@@ -1,0 +1,26 @@
+# CMake generated build files
+/build/
+/out/
+/cmake-build-*/
+/CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+*.dir/
+*.pdb
+*.suo
+*.user
+*.vcxproj*
+
+# Executables and libraries
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# IDE specific files (e.g., CLion, VS Code)
+.idea/
+.vscode/
