@@ -11,22 +11,22 @@
 */
 
 
-#include "SchemaRegistryClient/model/Mode.h"
-#include "SchemaRegistryClient/model/Helpers.h"
+#include "SchemaRegistryClient/rest/model/ModeUpdateRequest.h"
+#include "SchemaRegistryClient/rest/model/Helpers.h"
 
 #include <sstream>
 
 namespace org::openapitools::server::model
 {
 
-Mode::Mode()
+ModeUpdateRequest::ModeUpdateRequest()
 {
     m_Mode = "";
     m_ModeIsSet = false;
     
 }
 
-void Mode::validate() const
+void ModeUpdateRequest::validate() const
 {
     std::stringstream msg;
     if (!validate(msg))
@@ -35,21 +35,21 @@ void Mode::validate() const
     }
 }
 
-bool Mode::validate(std::stringstream& msg) const
+bool ModeUpdateRequest::validate(std::stringstream& msg) const
 {
     return validate(msg, "");
 }
 
-bool Mode::validate(std::stringstream& msg, const std::string& pathPrefix) const
+bool ModeUpdateRequest::validate(std::stringstream& msg, const std::string& pathPrefix) const
 {
     bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "Mode" : pathPrefix;
+    const std::string _pathPrefix = pathPrefix.empty() ? "ModeUpdateRequest" : pathPrefix;
 
         
     return success;
 }
 
-bool Mode::operator==(const Mode& rhs) const
+bool ModeUpdateRequest::operator==(const ModeUpdateRequest& rhs) const
 {
     return
     
@@ -60,12 +60,12 @@ bool Mode::operator==(const Mode& rhs) const
     ;
 }
 
-bool Mode::operator!=(const Mode& rhs) const
+bool ModeUpdateRequest::operator!=(const ModeUpdateRequest& rhs) const
 {
     return !(*this == rhs);
 }
 
-void to_json(nlohmann::json& j, const Mode& o)
+void to_json(nlohmann::json& j, const ModeUpdateRequest& o)
 {
     j = nlohmann::json::object();
     if(o.modeIsSet())
@@ -73,7 +73,7 @@ void to_json(nlohmann::json& j, const Mode& o)
     
 }
 
-void from_json(const nlohmann::json& j, Mode& o)
+void from_json(const nlohmann::json& j, ModeUpdateRequest& o)
 {
     if(j.find("mode") != j.end())
     {
@@ -83,20 +83,20 @@ void from_json(const nlohmann::json& j, Mode& o)
     
 }
 
-std::string Mode::getMode() const
+std::string ModeUpdateRequest::getMode() const
 {
     return m_Mode;
 }
-void Mode::setMode(std::string const& value)
+void ModeUpdateRequest::setMode(std::string const& value)
 {
     m_Mode = value;
     m_ModeIsSet = true;
 }
-bool Mode::modeIsSet() const
+bool ModeUpdateRequest::modeIsSet() const
 {
     return m_ModeIsSet;
 }
-void Mode::unsetMode()
+void ModeUpdateRequest::unsetMode()
 {
     m_ModeIsSet = false;
 }

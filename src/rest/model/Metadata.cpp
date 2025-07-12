@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/model/Metadata.h"
-#include "SchemaRegistryClient/model/Helpers.h"
+#include "SchemaRegistryClient/rest/model/Metadata.h"
+#include "SchemaRegistryClient/rest/model/Helpers.h"
 
 #include <sstream>
 

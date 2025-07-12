@@ -11,15 +11,15 @@
 */
 
 
-#include "SchemaRegistryClient/model/ExtendedSchema.h"
-#include "SchemaRegistryClient/model/Helpers.h"
+#include "SchemaRegistryClient/rest/model/Schema.h"
+#include "SchemaRegistryClient/rest/model/Helpers.h"
 
 #include <sstream>
 
 namespace org::openapitools::server::model
 {
 
-ExtendedSchema::ExtendedSchema()
+Schema::Schema()
 {
     m_Subject = "";
     m_SubjectIsSet = false;
@@ -34,13 +34,12 @@ ExtendedSchema::ExtendedSchema()
     m_RulesetIsSet = false;
     m_Schema = "";
     m_SchemaIsSet = false;
-    m_AliasesIsSet = false;
-    m_RuleSetIsSet = false;
     m_SchemaTagsIsSet = false;
+    m_RuleSetIsSet = false;
     
 }
 
-void ExtendedSchema::validate() const
+void Schema::validate() const
 {
     std::stringstream msg;
     if (!validate(msg))
@@ -49,15 +48,15 @@ void ExtendedSchema::validate() const
     }
 }
 
-bool ExtendedSchema::validate(std::stringstream& msg) const
+bool Schema::validate(std::stringstream& msg) const
 {
     return validate(msg, "");
 }
 
-bool ExtendedSchema::validate(std::stringstream& msg, const std::string& pathPrefix) const
+bool Schema::validate(std::stringstream& msg, const std::string& pathPrefix) const
 {
     bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "ExtendedSchema" : pathPrefix;
+    const std::string _pathPrefix = pathPrefix.empty() ? "Schema" : pathPrefix;
 
                          
     if (referencesIsSet())
@@ -81,27 +80,6 @@ bool ExtendedSchema::validate(std::stringstream& msg, const std::string& pathPre
 
     }
                      
-    if (aliasesIsSet())
-    {
-        const std::vector<std::string>& value = m_Aliases;
-        const std::string currentValuePath = _pathPrefix + ".aliases";
-                
-        
-        { // Recursive validation of array elements
-            const std::string oldValuePath = currentValuePath;
-            int i = 0;
-            for (const std::string& value : value)
-            { 
-                const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                        
-        
- 
-                i++;
-            }
-        }
-
-    }
-             
     if (schemaTagsIsSet())
     {
         const std::vector<org::openapitools::server::model::SchemaTags>& value = m_SchemaTags;
@@ -122,11 +100,11 @@ bool ExtendedSchema::validate(std::stringstream& msg, const std::string& pathPre
         }
 
     }
-    
+        
     return success;
 }
 
-bool ExtendedSchema::operator==(const ExtendedSchema& rhs) const
+bool Schema::operator==(const Schema& rhs) const
 {
     return
     
@@ -156,23 +134,20 @@ bool ExtendedSchema::operator==(const ExtendedSchema& rhs) const
     ((!schemaIsSet() && !rhs.schemaIsSet()) || (schemaIsSet() && rhs.schemaIsSet() && getSchema() == rhs.getSchema())) &&
     
     
-    ((!aliasesIsSet() && !rhs.aliasesIsSet()) || (aliasesIsSet() && rhs.aliasesIsSet() && getAliases() == rhs.getAliases())) &&
+    ((!schemaTagsIsSet() && !rhs.schemaTagsIsSet()) || (schemaTagsIsSet() && rhs.schemaTagsIsSet() && getSchemaTags() == rhs.getSchemaTags())) &&
     
     
-    ((!ruleSetIsSet() && !rhs.ruleSetIsSet()) || (ruleSetIsSet() && rhs.ruleSetIsSet() && getRuleSet() == rhs.getRuleSet())) &&
-    
-    
-    ((!schemaTagsIsSet() && !rhs.schemaTagsIsSet()) || (schemaTagsIsSet() && rhs.schemaTagsIsSet() && getSchemaTags() == rhs.getSchemaTags()))
+    ((!ruleSetIsSet() && !rhs.ruleSetIsSet()) || (ruleSetIsSet() && rhs.ruleSetIsSet() && getRuleSet() == rhs.getRuleSet()))
     
     ;
 }
 
-bool ExtendedSchema::operator!=(const ExtendedSchema& rhs) const
+bool Schema::operator!=(const Schema& rhs) const
 {
     return !(*this == rhs);
 }
 
-void to_json(nlohmann::json& j, const ExtendedSchema& o)
+void to_json(nlohmann::json& j, const Schema& o)
 {
     j = nlohmann::json::object();
     if(o.subjectIsSet())
@@ -191,16 +166,14 @@ void to_json(nlohmann::json& j, const ExtendedSchema& o)
         j["ruleset"] = o.m_Ruleset;
     if(o.schemaIsSet())
         j["schema"] = o.m_Schema;
-    if(o.aliasesIsSet() || !o.m_Aliases.empty())
-        j["aliases"] = o.m_Aliases;
-    if(o.ruleSetIsSet())
-        j["ruleSet"] = o.m_RuleSet;
     if(o.schemaTagsIsSet() || !o.m_SchemaTags.empty())
         j["schemaTags"] = o.m_SchemaTags;
+    if(o.ruleSetIsSet())
+        j["ruleSet"] = o.m_RuleSet;
     
 }
 
-void from_json(const nlohmann::json& j, ExtendedSchema& o)
+void from_json(const nlohmann::json& j, Schema& o)
 {
     if(j.find("subject") != j.end())
     {
@@ -242,210 +215,188 @@ void from_json(const nlohmann::json& j, ExtendedSchema& o)
         j.at("schema").get_to(o.m_Schema);
         o.m_SchemaIsSet = true;
     } 
-    if(j.find("aliases") != j.end())
+    if(j.find("schemaTags") != j.end())
     {
-        j.at("aliases").get_to(o.m_Aliases);
-        o.m_AliasesIsSet = true;
+        j.at("schemaTags").get_to(o.m_SchemaTags);
+        o.m_SchemaTagsIsSet = true;
     } 
     if(j.find("ruleSet") != j.end())
     {
         j.at("ruleSet").get_to(o.m_RuleSet);
         o.m_RuleSetIsSet = true;
     } 
-    if(j.find("schemaTags") != j.end())
-    {
-        j.at("schemaTags").get_to(o.m_SchemaTags);
-        o.m_SchemaTagsIsSet = true;
-    } 
     
 }
 
-std::string ExtendedSchema::getSubject() const
+std::string Schema::getSubject() const
 {
     return m_Subject;
 }
-void ExtendedSchema::setSubject(std::string const& value)
+void Schema::setSubject(std::string const& value)
 {
     m_Subject = value;
     m_SubjectIsSet = true;
 }
-bool ExtendedSchema::subjectIsSet() const
+bool Schema::subjectIsSet() const
 {
     return m_SubjectIsSet;
 }
-void ExtendedSchema::unsetSubject()
+void Schema::unsetSubject()
 {
     m_SubjectIsSet = false;
 }
-int32_t ExtendedSchema::getVersion() const
+int32_t Schema::getVersion() const
 {
     return m_Version;
 }
-void ExtendedSchema::setVersion(int32_t const value)
+void Schema::setVersion(int32_t const value)
 {
     m_Version = value;
     m_VersionIsSet = true;
 }
-bool ExtendedSchema::versionIsSet() const
+bool Schema::versionIsSet() const
 {
     return m_VersionIsSet;
 }
-void ExtendedSchema::unsetVersion()
+void Schema::unsetVersion()
 {
     m_VersionIsSet = false;
 }
-int32_t ExtendedSchema::getId() const
+int32_t Schema::getId() const
 {
     return m_Id;
 }
-void ExtendedSchema::setId(int32_t const value)
+void Schema::setId(int32_t const value)
 {
     m_Id = value;
     m_IdIsSet = true;
 }
-bool ExtendedSchema::idIsSet() const
+bool Schema::idIsSet() const
 {
     return m_IdIsSet;
 }
-void ExtendedSchema::unsetId()
+void Schema::unsetId()
 {
     m_IdIsSet = false;
 }
-std::string ExtendedSchema::getSchemaType() const
+std::string Schema::getSchemaType() const
 {
     return m_SchemaType;
 }
-void ExtendedSchema::setSchemaType(std::string const& value)
+void Schema::setSchemaType(std::string const& value)
 {
     m_SchemaType = value;
     m_SchemaTypeIsSet = true;
 }
-bool ExtendedSchema::schemaTypeIsSet() const
+bool Schema::schemaTypeIsSet() const
 {
     return m_SchemaTypeIsSet;
 }
-void ExtendedSchema::unsetSchemaType()
+void Schema::unsetSchemaType()
 {
     m_SchemaTypeIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaReference> ExtendedSchema::getReferences() const
+std::vector<org::openapitools::server::model::SchemaReference> Schema::getReferences() const
 {
     return m_References;
 }
-void ExtendedSchema::setReferences(std::vector<org::openapitools::server::model::SchemaReference> const& value)
+void Schema::setReferences(std::vector<org::openapitools::server::model::SchemaReference> const& value)
 {
     m_References = value;
     m_ReferencesIsSet = true;
 }
-bool ExtendedSchema::referencesIsSet() const
+bool Schema::referencesIsSet() const
 {
     return m_ReferencesIsSet;
 }
-void ExtendedSchema::unsetReferences()
+void Schema::unsetReferences()
 {
     m_ReferencesIsSet = false;
 }
-org::openapitools::server::model::Metadata ExtendedSchema::getMetadata() const
+org::openapitools::server::model::Metadata Schema::getMetadata() const
 {
     return m_Metadata;
 }
-void ExtendedSchema::setMetadata(org::openapitools::server::model::Metadata const& value)
+void Schema::setMetadata(org::openapitools::server::model::Metadata const& value)
 {
     m_Metadata = value;
     m_MetadataIsSet = true;
 }
-bool ExtendedSchema::metadataIsSet() const
+bool Schema::metadataIsSet() const
 {
     return m_MetadataIsSet;
 }
-void ExtendedSchema::unsetMetadata()
+void Schema::unsetMetadata()
 {
     m_MetadataIsSet = false;
 }
-org::openapitools::server::model::RuleSet ExtendedSchema::getRuleset() const
+org::openapitools::server::model::RuleSet Schema::getRuleset() const
 {
     return m_Ruleset;
 }
-void ExtendedSchema::setRuleset(org::openapitools::server::model::RuleSet const& value)
+void Schema::setRuleset(org::openapitools::server::model::RuleSet const& value)
 {
     m_Ruleset = value;
     m_RulesetIsSet = true;
 }
-bool ExtendedSchema::rulesetIsSet() const
+bool Schema::rulesetIsSet() const
 {
     return m_RulesetIsSet;
 }
-void ExtendedSchema::unsetRuleset()
+void Schema::unsetRuleset()
 {
     m_RulesetIsSet = false;
 }
-std::string ExtendedSchema::getSchema() const
+std::string Schema::getSchema() const
 {
     return m_Schema;
 }
-void ExtendedSchema::setSchema(std::string const& value)
+void Schema::setSchema(std::string const& value)
 {
     m_Schema = value;
     m_SchemaIsSet = true;
 }
-bool ExtendedSchema::schemaIsSet() const
+bool Schema::schemaIsSet() const
 {
     return m_SchemaIsSet;
 }
-void ExtendedSchema::unsetSchema()
+void Schema::unsetSchema()
 {
     m_SchemaIsSet = false;
 }
-std::vector<std::string> ExtendedSchema::getAliases() const
-{
-    return m_Aliases;
-}
-void ExtendedSchema::setAliases(std::vector<std::string> const& value)
-{
-    m_Aliases = value;
-    m_AliasesIsSet = true;
-}
-bool ExtendedSchema::aliasesIsSet() const
-{
-    return m_AliasesIsSet;
-}
-void ExtendedSchema::unsetAliases()
-{
-    m_AliasesIsSet = false;
-}
-org::openapitools::server::model::RuleSet ExtendedSchema::getRuleSet() const
-{
-    return m_RuleSet;
-}
-void ExtendedSchema::setRuleSet(org::openapitools::server::model::RuleSet const& value)
-{
-    m_RuleSet = value;
-    m_RuleSetIsSet = true;
-}
-bool ExtendedSchema::ruleSetIsSet() const
-{
-    return m_RuleSetIsSet;
-}
-void ExtendedSchema::unsetRuleSet()
-{
-    m_RuleSetIsSet = false;
-}
-std::vector<org::openapitools::server::model::SchemaTags> ExtendedSchema::getSchemaTags() const
+std::vector<org::openapitools::server::model::SchemaTags> Schema::getSchemaTags() const
 {
     return m_SchemaTags;
 }
-void ExtendedSchema::setSchemaTags(std::vector<org::openapitools::server::model::SchemaTags> const& value)
+void Schema::setSchemaTags(std::vector<org::openapitools::server::model::SchemaTags> const& value)
 {
     m_SchemaTags = value;
     m_SchemaTagsIsSet = true;
 }
-bool ExtendedSchema::schemaTagsIsSet() const
+bool Schema::schemaTagsIsSet() const
 {
     return m_SchemaTagsIsSet;
 }
-void ExtendedSchema::unsetSchemaTags()
+void Schema::unsetSchemaTags()
 {
     m_SchemaTagsIsSet = false;
+}
+org::openapitools::server::model::RuleSet Schema::getRuleSet() const
+{
+    return m_RuleSet;
+}
+void Schema::setRuleSet(org::openapitools::server::model::RuleSet const& value)
+{
+    m_RuleSet = value;
+    m_RuleSetIsSet = true;
+}
+bool Schema::ruleSetIsSet() const
+{
+    return m_RuleSetIsSet;
+}
+void Schema::unsetRuleSet()
+{
+    m_RuleSetIsSet = false;
 }
 
 

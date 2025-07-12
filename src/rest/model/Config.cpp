@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/model/Config.h"
-#include "SchemaRegistryClient/model/Helpers.h"
+#include "SchemaRegistryClient/rest/model/Config.h"
+#include "SchemaRegistryClient/rest/model/Helpers.h"
 
 #include <sstream>
 

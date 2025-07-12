@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/model/ServerClusterId.h"
-#include "SchemaRegistryClient/model/Helpers.h"
+#include "SchemaRegistryClient/rest/model/ServerClusterId.h"
+#include "SchemaRegistryClient/rest/model/Helpers.h"
 
 #include <sstream>
 

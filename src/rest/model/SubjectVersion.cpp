@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/model/SubjectVersion.h"
-#include "SchemaRegistryClient/model/Helpers.h"
+#include "SchemaRegistryClient/rest/model/SubjectVersion.h"
+#include "SchemaRegistryClient/rest/model/Helpers.h"
 
 #include <sstream>
 
