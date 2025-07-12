@@ -29,6 +29,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <httplib.h>
 
 namespace org {
 namespace openapitools {
@@ -43,18 +44,12 @@ public:
 
     std::shared_ptr<const ClientConfiguration> getConfiguration() const;
 
-    /*
-    pplx::task<web::http::http_response> callApi(
-        const utility::string_t& path,
-        const utility::string_t& method,
-        const std::map<utility::string_t, utility::string_t>& queryParams,
-        const std::shared_ptr<IHttpBody> postBody,
-        const std::map<utility::string_t, utility::string_t>& headerParams,
-        const std::map<utility::string_t, utility::string_t>& formParams,
-        const std::map<utility::string_t, std::shared_ptr<HttpContent>>& fileParams,
-        const utility::string_t& contentType
+    httplib::Result sendRequest(
+            const std::string& path,
+            const std::string& method,
+            const std::multimap<std::string, std::string>& query,
+            const std::string& body
     ) const;
-     */
 
 protected:
     std::shared_ptr<const ClientConfiguration> m_Configuration;

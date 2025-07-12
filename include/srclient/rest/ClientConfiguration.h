@@ -20,7 +20,6 @@
 
 
 #include <map>
-#include <httplib.h>
 
 namespace org {
 namespace openapitools {

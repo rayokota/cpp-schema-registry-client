@@ -31,7 +31,7 @@ class  RestException
 {
 public:
     RestException( int errorCode
-        , const std::string message
+        , const std::string& message
         , std::shared_ptr<std::istream> content = nullptr );
     virtual ~RestException();
 

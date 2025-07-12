@@ -17,7 +17,7 @@ namespace client {
 namespace api {
 
 RestException::RestException( int errorCode
-    , const std::string message
+    , const std::string& message
     , std::shared_ptr<std::istream> content /*= nullptr*/ )
     : m_Content(content)
 {
