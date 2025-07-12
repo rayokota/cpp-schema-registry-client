@@ -9,7 +9,7 @@
  * Do not edit the class manually.
  */
 
-#include "SchemaRegistryClient/rest/RestException.h"
+#include "srclient/rest/RestException.h"
 
 namespace org {
 namespace openapitools {

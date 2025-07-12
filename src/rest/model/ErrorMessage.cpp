@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/rest/model/ErrorMessage.h"
-#include "SchemaRegistryClient/rest/model/Helpers.h"
+#include "srclient/rest/model/ErrorMessage.h"
+#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 

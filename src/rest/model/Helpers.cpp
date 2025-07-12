@@ -9,7 +9,7 @@
 * https://openapi-generator.tech
 * Do not edit the class manually.
 */
-#include "SchemaRegistryClient/rest/model/Helpers.h"
+#include "srclient/rest/model/Helpers.h"
 #include <regex>
 
 namespace org::openapitools::server::helpers

@@ -9,7 +9,7 @@
  * Do not edit the class manually.
  */
 
-#include "SchemaRegistryClient/rest/ClientConfiguration.h"
+#include "srclient/rest/ClientConfiguration.h"
 
 namespace org {
 namespace openapitools {

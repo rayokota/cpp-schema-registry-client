@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/rest/model/SchemaTags.h"
-#include "SchemaRegistryClient/rest/model/Helpers.h"
+#include "srclient/rest/model/SchemaTags.h"
+#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 

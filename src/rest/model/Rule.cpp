@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/rest/model/Rule.h"
-#include "SchemaRegistryClient/rest/model/Helpers.h"
+#include "srclient/rest/model/Rule.h"
+#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 

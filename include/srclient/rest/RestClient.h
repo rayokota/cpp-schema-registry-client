@@ -19,8 +19,8 @@
 #define ORG_OPENAPITOOLS_CLIENT_API_RestClient_H_
 
 
-#include "SchemaRegistryClient/rest/ClientConfiguration.h"
-#include "SchemaRegistryClient/rest/RestException.h"
+#include "srclient/rest/ClientConfiguration.h"
+#include "srclient/rest/RestException.h"
 
 #if  defined (_WIN32) || defined (_WIN64)
 #undef U

@@ -9,7 +9,7 @@
  * Do not edit the class manually.
  */
 
-#include "SchemaRegistryClient/rest/RestClient.h"
+#include "srclient/rest/RestClient.h"
 
 #include <sstream>
 #include <limits>

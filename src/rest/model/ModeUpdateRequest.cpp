@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/rest/model/ModeUpdateRequest.h"
-#include "SchemaRegistryClient/rest/model/Helpers.h"
+#include "srclient/rest/model/ModeUpdateRequest.h"
+#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 

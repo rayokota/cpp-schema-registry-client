@@ -11,8 +11,8 @@
 */
 
 
-#include "SchemaRegistryClient/rest/model/CompatibilityCheckResponse.h"
-#include "SchemaRegistryClient/rest/model/Helpers.h"
+#include "srclient/rest/model/CompatibilityCheckResponse.h"
+#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 
