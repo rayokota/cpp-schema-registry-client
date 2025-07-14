@@ -63,12 +63,26 @@ public:
     /// RegisterSchemaResponse members
 
     /// <summary>
-    /// Globally unique identifier of the schema
+    /// Identifier of the schema
     /// </summary>
     int32_t getId() const;
     void setId(int32_t const value);
     bool idIsSet() const;
     void unsetId();
+    /// <summary>
+    /// Globally unique identifier of the schema
+    /// </summary>
+    std::string getGuid() const;
+    void setGuid(std::string const& value);
+    bool guidIsSet() const;
+    void unsetGuid();
+    /// <summary>
+    /// Subject
+    /// </summary>
+    std::string getSubject() const;
+    void setSubject(std::string const& value);
+    bool subjectIsSet() const;
+    void unsetSubject();
     /// <summary>
     /// Version number
     /// </summary>
@@ -117,6 +131,10 @@ public:
 protected:
     int32_t m_Id;
     bool m_IdIsSet;
+    std::string m_Guid;
+    bool m_GuidIsSet;
+    std::string m_Subject;
+    bool m_SubjectIsSet;
     int32_t m_Version;
     bool m_VersionIsSet;
     std::string m_SchemaType;

@@ -39,7 +39,7 @@ namespace api {
 class  RestClient
 {
 public:
-    RestClient( std::shared_ptr<ClientConfiguration> configuration = nullptr );
+    RestClient( std::shared_ptr<const ClientConfiguration> configuration = nullptr );
     virtual ~RestClient();
 
     std::shared_ptr<const ClientConfiguration> getConfiguration() const;

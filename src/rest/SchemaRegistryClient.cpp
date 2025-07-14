@@ -15,7 +15,7 @@ using json = nlohmann::json;
 namespace srclient {
 namespace rest {
 
-SchemaRegistryClient::SchemaRegistryClient(std::shared_ptr<org::openapitools::client::api::ClientConfiguration> config) 
+SchemaRegistryClient::SchemaRegistryClient(std::shared_ptr<const org::openapitools::client::api::ClientConfiguration> config)
     : restClient(std::make_shared<org::openapitools::client::api::RestClient>(config))
     , store(std::make_shared<SchemaStore>())
     , storeMutex(std::make_shared<std::mutex>())
@@ -33,7 +33,7 @@ SchemaRegistryClient::~SchemaRegistryClient() {
     close();
 }
 
-std::shared_ptr<org::openapitools::client::api::ClientConfiguration> SchemaRegistryClient::getConfiguration() const {
+std::shared_ptr<const org::openapitools::client::api::ClientConfiguration> SchemaRegistryClient::getConfiguration() const {
     return restClient->getConfiguration();
 }
 
@@ -71,15 +71,15 @@ std::string SchemaRegistryClient::createMetadataKey(const std::string& subject,
 
 std::string SchemaRegistryClient::sendHttpRequest(const std::string& path, 
                                                 const std::string& method,
-                                                const std::multimap<std::string, std::string>& query,
+                                                const httplib::Params& query,
                                                 const std::string& body) const {
-    std::multimap<std::string, std::string> headers;
+    httplib::Headers headers;
     headers.insert(std::make_pair("Content-Type", "application/json"));
     
     auto result = restClient->sendRequest(path, method, query, headers, body);
     
     if (!result) {
-        throw org::openapitools::client::api::RestException("Request failed: " + result.error());
+        throw org::openapitools::client::api::RestException("Request failed: " + to_string(result.error()));
     }
     
     if (result->status >= 400) {
@@ -189,7 +189,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::r
     
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions";
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     query.insert(std::make_pair("normalize", normalize ? "true" : "false"));
     
     // Serialize schema to JSON
@@ -228,7 +228,7 @@ org::openapitools::server::model::Schema SchemaRegistryClient::getBySubjectAndId
     
     // Prepare request
     std::string path = "/schemas/ids/" + std::to_string(id);
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     if (subject.has_value()) {
         query.insert(std::make_pair("subject", subject.value()));
     }
@@ -246,11 +246,7 @@ org::openapitools::server::model::Schema SchemaRegistryClient::getBySubjectAndId
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        std::optional<std::string> guid;
-        if (response.getSchemaId().has_value()) {
-            guid = response.getSchemaId().value();
-        }
-        store->setSchema(subject, std::make_optional(id), guid, schema);
+        store->setSchema(subject, std::make_optional(id), std::make_optional(response.getGuid()), schema);
     }
     
     return schema;
@@ -271,7 +267,7 @@ org::openapitools::server::model::Schema SchemaRegistryClient::getByGuid(
     
     // Prepare request
     std::string path = "/schemas/guids/" + urlEncode(guid);
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     if (format.has_value()) {
         query.insert(std::make_pair("format", format.value()));
     }
@@ -309,7 +305,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject);
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     query.insert(std::make_pair("normalize", normalize ? "true" : "false"));
     query.insert(std::make_pair("deleted", deleted ? "true" : "false"));
     
@@ -350,7 +346,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions/" + std::to_string(version);
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     query.insert(std::make_pair("deleted", deleted ? "true" : "false"));
     if (format.has_value()) {
         query.insert(std::make_pair("format", format.value()));
@@ -387,7 +383,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions/latest";
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     if (format.has_value()) {
         query.insert(std::make_pair("format", format.value()));
     }
@@ -425,7 +421,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/metadata";
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     query.insert(std::make_pair("deleted", deleted ? "true" : "false"));
     if (format.has_value()) {
         query.insert(std::make_pair("format", format.value()));
@@ -466,7 +462,7 @@ std::vector<int32_t> SchemaRegistryClient::getAllVersions(const std::string& sub
 std::vector<std::string> SchemaRegistryClient::getAllSubjects(bool deleted) {
     // Prepare request
     std::string path = "/subjects";
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     query.insert(std::make_pair("deleted", deleted ? "true" : "false"));
     
     // Send request
@@ -479,7 +475,7 @@ std::vector<std::string> SchemaRegistryClient::getAllSubjects(bool deleted) {
 std::vector<int32_t> SchemaRegistryClient::deleteSubject(const std::string& subject, bool permanent) {
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject);
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     query.insert(std::make_pair("permanent", permanent ? "true" : "false"));
     
     // Send request
@@ -492,7 +488,7 @@ std::vector<int32_t> SchemaRegistryClient::deleteSubject(const std::string& subj
 int32_t SchemaRegistryClient::deleteSubjectVersion(const std::string& subject, int32_t version, bool permanent) {
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions/" + std::to_string(version);
-    std::multimap<std::string, std::string> query;
+    httplib::Params query;
     query.insert(std::make_pair("permanent", permanent ? "true" : "false"));
     
     // Send request

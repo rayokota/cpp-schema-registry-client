@@ -27,6 +27,8 @@ Schema::Schema()
     m_VersionIsSet = false;
     m_Id = 0;
     m_IdIsSet = false;
+    m_Guid = "";
+    m_GuidIsSet = false;
     m_SchemaType = "";
     m_SchemaTypeIsSet = false;
     m_ReferencesIsSet = false;
@@ -156,6 +158,8 @@ void to_json(nlohmann::json& j, const Schema& o)
         j["version"] = o.m_Version;
     if(o.idIsSet())
         j["id"] = o.m_Id;
+    if(o.guidIsSet())
+        j["guid"] = o.m_Guid;
     if(o.schemaTypeIsSet())
         j["schemaType"] = o.m_SchemaType;
     if(o.referencesIsSet() || !o.m_References.empty())
@@ -184,11 +188,16 @@ void from_json(const nlohmann::json& j, Schema& o)
     {
         j.at("version").get_to(o.m_Version);
         o.m_VersionIsSet = true;
-    } 
+    }
     if(j.find("id") != j.end())
     {
         j.at("id").get_to(o.m_Id);
         o.m_IdIsSet = true;
+    }
+    if(j.find("guid") != j.end())
+    {
+        j.at("guid").get_to(o.m_Guid);
+        o.m_GuidIsSet = true;
     } 
     if(j.find("schemaType") != j.end())
     {
@@ -278,6 +287,23 @@ bool Schema::idIsSet() const
 void Schema::unsetId()
 {
     m_IdIsSet = false;
+}
+std::string Schema::getGuid() const
+{
+    return m_Guid;
+}
+void Schema::setGuid(std::string const& value)
+{
+    m_Guid = value;
+    m_GuidIsSet = true;
+}
+bool Schema::guidIsSet() const
+{
+    return m_GuidIsSet;
+}
+void Schema::unsetGuid()
+{
+    m_GuidIsSet = false;
 }
 std::string Schema::getSchemaType() const
 {

@@ -71,7 +71,7 @@ public:
     bool versionIsSet() const;
     void unsetVersion();
     /// <summary>
-    /// Globally unique identifier of the schema
+    /// Identifier of the schema
     /// </summary>
     int32_t getId() const;
     void setId(int32_t const value);

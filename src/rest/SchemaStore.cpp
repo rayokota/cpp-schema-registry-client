@@ -36,20 +36,20 @@ void SchemaStore::setSchema(const std::optional<std::string>& subject,
 void SchemaStore::setRegisteredSchema(const org::openapitools::server::model::Schema& schema,
                                      const org::openapitools::server::model::RegisterSchemaResponse& rs) {
     std::string subjectStr = "";
-    if (rs.getSubject().has_value()) {
-        subjectStr = rs.getSubject().value();
+    if (rs.subjectIsSet()) {
+        subjectStr = rs.getSubject();
     }
     
     std::string schemaHash = createSchemaHash(schema);
     
     // Update registered schema by ID index
-    if (rs.getId().has_value()) {
-        rsIdIndex[subjectStr][rs.getId().value()] = rs;
+    if (rs.idIsSet()) {
+        rsIdIndex[subjectStr][rs.getId()] = rs;
     }
     
     // Update registered schema by version index
-    if (rs.getVersion().has_value()) {
-        rsVersionIndex[subjectStr][rs.getVersion().value()] = rs;
+    if (rs.versionIsSet()) {
+        rsVersionIndex[subjectStr][rs.getVersion()] = rs;
     }
     
     // Update registered schema by schema index
@@ -57,8 +57,8 @@ void SchemaStore::setRegisteredSchema(const org::openapitools::server::model::Sc
     
     // Also update the schema store
     std::optional<std::string> guid;
-    if (rs.getSchemaId().has_value()) {
-        guid = rs.getSchemaId().value();
+    if (rs.schemaIsSet()) {
+        guid = rs.getSchema();
     }
     
     std::optional<std::string> subjectOpt;
@@ -154,8 +154,8 @@ std::string SchemaStore::createSchemaHash(const org::openapitools::server::model
     // Create a hash string from the schema content
     std::stringstream ss;
     ss << schema.getSchema();
-    if (schema.getSchemaType().has_value()) {
-        ss << "_" << schema.getSchemaType().value();
+    if (schema.schemaTypeIsSet()) {
+        ss << "_" << schema.getSchemaType();
     }
     
     // Use std::hash to create a hash value

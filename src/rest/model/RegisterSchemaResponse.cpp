@@ -23,6 +23,10 @@ RegisterSchemaResponse::RegisterSchemaResponse()
 {
     m_Id = 0;
     m_IdIsSet = false;
+    m_Guid = "";
+    m_GuidIsSet = false;
+    m_Subject = "";
+    m_SubjectIsSet = false;
     m_Version = 0;
     m_VersionIsSet = false;
     m_SchemaType = "";
@@ -118,6 +122,10 @@ void to_json(nlohmann::json& j, const RegisterSchemaResponse& o)
     j = nlohmann::json::object();
     if(o.idIsSet())
         j["id"] = o.m_Id;
+    if(o.guidIsSet())
+        j["guid"] = o.m_Guid;
+    if(o.subjectIsSet())
+        j["subject"] = o.m_Subject;
     if(o.versionIsSet())
         j["version"] = o.m_Version;
     if(o.schemaTypeIsSet())
@@ -139,7 +147,17 @@ void from_json(const nlohmann::json& j, RegisterSchemaResponse& o)
     {
         j.at("id").get_to(o.m_Id);
         o.m_IdIsSet = true;
-    } 
+    }
+    if(j.find("guid") != j.end())
+    {
+        j.at("guid").get_to(o.m_Guid);
+        o.m_GuidIsSet = true;
+    }
+    if(j.find("subject") != j.end())
+    {
+        j.at("subject").get_to(o.m_Subject);
+        o.m_SubjectIsSet = true;
+    }
     if(j.find("version") != j.end())
     {
         j.at("version").get_to(o.m_Version);
@@ -189,6 +207,40 @@ bool RegisterSchemaResponse::idIsSet() const
 void RegisterSchemaResponse::unsetId()
 {
     m_IdIsSet = false;
+}
+std::string RegisterSchemaResponse::getGuid() const
+{
+    return m_Guid;
+}
+void RegisterSchemaResponse::setGuid(std::string const& value)
+{
+    m_Guid = value;
+    m_GuidIsSet = true;
+}
+bool RegisterSchemaResponse::guidIsSet() const
+{
+    return m_GuidIsSet;
+}
+void RegisterSchemaResponse::unsetGuid()
+{
+    m_GuidIsSet = false;
+}
+std::string RegisterSchemaResponse::getSubject() const
+{
+    return m_Subject;
+}
+void RegisterSchemaResponse::setSubject(std::string const& value)
+{
+    m_Subject = value;
+    m_SubjectIsSet = true;
+}
+bool RegisterSchemaResponse::subjectIsSet() const
+{
+    return m_SubjectIsSet;
+}
+void RegisterSchemaResponse::unsetSubject()
+{
+    m_SubjectIsSet = false;
 }
 int32_t RegisterSchemaResponse::getVersion() const
 {

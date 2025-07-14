@@ -197,7 +197,7 @@ public:
     /**
      * Constructor
      */
-    SchemaRegistryClient(std::shared_ptr<org::openapitools::client::api::ClientConfiguration> config);
+    SchemaRegistryClient(std::shared_ptr<const org::openapitools::client::api::ClientConfiguration> config);
 
     /**
      * Destructor
@@ -207,7 +207,7 @@ public:
     /**
      * Get client configuration
      */
-    std::shared_ptr<org::openapitools::client::api::ClientConfiguration> getConfiguration() const;
+    std::shared_ptr<const org::openapitools::client::api::ClientConfiguration> getConfiguration() const;
 
     // Implement ISchemaRegistryClient methods
     org::openapitools::server::model::RegisterSchemaResponse registerSchema(
