@@ -26,7 +26,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 /// <summary>
@@ -72,36 +72,36 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    std::vector<org::openapitools::server::model::SchemaTags> getTagsToAdd() const;
-    void setTagsToAdd(std::vector<org::openapitools::server::model::SchemaTags> const& value);
+    std::vector<srclient::rest::model::SchemaTags> getTagsToAdd() const;
+    void setTagsToAdd(std::vector<srclient::rest::model::SchemaTags> const& value);
     bool tagsToAddIsSet() const;
     void unsetTagsToAdd();
     /// <summary>
     /// 
     /// </summary>
-    std::vector<org::openapitools::server::model::SchemaTags> getTagsToRemove() const;
-    void setTagsToRemove(std::vector<org::openapitools::server::model::SchemaTags> const& value);
+    std::vector<srclient::rest::model::SchemaTags> getTagsToRemove() const;
+    void setTagsToRemove(std::vector<srclient::rest::model::SchemaTags> const& value);
     bool tagsToRemoveIsSet() const;
     void unsetTagsToRemove();
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::Metadata getMetadata() const;
-    void setMetadata(org::openapitools::server::model::Metadata const& value);
+    srclient::rest::model::Metadata getMetadata() const;
+    void setMetadata(srclient::rest::model::Metadata const& value);
     bool metadataIsSet() const;
     void unsetMetadata();
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::RuleSet getRuleSet() const;
-    void setRuleSet(org::openapitools::server::model::RuleSet const& value);
+    srclient::rest::model::RuleSet getRuleSet() const;
+    void setRuleSet(srclient::rest::model::RuleSet const& value);
     bool ruleSetIsSet() const;
     void unsetRuleSet();
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::RuleSet getRulesToMerge() const;
-    void setRulesToMerge(org::openapitools::server::model::RuleSet const& value);
+    srclient::rest::model::RuleSet getRulesToMerge() const;
+    void setRulesToMerge(srclient::rest::model::RuleSet const& value);
     bool rulesToMergeIsSet() const;
     void unsetRulesToMerge();
     /// <summary>
@@ -117,21 +117,21 @@ public:
 protected:
     int32_t m_NewVersion;
     bool m_NewVersionIsSet;
-    std::vector<org::openapitools::server::model::SchemaTags> m_TagsToAdd;
+    std::vector<srclient::rest::model::SchemaTags> m_TagsToAdd;
     bool m_TagsToAddIsSet;
-    std::vector<org::openapitools::server::model::SchemaTags> m_TagsToRemove;
+    std::vector<srclient::rest::model::SchemaTags> m_TagsToRemove;
     bool m_TagsToRemoveIsSet;
-    org::openapitools::server::model::Metadata m_Metadata;
+    srclient::rest::model::Metadata m_Metadata;
     bool m_MetadataIsSet;
-    org::openapitools::server::model::RuleSet m_RuleSet;
+    srclient::rest::model::RuleSet m_RuleSet;
     bool m_RuleSetIsSet;
-    org::openapitools::server::model::RuleSet m_RulesToMerge;
+    srclient::rest::model::RuleSet m_RulesToMerge;
     bool m_RulesToMergeIsSet;
     std::vector<std::string> m_RulesToRemove;
     bool m_RulesToRemoveIsSet;
     
 };
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 
 #endif /* TagSchemaRequest_H_ */

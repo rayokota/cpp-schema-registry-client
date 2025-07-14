@@ -12,7 +12,7 @@
 #include "srclient/rest/model/Helpers.h"
 #include <regex>
 
-namespace org::openapitools::server::helpers
+namespace srclient::rest::model
 {
 
 const std::regex regexRfc3339_date(R"(^(\d{4})\-(\d{2})\-(\d{2})$)");
@@ -145,4 +145,4 @@ bool fromStringValue(const std::string &inStr, double &value){
     return true;
 }
 
-} // namespace org::openapitools::server::helpers
+} // namespace srclient::rest::model

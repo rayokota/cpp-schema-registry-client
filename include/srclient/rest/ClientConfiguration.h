@@ -21,10 +21,7 @@
 
 #include <map>
 
-namespace org {
-namespace openapitools {
-namespace client {
-namespace api {
+namespace srclient::rest {
 
 class  ClientConfiguration
 {
@@ -39,7 +36,5 @@ protected:
 };
 
 }
-}
-}
-}
+
 #endif /* ORG_OPENAPITOOLS_CLIENT_API_ClientConfiguration_H_ */

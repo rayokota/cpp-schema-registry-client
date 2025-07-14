@@ -27,7 +27,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 /// <summary>
@@ -87,22 +87,22 @@ public:
     /// <summary>
     /// References to other schemas
     /// </summary>
-    std::vector<org::openapitools::server::model::SchemaReference> getReferences() const;
-    void setReferences(std::vector<org::openapitools::server::model::SchemaReference> const& value);
+    std::vector<srclient::rest::model::SchemaReference> getReferences() const;
+    void setReferences(std::vector<srclient::rest::model::SchemaReference> const& value);
     bool referencesIsSet() const;
     void unsetReferences();
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::Metadata getMetadata() const;
-    void setMetadata(org::openapitools::server::model::Metadata const& value);
+    srclient::rest::model::Metadata getMetadata() const;
+    void setMetadata(srclient::rest::model::Metadata const& value);
     bool metadataIsSet() const;
     void unsetMetadata();
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::RuleSet getRuleSet() const;
-    void setRuleSet(org::openapitools::server::model::RuleSet const& value);
+    srclient::rest::model::RuleSet getRuleSet() const;
+    void setRuleSet(srclient::rest::model::RuleSet const& value);
     bool ruleSetIsSet() const;
     void unsetRuleSet();
     /// <summary>
@@ -115,15 +115,15 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    std::vector<org::openapitools::server::model::SchemaTags> getSchemaTagsToAdd() const;
-    void setSchemaTagsToAdd(std::vector<org::openapitools::server::model::SchemaTags> const& value);
+    std::vector<srclient::rest::model::SchemaTags> getSchemaTagsToAdd() const;
+    void setSchemaTagsToAdd(std::vector<srclient::rest::model::SchemaTags> const& value);
     bool schemaTagsToAddIsSet() const;
     void unsetSchemaTagsToAdd();
     /// <summary>
     /// 
     /// </summary>
-    std::vector<org::openapitools::server::model::SchemaTags> getSchemaTagsToRemove() const;
-    void setSchemaTagsToRemove(std::vector<org::openapitools::server::model::SchemaTags> const& value);
+    std::vector<srclient::rest::model::SchemaTags> getSchemaTagsToRemove() const;
+    void setSchemaTagsToRemove(std::vector<srclient::rest::model::SchemaTags> const& value);
     bool schemaTagsToRemoveIsSet() const;
     void unsetSchemaTagsToRemove();
     /// <summary>
@@ -143,23 +143,23 @@ protected:
     bool m_IdIsSet;
     std::string m_SchemaType;
     bool m_SchemaTypeIsSet;
-    std::vector<org::openapitools::server::model::SchemaReference> m_References;
+    std::vector<srclient::rest::model::SchemaReference> m_References;
     bool m_ReferencesIsSet;
-    org::openapitools::server::model::Metadata m_Metadata;
+    srclient::rest::model::Metadata m_Metadata;
     bool m_MetadataIsSet;
-    org::openapitools::server::model::RuleSet m_RuleSet;
+    srclient::rest::model::RuleSet m_RuleSet;
     bool m_RuleSetIsSet;
     std::string m_Schema;
     bool m_SchemaIsSet;
-    std::vector<org::openapitools::server::model::SchemaTags> m_SchemaTagsToAdd;
+    std::vector<srclient::rest::model::SchemaTags> m_SchemaTagsToAdd;
     bool m_SchemaTagsToAddIsSet;
-    std::vector<org::openapitools::server::model::SchemaTags> m_SchemaTagsToRemove;
+    std::vector<srclient::rest::model::SchemaTags> m_SchemaTagsToRemove;
     bool m_SchemaTagsToRemoveIsSet;
     bool m_PropagateSchemaTags;
     bool m_PropagateSchemaTagsIsSet;
     
 };
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 
 #endif /* RegisterSchemaRequest_H_ */

@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 SchemaTags::SchemaTags()
@@ -31,7 +31,7 @@ void SchemaTags::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -114,11 +114,11 @@ void from_json(const nlohmann::json& j, SchemaTags& o)
     
 }
 
-org::openapitools::server::model::SchemaEntity SchemaTags::getSchemaEntity() const
+srclient::rest::model::SchemaEntity SchemaTags::getSchemaEntity() const
 {
     return m_SchemaEntity;
 }
-void SchemaTags::setSchemaEntity(org::openapitools::server::model::SchemaEntity const& value)
+void SchemaTags::setSchemaEntity(srclient::rest::model::SchemaEntity const& value)
 {
     m_SchemaEntity = value;
     m_SchemaEntityIsSet = true;
@@ -150,5 +150,5 @@ void SchemaTags::unsetTags()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

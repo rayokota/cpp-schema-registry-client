@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 RuleSet::RuleSet()
@@ -33,7 +33,7 @@ void RuleSet::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -50,14 +50,14 @@ bool RuleSet::validate(std::stringstream& msg, const std::string& pathPrefix) co
          
     if (migrationRulesIsSet())
     {
-        const std::vector<org::openapitools::server::model::Rule>& value = m_MigrationRules;
+        const std::vector<srclient::rest::model::Rule>& value = m_MigrationRules;
         const std::string currentValuePath = _pathPrefix + ".migrationRules";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::Rule& value : value)
+            for (const srclient::rest::model::Rule& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -71,14 +71,14 @@ bool RuleSet::validate(std::stringstream& msg, const std::string& pathPrefix) co
          
     if (domainRulesIsSet())
     {
-        const std::vector<org::openapitools::server::model::Rule>& value = m_DomainRules;
+        const std::vector<srclient::rest::model::Rule>& value = m_DomainRules;
         const std::string currentValuePath = _pathPrefix + ".domainRules";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::Rule& value : value)
+            for (const srclient::rest::model::Rule& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -147,11 +147,11 @@ void from_json(const nlohmann::json& j, RuleSet& o)
     
 }
 
-std::vector<org::openapitools::server::model::Rule> RuleSet::getMigrationRules() const
+std::vector<srclient::rest::model::Rule> RuleSet::getMigrationRules() const
 {
     return m_MigrationRules;
 }
-void RuleSet::setMigrationRules(std::vector<org::openapitools::server::model::Rule> const& value)
+void RuleSet::setMigrationRules(std::vector<srclient::rest::model::Rule> const& value)
 {
     m_MigrationRules = value;
     m_MigrationRulesIsSet = true;
@@ -164,11 +164,11 @@ void RuleSet::unsetMigrationRules()
 {
     m_MigrationRulesIsSet = false;
 }
-std::vector<org::openapitools::server::model::Rule> RuleSet::getDomainRules() const
+std::vector<srclient::rest::model::Rule> RuleSet::getDomainRules() const
 {
     return m_DomainRules;
 }
-void RuleSet::setDomainRules(std::vector<org::openapitools::server::model::Rule> const& value)
+void RuleSet::setDomainRules(std::vector<srclient::rest::model::Rule> const& value)
 {
     m_DomainRules = value;
     m_DomainRulesIsSet = true;
@@ -200,5 +200,5 @@ void RuleSet::unsetEmpty()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

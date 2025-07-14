@@ -11,10 +11,7 @@
 
 #include "srclient/rest/ClientConfiguration.h"
 
-namespace org {
-namespace openapitools {
-namespace client {
-namespace api {
+namespace srclient::rest {
 
 ClientConfiguration::ClientConfiguration(const std::vector<std::string>& baseUrls)
     : m_BaseUrls(baseUrls)
@@ -30,7 +27,4 @@ std::vector<std::string> ClientConfiguration::getBaseUrls() const
     return m_BaseUrls;
 }
 
-}
-}
-}
 }

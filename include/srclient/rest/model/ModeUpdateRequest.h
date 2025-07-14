@@ -22,7 +22,7 @@
 #include <string>
 #include <nlohmann/json.hpp>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 /// <summary>
@@ -74,6 +74,6 @@ protected:
     
 };
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 
 #endif /* ModeUpdateRequest_H_ */

@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 ExtendedSchema::ExtendedSchema()
@@ -47,7 +47,7 @@ void ExtendedSchema::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -64,14 +64,14 @@ bool ExtendedSchema::validate(std::stringstream& msg, const std::string& pathPre
                          
     if (referencesIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaReference>& value = m_References;
+        const std::vector<srclient::rest::model::SchemaReference>& value = m_References;
         const std::string currentValuePath = _pathPrefix + ".references";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaReference& value : value)
+            for (const srclient::rest::model::SchemaReference& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -106,14 +106,14 @@ bool ExtendedSchema::validate(std::stringstream& msg, const std::string& pathPre
              
     if (schemaTagsIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaTags>& value = m_SchemaTags;
+        const std::vector<srclient::rest::model::SchemaTags>& value = m_SchemaTags;
         const std::string currentValuePath = _pathPrefix + ".schemaTags";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaTags& value : value)
+            for (const srclient::rest::model::SchemaTags& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -354,11 +354,11 @@ void ExtendedSchema::unsetSchemaType()
 {
     m_SchemaTypeIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaReference> ExtendedSchema::getReferences() const
+std::vector<srclient::rest::model::SchemaReference> ExtendedSchema::getReferences() const
 {
     return m_References;
 }
-void ExtendedSchema::setReferences(std::vector<org::openapitools::server::model::SchemaReference> const& value)
+void ExtendedSchema::setReferences(std::vector<srclient::rest::model::SchemaReference> const& value)
 {
     m_References = value;
     m_ReferencesIsSet = true;
@@ -371,11 +371,11 @@ void ExtendedSchema::unsetReferences()
 {
     m_ReferencesIsSet = false;
 }
-org::openapitools::server::model::Metadata ExtendedSchema::getMetadata() const
+srclient::rest::model::Metadata ExtendedSchema::getMetadata() const
 {
     return m_Metadata;
 }
-void ExtendedSchema::setMetadata(org::openapitools::server::model::Metadata const& value)
+void ExtendedSchema::setMetadata(srclient::rest::model::Metadata const& value)
 {
     m_Metadata = value;
     m_MetadataIsSet = true;
@@ -388,11 +388,11 @@ void ExtendedSchema::unsetMetadata()
 {
     m_MetadataIsSet = false;
 }
-org::openapitools::server::model::RuleSet ExtendedSchema::getRuleset() const
+srclient::rest::model::RuleSet ExtendedSchema::getRuleset() const
 {
     return m_Ruleset;
 }
-void ExtendedSchema::setRuleset(org::openapitools::server::model::RuleSet const& value)
+void ExtendedSchema::setRuleset(srclient::rest::model::RuleSet const& value)
 {
     m_Ruleset = value;
     m_RulesetIsSet = true;
@@ -439,11 +439,11 @@ void ExtendedSchema::unsetAliases()
 {
     m_AliasesIsSet = false;
 }
-org::openapitools::server::model::RuleSet ExtendedSchema::getRuleSet() const
+srclient::rest::model::RuleSet ExtendedSchema::getRuleSet() const
 {
     return m_RuleSet;
 }
-void ExtendedSchema::setRuleSet(org::openapitools::server::model::RuleSet const& value)
+void ExtendedSchema::setRuleSet(srclient::rest::model::RuleSet const& value)
 {
     m_RuleSet = value;
     m_RuleSetIsSet = true;
@@ -456,11 +456,11 @@ void ExtendedSchema::unsetRuleSet()
 {
     m_RuleSetIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaTags> ExtendedSchema::getSchemaTags() const
+std::vector<srclient::rest::model::SchemaTags> ExtendedSchema::getSchemaTags() const
 {
     return m_SchemaTags;
 }
-void ExtendedSchema::setSchemaTags(std::vector<org::openapitools::server::model::SchemaTags> const& value)
+void ExtendedSchema::setSchemaTags(std::vector<srclient::rest::model::SchemaTags> const& value)
 {
     m_SchemaTags = value;
     m_SchemaTagsIsSet = true;
@@ -475,5 +475,5 @@ void ExtendedSchema::unsetSchemaTags()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

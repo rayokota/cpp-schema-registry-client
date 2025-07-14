@@ -23,7 +23,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 /// <summary>
@@ -62,15 +62,15 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    std::vector<org::openapitools::server::model::Rule> getMigrationRules() const;
-    void setMigrationRules(std::vector<org::openapitools::server::model::Rule> const& value);
+    std::vector<srclient::rest::model::Rule> getMigrationRules() const;
+    void setMigrationRules(std::vector<srclient::rest::model::Rule> const& value);
     bool migrationRulesIsSet() const;
     void unsetMigrationRules();
     /// <summary>
     /// 
     /// </summary>
-    std::vector<org::openapitools::server::model::Rule> getDomainRules() const;
-    void setDomainRules(std::vector<org::openapitools::server::model::Rule> const& value);
+    std::vector<srclient::rest::model::Rule> getDomainRules() const;
+    void setDomainRules(std::vector<srclient::rest::model::Rule> const& value);
     bool domainRulesIsSet() const;
     void unsetDomainRules();
     /// <summary>
@@ -84,15 +84,15 @@ public:
     friend  void to_json(nlohmann::json& j, const RuleSet& o);
     friend  void from_json(const nlohmann::json& j, RuleSet& o);
 protected:
-    std::vector<org::openapitools::server::model::Rule> m_MigrationRules;
+    std::vector<srclient::rest::model::Rule> m_MigrationRules;
     bool m_MigrationRulesIsSet;
-    std::vector<org::openapitools::server::model::Rule> m_DomainRules;
+    std::vector<srclient::rest::model::Rule> m_DomainRules;
     bool m_DomainRulesIsSet;
     bool m_Empty;
     bool m_EmptyIsSet;
     
 };
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 
 #endif /* RuleSet_H_ */

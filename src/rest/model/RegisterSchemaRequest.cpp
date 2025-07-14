@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 RegisterSchemaRequest::RegisterSchemaRequest()
@@ -44,7 +44,7 @@ void RegisterSchemaRequest::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -61,14 +61,14 @@ bool RegisterSchemaRequest::validate(std::stringstream& msg, const std::string& 
                      
     if (referencesIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaReference>& value = m_References;
+        const std::vector<srclient::rest::model::SchemaReference>& value = m_References;
         const std::string currentValuePath = _pathPrefix + ".references";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaReference& value : value)
+            for (const srclient::rest::model::SchemaReference& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -82,14 +82,14 @@ bool RegisterSchemaRequest::validate(std::stringstream& msg, const std::string& 
                      
     if (schemaTagsToAddIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaTags>& value = m_SchemaTagsToAdd;
+        const std::vector<srclient::rest::model::SchemaTags>& value = m_SchemaTagsToAdd;
         const std::string currentValuePath = _pathPrefix + ".schemaTagsToAdd";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaTags& value : value)
+            for (const srclient::rest::model::SchemaTags& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -103,14 +103,14 @@ bool RegisterSchemaRequest::validate(std::stringstream& msg, const std::string& 
          
     if (schemaTagsToRemoveIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaTags>& value = m_SchemaTagsToRemove;
+        const std::vector<srclient::rest::model::SchemaTags>& value = m_SchemaTagsToRemove;
         const std::string currentValuePath = _pathPrefix + ".schemaTagsToRemove";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaTags& value : value)
+            for (const srclient::rest::model::SchemaTags& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -300,11 +300,11 @@ void RegisterSchemaRequest::unsetSchemaType()
 {
     m_SchemaTypeIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaReference> RegisterSchemaRequest::getReferences() const
+std::vector<srclient::rest::model::SchemaReference> RegisterSchemaRequest::getReferences() const
 {
     return m_References;
 }
-void RegisterSchemaRequest::setReferences(std::vector<org::openapitools::server::model::SchemaReference> const& value)
+void RegisterSchemaRequest::setReferences(std::vector<srclient::rest::model::SchemaReference> const& value)
 {
     m_References = value;
     m_ReferencesIsSet = true;
@@ -317,11 +317,11 @@ void RegisterSchemaRequest::unsetReferences()
 {
     m_ReferencesIsSet = false;
 }
-org::openapitools::server::model::Metadata RegisterSchemaRequest::getMetadata() const
+srclient::rest::model::Metadata RegisterSchemaRequest::getMetadata() const
 {
     return m_Metadata;
 }
-void RegisterSchemaRequest::setMetadata(org::openapitools::server::model::Metadata const& value)
+void RegisterSchemaRequest::setMetadata(srclient::rest::model::Metadata const& value)
 {
     m_Metadata = value;
     m_MetadataIsSet = true;
@@ -334,11 +334,11 @@ void RegisterSchemaRequest::unsetMetadata()
 {
     m_MetadataIsSet = false;
 }
-org::openapitools::server::model::RuleSet RegisterSchemaRequest::getRuleSet() const
+srclient::rest::model::RuleSet RegisterSchemaRequest::getRuleSet() const
 {
     return m_RuleSet;
 }
-void RegisterSchemaRequest::setRuleSet(org::openapitools::server::model::RuleSet const& value)
+void RegisterSchemaRequest::setRuleSet(srclient::rest::model::RuleSet const& value)
 {
     m_RuleSet = value;
     m_RuleSetIsSet = true;
@@ -368,11 +368,11 @@ void RegisterSchemaRequest::unsetSchema()
 {
     m_SchemaIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaTags> RegisterSchemaRequest::getSchemaTagsToAdd() const
+std::vector<srclient::rest::model::SchemaTags> RegisterSchemaRequest::getSchemaTagsToAdd() const
 {
     return m_SchemaTagsToAdd;
 }
-void RegisterSchemaRequest::setSchemaTagsToAdd(std::vector<org::openapitools::server::model::SchemaTags> const& value)
+void RegisterSchemaRequest::setSchemaTagsToAdd(std::vector<srclient::rest::model::SchemaTags> const& value)
 {
     m_SchemaTagsToAdd = value;
     m_SchemaTagsToAddIsSet = true;
@@ -385,11 +385,11 @@ void RegisterSchemaRequest::unsetSchemaTagsToAdd()
 {
     m_SchemaTagsToAddIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaTags> RegisterSchemaRequest::getSchemaTagsToRemove() const
+std::vector<srclient::rest::model::SchemaTags> RegisterSchemaRequest::getSchemaTagsToRemove() const
 {
     return m_SchemaTagsToRemove;
 }
-void RegisterSchemaRequest::setSchemaTagsToRemove(std::vector<org::openapitools::server::model::SchemaTags> const& value)
+void RegisterSchemaRequest::setSchemaTagsToRemove(std::vector<srclient::rest::model::SchemaTags> const& value)
 {
     m_SchemaTagsToRemove = value;
     m_SchemaTagsToRemoveIsSet = true;
@@ -421,5 +421,5 @@ void RegisterSchemaRequest::unsetPropagateSchemaTags()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

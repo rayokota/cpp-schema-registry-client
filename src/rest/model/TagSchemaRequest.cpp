@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 TagSchemaRequest::TagSchemaRequest()
@@ -37,7 +37,7 @@ void TagSchemaRequest::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -54,14 +54,14 @@ bool TagSchemaRequest::validate(std::stringstream& msg, const std::string& pathP
              
     if (tagsToAddIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaTags>& value = m_TagsToAdd;
+        const std::vector<srclient::rest::model::SchemaTags>& value = m_TagsToAdd;
         const std::string currentValuePath = _pathPrefix + ".tagsToAdd";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaTags& value : value)
+            for (const srclient::rest::model::SchemaTags& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -75,14 +75,14 @@ bool TagSchemaRequest::validate(std::stringstream& msg, const std::string& pathP
          
     if (tagsToRemoveIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaTags>& value = m_TagsToRemove;
+        const std::vector<srclient::rest::model::SchemaTags>& value = m_TagsToRemove;
         const std::string currentValuePath = _pathPrefix + ".tagsToRemove";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaTags& value : value)
+            for (const srclient::rest::model::SchemaTags& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -229,11 +229,11 @@ void TagSchemaRequest::unsetNewVersion()
 {
     m_NewVersionIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaTags> TagSchemaRequest::getTagsToAdd() const
+std::vector<srclient::rest::model::SchemaTags> TagSchemaRequest::getTagsToAdd() const
 {
     return m_TagsToAdd;
 }
-void TagSchemaRequest::setTagsToAdd(std::vector<org::openapitools::server::model::SchemaTags> const& value)
+void TagSchemaRequest::setTagsToAdd(std::vector<srclient::rest::model::SchemaTags> const& value)
 {
     m_TagsToAdd = value;
     m_TagsToAddIsSet = true;
@@ -246,11 +246,11 @@ void TagSchemaRequest::unsetTagsToAdd()
 {
     m_TagsToAddIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaTags> TagSchemaRequest::getTagsToRemove() const
+std::vector<srclient::rest::model::SchemaTags> TagSchemaRequest::getTagsToRemove() const
 {
     return m_TagsToRemove;
 }
-void TagSchemaRequest::setTagsToRemove(std::vector<org::openapitools::server::model::SchemaTags> const& value)
+void TagSchemaRequest::setTagsToRemove(std::vector<srclient::rest::model::SchemaTags> const& value)
 {
     m_TagsToRemove = value;
     m_TagsToRemoveIsSet = true;
@@ -263,11 +263,11 @@ void TagSchemaRequest::unsetTagsToRemove()
 {
     m_TagsToRemoveIsSet = false;
 }
-org::openapitools::server::model::Metadata TagSchemaRequest::getMetadata() const
+srclient::rest::model::Metadata TagSchemaRequest::getMetadata() const
 {
     return m_Metadata;
 }
-void TagSchemaRequest::setMetadata(org::openapitools::server::model::Metadata const& value)
+void TagSchemaRequest::setMetadata(srclient::rest::model::Metadata const& value)
 {
     m_Metadata = value;
     m_MetadataIsSet = true;
@@ -280,11 +280,11 @@ void TagSchemaRequest::unsetMetadata()
 {
     m_MetadataIsSet = false;
 }
-org::openapitools::server::model::RuleSet TagSchemaRequest::getRuleSet() const
+srclient::rest::model::RuleSet TagSchemaRequest::getRuleSet() const
 {
     return m_RuleSet;
 }
-void TagSchemaRequest::setRuleSet(org::openapitools::server::model::RuleSet const& value)
+void TagSchemaRequest::setRuleSet(srclient::rest::model::RuleSet const& value)
 {
     m_RuleSet = value;
     m_RuleSetIsSet = true;
@@ -297,11 +297,11 @@ void TagSchemaRequest::unsetRuleSet()
 {
     m_RuleSetIsSet = false;
 }
-org::openapitools::server::model::RuleSet TagSchemaRequest::getRulesToMerge() const
+srclient::rest::model::RuleSet TagSchemaRequest::getRulesToMerge() const
 {
     return m_RulesToMerge;
 }
-void TagSchemaRequest::setRulesToMerge(org::openapitools::server::model::RuleSet const& value)
+void TagSchemaRequest::setRulesToMerge(srclient::rest::model::RuleSet const& value)
 {
     m_RulesToMerge = value;
     m_RulesToMergeIsSet = true;
@@ -333,5 +333,5 @@ void TagSchemaRequest::unsetRulesToRemove()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

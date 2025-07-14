@@ -24,7 +24,7 @@
 #include "RuleSet.h"
 #include <nlohmann/json.hpp>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 /// <summary>
@@ -105,29 +105,29 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::Metadata getDefaultMetadata() const;
-    void setDefaultMetadata(org::openapitools::server::model::Metadata const& value);
+    srclient::rest::model::Metadata getDefaultMetadata() const;
+    void setDefaultMetadata(srclient::rest::model::Metadata const& value);
     bool defaultMetadataIsSet() const;
     void unsetDefaultMetadata();
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::Metadata getOverrideMetadata() const;
-    void setOverrideMetadata(org::openapitools::server::model::Metadata const& value);
+    srclient::rest::model::Metadata getOverrideMetadata() const;
+    void setOverrideMetadata(srclient::rest::model::Metadata const& value);
     bool overrideMetadataIsSet() const;
     void unsetOverrideMetadata();
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::RuleSet getDefaultRuleSet() const;
-    void setDefaultRuleSet(org::openapitools::server::model::RuleSet const& value);
+    srclient::rest::model::RuleSet getDefaultRuleSet() const;
+    void setDefaultRuleSet(srclient::rest::model::RuleSet const& value);
     bool defaultRuleSetIsSet() const;
     void unsetDefaultRuleSet();
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::RuleSet getOverrideRuleSet() const;
-    void setOverrideRuleSet(org::openapitools::server::model::RuleSet const& value);
+    srclient::rest::model::RuleSet getOverrideRuleSet() const;
+    void setOverrideRuleSet(srclient::rest::model::RuleSet const& value);
     bool overrideRuleSetIsSet() const;
     void unsetOverrideRuleSet();
 
@@ -146,17 +146,17 @@ protected:
     bool m_CompatibilityIsSet;
     std::string m_CompatibilityGroup;
     bool m_CompatibilityGroupIsSet;
-    org::openapitools::server::model::Metadata m_DefaultMetadata;
+    srclient::rest::model::Metadata m_DefaultMetadata;
     bool m_DefaultMetadataIsSet;
-    org::openapitools::server::model::Metadata m_OverrideMetadata;
+    srclient::rest::model::Metadata m_OverrideMetadata;
     bool m_OverrideMetadataIsSet;
-    org::openapitools::server::model::RuleSet m_DefaultRuleSet;
+    srclient::rest::model::RuleSet m_DefaultRuleSet;
     bool m_DefaultRuleSetIsSet;
-    org::openapitools::server::model::RuleSet m_OverrideRuleSet;
+    srclient::rest::model::RuleSet m_OverrideRuleSet;
     bool m_OverrideRuleSetIsSet;
     
 };
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 
 #endif /* ConfigUpdateRequest_H_ */

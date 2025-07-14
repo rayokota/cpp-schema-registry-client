@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 ConfigUpdateRequest::ConfigUpdateRequest()
@@ -45,7 +45,7 @@ void ConfigUpdateRequest::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -289,11 +289,11 @@ void ConfigUpdateRequest::unsetCompatibilityGroup()
 {
     m_CompatibilityGroupIsSet = false;
 }
-org::openapitools::server::model::Metadata ConfigUpdateRequest::getDefaultMetadata() const
+srclient::rest::model::Metadata ConfigUpdateRequest::getDefaultMetadata() const
 {
     return m_DefaultMetadata;
 }
-void ConfigUpdateRequest::setDefaultMetadata(org::openapitools::server::model::Metadata const& value)
+void ConfigUpdateRequest::setDefaultMetadata(srclient::rest::model::Metadata const& value)
 {
     m_DefaultMetadata = value;
     m_DefaultMetadataIsSet = true;
@@ -306,11 +306,11 @@ void ConfigUpdateRequest::unsetDefaultMetadata()
 {
     m_DefaultMetadataIsSet = false;
 }
-org::openapitools::server::model::Metadata ConfigUpdateRequest::getOverrideMetadata() const
+srclient::rest::model::Metadata ConfigUpdateRequest::getOverrideMetadata() const
 {
     return m_OverrideMetadata;
 }
-void ConfigUpdateRequest::setOverrideMetadata(org::openapitools::server::model::Metadata const& value)
+void ConfigUpdateRequest::setOverrideMetadata(srclient::rest::model::Metadata const& value)
 {
     m_OverrideMetadata = value;
     m_OverrideMetadataIsSet = true;
@@ -323,11 +323,11 @@ void ConfigUpdateRequest::unsetOverrideMetadata()
 {
     m_OverrideMetadataIsSet = false;
 }
-org::openapitools::server::model::RuleSet ConfigUpdateRequest::getDefaultRuleSet() const
+srclient::rest::model::RuleSet ConfigUpdateRequest::getDefaultRuleSet() const
 {
     return m_DefaultRuleSet;
 }
-void ConfigUpdateRequest::setDefaultRuleSet(org::openapitools::server::model::RuleSet const& value)
+void ConfigUpdateRequest::setDefaultRuleSet(srclient::rest::model::RuleSet const& value)
 {
     m_DefaultRuleSet = value;
     m_DefaultRuleSetIsSet = true;
@@ -340,11 +340,11 @@ void ConfigUpdateRequest::unsetDefaultRuleSet()
 {
     m_DefaultRuleSetIsSet = false;
 }
-org::openapitools::server::model::RuleSet ConfigUpdateRequest::getOverrideRuleSet() const
+srclient::rest::model::RuleSet ConfigUpdateRequest::getOverrideRuleSet() const
 {
     return m_OverrideRuleSet;
 }
-void ConfigUpdateRequest::setOverrideRuleSet(org::openapitools::server::model::RuleSet const& value)
+void ConfigUpdateRequest::setOverrideRuleSet(srclient::rest::model::RuleSet const& value)
 {
     m_OverrideRuleSet = value;
     m_OverrideRuleSetIsSet = true;
@@ -359,5 +359,5 @@ void ConfigUpdateRequest::unsetOverrideRuleSet()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

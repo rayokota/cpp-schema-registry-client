@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 Rule::Rule()
@@ -49,7 +49,7 @@ void Rule::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -70,7 +70,7 @@ bool Rule::validate(std::stringstream& msg, const std::string& pathPrefix) const
         const std::string currentValuePath = _pathPrefix + ".tags";
                 
         
-        if (!org::openapitools::server::helpers::hasOnlyUniqueItems(value))
+        if (!srclient::rest::model::hasOnlyUniqueItems(value))
         {
             success = false;
             msg << currentValuePath << ": may not contain the same item more than once;";
@@ -416,5 +416,5 @@ void Rule::unsetDisabled()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

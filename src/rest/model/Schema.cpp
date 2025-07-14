@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 Schema::Schema()
@@ -46,7 +46,7 @@ void Schema::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -63,14 +63,14 @@ bool Schema::validate(std::stringstream& msg, const std::string& pathPrefix) con
                          
     if (referencesIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaReference>& value = m_References;
+        const std::vector<srclient::rest::model::SchemaReference>& value = m_References;
         const std::string currentValuePath = _pathPrefix + ".references";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaReference& value : value)
+            for (const srclient::rest::model::SchemaReference& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -84,14 +84,14 @@ bool Schema::validate(std::stringstream& msg, const std::string& pathPrefix) con
                      
     if (schemaTagsIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaTags>& value = m_SchemaTags;
+        const std::vector<srclient::rest::model::SchemaTags>& value = m_SchemaTags;
         const std::string currentValuePath = _pathPrefix + ".schemaTags";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaTags& value : value)
+            for (const srclient::rest::model::SchemaTags& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -322,11 +322,11 @@ void Schema::unsetSchemaType()
 {
     m_SchemaTypeIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaReference> Schema::getReferences() const
+std::vector<srclient::rest::model::SchemaReference> Schema::getReferences() const
 {
     return m_References;
 }
-void Schema::setReferences(std::vector<org::openapitools::server::model::SchemaReference> const& value)
+void Schema::setReferences(std::vector<srclient::rest::model::SchemaReference> const& value)
 {
     m_References = value;
     m_ReferencesIsSet = true;
@@ -339,11 +339,11 @@ void Schema::unsetReferences()
 {
     m_ReferencesIsSet = false;
 }
-org::openapitools::server::model::Metadata Schema::getMetadata() const
+srclient::rest::model::Metadata Schema::getMetadata() const
 {
     return m_Metadata;
 }
-void Schema::setMetadata(org::openapitools::server::model::Metadata const& value)
+void Schema::setMetadata(srclient::rest::model::Metadata const& value)
 {
     m_Metadata = value;
     m_MetadataIsSet = true;
@@ -356,11 +356,11 @@ void Schema::unsetMetadata()
 {
     m_MetadataIsSet = false;
 }
-org::openapitools::server::model::RuleSet Schema::getRuleset() const
+srclient::rest::model::RuleSet Schema::getRuleset() const
 {
     return m_Ruleset;
 }
-void Schema::setRuleset(org::openapitools::server::model::RuleSet const& value)
+void Schema::setRuleset(srclient::rest::model::RuleSet const& value)
 {
     m_Ruleset = value;
     m_RulesetIsSet = true;
@@ -390,11 +390,11 @@ void Schema::unsetSchema()
 {
     m_SchemaIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaTags> Schema::getSchemaTags() const
+std::vector<srclient::rest::model::SchemaTags> Schema::getSchemaTags() const
 {
     return m_SchemaTags;
 }
-void Schema::setSchemaTags(std::vector<org::openapitools::server::model::SchemaTags> const& value)
+void Schema::setSchemaTags(std::vector<srclient::rest::model::SchemaTags> const& value)
 {
     m_SchemaTags = value;
     m_SchemaTagsIsSet = true;
@@ -407,11 +407,11 @@ void Schema::unsetSchemaTags()
 {
     m_SchemaTagsIsSet = false;
 }
-org::openapitools::server::model::RuleSet Schema::getRuleSet() const
+srclient::rest::model::RuleSet Schema::getRuleSet() const
 {
     return m_RuleSet;
 }
-void Schema::setRuleSet(org::openapitools::server::model::RuleSet const& value)
+void Schema::setRuleSet(srclient::rest::model::RuleSet const& value)
 {
     m_RuleSet = value;
     m_RuleSetIsSet = true;
@@ -426,5 +426,5 @@ void Schema::unsetRuleSet()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

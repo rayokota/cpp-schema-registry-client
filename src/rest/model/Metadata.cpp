@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 Metadata::Metadata()
@@ -32,7 +32,7 @@ void Metadata::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -53,7 +53,7 @@ bool Metadata::validate(std::stringstream& msg, const std::string& pathPrefix) c
         const std::string currentValuePath = _pathPrefix + ".sensitive";
                 
         
-        if (!org::openapitools::server::helpers::hasOnlyUniqueItems(value))
+        if (!srclient::rest::model::hasOnlyUniqueItems(value))
         {
             success = false;
             msg << currentValuePath << ": may not contain the same item more than once;";
@@ -183,5 +183,5 @@ void Metadata::unsetSensitive()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

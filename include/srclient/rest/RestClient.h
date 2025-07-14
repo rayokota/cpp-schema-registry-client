@@ -31,10 +31,7 @@
 #include <functional>
 #include <httplib.h>
 
-namespace org {
-namespace openapitools {
-namespace client {
-namespace api {
+namespace srclient::rest {
 
 class  RestClient
 {
@@ -57,10 +54,6 @@ protected:
     std::vector<std::unique_ptr<httplib::Client>> m_Clients;
 };
 
-
-}
-}
-}
 }
 
 #endif /* ORG_OPENAPITOOLS_CLIENT_API_RestClient_H_ */

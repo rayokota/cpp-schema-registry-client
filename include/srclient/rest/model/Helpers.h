@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace org::openapitools::server::helpers
+namespace srclient::rest::model
 {
 
     class ValidationException : public std::runtime_error
@@ -142,6 +142,6 @@ namespace org::openapitools::server::helpers
         return fromStringValue(inStrings, value);
     }
 
-} // namespace org::openapitools::server::helpers
+} // namespace srclient::rest::model
 
 #endif // Helpers_H_

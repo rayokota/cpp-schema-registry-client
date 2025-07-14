@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 SchemaRegistryServerVersion::SchemaRegistryServerVersion()
@@ -33,7 +33,7 @@ void SchemaRegistryServerVersion::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -131,5 +131,5 @@ void SchemaRegistryServerVersion::unsetCommitId()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

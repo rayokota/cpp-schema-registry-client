@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 RegisterSchemaResponse::RegisterSchemaResponse()
@@ -44,7 +44,7 @@ void RegisterSchemaResponse::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -61,14 +61,14 @@ bool RegisterSchemaResponse::validate(std::stringstream& msg, const std::string&
                      
     if (referencesIsSet())
     {
-        const std::vector<org::openapitools::server::model::SchemaReference>& value = m_References;
+        const std::vector<srclient::rest::model::SchemaReference>& value = m_References;
         const std::string currentValuePath = _pathPrefix + ".references";
                 
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
             int i = 0;
-            for (const org::openapitools::server::model::SchemaReference& value : value)
+            for (const srclient::rest::model::SchemaReference& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
                         
@@ -276,11 +276,11 @@ void RegisterSchemaResponse::unsetSchemaType()
 {
     m_SchemaTypeIsSet = false;
 }
-std::vector<org::openapitools::server::model::SchemaReference> RegisterSchemaResponse::getReferences() const
+std::vector<srclient::rest::model::SchemaReference> RegisterSchemaResponse::getReferences() const
 {
     return m_References;
 }
-void RegisterSchemaResponse::setReferences(std::vector<org::openapitools::server::model::SchemaReference> const& value)
+void RegisterSchemaResponse::setReferences(std::vector<srclient::rest::model::SchemaReference> const& value)
 {
     m_References = value;
     m_ReferencesIsSet = true;
@@ -293,11 +293,11 @@ void RegisterSchemaResponse::unsetReferences()
 {
     m_ReferencesIsSet = false;
 }
-org::openapitools::server::model::Metadata RegisterSchemaResponse::getMetadata() const
+srclient::rest::model::Metadata RegisterSchemaResponse::getMetadata() const
 {
     return m_Metadata;
 }
-void RegisterSchemaResponse::setMetadata(org::openapitools::server::model::Metadata const& value)
+void RegisterSchemaResponse::setMetadata(srclient::rest::model::Metadata const& value)
 {
     m_Metadata = value;
     m_MetadataIsSet = true;
@@ -310,11 +310,11 @@ void RegisterSchemaResponse::unsetMetadata()
 {
     m_MetadataIsSet = false;
 }
-org::openapitools::server::model::RuleSet RegisterSchemaResponse::getRuleSet() const
+srclient::rest::model::RuleSet RegisterSchemaResponse::getRuleSet() const
 {
     return m_RuleSet;
 }
-void RegisterSchemaResponse::setRuleSet(org::openapitools::server::model::RuleSet const& value)
+void RegisterSchemaResponse::setRuleSet(srclient::rest::model::RuleSet const& value)
 {
     m_RuleSet = value;
     m_RuleSetIsSet = true;
@@ -346,5 +346,5 @@ void RegisterSchemaResponse::unsetSchema()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

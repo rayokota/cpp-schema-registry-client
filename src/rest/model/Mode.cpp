@@ -16,7 +16,7 @@
 
 #include <sstream>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 Mode::Mode()
@@ -31,7 +31,7 @@ void Mode::validate() const
     std::stringstream msg;
     if (!validate(msg))
     {
-        throw org::openapitools::server::helpers::ValidationException(msg.str());
+        throw srclient::rest::model::ValidationException(msg.str());
     }
 }
 
@@ -102,5 +102,5 @@ void Mode::unsetMode()
 }
 
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 

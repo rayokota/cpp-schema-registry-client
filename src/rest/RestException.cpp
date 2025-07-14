@@ -11,10 +11,7 @@
 
 #include "srclient/rest/RestException.h"
 
-namespace org {
-namespace openapitools {
-namespace client {
-namespace api {
+namespace srclient::rest {
 
 RestException::RestException(const std::string_view message
     , int errorCode
@@ -32,7 +29,4 @@ std::shared_ptr<std::istream> RestException::getContent() const
     return m_Content;
 }
 
-}
-}
-}
 }

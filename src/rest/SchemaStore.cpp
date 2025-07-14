@@ -7,15 +7,14 @@
 #include <sstream>
 #include <functional>
 
-namespace srclient {
-namespace rest {
+namespace srclient::rest {
 
 SchemaStore::SchemaStore() {}
 
 void SchemaStore::setSchema(const std::optional<std::string>& subject,
                            const std::optional<int32_t>& schemaId,
                            const std::optional<std::string>& schemaGuid,
-                           const org::openapitools::server::model::Schema& schema) {
+                           const srclient::rest::model::Schema& schema) {
     std::string subjectStr = subject.value_or("");
     
     if (schemaId.has_value()) {
@@ -33,8 +32,8 @@ void SchemaStore::setSchema(const std::optional<std::string>& subject,
     }
 }
 
-void SchemaStore::setRegisteredSchema(const org::openapitools::server::model::Schema& schema,
-                                     const org::openapitools::server::model::RegisterSchemaResponse& rs) {
+void SchemaStore::setRegisteredSchema(const srclient::rest::model::Schema& schema,
+                                     const srclient::rest::model::RegisterSchemaResponse& rs) {
     std::string subjectStr = "";
     if (rs.subjectIsSet()) {
         subjectStr = rs.getSubject();
@@ -69,7 +68,7 @@ void SchemaStore::setRegisteredSchema(const org::openapitools::server::model::Sc
     setSchema(subjectOpt, rs.getId(), guid, schema);
 }
 
-std::optional<std::pair<std::optional<std::string>, org::openapitools::server::model::Schema>> 
+std::optional<std::pair<std::optional<std::string>, srclient::rest::model::Schema>>
 SchemaStore::getSchemaById(const std::string& subject, int32_t schemaId) const {
     auto subjectIt = schemaIdIndex.find(subject);
     if (subjectIt != schemaIdIndex.end()) {
@@ -81,7 +80,7 @@ SchemaStore::getSchemaById(const std::string& subject, int32_t schemaId) const {
     return std::nullopt;
 }
 
-std::optional<org::openapitools::server::model::Schema> 
+std::optional<srclient::rest::model::Schema>
 SchemaStore::getSchemaByGuid(const std::string& guid) const {
     auto it = schemaGuidIndex.find(guid);
     if (it != schemaGuidIndex.end()) {
@@ -91,7 +90,7 @@ SchemaStore::getSchemaByGuid(const std::string& guid) const {
 }
 
 std::optional<int32_t> SchemaStore::getIdBySchema(const std::string& subject,
-                                                 const org::openapitools::server::model::Schema& schema) const {
+                                                 const srclient::rest::model::Schema& schema) const {
     auto subjectIt = schemaIndex.find(subject);
     if (subjectIt != schemaIndex.end()) {
         std::string schemaHash = createSchemaHash(schema);
@@ -103,9 +102,9 @@ std::optional<int32_t> SchemaStore::getIdBySchema(const std::string& subject,
     return std::nullopt;
 }
 
-std::optional<org::openapitools::server::model::RegisterSchemaResponse> 
+std::optional<srclient::rest::model::RegisterSchemaResponse>
 SchemaStore::getRegisteredBySchema(const std::string& subject,
-                                  const org::openapitools::server::model::Schema& schema) const {
+                                  const srclient::rest::model::Schema& schema) const {
     auto subjectIt = rsSchemaIndex.find(subject);
     if (subjectIt != rsSchemaIndex.end()) {
         std::string schemaHash = createSchemaHash(schema);
@@ -117,7 +116,7 @@ SchemaStore::getRegisteredBySchema(const std::string& subject,
     return std::nullopt;
 }
 
-std::optional<org::openapitools::server::model::RegisterSchemaResponse> 
+std::optional<srclient::rest::model::RegisterSchemaResponse>
 SchemaStore::getRegisteredByVersion(const std::string& subject, int32_t version) const {
     auto subjectIt = rsVersionIndex.find(subject);
     if (subjectIt != rsVersionIndex.end()) {
@@ -129,7 +128,7 @@ SchemaStore::getRegisteredByVersion(const std::string& subject, int32_t version)
     return std::nullopt;
 }
 
-std::optional<org::openapitools::server::model::RegisterSchemaResponse> 
+std::optional<srclient::rest::model::RegisterSchemaResponse>
 SchemaStore::getRegisteredById(const std::string& subject, int32_t schemaId) const {
     auto subjectIt = rsIdIndex.find(subject);
     if (subjectIt != rsIdIndex.end()) {
@@ -150,7 +149,7 @@ void SchemaStore::clear() {
     rsSchemaIndex.clear();
 }
 
-std::string SchemaStore::createSchemaHash(const org::openapitools::server::model::Schema& schema) const {
+std::string SchemaStore::createSchemaHash(const srclient::rest::model::Schema& schema) const {
     // Create a hash string from the schema content
     std::stringstream ss;
     ss << schema.getSchema();
@@ -163,5 +162,4 @@ std::string SchemaStore::createSchemaHash(const org::openapitools::server::model
     return std::to_string(hasher(ss.str()));
 }
 
-} // namespace rest
-} // namespace srclient 
+}

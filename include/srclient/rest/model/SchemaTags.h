@@ -24,7 +24,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
-namespace org::openapitools::server::model
+namespace srclient::rest::model
 {
 
 /// <summary>
@@ -63,8 +63,8 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    org::openapitools::server::model::SchemaEntity getSchemaEntity() const;
-    void setSchemaEntity(org::openapitools::server::model::SchemaEntity const& value);
+    srclient::rest::model::SchemaEntity getSchemaEntity() const;
+    void setSchemaEntity(srclient::rest::model::SchemaEntity const& value);
     bool schemaEntityIsSet() const;
     void unsetSchemaEntity();
     /// <summary>
@@ -78,13 +78,13 @@ public:
     friend  void to_json(nlohmann::json& j, const SchemaTags& o);
     friend  void from_json(const nlohmann::json& j, SchemaTags& o);
 protected:
-    org::openapitools::server::model::SchemaEntity m_SchemaEntity;
+    srclient::rest::model::SchemaEntity m_SchemaEntity;
     bool m_SchemaEntityIsSet;
     std::vector<std::string> m_Tags;
     bool m_TagsIsSet;
     
 };
 
-} // namespace org::openapitools::server::model
+} // namespace srclient::rest::model
 
 #endif /* SchemaTags_H_ */

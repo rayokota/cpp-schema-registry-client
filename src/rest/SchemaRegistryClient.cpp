@@ -12,11 +12,10 @@
 
 using json = nlohmann::json;
 
-namespace srclient {
-namespace rest {
+namespace srclient::rest {
 
-SchemaRegistryClient::SchemaRegistryClient(std::shared_ptr<const org::openapitools::client::api::ClientConfiguration> config)
-    : restClient(std::make_shared<org::openapitools::client::api::RestClient>(config))
+SchemaRegistryClient::SchemaRegistryClient(std::shared_ptr<const srclient::rest::ClientConfiguration> config)
+    : restClient(std::make_shared<srclient::rest::RestClient>(config))
     , store(std::make_shared<SchemaStore>())
     , storeMutex(std::make_shared<std::mutex>())
     , latestVersionCacheMutex(std::make_shared<std::mutex>())
@@ -25,7 +24,7 @@ SchemaRegistryClient::SchemaRegistryClient(std::shared_ptr<const org::openapitoo
     , cacheLatestTtl(std::chrono::seconds(300)) // 5 minutes
 {
     if (config->getBaseUrls().empty()) {
-        throw org::openapitools::client::api::RestException("Base URL is required");
+        throw srclient::rest::RestException("Base URL is required");
     }
 }
 
@@ -33,7 +32,7 @@ SchemaRegistryClient::~SchemaRegistryClient() {
     close();
 }
 
-std::shared_ptr<const org::openapitools::client::api::ClientConfiguration> SchemaRegistryClient::getConfiguration() const {
+std::shared_ptr<const srclient::rest::ClientConfiguration> SchemaRegistryClient::getConfiguration() const {
     return restClient->getConfiguration();
 }
 
@@ -79,47 +78,47 @@ std::string SchemaRegistryClient::sendHttpRequest(const std::string& path,
     auto result = restClient->sendRequest(path, method, query, headers, body);
     
     if (!result) {
-        throw org::openapitools::client::api::RestException("Request failed: " + to_string(result.error()));
+        throw srclient::rest::RestException("Request failed: " + to_string(result.error()));
     }
     
     if (result->status >= 400) {
         std::string errorMsg = "HTTP Error " + std::to_string(result->status) + ": " + result->body;
-        throw org::openapitools::client::api::RestException(errorMsg);
+        throw srclient::rest::RestException(errorMsg);
     }
     
     return result->body;
 }
 
-org::openapitools::server::model::Schema SchemaRegistryClient::parseSchemaFromJson(const std::string& jsonStr) const {
+srclient::rest::model::Schema SchemaRegistryClient::parseSchemaFromJson(const std::string& jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        org::openapitools::server::model::Schema schema;
+        srclient::rest::model::Schema schema;
         from_json(j, schema);
         return schema;
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse schema from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse schema from JSON: " + std::string(e.what()));
     }
 }
 
-org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::parseRegisteredSchemaFromJson(const std::string& jsonStr) const {
+srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::parseRegisteredSchemaFromJson(const std::string& jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        org::openapitools::server::model::RegisterSchemaResponse response;
+        srclient::rest::model::RegisterSchemaResponse response;
         from_json(j, response);
         return response;
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse registered schema from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse registered schema from JSON: " + std::string(e.what()));
     }
 }
 
-org::openapitools::server::model::Config SchemaRegistryClient::parseConfigFromJson(const std::string& jsonStr) const {
+srclient::rest::model::Config SchemaRegistryClient::parseConfigFromJson(const std::string& jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        org::openapitools::server::model::Config config;
+        srclient::rest::model::Config config;
         from_json(j, config);
         return config;
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse config from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse config from JSON: " + std::string(e.what()));
     }
 }
 
@@ -128,7 +127,7 @@ bool SchemaRegistryClient::parseBoolFromJson(const std::string& jsonStr) const {
         json j = json::parse(jsonStr);
         return j.get<bool>();
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse boolean from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse boolean from JSON: " + std::string(e.what()));
     }
 }
 
@@ -137,7 +136,7 @@ std::vector<int32_t> SchemaRegistryClient::parseIntArrayFromJson(const std::stri
         json j = json::parse(jsonStr);
         return j.get<std::vector<int32_t>>();
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse int array from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse int array from JSON: " + std::string(e.what()));
     }
 }
 
@@ -146,7 +145,7 @@ std::vector<std::string> SchemaRegistryClient::parseStringArrayFromJson(const st
         json j = json::parse(jsonStr);
         return j.get<std::vector<std::string>>();
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse string array from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse string array from JSON: " + std::string(e.what()));
     }
 }
 
@@ -173,9 +172,9 @@ void SchemaRegistryClient::close() {
     clearCaches();
 }
 
-org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::registerSchema(
+srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::registerSchema(
     const std::string& subject,
-    const org::openapitools::server::model::Schema& schema,
+    const srclient::rest::model::Schema& schema,
     bool normalize) {
     
     // Check cache first
@@ -201,7 +200,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::r
     std::string responseBody = sendHttpRequest(path, "POST", query, body);
     
     // Parse response
-    org::openapitools::server::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
@@ -212,7 +211,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::r
     return response;
 }
 
-org::openapitools::server::model::Schema SchemaRegistryClient::getBySubjectAndId(
+srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     const std::optional<std::string>& subject,
     int32_t id,
     const std::optional<std::string>& format) {
@@ -240,8 +239,8 @@ org::openapitools::server::model::Schema SchemaRegistryClient::getBySubjectAndId
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    org::openapitools::server::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
-    org::openapitools::server::model::Schema schema = parseSchemaFromJson(response.getSchema());
+    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema());
     
     // Update cache
     {
@@ -252,7 +251,7 @@ org::openapitools::server::model::Schema SchemaRegistryClient::getBySubjectAndId
     return schema;
 }
 
-org::openapitools::server::model::Schema SchemaRegistryClient::getByGuid(
+srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
     const std::string& guid,
     const std::optional<std::string>& format) {
     
@@ -276,8 +275,8 @@ org::openapitools::server::model::Schema SchemaRegistryClient::getByGuid(
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    org::openapitools::server::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
-    org::openapitools::server::model::Schema schema = parseSchemaFromJson(response.getSchema());
+    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema());
     
     // Update cache
     {
@@ -288,9 +287,9 @@ org::openapitools::server::model::Schema SchemaRegistryClient::getByGuid(
     return schema;
 }
 
-org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::getBySchema(
+srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getBySchema(
     const std::string& subject,
-    const org::openapitools::server::model::Schema& schema,
+    const srclient::rest::model::Schema& schema,
     bool normalize,
     bool deleted) {
     
@@ -318,7 +317,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     std::string responseBody = sendHttpRequest(path, "POST", query, body);
     
     // Parse response
-    org::openapitools::server::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
@@ -329,7 +328,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     return response;
 }
 
-org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::getVersion(
+srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getVersion(
     const std::string& subject,
     int32_t version,
     bool deleted,
@@ -356,19 +355,19 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    org::openapitools::server::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        org::openapitools::server::model::Schema schema = parseSchemaFromJson(response.getSchema());
+        srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema());
         store->setRegisteredSchema(schema, response);
     }
     
     return response;
 }
 
-org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::getLatestVersion(
+srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getLatestVersion(
     const std::string& subject,
     const std::optional<std::string>& format) {
     
@@ -392,7 +391,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    org::openapitools::server::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
@@ -403,7 +402,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     return response;
 }
 
-org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::getLatestWithMetadata(
+srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getLatestWithMetadata(
     const std::string& subject,
     const std::unordered_map<std::string, std::string>& metadata,
     bool deleted,
@@ -437,7 +436,7 @@ org::openapitools::server::model::RegisterSchemaResponse SchemaRegistryClient::g
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    org::openapitools::server::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
@@ -499,11 +498,11 @@ int32_t SchemaRegistryClient::deleteSubjectVersion(const std::string& subject, i
         json j = json::parse(responseBody);
         return j.get<int32_t>();
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse version from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse version from JSON: " + std::string(e.what()));
     }
 }
 
-bool SchemaRegistryClient::testSubjectCompatibility(const std::string& subject, const org::openapitools::server::model::Schema& schema) {
+bool SchemaRegistryClient::testSubjectCompatibility(const std::string& subject, const srclient::rest::model::Schema& schema) {
     // Prepare request
     std::string path = "/compatibility/subjects/" + urlEncode(subject) + "/versions/latest";
     
@@ -520,11 +519,11 @@ bool SchemaRegistryClient::testSubjectCompatibility(const std::string& subject, 
         json response = json::parse(responseBody);
         return response.get<bool>();
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse compatibility response from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse compatibility response from JSON: " + std::string(e.what()));
     }
 }
 
-bool SchemaRegistryClient::testCompatibility(const std::string& subject, int32_t version, const org::openapitools::server::model::Schema& schema) {
+bool SchemaRegistryClient::testCompatibility(const std::string& subject, int32_t version, const srclient::rest::model::Schema& schema) {
     // Prepare request
     std::string path = "/compatibility/subjects/" + urlEncode(subject) + "/versions/" + std::to_string(version);
     
@@ -541,11 +540,11 @@ bool SchemaRegistryClient::testCompatibility(const std::string& subject, int32_t
         json response = json::parse(responseBody);
         return response.get<bool>();
     } catch (const std::exception& e) {
-        throw org::openapitools::client::api::RestException("Failed to parse compatibility response from JSON: " + std::string(e.what()));
+        throw srclient::rest::RestException("Failed to parse compatibility response from JSON: " + std::string(e.what()));
     }
 }
 
-org::openapitools::server::model::Config SchemaRegistryClient::getConfig(const std::string& subject) {
+srclient::rest::model::Config SchemaRegistryClient::getConfig(const std::string& subject) {
     // Prepare request
     std::string path = "/config/" + urlEncode(subject);
     
@@ -556,7 +555,7 @@ org::openapitools::server::model::Config SchemaRegistryClient::getConfig(const s
     return parseConfigFromJson(responseBody);
 }
 
-org::openapitools::server::model::Config SchemaRegistryClient::updateConfig(const std::string& subject, const org::openapitools::server::model::Config& config) {
+srclient::rest::model::Config SchemaRegistryClient::updateConfig(const std::string& subject, const srclient::rest::model::Config& config) {
     // Prepare request
     std::string path = "/config/" + urlEncode(subject);
     
@@ -572,7 +571,7 @@ org::openapitools::server::model::Config SchemaRegistryClient::updateConfig(cons
     return parseConfigFromJson(responseBody);
 }
 
-org::openapitools::server::model::Config SchemaRegistryClient::getDefaultConfig() {
+srclient::rest::model::Config SchemaRegistryClient::getDefaultConfig() {
     // Prepare request
     std::string path = "/config";
     
@@ -583,7 +582,7 @@ org::openapitools::server::model::Config SchemaRegistryClient::getDefaultConfig(
     return parseConfigFromJson(responseBody);
 }
 
-org::openapitools::server::model::Config SchemaRegistryClient::updateDefaultConfig(const org::openapitools::server::model::Config& config) {
+srclient::rest::model::Config SchemaRegistryClient::updateDefaultConfig(const srclient::rest::model::Config& config) {
     // Prepare request
     std::string path = "/config";
     
@@ -599,5 +598,4 @@ org::openapitools::server::model::Config SchemaRegistryClient::updateDefaultConf
     return parseConfigFromJson(responseBody);
 }
 
-} // namespace rest
-} // namespace srclient 
+}

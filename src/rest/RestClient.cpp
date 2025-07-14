@@ -16,10 +16,7 @@
 #include <iomanip>
 #include <httplib.h>
 
-namespace org {
-namespace openapitools {
-namespace client {
-namespace api {
+namespace srclient::rest {
 
 RestClient::RestClient(std::shared_ptr<const ClientConfiguration> configuration )
     : m_Configuration(configuration)
@@ -57,7 +54,4 @@ httplib::Result RestClient::sendRequest(
     return m_Clients.front()->send(req);
 }
 
-}
-}
-}
 }

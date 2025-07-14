@@ -22,10 +22,7 @@
 #include <memory>
 #include <map>
 
-namespace org {
-namespace openapitools {
-namespace client {
-namespace api {
+namespace srclient::rest {
 
 class  RestException
 {
@@ -41,9 +38,6 @@ protected:
     std::shared_ptr<std::istream> m_Content;
 };
 
-}
-}
-}
 }
 
 #endif /* ORG_OPENAPITOOLS_CLIENT_API_RestBase_H_ */
