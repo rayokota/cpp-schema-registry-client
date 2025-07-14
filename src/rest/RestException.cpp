@@ -16,8 +16,8 @@ namespace openapitools {
 namespace client {
 namespace api {
 
-RestException::RestException( int errorCode
-    , const std::string& message
+RestException::RestException(const std::string_view message
+    , int errorCode
     , std::shared_ptr<std::istream> content /*= nullptr*/ )
     : m_Content(content)
 {

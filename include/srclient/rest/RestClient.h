@@ -39,7 +39,7 @@ namespace api {
 class  RestClient
 {
 public:
-    RestClient( std::shared_ptr<const ClientConfiguration> configuration = nullptr );
+    RestClient( std::shared_ptr<ClientConfiguration> configuration = nullptr );
     virtual ~RestClient();
 
     std::shared_ptr<const ClientConfiguration> getConfiguration() const;
@@ -47,7 +47,8 @@ public:
     httplib::Result sendRequest(
             const std::string& path,
             const std::string& method,
-            const std::multimap<std::string, std::string>& query,
+            const httplib::Params& query,
+            const httplib::Headers& headers,
             const std::string& body
     ) const;
 

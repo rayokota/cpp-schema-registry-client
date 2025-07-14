@@ -30,8 +30,8 @@ namespace api {
 class  RestException
 {
 public:
-    RestException( int errorCode
-        , const std::string& message
+    RestException(const std::string_view message
+        , int errorCode = 0
         , std::shared_ptr<std::istream> content = nullptr );
     virtual ~RestException();
 

@@ -14,6 +14,7 @@
 #include <sstream>
 #include <limits>
 #include <iomanip>
+#include <httplib.h>
 
 namespace org {
 namespace openapitools {
@@ -41,7 +42,8 @@ std::shared_ptr<const ClientConfiguration> RestClient::getConfiguration() const
 httplib::Result RestClient::sendRequest(
     const std::string& path,
     const std::string& method,
-    const std::multimap<std::string, std::string>& query,
+    const httplib::Params& query,
+    const httplib::Headers& headers,
     const std::string& body
 ) const
 {
@@ -49,6 +51,7 @@ httplib::Result RestClient::sendRequest(
     req.path = path;
     req.method = method;
     req.params = query;
+    req.headers = headers;
     req.body = body;
 
     return m_Clients.front()->send(req);

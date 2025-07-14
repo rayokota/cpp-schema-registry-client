@@ -1,15 +1,15 @@
 # CMake generated build files
-/build/
-/out/
-/cmake-build-*/
-/CMakeFiles/
+build
+out
+cmake-build-*
+CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
 Makefile
 Testing
 _deps
 *.cmake
-*.dir/
+*.dir
 *.pdb
 *.suo
 *.user
@@ -25,5 +25,5 @@ _deps
 test/srclient-test
 
 # IDE specific files (e.g., CLion, VS Code)
-.idea/
-.vscode/
+.idea
+.vscode
