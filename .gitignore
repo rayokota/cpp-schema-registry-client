@@ -22,6 +22,7 @@ _deps
 *.dylib
 *.a
 *.lib
+test/srclient-test
 
 # IDE specific files (e.g., CLion, VS Code)
 .idea/
