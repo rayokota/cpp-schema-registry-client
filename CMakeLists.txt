@@ -58,21 +58,7 @@ target_include_directories(${PROJECT_NAME}
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-if (UNIX)
-    message(STATUS "Building client library for Linux/Unix")
-    if (BUILD_SHARED_LIBS)
-        target_link_libraries(${PROJECT_NAME} PUBLIC Boost::headers)
-    else()
-        target_link_libraries(${PROJECT_NAME} PUBLIC Boost::headers crypto)
-    endif()
-else()
-    message(STATUS "Building client library for Windows")
-    if (BUILD_SHARED_LIBS)
-        target_link_libraries(${PROJECT_NAME} PUBLIC Boost::headers)
-    else()
-        target_link_libraries(${PROJECT_NAME} PUBLIC Boost::headers bcrypt)
-    endif()
-endif()
+target_link_libraries(${PROJECT_NAME} PUBLIC Boost::headers)
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
@@ -102,3 +88,7 @@ install(
     EXPORT ${PROJECT_NAME}Targets
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
 )
+
+# Enable testing
+enable_testing()
+add_subdirectory(test)

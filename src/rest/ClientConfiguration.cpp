@@ -25,6 +25,11 @@ ClientConfiguration::~ClientConfiguration()
 {
 }
 
+std::vector<std::string> ClientConfiguration::getBaseUrls() const
+{
+    return m_BaseUrls;
+}
+
 }
 }
 }

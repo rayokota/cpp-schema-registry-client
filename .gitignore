@@ -6,6 +6,8 @@
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+Testing
+_deps
 *.cmake
 *.dir/
 *.pdb
