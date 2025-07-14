@@ -25,16 +25,12 @@ RestClient::RestClient(std::shared_ptr<const ClientConfiguration> configuration 
 {
     // Initialize a client for each base URL
     for (const auto& baseUrl : configuration->getBaseUrls()) {
-        httplib::Client* client = new httplib::Client(baseUrl);
-        m_Clients.push_back(client);
+        std::unique_ptr<httplib::Client> client = std::make_unique<httplib::Client>(baseUrl);
+        m_Clients.push_back(std::move(client));
     }
 }
 RestClient::~RestClient()
 {
-    // Clean up the clients
-    for (auto& client : m_Clients) {
-        delete client;
-    }
 }
 
 std::shared_ptr<const ClientConfiguration> RestClient::getConfiguration() const

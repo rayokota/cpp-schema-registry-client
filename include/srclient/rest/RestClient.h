@@ -53,7 +53,7 @@ public:
 
 protected:
     std::shared_ptr<const ClientConfiguration> m_Configuration;
-    std::vector<httplib::Client*> m_Clients;
+    std::vector<std::unique_ptr<httplib::Client>> m_Clients;
 };
 
 
