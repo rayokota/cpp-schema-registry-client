@@ -36,7 +36,6 @@ Schema::Schema()
     m_RulesetIsSet = false;
     m_Schema = "";
     m_SchemaIsSet = false;
-    m_SchemaTagsIsSet = false;
     m_RuleSetIsSet = false;
     
 }
@@ -82,27 +81,6 @@ bool Schema::validate(std::stringstream& msg, const std::string& pathPrefix) con
 
     }
                      
-    if (schemaTagsIsSet())
-    {
-        const std::vector<srclient::rest::model::SchemaTags>& value = m_SchemaTags;
-        const std::string currentValuePath = _pathPrefix + ".schemaTags";
-                
-        
-        { // Recursive validation of array elements
-            const std::string oldValuePath = currentValuePath;
-            int i = 0;
-            for (const srclient::rest::model::SchemaTags& value : value)
-            { 
-                const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                        
-        success = value.validate(msg, currentValuePath + ".schemaTags") && success;
- 
-                i++;
-            }
-        }
-
-    }
-        
     return success;
 }
 
@@ -136,9 +114,6 @@ bool Schema::operator==(const Schema& rhs) const
     ((!schemaIsSet() && !rhs.schemaIsSet()) || (schemaIsSet() && rhs.schemaIsSet() && getSchema() == rhs.getSchema())) &&
     
     
-    ((!schemaTagsIsSet() && !rhs.schemaTagsIsSet()) || (schemaTagsIsSet() && rhs.schemaTagsIsSet() && getSchemaTags() == rhs.getSchemaTags())) &&
-    
-    
     ((!ruleSetIsSet() && !rhs.ruleSetIsSet()) || (ruleSetIsSet() && rhs.ruleSetIsSet() && getRuleSet() == rhs.getRuleSet()))
     
     ;
@@ -170,8 +145,6 @@ void to_json(nlohmann::json& j, const Schema& o)
         j["ruleset"] = o.m_Ruleset;
     if(o.schemaIsSet())
         j["schema"] = o.m_Schema;
-    if(o.schemaTagsIsSet() || !o.m_SchemaTags.empty())
-        j["schemaTags"] = o.m_SchemaTags;
     if(o.ruleSetIsSet())
         j["ruleSet"] = o.m_RuleSet;
     
@@ -223,11 +196,6 @@ void from_json(const nlohmann::json& j, Schema& o)
     {
         j.at("schema").get_to(o.m_Schema);
         o.m_SchemaIsSet = true;
-    } 
-    if(j.find("schemaTags") != j.end())
-    {
-        j.at("schemaTags").get_to(o.m_SchemaTags);
-        o.m_SchemaTagsIsSet = true;
     } 
     if(j.find("ruleSet") != j.end())
     {
@@ -389,23 +357,6 @@ bool Schema::schemaIsSet() const
 void Schema::unsetSchema()
 {
     m_SchemaIsSet = false;
-}
-std::vector<srclient::rest::model::SchemaTags> Schema::getSchemaTags() const
-{
-    return m_SchemaTags;
-}
-void Schema::setSchemaTags(std::vector<srclient::rest::model::SchemaTags> const& value)
-{
-    m_SchemaTags = value;
-    m_SchemaTagsIsSet = true;
-}
-bool Schema::schemaTagsIsSet() const
-{
-    return m_SchemaTagsIsSet;
-}
-void Schema::unsetSchemaTags()
-{
-    m_SchemaTagsIsSet = false;
 }
 srclient::rest::model::RuleSet Schema::getRuleSet() const
 {

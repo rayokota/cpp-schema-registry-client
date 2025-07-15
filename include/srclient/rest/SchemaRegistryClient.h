@@ -21,8 +21,7 @@
 #include "srclient/rest/SchemaStore.h"
 #include "srclient/rest/model/Schema.h"
 #include "srclient/rest/model/RegisterSchemaResponse.h"
-#include "srclient/rest/model/Config.h"
-#include "srclient/rest/model/CompatibilityCheckResponse.h"
+#include "srclient/rest/model/ServerConfig.h"
 
 namespace srclient::rest {
 
@@ -125,23 +124,23 @@ public:
     /**
      * Get configuration for subject
      */
-    virtual srclient::rest::model::Config getConfig(const std::string &subject) = 0;
+    virtual srclient::rest::model::ServerConfig getConfig(const std::string &subject) = 0;
 
     /**
      * Update configuration for subject
      */
-    virtual srclient::rest::model::Config
-    updateConfig(const std::string &subject, const srclient::rest::model::Config &config) = 0;
+    virtual srclient::rest::model::ServerConfig
+    updateConfig(const std::string &subject, const srclient::rest::model::ServerConfig &config) = 0;
 
     /**
      * Get default configuration
      */
-    virtual srclient::rest::model::Config getDefaultConfig() = 0;
+    virtual srclient::rest::model::ServerConfig getDefaultConfig() = 0;
 
     /**
      * Update default configuration
      */
-    virtual srclient::rest::model::Config updateDefaultConfig(const srclient::rest::model::Config &config) = 0;
+    virtual srclient::rest::model::ServerConfig updateDefaultConfig(const srclient::rest::model::ServerConfig &config) = 0;
 
     /**
      * Clear latest version caches
@@ -189,7 +188,7 @@ private:
 
     srclient::rest::model::RegisterSchemaResponse parseRegisteredSchemaFromJson(const std::string &json) const;
 
-    srclient::rest::model::Config parseConfigFromJson(const std::string &json) const;
+    srclient::rest::model::ServerConfig parseConfigFromJson(const std::string &json) const;
 
     bool parseBoolFromJson(const std::string &json) const;
 
@@ -268,14 +267,14 @@ public:
     bool testCompatibility(const std::string &subject, int32_t version,
                            const srclient::rest::model::Schema &schema) override;
 
-    srclient::rest::model::Config getConfig(const std::string &subject) override;
+    srclient::rest::model::ServerConfig getConfig(const std::string &subject) override;
 
-    srclient::rest::model::Config
-    updateConfig(const std::string &subject, const srclient::rest::model::Config &config) override;
+    srclient::rest::model::ServerConfig
+    updateConfig(const std::string &subject, const srclient::rest::model::ServerConfig &config) override;
 
-    srclient::rest::model::Config getDefaultConfig() override;
+    srclient::rest::model::ServerConfig getDefaultConfig() override;
 
-    srclient::rest::model::Config updateDefaultConfig(const srclient::rest::model::Config &config) override;
+    srclient::rest::model::ServerConfig updateDefaultConfig(const srclient::rest::model::ServerConfig &config) override;
 
     void clearLatestCaches() override;
 

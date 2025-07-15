@@ -22,7 +22,6 @@
 #include "SchemaReference.h"
 #include <string>
 #include "Metadata.h"
-#include "SchemaTags.h"
 #include "RuleSet.h"
 #include <vector>
 #include <nlohmann/json.hpp>
@@ -127,13 +126,6 @@ public:
     bool schemaIsSet() const;
     void unsetSchema();
     /// <summary>
-    /// Schema tags
-    /// </summary>
-    std::vector<srclient::rest::model::SchemaTags> getSchemaTags() const;
-    void setSchemaTags(std::vector<srclient::rest::model::SchemaTags> const& value);
-    bool schemaTagsIsSet() const;
-    void unsetSchemaTags();
-    /// <summary>
     /// 
     /// </summary>
     srclient::rest::model::RuleSet getRuleSet() const;
@@ -162,8 +154,6 @@ protected:
     bool m_RulesetIsSet;
     std::string m_Schema;
     bool m_SchemaIsSet;
-    std::vector<srclient::rest::model::SchemaTags> m_SchemaTags;
-    bool m_SchemaTagsIsSet;
     srclient::rest::model::RuleSet m_RuleSet;
     bool m_RuleSetIsSet;
     

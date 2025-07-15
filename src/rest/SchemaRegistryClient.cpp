@@ -111,10 +111,10 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::parseRegiste
     }
 }
 
-srclient::rest::model::Config SchemaRegistryClient::parseConfigFromJson(const std::string& jsonStr) const {
+srclient::rest::model::ServerConfig SchemaRegistryClient::parseConfigFromJson(const std::string& jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        srclient::rest::model::Config config;
+        srclient::rest::model::ServerConfig config;
         from_json(j, config);
         return config;
     } catch (const std::exception& e) {
@@ -544,7 +544,7 @@ bool SchemaRegistryClient::testCompatibility(const std::string& subject, int32_t
     }
 }
 
-srclient::rest::model::Config SchemaRegistryClient::getConfig(const std::string& subject) {
+srclient::rest::model::ServerConfig SchemaRegistryClient::getConfig(const std::string& subject) {
     // Prepare request
     std::string path = "/config/" + urlEncode(subject);
     
@@ -555,7 +555,7 @@ srclient::rest::model::Config SchemaRegistryClient::getConfig(const std::string&
     return parseConfigFromJson(responseBody);
 }
 
-srclient::rest::model::Config SchemaRegistryClient::updateConfig(const std::string& subject, const srclient::rest::model::Config& config) {
+srclient::rest::model::ServerConfig SchemaRegistryClient::updateConfig(const std::string& subject, const srclient::rest::model::ServerConfig& config) {
     // Prepare request
     std::string path = "/config/" + urlEncode(subject);
     
@@ -571,7 +571,7 @@ srclient::rest::model::Config SchemaRegistryClient::updateConfig(const std::stri
     return parseConfigFromJson(responseBody);
 }
 
-srclient::rest::model::Config SchemaRegistryClient::getDefaultConfig() {
+srclient::rest::model::ServerConfig SchemaRegistryClient::getDefaultConfig() {
     // Prepare request
     std::string path = "/config";
     
@@ -582,7 +582,7 @@ srclient::rest::model::Config SchemaRegistryClient::getDefaultConfig() {
     return parseConfigFromJson(responseBody);
 }
 
-srclient::rest::model::Config SchemaRegistryClient::updateDefaultConfig(const srclient::rest::model::Config& config) {
+srclient::rest::model::ServerConfig SchemaRegistryClient::updateDefaultConfig(const srclient::rest::model::ServerConfig& config) {
     // Prepare request
     std::string path = "/config";
     
