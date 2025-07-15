@@ -42,6 +42,9 @@ FetchContent_Declare(
         GIT_TAG        v1.3.2
 )
 
+# Disable jsoncons unit tests
+set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
+
 FetchContent_MakeAvailable(jsoncons)
 
 find_path(AVRO_INCLUDE_DIR avro/Encoder.hh)
@@ -182,4 +185,4 @@ install(
 
 # Enable testing
 enable_testing()
-add_subdirectory(test)
+add_subdirectory(tests)
