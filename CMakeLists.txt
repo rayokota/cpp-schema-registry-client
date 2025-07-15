@@ -35,6 +35,15 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+include(FetchContent)
+FetchContent_Declare(
+        jsoncons
+        GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
+        GIT_TAG        v1.3.2
+)
+
+FetchContent_MakeAvailable(jsoncons)
+
 find_path(AVRO_INCLUDE_DIR avro/Encoder.hh)
 get_filename_component(AVRO_ROOT_FIND_DIR ${AVRO_INCLUDE_DIR} DIRECTORY)
 find_library(AVRO_LIBRARY avrocpp PATHS "${AVRO_ROOT_FIND_DIR}/lib/" REQUIRED NO_DEFAULT_PATH)
@@ -139,6 +148,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     absl::absl_log
     absl::log_internal_message
     absl::hash
+    jsoncons
 )
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
