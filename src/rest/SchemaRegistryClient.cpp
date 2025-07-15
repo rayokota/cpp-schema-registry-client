@@ -194,7 +194,13 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::registerSchema(
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        store->setRegisteredSchema(schema, response);
+        srclient::rest::model::Schema schemaKey;
+        if (response.getSchema().has_value()) {
+            schemaKey = response.toSchema();
+        } else {
+            schemaKey = schema; // Use the input schema if no schema in response
+        }
+        store->setSchema(std::make_optional(subject), response.getId(), response.getGuid(), schemaKey);
     }
     
     return response;
