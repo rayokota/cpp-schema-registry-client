@@ -1,20 +1,31 @@
 #pragma once
 
+#include <vector>
+#include <string>
+#include <memory>
+#include <optional>
+#include <variant>
+#include <unordered_map>
+#include <functional>
+#include <nlohmann/json.hpp>
+#include <avro/ValidSchema.hh>
+#include <avro/GenericDatum.hh>
+
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/RuleRegistry.h"
 #include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/serdes/WildcardMatcher.h"
-#include <string>
-#include <vector>
-#include <optional>
-#include <memory>
-#include <unordered_map>
-#include <unordered_set>
-#include <variant>
-#include <mutex>
-#include <cstdint>
+
+// Forward declarations
+namespace srclient::rest {
+    class ISchemaRegistryClient;
+}
+
+namespace srclient::rest::model {
+    class Schema;
+}
 
 namespace srclient::serdes {
 
@@ -85,7 +96,9 @@ private:
         int64_t,         // For integer values
         double,          // For float values
         std::vector<SerdeValue>, // For array values
-        std::unordered_map<std::string, SerdeValue> // For object/map values
+        std::unordered_map<std::string, SerdeValue>, // For object/map values
+        nlohmann::json,  // For JSON values (used in migrations)
+        avro::GenericDatum // For Avro values
     > value_;
 
 public:
@@ -95,6 +108,10 @@ public:
     SerdeValue(Type type, bool value);
     SerdeValue(Type type, int64_t value);
     SerdeValue(Type type, double value);
+    SerdeValue(const nlohmann::json& json_value);
+    
+    // Avro-specific constructors
+    SerdeValue(Type type, const avro::GenericDatum& avro_value);
     
     // Static factory methods (based on SerdeValue methods from serde.rs)
     static SerdeValue createString(SerdeFormat format, const std::string& value);
@@ -110,12 +127,17 @@ public:
     std::vector<uint8_t> asBytes() const;
     int64_t asInt() const;
     double asFloat() const;
+    nlohmann::json asJson() const;
     
     // Copy/move constructors and assignment operators
     SerdeValue(const SerdeValue&) = default;
     SerdeValue(SerdeValue&&) = default;
     SerdeValue& operator=(const SerdeValue&) = default;
     SerdeValue& operator=(SerdeValue&&) = default;
+
+    // Getter methods
+    const auto& getValue() const { return value_; }
+    auto& getValue() { return value_; }
 };
 
 /**
@@ -133,9 +155,13 @@ public:
 private:
     Type type_;
     std::string schema_data_;
+    std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> avro_schema_;
     
 public:
     SerdeSchema(Type type, const std::string& schema_data);
+    
+    // Avro-specific constructors
+    SerdeSchema(Type type, const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& avro_schema);
     
     Type getType() const { return type_; }
     const std::string& getSchemaData() const { return schema_data_; }
