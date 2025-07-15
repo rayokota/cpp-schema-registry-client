@@ -1,5 +1,5 @@
-#ifndef SRCLIENT_REST_MODEL_SERVERCONFIG_H_
-#define SRCLIENT_REST_MODEL_SERVERCONFIG_H_
+#ifndef SRCLIENT_REST_MODEL_SERVER_CONFIG_H_
+#define SRCLIENT_REST_MODEL_SERVER_CONFIG_H_
 
 
 #include <string>
@@ -10,6 +10,16 @@
 
 namespace srclient::rest::model
 {
+
+enum class CompatibilityLevel {
+    Backward,
+    BackwardTransitive,
+    Forward,
+    ForwardTransitive,
+    Full,
+    FullTransitive,
+    None,
+};
 
 /// <summary>
 /// Config
@@ -29,13 +39,13 @@ public:
     /// <summary>
     /// Compatibility
     /// </summary>
-    std::optional<std::string> getCompatibility() const;
-    void setCompatibility(const std::optional<std::string>& value);
+    std::optional<CompatibilityLevel> getCompatibility() const;
+    void setCompatibility(const std::optional<CompatibilityLevel>& value);
     /// <summary>
     /// Compatibility Level
     /// </summary>
-    std::optional<std::string> getCompatibilityLevel() const;
-    void setCompatibilityLevel(const std::optional<std::string>& value);
+    std::optional<CompatibilityLevel> getCompatibilityLevel() const;
+    void setCompatibilityLevel(const std::optional<CompatibilityLevel>& value);
     /// <summary>
     /// 
     /// </summary>
@@ -85,8 +95,8 @@ public:
     friend  void to_json(nlohmann::json& j, const ServerConfig& o);
     friend  void from_json(const nlohmann::json& j, ServerConfig& o);
 protected:
-    std::optional<std::string> m_Compatibility;
-    std::optional<std::string> m_CompatibilityLevel;
+    std::optional<CompatibilityLevel> m_Compatibility;
+    std::optional<CompatibilityLevel> m_CompatibilityLevel;
     std::optional<std::string> m_Alias;
     std::optional<bool> m_Normalize;
     std::optional<bool> m_ValidateFields;
@@ -101,4 +111,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* SRCLIENT_REST_MODEL_SERVERCONFIG_H_ */
+#endif /* SRCLIENT_REST_MODEL_SERVER_CONFIG_H_ */

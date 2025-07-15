@@ -15,8 +15,8 @@
  * This is an API client responsible for stating the HTTP calls
  */
 
-#ifndef ORG_OPENAPITOOLS_CLIENT_API_RestClient_H_
-#define ORG_OPENAPITOOLS_CLIENT_API_RestClient_H_
+#ifndef SRCLIENT_REST_REST_CLIENT_H_
+#define SRCLIENT_REST_REST_CLIENT_H_
 
 
 #include "srclient/rest/ClientConfiguration.h"
@@ -56,4 +56,4 @@ protected:
 
 }
 
-#endif /* ORG_OPENAPITOOLS_CLIENT_API_RestClient_H_ */
+#endif /* SRCLIENT_REST_REST_CLIENT_H_ */

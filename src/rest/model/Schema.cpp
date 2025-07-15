@@ -29,9 +29,8 @@ bool Schema::operator==(const Schema& rhs) const
         m_SchemaType == rhs.m_SchemaType &&
         m_References == rhs.m_References &&
         m_Metadata == rhs.m_Metadata &&
-        m_Ruleset == rhs.m_Ruleset &&
-        m_Schema == rhs.m_Schema &&
-        m_RuleSet == rhs.m_RuleSet;
+        m_RuleSet == rhs.m_RuleSet &&
+        m_Schema == rhs.m_Schema;
 }
 
 bool Schema::operator!=(const Schema& rhs) const
@@ -48,12 +47,10 @@ void to_json(nlohmann::json& j, const Schema& o)
         j["references"] = o.m_References.value();
     if(o.m_Metadata.has_value())
         j["metadata"] = o.m_Metadata.value();
-    if(o.m_Ruleset.has_value())
-        j["ruleset"] = o.m_Ruleset.value();
-    if(o.m_Schema.has_value())
-        j["schema"] = o.m_Schema.value();
     if(o.m_RuleSet.has_value())
         j["ruleSet"] = o.m_RuleSet.value();
+    if(o.m_Schema.has_value())
+        j["schema"] = o.m_Schema.value();
 }
 
 void from_json(const nlohmann::json& j, Schema& o)
@@ -76,23 +73,17 @@ void from_json(const nlohmann::json& j, Schema& o)
         j.at("metadata").get_to(temp);
         o.m_Metadata = temp;
     } 
-    if(j.find("ruleset") != j.end())
+    if(j.find("ruleSet") != j.end())
     {
         srclient::rest::model::RuleSet temp;
-        j.at("ruleset").get_to(temp);
-        o.m_Ruleset = temp;
+        j.at("ruleSet").get_to(temp);
+        o.m_RuleSet = temp;
     } 
     if(j.find("schema") != j.end())
     {
         std::string temp;
         j.at("schema").get_to(temp);
         o.m_Schema = temp;
-    } 
-    if(j.find("ruleSet") != j.end())
-    {
-        srclient::rest::model::RuleSet temp;
-        j.at("ruleSet").get_to(temp);
-        o.m_RuleSet = temp;
     } 
 }
 
@@ -126,14 +117,14 @@ void Schema::setMetadata(const std::optional<srclient::rest::model::Metadata>& v
     m_Metadata = value;
 }
 
-std::optional<srclient::rest::model::RuleSet> Schema::getRuleset() const
+std::optional<srclient::rest::model::RuleSet> Schema::getRuleSet() const
 {
-    return m_Ruleset;
+    return m_RuleSet;
 }
 
-void Schema::setRuleset(const std::optional<srclient::rest::model::RuleSet>& value)
+void Schema::setRuleSet(const std::optional<srclient::rest::model::RuleSet>& value)
 {
-    m_Ruleset = value;
+    m_RuleSet = value;
 }
 
 std::optional<std::string> Schema::getSchema() const
@@ -144,16 +135,6 @@ std::optional<std::string> Schema::getSchema() const
 void Schema::setSchema(const std::optional<std::string>& value)
 {
     m_Schema = value;
-}
-
-std::optional<srclient::rest::model::RuleSet> Schema::getRuleSet() const
-{
-    return m_RuleSet;
-}
-
-void Schema::setRuleSet(const std::optional<srclient::rest::model::RuleSet>& value)
-{
-    m_RuleSet = value;
 }
 
 } // namespace srclient::rest::model

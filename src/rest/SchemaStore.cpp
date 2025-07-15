@@ -150,16 +150,10 @@ void SchemaStore::clear() {
 }
 
 std::string SchemaStore::createSchemaHash(const srclient::rest::model::Schema& schema) const {
-    // Create a hash string from the schema content
-    std::stringstream ss;
-    ss << schema.getSchema().value();
-    if (schema.getSchemaType().has_value()) {
-        ss << "_" << schema.getSchemaType().value();
-    }
-
-    // Use std::hash to create a hash value
-    std::hash<std::string> hasher;
-    return std::to_string(hasher(ss.str()));
+    // Us the JSON representation of the schema to create a hash
+    nlohmann::json j;
+    to_json(j, schema);
+    return j.dump();
 }
 
 }

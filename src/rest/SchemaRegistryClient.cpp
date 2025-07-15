@@ -89,17 +89,6 @@ std::string SchemaRegistryClient::sendHttpRequest(const std::string& path,
     return result->body;
 }
 
-srclient::rest::model::Schema SchemaRegistryClient::parseSchemaFromJson(const std::string& jsonStr) const {
-    try {
-        json j = json::parse(jsonStr);
-        srclient::rest::model::Schema schema;
-        from_json(j, schema);
-        return schema;
-    } catch (const std::exception& e) {
-        throw srclient::rest::RestException("Failed to parse schema from JSON: " + std::string(e.what()));
-    }
-}
-
 srclient::rest::model::RegisteredSchema SchemaRegistryClient::parseRegisteredSchemaFromJson(const std::string& jsonStr) const {
     try {
         json j = json::parse(jsonStr);
@@ -240,7 +229,7 @@ srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     
     // Parse response
     srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
-    srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema().value());
+    srclient::rest::model::Schema schema = response.toSchema();
     
     // Update cache
     {
@@ -276,7 +265,7 @@ srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
     
     // Parse response
     srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
-    srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema().value());
+    srclient::rest::model::Schema schema = response.toSchema();
     
     // Update cache
     {
@@ -322,7 +311,9 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::getBySchema(
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        store->setRegisteredSchema(schema, response);
+        // Ensure the schema matches the input
+        srclient::rest::model::RegisteredSchema rs(response.getId(), response.getGuid(), response.getSubject(), response.getVersion(), schema);
+        store->setRegisteredSchema(schema, rs);
     }
     
     return response;
@@ -360,7 +351,7 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::getVersion(
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema().value());
+        srclient::rest::model::Schema schema = response.toSchema();
         store->setRegisteredSchema(schema, response);
     }
     

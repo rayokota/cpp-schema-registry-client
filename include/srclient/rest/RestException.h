@@ -15,8 +15,8 @@
  * This is the exception being thrown in case the api call was not successful
  */
 
-#ifndef ORG_OPENAPITOOLS_CLIENT_API_RestException_H_
-#define ORG_OPENAPITOOLS_CLIENT_API_RestException_H_
+#ifndef SRCLIENT_REST_REST_EXCEPTION_H_
+#define SRCLIENT_REST_REST_EXCEPTION_H_
 
 
 #include <memory>
@@ -40,4 +40,4 @@ protected:
 
 }
 
-#endif /* ORG_OPENAPITOOLS_CLIENT_API_RestBase_H_ */
+#endif /* SRCLIENT_REST_REST_EXCEPTION_H_ */

@@ -63,18 +63,13 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    std::optional<srclient::rest::model::RuleSet> getRuleset() const;
-    void setRuleset(const std::optional<srclient::rest::model::RuleSet>& value);
+    std::optional<srclient::rest::model::RuleSet> getRuleSet() const;
+    void setRuleSet(const std::optional<srclient::rest::model::RuleSet>& value);
     /// <summary>
     /// Schema definition string
     /// </summary>
     std::optional<std::string> getSchema() const;
     void setSchema(const std::optional<std::string>& value);
-    /// <summary>
-    /// 
-    /// </summary>
-    std::optional<srclient::rest::model::RuleSet> getRuleSet() const;
-    void setRuleSet(const std::optional<srclient::rest::model::RuleSet>& value);
 
     friend  void to_json(nlohmann::json& j, const Schema& o);
     friend  void from_json(const nlohmann::json& j, Schema& o);
@@ -82,10 +77,9 @@ protected:
     std::optional<std::string> m_SchemaType;
     std::optional<std::vector<srclient::rest::model::SchemaReference>> m_References;
     std::optional<srclient::rest::model::Metadata> m_Metadata;
-    std::optional<srclient::rest::model::RuleSet> m_Ruleset;
-    std::optional<std::string> m_Schema;
     std::optional<srclient::rest::model::RuleSet> m_RuleSet;
-    
+    std::optional<std::string> m_Schema;
+
 };
 
 } // namespace srclient::rest::model

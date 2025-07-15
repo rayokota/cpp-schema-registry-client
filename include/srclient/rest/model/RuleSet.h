@@ -15,8 +15,8 @@
  * Schema rule set
  */
 
-#ifndef SRCLIENT_REST_MODEL_RULESET_H_
-#define SRCLIENT_REST_MODEL_RULESET_H_
+#ifndef SRCLIENT_REST_MODEL_RULE_SET_H_
+#define SRCLIENT_REST_MODEL_RULE_SET_H_
 
 
 #include "Rule.h"
@@ -69,4 +69,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* SRCLIENT_REST_MODEL_RULESET_H_ */
+#endif /* SRCLIENT_REST_MODEL_RULE_SET_H_ */

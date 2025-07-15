@@ -23,6 +23,18 @@ RegisteredSchema::RegisteredSchema()
     // Optional members are initialized to std::nullopt by default
 }
 
+RegisteredSchema::RegisteredSchema(
+        const std::optional<int32_t>& id,
+        const std::optional<std::string>& guid,
+        const std::optional<std::string>& subject,
+        const std::optional<int32_t>& version,
+        const Schema& schema) : m_Id(id), m_Guid(guid), m_Subject(subject), m_Version(version),
+        m_SchemaType(schema.getSchemaType()), m_References(schema.getReferences()),
+        m_Metadata(schema.getMetadata()), m_RuleSet(schema.getRuleSet()),
+        m_Schema(schema.getSchema())
+{
+}
+
 bool RegisteredSchema::operator==(const RegisteredSchema& rhs) const
 {
     return
@@ -211,6 +223,17 @@ std::optional<std::string> RegisteredSchema::getSchema() const
 void RegisteredSchema::setSchema(const std::optional<std::string>& value)
 {
     m_Schema = value;
+}
+
+Schema RegisteredSchema::toSchema() const
+{
+    Schema schema;
+    schema.setSchemaType(m_SchemaType);
+    schema.setReferences(m_References);
+    schema.setMetadata(m_Metadata);
+    schema.setRuleSet(m_RuleSet);
+    schema.setSchema(m_Schema);
+    return schema;
 }
 
 } // namespace srclient::rest::model

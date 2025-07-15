@@ -18,6 +18,16 @@
 namespace srclient::rest::model
 {
 
+NLOHMANN_JSON_SERIALIZE_ENUM( CompatibilityLevel, {
+    {CompatibilityLevel::Backward, "BACKWARD"},
+    {CompatibilityLevel::BackwardTransitive, "BACKWARD_TRANSITIVE"},
+    {CompatibilityLevel::Forward, "FORWARD"},
+    {CompatibilityLevel::ForwardTransitive, "FORWARD_TRANSITIVE"},
+    {CompatibilityLevel::Full, "FULL"},
+    {CompatibilityLevel::FullTransitive, "FULL_TRANSITIVE"},
+    {CompatibilityLevel::None, "NONE"}
+})
+
 ServerConfig::ServerConfig()
 {
     // Optional members are initialized to std::nullopt by default
@@ -26,11 +36,12 @@ ServerConfig::ServerConfig()
 bool ServerConfig::operator==(const ServerConfig& rhs) const
 {
     return
+        m_Compatibility == rhs.m_Compatibility&&
+        m_CompatibilityLevel == rhs.m_CompatibilityLevel &&
         m_Alias == rhs.m_Alias &&
         m_Normalize == rhs.m_Normalize &&
         m_ValidateFields == rhs.m_ValidateFields &&
         m_ValidateRules == rhs.m_ValidateRules &&
-        m_CompatibilityLevel == rhs.m_CompatibilityLevel &&
         m_CompatibilityGroup == rhs.m_CompatibilityGroup &&
         m_DefaultMetadata == rhs.m_DefaultMetadata &&
         m_OverrideMetadata == rhs.m_OverrideMetadata &&
@@ -46,6 +57,10 @@ bool ServerConfig::operator!=(const ServerConfig& rhs) const
 void to_json(nlohmann::json& j, const ServerConfig& o)
 {
     j = nlohmann::json::object();
+    if(o.m_Compatibility.has_value())
+        j["compatibility"] = o.m_Compatibility.value();
+    if(o.m_CompatibilityLevel.has_value())
+        j["compatibilityLevel"] = o.m_CompatibilityLevel.value();
     if(o.m_Alias.has_value())
         j["alias"] = o.m_Alias.value();
     if(o.m_Normalize.has_value())
@@ -54,8 +69,6 @@ void to_json(nlohmann::json& j, const ServerConfig& o)
         j["validateFields"] = o.m_ValidateFields.value();
     if(o.m_ValidateRules.has_value())
         j["validateRules"] = o.m_ValidateRules.value();
-    if(o.m_CompatibilityLevel.has_value())
-        j["compatibilityLevel"] = o.m_CompatibilityLevel.value();
     if(o.m_CompatibilityGroup.has_value())
         j["compatibilityGroup"] = o.m_CompatibilityGroup.value();
     if(o.m_DefaultMetadata.has_value())
@@ -70,6 +83,18 @@ void to_json(nlohmann::json& j, const ServerConfig& o)
 
 void from_json(const nlohmann::json& j, ServerConfig& o)
 {
+    if(j.find("compatibility") != j.end())
+    {
+        CompatibilityLevel temp;
+        j.at("compatibility").get_to(temp);
+        o.m_Compatibility= temp;
+    }
+    if(j.find("compatibilityLevel") != j.end())
+    {
+        CompatibilityLevel temp;
+        j.at("compatibilityLevel").get_to(temp);
+        o.m_CompatibilityLevel = temp;
+    }
     if(j.find("alias") != j.end())
     {
         std::string temp;
@@ -93,12 +118,6 @@ void from_json(const nlohmann::json& j, ServerConfig& o)
         bool temp;
         j.at("validateRules").get_to(temp);
         o.m_ValidateRules = temp;
-    } 
-    if(j.find("compatibilityLevel") != j.end())
-    {
-        std::string temp;
-        j.at("compatibilityLevel").get_to(temp);
-        o.m_CompatibilityLevel = temp;
     } 
     if(j.find("compatibilityGroup") != j.end())
     {
@@ -130,6 +149,26 @@ void from_json(const nlohmann::json& j, ServerConfig& o)
         j.at("overrideRuleSet").get_to(temp);
         o.m_OverrideRuleSet = temp;
     } 
+}
+
+std::optional<CompatibilityLevel> ServerConfig::getCompatibility() const
+{
+    return m_Compatibility;
+}
+
+void ServerConfig::setCompatibility(const std::optional<CompatibilityLevel>& value)
+{
+    m_Compatibility= value;
+}
+
+std::optional<CompatibilityLevel> ServerConfig::getCompatibilityLevel() const
+{
+    return m_CompatibilityLevel;
+}
+
+void ServerConfig::setCompatibilityLevel(const std::optional<CompatibilityLevel>& value)
+{
+    m_CompatibilityLevel = value;
 }
 
 std::optional<std::string> ServerConfig::getAlias() const
@@ -170,16 +209,6 @@ std::optional<bool> ServerConfig::isValidateRules() const
 void ServerConfig::setValidateRules(const std::optional<bool>& value)
 {
     m_ValidateRules = value;
-}
-
-std::optional<std::string> ServerConfig::getCompatibilityLevel() const
-{
-    return m_CompatibilityLevel;
-}
-
-void ServerConfig::setCompatibilityLevel(const std::optional<std::string>& value)
-{
-    m_CompatibilityLevel = value;
 }
 
 std::optional<std::string> ServerConfig::getCompatibilityGroup() const

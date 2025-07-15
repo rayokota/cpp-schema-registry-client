@@ -15,10 +15,11 @@
  * Schema register response
  */
 
-#ifndef SRCLIENT_REST_MODEL_REGISTEREDSCHEMA_H_
-#define SRCLIENT_REST_MODEL_REGISTEREDSCHEMA_H_
+#ifndef SRCLIENT_REST_MODEL_REGISTERED_SCHEMA_H_
+#define SRCLIENT_REST_MODEL_REGISTERED_SCHEMA_H_
 
 
+#include "Schema.h"
 #include "SchemaReference.h"
 #include <string>
 #include "Metadata.h"
@@ -37,6 +38,13 @@ class  RegisteredSchema
 {
 public:
     RegisteredSchema();
+    RegisteredSchema(
+        const std::optional<int32_t>& id,
+        const std::optional<std::string>& guid,
+        const std::optional<std::string>& subject,
+        const std::optional<int32_t>& version,
+        const Schema& schema);
+
     virtual ~RegisteredSchema() = default;
 
     bool operator==(const RegisteredSchema& rhs) const;
@@ -91,6 +99,8 @@ public:
     std::optional<std::string> getSchema() const;
     void setSchema(const std::optional<std::string>& value);
 
+    srclient::rest::model::Schema toSchema() const;
+
     friend  void to_json(nlohmann::json& j, const RegisteredSchema& o);
     friend  void from_json(const nlohmann::json& j, RegisteredSchema& o);
 protected:
@@ -108,4 +118,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* SRCLIENT_REST_MODEL_REGISTEREDSCHEMA_H_ */
+#endif /* SRCLIENT_REST_MODEL_REGISTERED_SCHEMA_H_ */

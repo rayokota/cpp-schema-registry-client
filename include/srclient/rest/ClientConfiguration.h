@@ -15,8 +15,8 @@
  * This class represents a single item of a multipart-formdata request.
  */
 
-#ifndef ORG_OPENAPITOOLS_CLIENT_API_ClientConfiguration_H_
-#define ORG_OPENAPITOOLS_CLIENT_API_ClientConfiguration_H_
+#ifndef SRCLIENT_REST_CLIENT_CONFIGURATION_H_
+#define SRCLIENT_REST_CLIENT_CONFIGURATION_H_
 
 
 #include <map>
@@ -37,4 +37,4 @@ protected:
 
 }
 
-#endif /* ORG_OPENAPITOOLS_CLIENT_API_ClientConfiguration_H_ */
+#endif /* SRCLIENT_REST_CLIENT_CONFIGURATION_H_ */
