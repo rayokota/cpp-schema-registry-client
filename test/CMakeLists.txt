@@ -9,6 +9,7 @@ FetchContent_MakeAvailable(googletest)
 # Add the test executable
 add_executable(srclient-test
         test.cpp
+        WildcardMatcherTest.cpp
 )
 
 target_link_libraries(srclient-test
