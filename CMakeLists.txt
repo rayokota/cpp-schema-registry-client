@@ -26,28 +26,23 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-find_path(AVRO_INCLUDE_DIR avro/Encoder.hh)
-get_filename_component(AVRO_ROOT_FIND_DIR ${AVRO_INCLUDE_DIR} DIRECTORY)
-find_library(AVRO_LIBRARY avrocpp PATHS "${AVRO_ROOT_FIND_DIR}/lib/" REQUIRED NO_DEFAULT_PATH)
-
-# Create an IMPORTED target for avrocpp
-add_library(AvroCpp::avrocpp SHARED IMPORTED)
-set_target_properties(AvroCpp::avrocpp PROPERTIES
-        IMPORTED_LOCATION "${AVRO_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${AVRO_INCLUDE_DIR}"
-)
-
 include(FetchContent)
+
+FetchContent_Declare(avrocpp
+        GIT_REPOSITORY https://github.com/apache/avro.git
+        GIT_TAG release-1.12.0
+        EXCLUDE_FROM_ALL
+        SOURCE_SUBDIR lang/c++)
+
+FetchContent_MakeAvailable(avrocpp)
 
 FetchContent_Declare(
         jsoncons
         GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
         GIT_TAG        v1.3.2
 )
-
 # Disable jsoncons unit tests
 set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
-
 FetchContent_MakeAvailable(jsoncons)
 
 # Import Tink as an in-tree dependency.
@@ -149,10 +144,10 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} 
     PUBLIC 
-        AvroCpp::avrocpp 
+        avrocpp
         Boost::headers
-        ${Protobuf_LIBRARIES}
         jsoncons
+        ${Protobuf_LIBRARIES}
     PRIVATE
         absl::log_internal_log_sink_set
         absl::log_internal_proto
