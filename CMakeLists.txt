@@ -48,6 +48,7 @@ set_target_properties(AvroCpp::avrocpp PROPERTIES
 
 find_package(Boost REQUIRED)
 find_package(nlohmann_json 3.12.0 REQUIRED)
+find_package(Protobuf REQUIRED)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
