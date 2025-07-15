@@ -1,0 +1,169 @@
+/**
+ * Mock Schema Registry Client
+ * Synchronous C++ mock implementation for testing
+ */
+
+#ifndef SRCLIENT_REST_MOCK_SCHEMA_REGISTRY_CLIENT_H_
+#define SRCLIENT_REST_MOCK_SCHEMA_REGISTRY_CLIENT_H_
+
+#include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/rest/model/Schema.h"
+#include "srclient/rest/model/RegisteredSchema.h"
+#include "srclient/rest/model/ServerConfig.h"
+#include "srclient/rest/ClientConfiguration.h"
+#include "srclient/rest/RestException.h"
+#include <memory>
+#include <vector>
+#include <unordered_map>
+#include <string>
+#include <mutex>
+#include <optional>
+
+namespace srclient::rest {
+
+class MockSchemaStore {
+private:
+    // Maps subject -> list of registered schemas
+    std::unordered_map<std::string, std::vector<srclient::rest::model::RegisteredSchema>> schemas;
+    
+    // Maps schema id -> registered schema
+    std::unordered_map<int32_t, srclient::rest::model::RegisteredSchema> schemaIdIndex;
+    
+    // Maps guid -> registered schema
+    std::unordered_map<std::string, srclient::rest::model::RegisteredSchema> schemaGuidIndex;
+    
+    // Maps schema content -> registered schema
+    std::unordered_map<std::string, srclient::rest::model::RegisteredSchema> schemaIndex;
+    
+    int32_t nextSchemaId = 1;
+
+public:
+    MockSchemaStore() = default;
+    ~MockSchemaStore() = default;
+
+    void setRegisteredSchema(const srclient::rest::model::RegisteredSchema& schema);
+    
+    std::optional<srclient::rest::model::Schema> getSchemaById(int32_t schemaId) const;
+    
+    std::optional<srclient::rest::model::Schema> getSchemaByGuid(const std::string& guid) const;
+    
+    std::optional<srclient::rest::model::RegisteredSchema> getRegisteredBySchema(
+        const std::string& subject, 
+        const srclient::rest::model::Schema& schema) const;
+    
+    std::optional<srclient::rest::model::RegisteredSchema> getRegisteredByVersion(
+        const std::string& subject, 
+        int32_t version) const;
+    
+    std::optional<srclient::rest::model::RegisteredSchema> getLatestVersion(
+        const std::string& subject) const;
+    
+    std::optional<srclient::rest::model::RegisteredSchema> getLatestWithMetadata(
+        const std::string& subject,
+        const std::unordered_map<std::string, std::string>& metadata) const;
+    
+    std::vector<std::string> getSubjects() const;
+    
+    std::vector<int32_t> getVersions(const std::string& subject) const;
+    
+    void removeBySchema(const std::string& subject, const srclient::rest::model::RegisteredSchema& registeredSchema);
+    
+    std::vector<int32_t> removeBySubject(const std::string& subject);
+    
+    void clear();
+
+    friend class MockSchemaRegistryClient;
+
+private:
+    bool hasMetadata(const std::unordered_map<std::string, std::string>& metadata, 
+                     const srclient::rest::model::RegisteredSchema& rs) const;
+    
+    std::string generateGuid() const;
+};
+
+/**
+ * Mock Schema Registry Client for testing
+ */
+class MockSchemaRegistryClient {
+private:
+    std::shared_ptr<MockSchemaStore> store;
+    std::shared_ptr<const srclient::rest::ClientConfiguration> config;
+    std::shared_ptr<std::mutex> storeMutex;
+
+public:
+    explicit MockSchemaRegistryClient(std::shared_ptr<const srclient::rest::ClientConfiguration> config);
+    
+    ~MockSchemaRegistryClient() = default;
+
+    std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const;
+
+    // Schema operations
+    srclient::rest::model::RegisteredSchema registerSchema(
+        const std::string& subject,
+        const srclient::rest::model::Schema& schema,
+        bool normalize = false);
+
+    srclient::rest::model::Schema getBySubjectAndId(
+        const std::optional<std::string>& subject,
+        int32_t id,
+        const std::optional<std::string>& format = std::nullopt);
+
+    srclient::rest::model::Schema getByGuid(
+        const std::string& guid,
+        const std::optional<std::string>& format = std::nullopt);
+
+    srclient::rest::model::RegisteredSchema getBySchema(
+        const std::string& subject,
+        const srclient::rest::model::Schema& schema,
+        bool normalize = false,
+        bool deleted = false);
+
+    srclient::rest::model::RegisteredSchema getVersion(
+        const std::string& subject,
+        int32_t version,
+        bool deleted = false,
+        const std::optional<std::string>& format = std::nullopt);
+
+    srclient::rest::model::RegisteredSchema getLatestVersion(
+        const std::string& subject,
+        const std::optional<std::string>& format = std::nullopt);
+
+    srclient::rest::model::RegisteredSchema getLatestWithMetadata(
+        const std::string& subject,
+        const std::unordered_map<std::string, std::string>& metadata,
+        bool deleted = false,
+        const std::optional<std::string>& format = std::nullopt);
+
+    std::vector<int32_t> getAllVersions(const std::string& subject);
+
+    std::vector<std::string> getAllSubjects(bool deleted = false);
+
+    std::vector<int32_t> deleteSubject(const std::string& subject, bool permanent = false);
+
+    int32_t deleteSubjectVersion(const std::string& subject, int32_t version, bool permanent = false);
+
+    // Compatibility operations
+    bool testSubjectCompatibility(const std::string& subject, const srclient::rest::model::Schema& schema);
+
+    bool testCompatibility(const std::string& subject, int32_t version, const srclient::rest::model::Schema& schema);
+
+    // Config operations
+    srclient::rest::model::ServerConfig getConfig(const std::string& subject);
+
+    srclient::rest::model::ServerConfig updateConfig(const std::string& subject, const srclient::rest::model::ServerConfig& config);
+
+    srclient::rest::model::ServerConfig getDefaultConfig();
+
+    srclient::rest::model::ServerConfig updateDefaultConfig(const srclient::rest::model::ServerConfig& config);
+
+    // Cache operations
+    void clearLatestCaches();
+
+    void clearCaches();
+
+    void close();
+};
+
+} // namespace srclient::rest
+
+#endif // SRCLIENT_REST_MOCK_SCHEMA_REGISTRY_CLIENT_H_ 
