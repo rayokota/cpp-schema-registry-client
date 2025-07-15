@@ -1,0 +1,154 @@
+#include "srclient/serdes/SerdeTypes.h"
+#include "srclient/rest/model/Schema.h"
+#include "srclient/rest/model/RegisteredSchema.h"
+#include <sstream>
+
+namespace srclient::serdes {
+
+// SchemaSelectorData static factory methods
+SchemaSelectorData SchemaSelectorData::createSchemaId(int32_t id) {
+    SchemaSelectorData data;
+    data.type = SchemaSelector::SchemaId;
+    data.schema_id = id;
+    return data;
+}
+
+SchemaSelectorData SchemaSelectorData::createLatestVersion() {
+    SchemaSelectorData data;
+    data.type = SchemaSelector::LatestVersion;
+    return data;
+}
+
+SchemaSelectorData SchemaSelectorData::createLatestWithMetadata(const std::unordered_map<std::string, std::string>& metadata) {
+    SchemaSelectorData data;
+    data.type = SchemaSelector::LatestWithMetadata;
+    data.metadata = metadata;
+    return data;
+}
+
+// Migration implementation
+Migration::Migration(Mode mode, 
+                    std::optional<RegisteredSchema> src,
+                    std::optional<RegisteredSchema> tgt)
+    : rule_mode(mode), source(src), target(tgt) {}
+
+// FieldType to string conversion
+std::string fieldTypeToString(FieldType type) {
+    switch (type) {
+        case FieldType::Record: return "RECORD";
+        case FieldType::Enum: return "ENUM";
+        case FieldType::Array: return "ARRAY";
+        case FieldType::Map: return "MAP";
+        case FieldType::Combined: return "COMBINED";
+        case FieldType::Fixed: return "FIXED";
+        case FieldType::String: return "STRING";
+        case FieldType::Bytes: return "BYTES";
+        case FieldType::Int: return "INT";
+        case FieldType::Long: return "LONG";
+        case FieldType::Float: return "FLOAT";
+        case FieldType::Double: return "DOUBLE";
+        case FieldType::Boolean: return "BOOLEAN";
+        case FieldType::Null: return "NULL";
+        default: return "UNKNOWN";
+    }
+}
+
+// ParsedSchemaCache template implementation
+template<typename T>
+void ParsedSchemaCache<T>::set(const Schema& schema, const T& parsed_schema) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::string key = getSchemaKey(schema);
+    cache_[key] = parsed_schema;
+}
+
+template<typename T>
+std::optional<T> ParsedSchemaCache<T>::get(const Schema& schema) const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::string key = getSchemaKey(schema);
+    auto it = cache_.find(key);
+    if (it != cache_.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
+template<typename T>
+void ParsedSchemaCache<T>::clear() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    cache_.clear();
+}
+
+template<typename T>
+std::string ParsedSchemaCache<T>::getSchemaKey(const Schema& schema) const {
+    // Create a key from schema content and type
+    std::ostringstream key_stream;
+    
+    // Schema class doesn't have getId() or getGuid() - those are in RegisteredSchema
+    // Use schema content and type as key
+    if (schema.getSchema().has_value()) {
+        key_stream << "schema:" << schema.getSchema().value();
+    }
+    
+    if (schema.getSchemaType().has_value()) {
+        key_stream << "_type:" << schema.getSchemaType().value();
+    }
+    
+    return key_stream.str();
+}
+
+// Explicit template instantiations for common types
+template class ParsedSchemaCache<std::string>;
+template class ParsedSchemaCache<int>;
+
+namespace type_utils {
+
+std::string formatToString(SerdeFormat format) {
+    switch (format) {
+        case SerdeFormat::Avro: return "AVRO";
+        case SerdeFormat::Json: return "JSON";
+        case SerdeFormat::Protobuf: return "PROTOBUF";
+        default: return "UNKNOWN";
+    }
+}
+
+SerdeFormat stringToFormat(const std::string& format) {
+    if (format == "AVRO" || format == "avro") {
+        return SerdeFormat::Avro;
+    } else if (format == "JSON" || format == "json") {
+        return SerdeFormat::Json;
+    } else if (format == "PROTOBUF" || format == "protobuf") {
+        return SerdeFormat::Protobuf;
+    }
+    // Default to JSON if unknown
+    return SerdeFormat::Json;
+}
+
+std::string typeToString(SerdeType type) {
+    switch (type) {
+        case SerdeType::Key: return "KEY";
+        case SerdeType::Value: return "VALUE";
+        default: return "UNKNOWN";
+    }
+}
+
+std::string modeToString(Mode mode) {
+    // This will use the existing mode to string conversion from the model
+    // For now, return a placeholder
+    return "MODE";
+}
+
+std::string phaseToString(Phase phase) {
+    // This will use the existing phase to string conversion from the model
+    // For now, return a placeholder
+    return "PHASE";
+}
+
+std::string kindToString(Kind kind) {
+    // This will use the existing kind to string conversion from the model
+    // For now, return a placeholder  
+    return "KIND";
+}
+
+} // namespace type_utils
+
+} // namespace srclient::serdes 
