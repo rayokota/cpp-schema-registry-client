@@ -23,7 +23,7 @@ generated_test_proto
 *.dylib
 *.a
 *.lib
-test/srclient-test
+srclient-test
 
 # IDE specific files (e.g., CLion, VS Code)
 .idea
