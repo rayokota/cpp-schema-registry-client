@@ -1,5 +1,5 @@
-#ifndef Config_H_
-#define Config_H_
+#ifndef SRCLIENT_REST_MODEL_SERVERCONFIG_H_
+#define SRCLIENT_REST_MODEL_SERVERCONFIG_H_
 
 
 #include <string>
@@ -101,4 +101,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* Config_H_ */
+#endif /* SRCLIENT_REST_MODEL_SERVERCONFIG_H_ */

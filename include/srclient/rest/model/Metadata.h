@@ -15,8 +15,8 @@
  * User-defined metadata
  */
 
-#ifndef Metadata_H_
-#define Metadata_H_
+#ifndef SRCLIENT_REST_MODEL_METADATA_H_
+#define SRCLIENT_REST_MODEL_METADATA_H_
 
 
 #include <string>
@@ -70,4 +70,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* Metadata_H_ */
+#endif /* SRCLIENT_REST_MODEL_METADATA_H_ */

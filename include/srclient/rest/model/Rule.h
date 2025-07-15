@@ -15,8 +15,8 @@
  * Rule
  */
 
-#ifndef Rule_H_
-#define Rule_H_
+#ifndef SRCLIENT_REST_MODEL_RULE_H_
+#define SRCLIENT_REST_MODEL_RULE_H_
 
 
 #include <string>
@@ -118,4 +118,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* Rule_H_ */
+#endif /* SRCLIENT_REST_MODEL_RULE_H_ */
