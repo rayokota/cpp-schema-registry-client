@@ -1,5 +1,7 @@
-# Download GoogleTest if not already present
 include(FetchContent)
+
+# Download GoogleTest if not already present
+# See https://google.github.io/googletest/quickstart-cmake.html
 FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
