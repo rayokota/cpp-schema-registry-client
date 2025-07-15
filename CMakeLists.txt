@@ -51,11 +51,6 @@ find_package(Boost REQUIRED)
 find_package(nlohmann_json 3.12.0 REQUIRED)
 find_package(Protobuf REQUIRED)
 
-# Help CMake find Homebrew packages on macOS
-if(APPLE)
-    list(APPEND CMAKE_PREFIX_PATH /opt/homebrew /opt/homebrew/opt/protobuf@3 /usr/local)
-endif()
-
 # Function to compile protobuf files in the proto/ directory
 function(compile_project_proto_files)
     # Find all .proto files in the proto/ directory only
