@@ -11,7 +11,7 @@
 #include <memory>
 #include <optional>
 #include "srclient/rest/model/Schema.h"
-#include "srclient/rest/model/RegisterSchemaResponse.h"
+#include "srclient/rest/model/RegisteredSchema.h"
 
 namespace srclient::rest {
 
@@ -30,13 +30,13 @@ private:
     std::unordered_map<std::string, std::unordered_map<std::string, int32_t>> schemaIndex;
 
     // Maps subject -> schema_id -> registered_schema
-    std::unordered_map<std::string, std::unordered_map<int32_t, srclient::rest::model::RegisterSchemaResponse>> rsIdIndex;
+    std::unordered_map<std::string, std::unordered_map<int32_t, srclient::rest::model::RegisteredSchema>> rsIdIndex;
 
     // Maps subject -> version -> registered_schema
-    std::unordered_map<std::string, std::unordered_map<int32_t, srclient::rest::model::RegisterSchemaResponse>> rsVersionIndex;
+    std::unordered_map<std::string, std::unordered_map<int32_t, srclient::rest::model::RegisteredSchema>> rsVersionIndex;
 
     // Maps subject -> schema -> registered_schema
-    std::unordered_map<std::string, std::unordered_map<std::string, srclient::rest::model::RegisterSchemaResponse>> rsSchemaIndex;
+    std::unordered_map<std::string, std::unordered_map<std::string, srclient::rest::model::RegisteredSchema>> rsSchemaIndex;
 
 public:
     SchemaStore();
@@ -55,7 +55,7 @@ public:
      * Set registered schema information
      */
     void setRegisteredSchema(const srclient::rest::model::Schema &schema,
-                             const srclient::rest::model::RegisterSchemaResponse &rs);
+                             const srclient::rest::model::RegisteredSchema &rs);
 
     /**
      * Get schema by subject and id
@@ -77,20 +77,20 @@ public:
     /**
      * Get registered schema by subject and schema
      */
-    std::optional<srclient::rest::model::RegisterSchemaResponse>
+    std::optional<srclient::rest::model::RegisteredSchema>
     getRegisteredBySchema(const std::string &subject,
                           const srclient::rest::model::Schema &schema) const;
 
     /**
      * Get registered schema by subject and version
      */
-    std::optional<srclient::rest::model::RegisterSchemaResponse>
+    std::optional<srclient::rest::model::RegisteredSchema>
     getRegisteredByVersion(const std::string &subject, int32_t version) const;
 
     /**
      * Get registered schema by subject and id
      */
-    std::optional<srclient::rest::model::RegisterSchemaResponse>
+    std::optional<srclient::rest::model::RegisteredSchema>
     getRegisteredById(const std::string &subject, int32_t schemaId) const;
 
     /**

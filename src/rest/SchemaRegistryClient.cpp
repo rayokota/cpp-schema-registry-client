@@ -100,10 +100,10 @@ srclient::rest::model::Schema SchemaRegistryClient::parseSchemaFromJson(const st
     }
 }
 
-srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::parseRegisteredSchemaFromJson(const std::string& jsonStr) const {
+srclient::rest::model::RegisteredSchema SchemaRegistryClient::parseRegisteredSchemaFromJson(const std::string& jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        srclient::rest::model::RegisterSchemaResponse response;
+        srclient::rest::model::RegisteredSchema response;
         from_json(j, response);
         return response;
     } catch (const std::exception& e) {
@@ -172,7 +172,7 @@ void SchemaRegistryClient::close() {
     clearCaches();
 }
 
-srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::registerSchema(
+srclient::rest::model::RegisteredSchema SchemaRegistryClient::registerSchema(
     const std::string& subject,
     const srclient::rest::model::Schema& schema,
     bool normalize) {
@@ -200,7 +200,7 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::registerSche
     std::string responseBody = sendHttpRequest(path, "POST", query, body);
     
     // Parse response
-    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
@@ -239,7 +239,7 @@ srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
     srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema());
     
     // Update cache
@@ -275,7 +275,7 @@ srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
     srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema());
     
     // Update cache
@@ -287,7 +287,7 @@ srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
     return schema;
 }
 
-srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getBySchema(
+srclient::rest::model::RegisteredSchema SchemaRegistryClient::getBySchema(
     const std::string& subject,
     const srclient::rest::model::Schema& schema,
     bool normalize,
@@ -317,7 +317,7 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getBySchema(
     std::string responseBody = sendHttpRequest(path, "POST", query, body);
     
     // Parse response
-    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
@@ -328,7 +328,7 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getBySchema(
     return response;
 }
 
-srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getVersion(
+srclient::rest::model::RegisteredSchema SchemaRegistryClient::getVersion(
     const std::string& subject,
     int32_t version,
     bool deleted,
@@ -355,7 +355,7 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getVersion(
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
@@ -367,7 +367,7 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getVersion(
     return response;
 }
 
-srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getLatestVersion(
+srclient::rest::model::RegisteredSchema SchemaRegistryClient::getLatestVersion(
     const std::string& subject,
     const std::optional<std::string>& format) {
     
@@ -391,7 +391,7 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getLatestVer
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {
@@ -402,7 +402,7 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getLatestVer
     return response;
 }
 
-srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getLatestWithMetadata(
+srclient::rest::model::RegisteredSchema SchemaRegistryClient::getLatestWithMetadata(
     const std::string& subject,
     const std::unordered_map<std::string, std::string>& metadata,
     bool deleted,
@@ -436,7 +436,7 @@ srclient::rest::model::RegisterSchemaResponse SchemaRegistryClient::getLatestWit
     std::string responseBody = sendHttpRequest(path, "GET", query);
     
     // Parse response
-    srclient::rest::model::RegisterSchemaResponse response = parseRegisteredSchemaFromJson(responseBody);
+    srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
     
     // Update cache
     {

@@ -16,16 +16,16 @@ void SchemaStore::setSchema(const std::optional<std::string>& subject,
                            const std::optional<std::string>& schemaGuid,
                            const srclient::rest::model::Schema& schema) {
     std::string subjectStr = subject.value_or("");
-    
+
     if (schemaId.has_value()) {
         // Update schema id index
         schemaIdIndex[subjectStr][schemaId.value()] = std::make_pair(schemaGuid, schema);
-        
+
         // Update schema index
         std::string schemaHash = createSchemaHash(schema);
         schemaIndex[subjectStr][schemaHash] = schemaId.value();
     }
-    
+
     if (schemaGuid.has_value()) {
         // Update schema guid index
         schemaGuidIndex[schemaGuid.value()] = schema;
@@ -33,38 +33,38 @@ void SchemaStore::setSchema(const std::optional<std::string>& subject,
 }
 
 void SchemaStore::setRegisteredSchema(const srclient::rest::model::Schema& schema,
-                                     const srclient::rest::model::RegisterSchemaResponse& rs) {
+                                     const srclient::rest::model::RegisteredSchema& rs) {
     std::string subjectStr = "";
     if (rs.subjectIsSet()) {
         subjectStr = rs.getSubject();
     }
-    
+
     std::string schemaHash = createSchemaHash(schema);
-    
+
     // Update registered schema by ID index
     if (rs.idIsSet()) {
         rsIdIndex[subjectStr][rs.getId()] = rs;
     }
-    
+
     // Update registered schema by version index
     if (rs.versionIsSet()) {
         rsVersionIndex[subjectStr][rs.getVersion()] = rs;
     }
-    
+
     // Update registered schema by schema index
     rsSchemaIndex[subjectStr][schemaHash] = rs;
-    
+
     // Also update the schema store
     std::optional<std::string> guid;
     if (rs.schemaIsSet()) {
         guid = rs.getSchema();
     }
-    
+
     std::optional<std::string> subjectOpt;
     if (!subjectStr.empty()) {
         subjectOpt = subjectStr;
     }
-    
+
     setSchema(subjectOpt, rs.getId(), guid, schema);
 }
 
@@ -102,7 +102,7 @@ std::optional<int32_t> SchemaStore::getIdBySchema(const std::string& subject,
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisterSchemaResponse>
+std::optional<srclient::rest::model::RegisteredSchema>
 SchemaStore::getRegisteredBySchema(const std::string& subject,
                                   const srclient::rest::model::Schema& schema) const {
     auto subjectIt = rsSchemaIndex.find(subject);
@@ -116,7 +116,7 @@ SchemaStore::getRegisteredBySchema(const std::string& subject,
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisterSchemaResponse>
+std::optional<srclient::rest::model::RegisteredSchema>
 SchemaStore::getRegisteredByVersion(const std::string& subject, int32_t version) const {
     auto subjectIt = rsVersionIndex.find(subject);
     if (subjectIt != rsVersionIndex.end()) {
@@ -128,7 +128,7 @@ SchemaStore::getRegisteredByVersion(const std::string& subject, int32_t version)
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisterSchemaResponse>
+std::optional<srclient::rest::model::RegisteredSchema>
 SchemaStore::getRegisteredById(const std::string& subject, int32_t schemaId) const {
     auto subjectIt = rsIdIndex.find(subject);
     if (subjectIt != rsIdIndex.end()) {
@@ -156,7 +156,7 @@ std::string SchemaStore::createSchemaHash(const srclient::rest::model::Schema& s
     if (schema.schemaTypeIsSet()) {
         ss << "_" << schema.getSchemaType();
     }
-    
+
     // Use std::hash to create a hash value
     std::hash<std::string> hasher;
     return std::to_string(hasher(ss.str()));

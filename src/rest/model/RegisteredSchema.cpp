@@ -11,7 +11,7 @@
 */
 
 
-#include "srclient/rest/model/RegisterSchemaResponse.h"
+#include "srclient/rest/model/RegisteredSchema.h"
 #include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
@@ -19,7 +19,7 @@
 namespace srclient::rest::model
 {
 
-RegisterSchemaResponse::RegisterSchemaResponse()
+RegisteredSchema::RegisteredSchema()
 {
     m_Id = 0;
     m_IdIsSet = false;
@@ -39,7 +39,7 @@ RegisterSchemaResponse::RegisterSchemaResponse()
     
 }
 
-void RegisterSchemaResponse::validate() const
+void RegisteredSchema::validate() const
 {
     std::stringstream msg;
     if (!validate(msg))
@@ -48,15 +48,15 @@ void RegisterSchemaResponse::validate() const
     }
 }
 
-bool RegisterSchemaResponse::validate(std::stringstream& msg) const
+bool RegisteredSchema::validate(std::stringstream& msg) const
 {
     return validate(msg, "");
 }
 
-bool RegisterSchemaResponse::validate(std::stringstream& msg, const std::string& pathPrefix) const
+bool RegisteredSchema::validate(std::stringstream& msg, const std::string& pathPrefix) const
 {
     bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "RegisterSchemaResponse" : pathPrefix;
+    const std::string _pathPrefix = pathPrefix.empty() ? "RegisteredSchema" : pathPrefix;
 
                      
     if (referencesIsSet())
@@ -83,7 +83,7 @@ bool RegisterSchemaResponse::validate(std::stringstream& msg, const std::string&
     return success;
 }
 
-bool RegisterSchemaResponse::operator==(const RegisterSchemaResponse& rhs) const
+bool RegisteredSchema::operator==(const RegisteredSchema& rhs) const
 {
     return
     
@@ -112,12 +112,12 @@ bool RegisterSchemaResponse::operator==(const RegisterSchemaResponse& rhs) const
     ;
 }
 
-bool RegisterSchemaResponse::operator!=(const RegisterSchemaResponse& rhs) const
+bool RegisteredSchema::operator!=(const RegisteredSchema& rhs) const
 {
     return !(*this == rhs);
 }
 
-void to_json(nlohmann::json& j, const RegisterSchemaResponse& o)
+void to_json(nlohmann::json& j, const RegisteredSchema& o)
 {
     j = nlohmann::json::object();
     if(o.idIsSet())
@@ -141,7 +141,7 @@ void to_json(nlohmann::json& j, const RegisterSchemaResponse& o)
     
 }
 
-void from_json(const nlohmann::json& j, RegisterSchemaResponse& o)
+void from_json(const nlohmann::json& j, RegisteredSchema& o)
 {
     if(j.find("id") != j.end())
     {
@@ -191,156 +191,156 @@ void from_json(const nlohmann::json& j, RegisterSchemaResponse& o)
     
 }
 
-int32_t RegisterSchemaResponse::getId() const
+int32_t RegisteredSchema::getId() const
 {
     return m_Id;
 }
-void RegisterSchemaResponse::setId(int32_t const value)
+void RegisteredSchema::setId(int32_t const value)
 {
     m_Id = value;
     m_IdIsSet = true;
 }
-bool RegisterSchemaResponse::idIsSet() const
+bool RegisteredSchema::idIsSet() const
 {
     return m_IdIsSet;
 }
-void RegisterSchemaResponse::unsetId()
+void RegisteredSchema::unsetId()
 {
     m_IdIsSet = false;
 }
-std::string RegisterSchemaResponse::getGuid() const
+std::string RegisteredSchema::getGuid() const
 {
     return m_Guid;
 }
-void RegisterSchemaResponse::setGuid(std::string const& value)
+void RegisteredSchema::setGuid(std::string const& value)
 {
     m_Guid = value;
     m_GuidIsSet = true;
 }
-bool RegisterSchemaResponse::guidIsSet() const
+bool RegisteredSchema::guidIsSet() const
 {
     return m_GuidIsSet;
 }
-void RegisterSchemaResponse::unsetGuid()
+void RegisteredSchema::unsetGuid()
 {
     m_GuidIsSet = false;
 }
-std::string RegisterSchemaResponse::getSubject() const
+std::string RegisteredSchema::getSubject() const
 {
     return m_Subject;
 }
-void RegisterSchemaResponse::setSubject(std::string const& value)
+void RegisteredSchema::setSubject(std::string const& value)
 {
     m_Subject = value;
     m_SubjectIsSet = true;
 }
-bool RegisterSchemaResponse::subjectIsSet() const
+bool RegisteredSchema::subjectIsSet() const
 {
     return m_SubjectIsSet;
 }
-void RegisterSchemaResponse::unsetSubject()
+void RegisteredSchema::unsetSubject()
 {
     m_SubjectIsSet = false;
 }
-int32_t RegisterSchemaResponse::getVersion() const
+int32_t RegisteredSchema::getVersion() const
 {
     return m_Version;
 }
-void RegisterSchemaResponse::setVersion(int32_t const value)
+void RegisteredSchema::setVersion(int32_t const value)
 {
     m_Version = value;
     m_VersionIsSet = true;
 }
-bool RegisterSchemaResponse::versionIsSet() const
+bool RegisteredSchema::versionIsSet() const
 {
     return m_VersionIsSet;
 }
-void RegisterSchemaResponse::unsetVersion()
+void RegisteredSchema::unsetVersion()
 {
     m_VersionIsSet = false;
 }
-std::string RegisterSchemaResponse::getSchemaType() const
+std::string RegisteredSchema::getSchemaType() const
 {
     return m_SchemaType;
 }
-void RegisterSchemaResponse::setSchemaType(std::string const& value)
+void RegisteredSchema::setSchemaType(std::string const& value)
 {
     m_SchemaType = value;
     m_SchemaTypeIsSet = true;
 }
-bool RegisterSchemaResponse::schemaTypeIsSet() const
+bool RegisteredSchema::schemaTypeIsSet() const
 {
     return m_SchemaTypeIsSet;
 }
-void RegisterSchemaResponse::unsetSchemaType()
+void RegisteredSchema::unsetSchemaType()
 {
     m_SchemaTypeIsSet = false;
 }
-std::vector<srclient::rest::model::SchemaReference> RegisterSchemaResponse::getReferences() const
+std::vector<srclient::rest::model::SchemaReference> RegisteredSchema::getReferences() const
 {
     return m_References;
 }
-void RegisterSchemaResponse::setReferences(std::vector<srclient::rest::model::SchemaReference> const& value)
+void RegisteredSchema::setReferences(std::vector<srclient::rest::model::SchemaReference> const& value)
 {
     m_References = value;
     m_ReferencesIsSet = true;
 }
-bool RegisterSchemaResponse::referencesIsSet() const
+bool RegisteredSchema::referencesIsSet() const
 {
     return m_ReferencesIsSet;
 }
-void RegisterSchemaResponse::unsetReferences()
+void RegisteredSchema::unsetReferences()
 {
     m_ReferencesIsSet = false;
 }
-srclient::rest::model::Metadata RegisterSchemaResponse::getMetadata() const
+srclient::rest::model::Metadata RegisteredSchema::getMetadata() const
 {
     return m_Metadata;
 }
-void RegisterSchemaResponse::setMetadata(srclient::rest::model::Metadata const& value)
+void RegisteredSchema::setMetadata(srclient::rest::model::Metadata const& value)
 {
     m_Metadata = value;
     m_MetadataIsSet = true;
 }
-bool RegisterSchemaResponse::metadataIsSet() const
+bool RegisteredSchema::metadataIsSet() const
 {
     return m_MetadataIsSet;
 }
-void RegisterSchemaResponse::unsetMetadata()
+void RegisteredSchema::unsetMetadata()
 {
     m_MetadataIsSet = false;
 }
-srclient::rest::model::RuleSet RegisterSchemaResponse::getRuleSet() const
+srclient::rest::model::RuleSet RegisteredSchema::getRuleSet() const
 {
     return m_RuleSet;
 }
-void RegisterSchemaResponse::setRuleSet(srclient::rest::model::RuleSet const& value)
+void RegisteredSchema::setRuleSet(srclient::rest::model::RuleSet const& value)
 {
     m_RuleSet = value;
     m_RuleSetIsSet = true;
 }
-bool RegisterSchemaResponse::ruleSetIsSet() const
+bool RegisteredSchema::ruleSetIsSet() const
 {
     return m_RuleSetIsSet;
 }
-void RegisterSchemaResponse::unsetRuleSet()
+void RegisteredSchema::unsetRuleSet()
 {
     m_RuleSetIsSet = false;
 }
-std::string RegisterSchemaResponse::getSchema() const
+std::string RegisteredSchema::getSchema() const
 {
     return m_Schema;
 }
-void RegisterSchemaResponse::setSchema(std::string const& value)
+void RegisteredSchema::setSchema(std::string const& value)
 {
     m_Schema = value;
     m_SchemaIsSet = true;
 }
-bool RegisterSchemaResponse::schemaIsSet() const
+bool RegisteredSchema::schemaIsSet() const
 {
     return m_SchemaIsSet;
 }
-void RegisterSchemaResponse::unsetSchema()
+void RegisteredSchema::unsetSchema()
 {
     m_SchemaIsSet = false;
 }

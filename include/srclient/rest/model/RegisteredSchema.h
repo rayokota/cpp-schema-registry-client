@@ -10,13 +10,13 @@
 * Do not edit the class manually.
 */
 /*
- * RegisterSchemaResponse.h
+ * RegisteredSchema.h
  *
  * Schema register response
  */
 
-#ifndef RegisterSchemaResponse_H_
-#define RegisterSchemaResponse_H_
+#ifndef RegisteredSchema_H_
+#define RegisteredSchema_H_
 
 
 #include "SchemaReference.h"
@@ -32,11 +32,11 @@ namespace srclient::rest::model
 /// <summary>
 /// Schema register response
 /// </summary>
-class  RegisterSchemaResponse
+class  RegisteredSchema
 {
 public:
-    RegisterSchemaResponse();
-    virtual ~RegisterSchemaResponse() = default;
+    RegisteredSchema();
+    virtual ~RegisteredSchema() = default;
 
 
     /// <summary>
@@ -56,11 +56,11 @@ public:
     /// </summary>
     bool validate(std::stringstream& msg, const std::string& pathPrefix) const;
 
-    bool operator==(const RegisterSchemaResponse& rhs) const;
-    bool operator!=(const RegisterSchemaResponse& rhs) const;
+    bool operator==(const RegisteredSchema& rhs) const;
+    bool operator!=(const RegisteredSchema& rhs) const;
 
     /////////////////////////////////////////////
-    /// RegisterSchemaResponse members
+    /// RegisteredSchema members
 
     /// <summary>
     /// Identifier of the schema
@@ -126,8 +126,8 @@ public:
     bool schemaIsSet() const;
     void unsetSchema();
 
-    friend  void to_json(nlohmann::json& j, const RegisterSchemaResponse& o);
-    friend  void from_json(const nlohmann::json& j, RegisterSchemaResponse& o);
+    friend  void to_json(nlohmann::json& j, const RegisteredSchema& o);
+    friend  void from_json(const nlohmann::json& j, RegisteredSchema& o);
 protected:
     int32_t m_Id;
     bool m_IdIsSet;
@@ -152,4 +152,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* RegisterSchemaResponse_H_ */
+#endif /* RegisteredSchema_H_ */

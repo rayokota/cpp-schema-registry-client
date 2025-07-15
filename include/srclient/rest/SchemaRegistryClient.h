@@ -20,7 +20,7 @@
 #include "srclient/rest/RestException.h"
 #include "srclient/rest/SchemaStore.h"
 #include "srclient/rest/model/Schema.h"
-#include "srclient/rest/model/RegisterSchemaResponse.h"
+#include "srclient/rest/model/RegisteredSchema.h"
 #include "srclient/rest/model/ServerConfig.h"
 
 namespace srclient::rest {
@@ -35,7 +35,7 @@ public:
     /**
      * Register a schema for the given subject
      */
-    virtual srclient::rest::model::RegisterSchemaResponse registerSchema(
+    virtual srclient::rest::model::RegisteredSchema registerSchema(
             const std::string &subject,
             const srclient::rest::model::Schema &schema,
             bool normalize = false) = 0;
@@ -58,7 +58,7 @@ public:
     /**
      * Get registered schema by subject and schema
      */
-    virtual srclient::rest::model::RegisterSchemaResponse getBySchema(
+    virtual srclient::rest::model::RegisteredSchema getBySchema(
             const std::string &subject,
             const srclient::rest::model::Schema &schema,
             bool normalize = false,
@@ -67,7 +67,7 @@ public:
     /**
      * Get registered schema by subject and version
      */
-    virtual srclient::rest::model::RegisterSchemaResponse getVersion(
+    virtual srclient::rest::model::RegisteredSchema getVersion(
             const std::string &subject,
             int32_t version,
             bool deleted = false,
@@ -76,14 +76,14 @@ public:
     /**
      * Get latest version of schema for subject
      */
-    virtual srclient::rest::model::RegisterSchemaResponse getLatestVersion(
+    virtual srclient::rest::model::RegisteredSchema getLatestVersion(
             const std::string &subject,
             const std::optional<std::string> &format = std::nullopt) = 0;
 
     /**
      * Get latest version with metadata
      */
-    virtual srclient::rest::model::RegisterSchemaResponse getLatestWithMetadata(
+    virtual srclient::rest::model::RegisteredSchema getLatestWithMetadata(
             const std::string &subject,
             const std::unordered_map<std::string, std::string> &metadata,
             bool deleted = false,
@@ -168,8 +168,8 @@ private:
     std::shared_ptr<std::mutex> storeMutex;
 
     // Caches for latest versions
-    std::unordered_map<std::string, srclient::rest::model::RegisterSchemaResponse> latestVersionCache;
-    std::unordered_map<std::string, srclient::rest::model::RegisterSchemaResponse> latestWithMetadataCache;
+    std::unordered_map<std::string, srclient::rest::model::RegisteredSchema> latestVersionCache;
+    std::unordered_map<std::string, srclient::rest::model::RegisteredSchema> latestWithMetadataCache;
     std::shared_ptr<std::mutex> latestVersionCacheMutex;
     std::shared_ptr<std::mutex> latestWithMetadataCacheMutex;
 
@@ -186,7 +186,7 @@ private:
     // JSON processing helpers
     srclient::rest::model::Schema parseSchemaFromJson(const std::string &json) const;
 
-    srclient::rest::model::RegisterSchemaResponse parseRegisteredSchemaFromJson(const std::string &json) const;
+    srclient::rest::model::RegisteredSchema parseRegisteredSchemaFromJson(const std::string &json) const;
 
     srclient::rest::model::ServerConfig parseConfigFromJson(const std::string &json) const;
 
@@ -218,7 +218,7 @@ public:
     std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const;
 
     // Implement ISchemaRegistryClient methods
-    srclient::rest::model::RegisterSchemaResponse registerSchema(
+    srclient::rest::model::RegisteredSchema registerSchema(
             const std::string &subject,
             const srclient::rest::model::Schema &schema,
             bool normalize = false) override;
@@ -232,23 +232,23 @@ public:
             const std::string &guid,
             const std::optional<std::string> &format = std::nullopt) override;
 
-    srclient::rest::model::RegisterSchemaResponse getBySchema(
+    srclient::rest::model::RegisteredSchema getBySchema(
             const std::string &subject,
             const srclient::rest::model::Schema &schema,
             bool normalize = false,
             bool deleted = false) override;
 
-    srclient::rest::model::RegisterSchemaResponse getVersion(
+    srclient::rest::model::RegisteredSchema getVersion(
             const std::string &subject,
             int32_t version,
             bool deleted = false,
             const std::optional<std::string> &format = std::nullopt) override;
 
-    srclient::rest::model::RegisterSchemaResponse getLatestVersion(
+    srclient::rest::model::RegisteredSchema getLatestVersion(
             const std::string &subject,
             const std::optional<std::string> &format = std::nullopt) override;
 
-    srclient::rest::model::RegisterSchemaResponse getLatestWithMetadata(
+    srclient::rest::model::RegisteredSchema getLatestWithMetadata(
             const std::string &subject,
             const std::unordered_map<std::string, std::string> &metadata,
             bool deleted = false,
