@@ -24,6 +24,7 @@
 #include "Metadata.h"
 #include "RuleSet.h"
 #include <vector>
+#include <optional>
 #include <nlohmann/json.hpp>
 
 namespace srclient::rest::model
@@ -65,97 +66,67 @@ public:
     /// <summary>
     /// Name of the subject
     /// </summary>
-    std::string getSubject() const;
-    void setSubject(std::string const& value);
-    bool subjectIsSet() const;
-    void unsetSubject();
+    std::optional<std::string> getSubject() const;
+    void setSubject(const std::optional<std::string>& value);
     /// <summary>
     /// Version number
     /// </summary>
-    int32_t getVersion() const;
-    void setVersion(int32_t const value);
-    bool versionIsSet() const;
-    void unsetVersion();
+    std::optional<int32_t> getVersion() const;
+    void setVersion(const std::optional<int32_t>& value);
     /// <summary>
     /// Identifier of the schema
     /// </summary>
-    int32_t getId() const;
-    void setId(int32_t const value);
-    bool idIsSet() const;
-    void unsetId();
+    std::optional<int32_t> getId() const;
+    void setId(const std::optional<int32_t>& value);
     /// <summary>
     /// Globally unique identifier of the schema
     /// </summary>
-    std::string getGuid() const;
-    void setGuid(std::string const& value);
-    bool guidIsSet() const;
-    void unsetGuid();
+    std::optional<std::string> getGuid() const;
+    void setGuid(const std::optional<std::string>& value);
     /// <summary>
     /// Schema type
     /// </summary>
-    std::string getSchemaType() const;
-    void setSchemaType(std::string const& value);
-    bool schemaTypeIsSet() const;
-    void unsetSchemaType();
+    std::optional<std::string> getSchemaType() const;
+    void setSchemaType(const std::optional<std::string>& value);
     /// <summary>
     /// References to other schemas
     /// </summary>
-    std::vector<srclient::rest::model::SchemaReference> getReferences() const;
-    void setReferences(std::vector<srclient::rest::model::SchemaReference> const& value);
-    bool referencesIsSet() const;
-    void unsetReferences();
+    std::optional<std::vector<srclient::rest::model::SchemaReference>> getReferences() const;
+    void setReferences(const std::optional<std::vector<srclient::rest::model::SchemaReference>>& value);
     /// <summary>
     /// 
     /// </summary>
-    srclient::rest::model::Metadata getMetadata() const;
-    void setMetadata(srclient::rest::model::Metadata const& value);
-    bool metadataIsSet() const;
-    void unsetMetadata();
+    std::optional<srclient::rest::model::Metadata> getMetadata() const;
+    void setMetadata(const std::optional<srclient::rest::model::Metadata>& value);
     /// <summary>
     /// 
     /// </summary>
-    srclient::rest::model::RuleSet getRuleset() const;
-    void setRuleset(srclient::rest::model::RuleSet const& value);
-    bool rulesetIsSet() const;
-    void unsetRuleset();
+    std::optional<srclient::rest::model::RuleSet> getRuleset() const;
+    void setRuleset(const std::optional<srclient::rest::model::RuleSet>& value);
     /// <summary>
     /// Schema definition string
     /// </summary>
-    std::string getSchema() const;
-    void setSchema(std::string const& value);
-    bool schemaIsSet() const;
-    void unsetSchema();
+    std::optional<std::string> getSchema() const;
+    void setSchema(const std::optional<std::string>& value);
     /// <summary>
     /// 
     /// </summary>
-    srclient::rest::model::RuleSet getRuleSet() const;
-    void setRuleSet(srclient::rest::model::RuleSet const& value);
-    bool ruleSetIsSet() const;
-    void unsetRuleSet();
+    std::optional<srclient::rest::model::RuleSet> getRuleSet() const;
+    void setRuleSet(const std::optional<srclient::rest::model::RuleSet>& value);
 
     friend  void to_json(nlohmann::json& j, const Schema& o);
     friend  void from_json(const nlohmann::json& j, Schema& o);
 protected:
-    std::string m_Subject;
-    bool m_SubjectIsSet;
-    int32_t m_Version;
-    bool m_VersionIsSet;
-    int32_t m_Id;
-    bool m_IdIsSet;
-    std::string m_Guid;
-    bool m_GuidIsSet;
-    std::string m_SchemaType;
-    bool m_SchemaTypeIsSet;
-    std::vector<srclient::rest::model::SchemaReference> m_References;
-    bool m_ReferencesIsSet;
-    srclient::rest::model::Metadata m_Metadata;
-    bool m_MetadataIsSet;
-    srclient::rest::model::RuleSet m_Ruleset;
-    bool m_RulesetIsSet;
-    std::string m_Schema;
-    bool m_SchemaIsSet;
-    srclient::rest::model::RuleSet m_RuleSet;
-    bool m_RuleSetIsSet;
+    std::optional<std::string> m_Subject;
+    std::optional<int32_t> m_Version;
+    std::optional<int32_t> m_Id;
+    std::optional<std::string> m_Guid;
+    std::optional<std::string> m_SchemaType;
+    std::optional<std::vector<srclient::rest::model::SchemaReference>> m_References;
+    std::optional<srclient::rest::model::Metadata> m_Metadata;
+    std::optional<srclient::rest::model::RuleSet> m_Ruleset;
+    std::optional<std::string> m_Schema;
+    std::optional<srclient::rest::model::RuleSet> m_RuleSet;
     
 };
 

@@ -240,12 +240,12 @@ srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     
     // Parse response
     srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
-    srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema());
+    srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema().value());
     
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        store->setSchema(subject, std::make_optional(id), std::make_optional(response.getGuid()), schema);
+        store->setSchema(subject, std::make_optional(id), response.getGuid(), schema);
     }
     
     return schema;
@@ -276,7 +276,7 @@ srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
     
     // Parse response
     srclient::rest::model::RegisteredSchema response = parseRegisteredSchemaFromJson(responseBody);
-    srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema());
+    srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema().value());
     
     // Update cache
     {
@@ -360,7 +360,7 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::getVersion(
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema());
+        srclient::rest::model::Schema schema = parseSchemaFromJson(response.getSchema().value());
         store->setRegisteredSchema(schema, response);
     }
     

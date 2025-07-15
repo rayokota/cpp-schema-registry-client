@@ -21,11 +21,7 @@ namespace srclient::rest::model
 
 RuleSet::RuleSet()
 {
-    m_MigrationRulesIsSet = false;
-    m_DomainRulesIsSet = false;
-    m_Empty = false;
-    m_EmptyIsSet = false;
-    
+    // Optional members are initialized to std::nullopt by default
 }
 
 void RuleSet::validate() const
@@ -47,12 +43,10 @@ bool RuleSet::validate(std::stringstream& msg, const std::string& pathPrefix) co
     bool success = true;
     const std::string _pathPrefix = pathPrefix.empty() ? "RuleSet" : pathPrefix;
 
-         
-    if (migrationRulesIsSet())
+    if (m_MigrationRules.has_value())
     {
-        const std::vector<srclient::rest::model::Rule>& value = m_MigrationRules;
+        const std::vector<srclient::rest::model::Rule>& value = m_MigrationRules.value();
         const std::string currentValuePath = _pathPrefix + ".migrationRules";
-                
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
@@ -60,20 +54,16 @@ bool RuleSet::validate(std::stringstream& msg, const std::string& pathPrefix) co
             for (const srclient::rest::model::Rule& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                        
-        success = value.validate(msg, currentValuePath + ".migrationRules") && success;
- 
+                success = value.validate(msg, currentValuePath + ".migrationRules") && success;
                 i++;
             }
         }
-
     }
-         
-    if (domainRulesIsSet())
+    
+    if (m_DomainRules.has_value())
     {
-        const std::vector<srclient::rest::model::Rule>& value = m_DomainRules;
+        const std::vector<srclient::rest::model::Rule>& value = m_DomainRules.value();
         const std::string currentValuePath = _pathPrefix + ".domainRules";
-                
         
         { // Recursive validation of array elements
             const std::string oldValuePath = currentValuePath;
@@ -81,33 +71,21 @@ bool RuleSet::validate(std::stringstream& msg, const std::string& pathPrefix) co
             for (const srclient::rest::model::Rule& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                        
-        success = value.validate(msg, currentValuePath + ".domainRules") && success;
- 
+                success = value.validate(msg, currentValuePath + ".domainRules") && success;
                 i++;
             }
         }
-
     }
-        
+    
     return success;
 }
 
 bool RuleSet::operator==(const RuleSet& rhs) const
 {
     return
-    
-    
-    
-    ((!migrationRulesIsSet() && !rhs.migrationRulesIsSet()) || (migrationRulesIsSet() && rhs.migrationRulesIsSet() && getMigrationRules() == rhs.getMigrationRules())) &&
-    
-    
-    ((!domainRulesIsSet() && !rhs.domainRulesIsSet()) || (domainRulesIsSet() && rhs.domainRulesIsSet() && getDomainRules() == rhs.getDomainRules())) &&
-    
-    
-    ((!emptyIsSet() && !rhs.emptyIsSet()) || (emptyIsSet() && rhs.emptyIsSet() && isEmpty() == rhs.isEmpty()))
-    
-    ;
+        m_MigrationRules == rhs.m_MigrationRules &&
+        m_DomainRules == rhs.m_DomainRules &&
+        m_Empty == rhs.m_Empty;
 }
 
 bool RuleSet::operator!=(const RuleSet& rhs) const
@@ -118,87 +96,65 @@ bool RuleSet::operator!=(const RuleSet& rhs) const
 void to_json(nlohmann::json& j, const RuleSet& o)
 {
     j = nlohmann::json::object();
-    if(o.migrationRulesIsSet() || !o.m_MigrationRules.empty())
-        j["migrationRules"] = o.m_MigrationRules;
-    if(o.domainRulesIsSet() || !o.m_DomainRules.empty())
-        j["domainRules"] = o.m_DomainRules;
-    if(o.emptyIsSet())
-        j["empty"] = o.m_Empty;
-    
+    if(o.m_MigrationRules.has_value())
+        j["migrationRules"] = o.m_MigrationRules.value();
+    if(o.m_DomainRules.has_value())
+        j["domainRules"] = o.m_DomainRules.value();
+    if(o.m_Empty.has_value())
+        j["empty"] = o.m_Empty.value();
 }
 
 void from_json(const nlohmann::json& j, RuleSet& o)
 {
     if(j.find("migrationRules") != j.end())
     {
-        j.at("migrationRules").get_to(o.m_MigrationRules);
-        o.m_MigrationRulesIsSet = true;
+        std::vector<srclient::rest::model::Rule> temp;
+        j.at("migrationRules").get_to(temp);
+        o.m_MigrationRules = temp;
     } 
     if(j.find("domainRules") != j.end())
     {
-        j.at("domainRules").get_to(o.m_DomainRules);
-        o.m_DomainRulesIsSet = true;
+        std::vector<srclient::rest::model::Rule> temp;
+        j.at("domainRules").get_to(temp);
+        o.m_DomainRules = temp;
     } 
     if(j.find("empty") != j.end())
     {
-        j.at("empty").get_to(o.m_Empty);
-        o.m_EmptyIsSet = true;
+        bool temp;
+        j.at("empty").get_to(temp);
+        o.m_Empty = temp;
     } 
-    
 }
 
-std::vector<srclient::rest::model::Rule> RuleSet::getMigrationRules() const
+std::optional<std::vector<srclient::rest::model::Rule>> RuleSet::getMigrationRules() const
 {
     return m_MigrationRules;
 }
-void RuleSet::setMigrationRules(std::vector<srclient::rest::model::Rule> const& value)
+
+void RuleSet::setMigrationRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value)
 {
     m_MigrationRules = value;
-    m_MigrationRulesIsSet = true;
 }
-bool RuleSet::migrationRulesIsSet() const
-{
-    return m_MigrationRulesIsSet;
-}
-void RuleSet::unsetMigrationRules()
-{
-    m_MigrationRulesIsSet = false;
-}
-std::vector<srclient::rest::model::Rule> RuleSet::getDomainRules() const
+
+std::optional<std::vector<srclient::rest::model::Rule>> RuleSet::getDomainRules() const
 {
     return m_DomainRules;
 }
-void RuleSet::setDomainRules(std::vector<srclient::rest::model::Rule> const& value)
+
+void RuleSet::setDomainRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value)
 {
     m_DomainRules = value;
-    m_DomainRulesIsSet = true;
 }
-bool RuleSet::domainRulesIsSet() const
-{
-    return m_DomainRulesIsSet;
-}
-void RuleSet::unsetDomainRules()
-{
-    m_DomainRulesIsSet = false;
-}
-bool RuleSet::isEmpty() const
+
+std::optional<bool> RuleSet::isEmpty() const
 {
     return m_Empty;
 }
-void RuleSet::setEmpty(bool const value)
+
+void RuleSet::setEmpty(const std::optional<bool>& value)
 {
     m_Empty = value;
-    m_EmptyIsSet = true;
 }
-bool RuleSet::emptyIsSet() const
-{
-    return m_EmptyIsSet;
-}
-void RuleSet::unsetEmpty()
-{
-    m_EmptyIsSet = false;
-}
-
 
 } // namespace srclient::rest::model
 

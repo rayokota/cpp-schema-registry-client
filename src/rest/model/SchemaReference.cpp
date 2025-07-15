@@ -21,13 +21,7 @@ namespace srclient::rest::model
 
 SchemaReference::SchemaReference()
 {
-    m_Name = "";
-    m_NameIsSet = false;
-    m_Subject = "";
-    m_SubjectIsSet = false;
-    m_Version = 0;
-    m_VersionIsSet = false;
-    
+    // Optional members are initialized to std::nullopt by default
 }
 
 void SchemaReference::validate() const
@@ -49,25 +43,15 @@ bool SchemaReference::validate(std::stringstream& msg, const std::string& pathPr
     bool success = true;
     const std::string _pathPrefix = pathPrefix.empty() ? "SchemaReference" : pathPrefix;
 
-                
     return success;
 }
 
 bool SchemaReference::operator==(const SchemaReference& rhs) const
 {
     return
-    
-    
-    
-    ((!nameIsSet() && !rhs.nameIsSet()) || (nameIsSet() && rhs.nameIsSet() && getName() == rhs.getName())) &&
-    
-    
-    ((!subjectIsSet() && !rhs.subjectIsSet()) || (subjectIsSet() && rhs.subjectIsSet() && getSubject() == rhs.getSubject())) &&
-    
-    
-    ((!versionIsSet() && !rhs.versionIsSet()) || (versionIsSet() && rhs.versionIsSet() && getVersion() == rhs.getVersion()))
-    
-    ;
+        m_Name == rhs.m_Name &&
+        m_Subject == rhs.m_Subject &&
+        m_Version == rhs.m_Version;
 }
 
 bool SchemaReference::operator!=(const SchemaReference& rhs) const
@@ -78,87 +62,65 @@ bool SchemaReference::operator!=(const SchemaReference& rhs) const
 void to_json(nlohmann::json& j, const SchemaReference& o)
 {
     j = nlohmann::json::object();
-    if(o.nameIsSet())
-        j["name"] = o.m_Name;
-    if(o.subjectIsSet())
-        j["subject"] = o.m_Subject;
-    if(o.versionIsSet())
-        j["version"] = o.m_Version;
-    
+    if(o.m_Name.has_value())
+        j["name"] = o.m_Name.value();
+    if(o.m_Subject.has_value())
+        j["subject"] = o.m_Subject.value();
+    if(o.m_Version.has_value())
+        j["version"] = o.m_Version.value();
 }
 
 void from_json(const nlohmann::json& j, SchemaReference& o)
 {
     if(j.find("name") != j.end())
     {
-        j.at("name").get_to(o.m_Name);
-        o.m_NameIsSet = true;
+        std::string temp;
+        j.at("name").get_to(temp);
+        o.m_Name = temp;
     } 
     if(j.find("subject") != j.end())
     {
-        j.at("subject").get_to(o.m_Subject);
-        o.m_SubjectIsSet = true;
+        std::string temp;
+        j.at("subject").get_to(temp);
+        o.m_Subject = temp;
     } 
     if(j.find("version") != j.end())
     {
-        j.at("version").get_to(o.m_Version);
-        o.m_VersionIsSet = true;
+        int32_t temp;
+        j.at("version").get_to(temp);
+        o.m_Version = temp;
     } 
-    
 }
 
-std::string SchemaReference::getName() const
+std::optional<std::string> SchemaReference::getName() const
 {
     return m_Name;
 }
-void SchemaReference::setName(std::string const& value)
+
+void SchemaReference::setName(const std::optional<std::string>& value)
 {
     m_Name = value;
-    m_NameIsSet = true;
 }
-bool SchemaReference::nameIsSet() const
-{
-    return m_NameIsSet;
-}
-void SchemaReference::unsetName()
-{
-    m_NameIsSet = false;
-}
-std::string SchemaReference::getSubject() const
+
+std::optional<std::string> SchemaReference::getSubject() const
 {
     return m_Subject;
 }
-void SchemaReference::setSubject(std::string const& value)
+
+void SchemaReference::setSubject(const std::optional<std::string>& value)
 {
     m_Subject = value;
-    m_SubjectIsSet = true;
 }
-bool SchemaReference::subjectIsSet() const
-{
-    return m_SubjectIsSet;
-}
-void SchemaReference::unsetSubject()
-{
-    m_SubjectIsSet = false;
-}
-int32_t SchemaReference::getVersion() const
+
+std::optional<int32_t> SchemaReference::getVersion() const
 {
     return m_Version;
 }
-void SchemaReference::setVersion(int32_t const value)
+
+void SchemaReference::setVersion(const std::optional<int32_t>& value)
 {
     m_Version = value;
-    m_VersionIsSet = true;
 }
-bool SchemaReference::versionIsSet() const
-{
-    return m_VersionIsSet;
-}
-void SchemaReference::unsetVersion()
-{
-    m_VersionIsSet = false;
-}
-
 
 } // namespace srclient::rest::model
 

@@ -5,6 +5,7 @@
 #include <string>
 #include "Metadata.h"
 #include "RuleSet.h"
+#include <optional>
 #include <nlohmann/json.hpp>
 
 namespace srclient::rest::model
@@ -46,97 +47,67 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    std::string getAlias() const;
-    void setAlias(std::string const& value);
-    bool aliasIsSet() const;
-    void unsetAlias();
+    std::optional<std::string> getAlias() const;
+    void setAlias(const std::optional<std::string>& value);
     /// <summary>
     /// 
     /// </summary>
-    bool isNormalize() const;
-    void setNormalize(bool const value);
-    bool normalizeIsSet() const;
-    void unsetNormalize();
+    std::optional<bool> isNormalize() const;
+    void setNormalize(const std::optional<bool>& value);
     /// <summary>
     /// 
     /// </summary>
-    bool isValidateFields() const;
-    void setValidateFields(bool const value);
-    bool validateFieldsIsSet() const;
-    void unsetValidateFields();
+    std::optional<bool> isValidateFields() const;
+    void setValidateFields(const std::optional<bool>& value);
     /// <summary>
     /// 
     /// </summary>
-    bool isValidateRules() const;
-    void setValidateRules(bool const value);
-    bool validateRulesIsSet() const;
-    void unsetValidateRules();
+    std::optional<bool> isValidateRules() const;
+    void setValidateRules(const std::optional<bool>& value);
     /// <summary>
     /// Compatibility Level
     /// </summary>
-    std::string getCompatibilityLevel() const;
-    void setCompatibilityLevel(std::string const& value);
-    bool compatibilityLevelIsSet() const;
-    void unsetCompatibilityLevel();
+    std::optional<std::string> getCompatibilityLevel() const;
+    void setCompatibilityLevel(const std::optional<std::string>& value);
     /// <summary>
     /// 
     /// </summary>
-    std::string getCompatibilityGroup() const;
-    void setCompatibilityGroup(std::string const& value);
-    bool compatibilityGroupIsSet() const;
-    void unsetCompatibilityGroup();
+    std::optional<std::string> getCompatibilityGroup() const;
+    void setCompatibilityGroup(const std::optional<std::string>& value);
     /// <summary>
     /// 
     /// </summary>
-    srclient::rest::model::Metadata getDefaultMetadata() const;
-    void setDefaultMetadata(srclient::rest::model::Metadata const& value);
-    bool defaultMetadataIsSet() const;
-    void unsetDefaultMetadata();
+    std::optional<srclient::rest::model::Metadata> getDefaultMetadata() const;
+    void setDefaultMetadata(const std::optional<srclient::rest::model::Metadata>& value);
     /// <summary>
     /// 
     /// </summary>
-    srclient::rest::model::Metadata getOverrideMetadata() const;
-    void setOverrideMetadata(srclient::rest::model::Metadata const& value);
-    bool overrideMetadataIsSet() const;
-    void unsetOverrideMetadata();
+    std::optional<srclient::rest::model::Metadata> getOverrideMetadata() const;
+    void setOverrideMetadata(const std::optional<srclient::rest::model::Metadata>& value);
     /// <summary>
     /// 
     /// </summary>
-    srclient::rest::model::RuleSet getDefaultRuleSet() const;
-    void setDefaultRuleSet(srclient::rest::model::RuleSet const& value);
-    bool defaultRuleSetIsSet() const;
-    void unsetDefaultRuleSet();
+    std::optional<srclient::rest::model::RuleSet> getDefaultRuleSet() const;
+    void setDefaultRuleSet(const std::optional<srclient::rest::model::RuleSet>& value);
     /// <summary>
     /// 
     /// </summary>
-    srclient::rest::model::RuleSet getOverrideRuleSet() const;
-    void setOverrideRuleSet(srclient::rest::model::RuleSet const& value);
-    bool overrideRuleSetIsSet() const;
-    void unsetOverrideRuleSet();
+    std::optional<srclient::rest::model::RuleSet> getOverrideRuleSet() const;
+    void setOverrideRuleSet(const std::optional<srclient::rest::model::RuleSet>& value);
 
     friend  void to_json(nlohmann::json& j, const ServerConfig& o);
     friend  void from_json(const nlohmann::json& j, ServerConfig& o);
 protected:
-    std::string m_Alias;
-    bool m_AliasIsSet;
-    bool m_Normalize;
-    bool m_NormalizeIsSet;
-    bool m_ValidateFields;
-    bool m_ValidateFieldsIsSet;
-    bool m_ValidateRules;
-    bool m_ValidateRulesIsSet;
-    std::string m_CompatibilityLevel;
-    bool m_CompatibilityLevelIsSet;
-    std::string m_CompatibilityGroup;
-    bool m_CompatibilityGroupIsSet;
-    srclient::rest::model::Metadata m_DefaultMetadata;
-    bool m_DefaultMetadataIsSet;
-    srclient::rest::model::Metadata m_OverrideMetadata;
-    bool m_OverrideMetadataIsSet;
-    srclient::rest::model::RuleSet m_DefaultRuleSet;
-    bool m_DefaultRuleSetIsSet;
-    srclient::rest::model::RuleSet m_OverrideRuleSet;
-    bool m_OverrideRuleSetIsSet;
+    std::optional<std::string> m_Alias;
+    std::optional<bool> m_Normalize;
+    std::optional<bool> m_ValidateFields;
+    std::optional<bool> m_ValidateRules;
+    std::optional<std::string> m_CompatibilityLevel;
+    std::optional<std::string> m_CompatibilityGroup;
+    std::optional<srclient::rest::model::Metadata> m_DefaultMetadata;
+    std::optional<srclient::rest::model::Metadata> m_OverrideMetadata;
+    std::optional<srclient::rest::model::RuleSet> m_DefaultRuleSet;
+    std::optional<srclient::rest::model::RuleSet> m_OverrideRuleSet;
     
 };
 

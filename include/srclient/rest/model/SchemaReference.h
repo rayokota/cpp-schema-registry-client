@@ -20,6 +20,7 @@
 
 
 #include <string>
+#include <optional>
 #include <nlohmann/json.hpp>
 
 namespace srclient::rest::model
@@ -61,34 +62,25 @@ public:
     /// <summary>
     /// Reference name
     /// </summary>
-    std::string getName() const;
-    void setName(std::string const& value);
-    bool nameIsSet() const;
-    void unsetName();
+    std::optional<std::string> getName() const;
+    void setName(const std::optional<std::string>& value);
     /// <summary>
     /// Name of the referenced subject
     /// </summary>
-    std::string getSubject() const;
-    void setSubject(std::string const& value);
-    bool subjectIsSet() const;
-    void unsetSubject();
+    std::optional<std::string> getSubject() const;
+    void setSubject(const std::optional<std::string>& value);
     /// <summary>
     /// Version number of the referenced subject
     /// </summary>
-    int32_t getVersion() const;
-    void setVersion(int32_t const value);
-    bool versionIsSet() const;
-    void unsetVersion();
+    std::optional<int32_t> getVersion() const;
+    void setVersion(const std::optional<int32_t>& value);
 
     friend  void to_json(nlohmann::json& j, const SchemaReference& o);
     friend  void from_json(const nlohmann::json& j, SchemaReference& o);
 protected:
-    std::string m_Name;
-    bool m_NameIsSet;
-    std::string m_Subject;
-    bool m_SubjectIsSet;
-    int32_t m_Version;
-    bool m_VersionIsSet;
+    std::optional<std::string> m_Name;
+    std::optional<std::string> m_Subject;
+    std::optional<int32_t> m_Version;
     
 };
 

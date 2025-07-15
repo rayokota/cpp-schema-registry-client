@@ -21,10 +21,7 @@ namespace srclient::rest::model
 
 Metadata::Metadata()
 {
-    m_TagsIsSet = false;
-    m_PropertiesIsSet = false;
-    m_SensitiveIsSet = false;
-    
+    // Optional members are initialized to std::nullopt by default
 }
 
 void Metadata::validate() const
@@ -47,9 +44,9 @@ bool Metadata::validate(std::stringstream& msg, const std::string& pathPrefix) c
     const std::string _pathPrefix = pathPrefix.empty() ? "Metadata" : pathPrefix;
 
                  
-    if (sensitiveIsSet())
+    if (m_Sensitive.has_value())
     {
-        const std::set<std::string>& value = m_Sensitive;
+        const std::set<std::string>& value = m_Sensitive.value();
         const std::string currentValuePath = _pathPrefix + ".sensitive";
                 
         
@@ -79,18 +76,9 @@ bool Metadata::validate(std::stringstream& msg, const std::string& pathPrefix) c
 bool Metadata::operator==(const Metadata& rhs) const
 {
     return
-    
-    
-    
-    ((!tagsIsSet() && !rhs.tagsIsSet()) || (tagsIsSet() && rhs.tagsIsSet() && getTags() == rhs.getTags())) &&
-    
-    
-    ((!propertiesIsSet() && !rhs.propertiesIsSet()) || (propertiesIsSet() && rhs.propertiesIsSet() && getProperties() == rhs.getProperties())) &&
-    
-    
-    ((!sensitiveIsSet() && !rhs.sensitiveIsSet()) || (sensitiveIsSet() && rhs.sensitiveIsSet() && getSensitive() == rhs.getSensitive()))
-    
-    ;
+        m_Tags == rhs.m_Tags &&
+        m_Properties == rhs.m_Properties &&
+        m_Sensitive == rhs.m_Sensitive;
 }
 
 bool Metadata::operator!=(const Metadata& rhs) const
@@ -101,87 +89,65 @@ bool Metadata::operator!=(const Metadata& rhs) const
 void to_json(nlohmann::json& j, const Metadata& o)
 {
     j = nlohmann::json::object();
-    if(o.tagsIsSet() || !o.m_Tags.empty())
-        j["tags"] = o.m_Tags;
-    if(o.propertiesIsSet() || !o.m_Properties.empty())
-        j["properties"] = o.m_Properties;
-    if(o.sensitiveIsSet() || !o.m_Sensitive.empty())
-        j["sensitive"] = o.m_Sensitive;
-    
+    if(o.m_Tags.has_value())
+        j["tags"] = o.m_Tags.value();
+    if(o.m_Properties.has_value())
+        j["properties"] = o.m_Properties.value();
+    if(o.m_Sensitive.has_value())
+        j["sensitive"] = o.m_Sensitive.value();
 }
 
 void from_json(const nlohmann::json& j, Metadata& o)
 {
     if(j.find("tags") != j.end())
     {
-        j.at("tags").get_to(o.m_Tags);
-        o.m_TagsIsSet = true;
+        std::map<std::string, std::set<std::string>> temp;
+        j.at("tags").get_to(temp);
+        o.m_Tags = temp;
     } 
     if(j.find("properties") != j.end())
     {
-        j.at("properties").get_to(o.m_Properties);
-        o.m_PropertiesIsSet = true;
+        std::map<std::string, std::string> temp;
+        j.at("properties").get_to(temp);
+        o.m_Properties = temp;
     } 
     if(j.find("sensitive") != j.end())
     {
-        j.at("sensitive").get_to(o.m_Sensitive);
-        o.m_SensitiveIsSet = true;
+        std::set<std::string> temp;
+        j.at("sensitive").get_to(temp);
+        o.m_Sensitive = temp;
     } 
-    
 }
 
-std::map<std::string, std::set<std::string>> Metadata::getTags() const
+std::optional<std::map<std::string, std::set<std::string>>> Metadata::getTags() const
 {
     return m_Tags;
 }
-void Metadata::setTags(std::map<std::string, std::set<std::string>> const& value)
+
+void Metadata::setTags(const std::optional<std::map<std::string, std::set<std::string>>>& value)
 {
     m_Tags = value;
-    m_TagsIsSet = true;
 }
-bool Metadata::tagsIsSet() const
-{
-    return m_TagsIsSet;
-}
-void Metadata::unsetTags()
-{
-    m_TagsIsSet = false;
-}
-std::map<std::string, std::string> Metadata::getProperties() const
+
+std::optional<std::map<std::string, std::string>> Metadata::getProperties() const
 {
     return m_Properties;
 }
-void Metadata::setProperties(std::map<std::string, std::string> const& value)
+
+void Metadata::setProperties(const std::optional<std::map<std::string, std::string>>& value)
 {
     m_Properties = value;
-    m_PropertiesIsSet = true;
 }
-bool Metadata::propertiesIsSet() const
-{
-    return m_PropertiesIsSet;
-}
-void Metadata::unsetProperties()
-{
-    m_PropertiesIsSet = false;
-}
-std::set<std::string> Metadata::getSensitive() const
+
+std::optional<std::set<std::string>> Metadata::getSensitive() const
 {
     return m_Sensitive;
 }
-void Metadata::setSensitive(std::set<std::string> const& value)
+
+void Metadata::setSensitive(const std::optional<std::set<std::string>>& value)
 {
     m_Sensitive = value;
-    m_SensitiveIsSet = true;
 }
-bool Metadata::sensitiveIsSet() const
-{
-    return m_SensitiveIsSet;
-}
-void Metadata::unsetSensitive()
-{
-    m_SensitiveIsSet = false;
-}
-
 
 } // namespace srclient::rest::model
 

@@ -21,27 +21,7 @@ namespace srclient::rest::model
 
 Rule::Rule()
 {
-    m_Name = "";
-    m_NameIsSet = false;
-    m_Doc = "";
-    m_DocIsSet = false;
-    m_Kind = "";
-    m_KindIsSet = false;
-    m_Mode = "";
-    m_ModeIsSet = false;
-    m_Type = "";
-    m_TypeIsSet = false;
-    m_TagsIsSet = false;
-    m_ParamsIsSet = false;
-    m_Expr = "";
-    m_ExprIsSet = false;
-    m_OnSuccess = "";
-    m_OnSuccessIsSet = false;
-    m_OnFailure = "";
-    m_OnFailureIsSet = false;
-    m_Disabled = false;
-    m_DisabledIsSet = false;
-    
+    // Optional members are initialized to std::nullopt by default
 }
 
 void Rule::validate() const
@@ -63,12 +43,10 @@ bool Rule::validate(std::stringstream& msg, const std::string& pathPrefix) const
     bool success = true;
     const std::string _pathPrefix = pathPrefix.empty() ? "Rule" : pathPrefix;
 
-                             
-    if (tagsIsSet())
+    if (m_Tags.has_value())
     {
-        const std::set<std::string>& value = m_Tags;
+        const std::set<std::string>& value = m_Tags.value();
         const std::string currentValuePath = _pathPrefix + ".tags";
-                
         
         if (!srclient::rest::model::hasOnlyUniqueItems(value))
         {
@@ -81,57 +59,28 @@ bool Rule::validate(std::stringstream& msg, const std::string& pathPrefix) const
             for (const std::string& value : value)
             { 
                 const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                        
-        
- 
                 i++;
             }
         }
-
     }
-                        
+    
     return success;
 }
 
 bool Rule::operator==(const Rule& rhs) const
 {
     return
-    
-    
-    
-    ((!nameIsSet() && !rhs.nameIsSet()) || (nameIsSet() && rhs.nameIsSet() && getName() == rhs.getName())) &&
-    
-    
-    ((!docIsSet() && !rhs.docIsSet()) || (docIsSet() && rhs.docIsSet() && getDoc() == rhs.getDoc())) &&
-    
-    
-    ((!kindIsSet() && !rhs.kindIsSet()) || (kindIsSet() && rhs.kindIsSet() && getKind() == rhs.getKind())) &&
-    
-    
-    ((!modeIsSet() && !rhs.modeIsSet()) || (modeIsSet() && rhs.modeIsSet() && getMode() == rhs.getMode())) &&
-    
-    
-    ((!typeIsSet() && !rhs.typeIsSet()) || (typeIsSet() && rhs.typeIsSet() && getType() == rhs.getType())) &&
-    
-    
-    ((!tagsIsSet() && !rhs.tagsIsSet()) || (tagsIsSet() && rhs.tagsIsSet() && getTags() == rhs.getTags())) &&
-    
-    
-    ((!paramsIsSet() && !rhs.paramsIsSet()) || (paramsIsSet() && rhs.paramsIsSet() && getParams() == rhs.getParams())) &&
-    
-    
-    ((!exprIsSet() && !rhs.exprIsSet()) || (exprIsSet() && rhs.exprIsSet() && getExpr() == rhs.getExpr())) &&
-    
-    
-    ((!onSuccessIsSet() && !rhs.onSuccessIsSet()) || (onSuccessIsSet() && rhs.onSuccessIsSet() && getOnSuccess() == rhs.getOnSuccess())) &&
-    
-    
-    ((!onFailureIsSet() && !rhs.onFailureIsSet()) || (onFailureIsSet() && rhs.onFailureIsSet() && getOnFailure() == rhs.getOnFailure())) &&
-    
-    
-    ((!disabledIsSet() && !rhs.disabledIsSet()) || (disabledIsSet() && rhs.disabledIsSet() && isDisabled() == rhs.isDisabled()))
-    
-    ;
+        m_Name == rhs.m_Name &&
+        m_Doc == rhs.m_Doc &&
+        m_Kind == rhs.m_Kind &&
+        m_Mode == rhs.m_Mode &&
+        m_Type == rhs.m_Type &&
+        m_Tags == rhs.m_Tags &&
+        m_Params == rhs.m_Params &&
+        m_Expr == rhs.m_Expr &&
+        m_OnSuccess == rhs.m_OnSuccess &&
+        m_OnFailure == rhs.m_OnFailure &&
+        m_Disabled == rhs.m_Disabled;
 }
 
 bool Rule::operator!=(const Rule& rhs) const
@@ -142,279 +91,209 @@ bool Rule::operator!=(const Rule& rhs) const
 void to_json(nlohmann::json& j, const Rule& o)
 {
     j = nlohmann::json::object();
-    if(o.nameIsSet())
-        j["name"] = o.m_Name;
-    if(o.docIsSet())
-        j["doc"] = o.m_Doc;
-    if(o.kindIsSet())
-        j["kind"] = o.m_Kind;
-    if(o.modeIsSet())
-        j["mode"] = o.m_Mode;
-    if(o.typeIsSet())
-        j["type"] = o.m_Type;
-    if(o.tagsIsSet() || !o.m_Tags.empty())
-        j["tags"] = o.m_Tags;
-    if(o.paramsIsSet() || !o.m_Params.empty())
-        j["params"] = o.m_Params;
-    if(o.exprIsSet())
-        j["expr"] = o.m_Expr;
-    if(o.onSuccessIsSet())
-        j["onSuccess"] = o.m_OnSuccess;
-    if(o.onFailureIsSet())
-        j["onFailure"] = o.m_OnFailure;
-    if(o.disabledIsSet())
-        j["disabled"] = o.m_Disabled;
-    
+    if(o.m_Name.has_value())
+        j["name"] = o.m_Name.value();
+    if(o.m_Doc.has_value())
+        j["doc"] = o.m_Doc.value();
+    if(o.m_Kind.has_value())
+        j["kind"] = o.m_Kind.value();
+    if(o.m_Mode.has_value())
+        j["mode"] = o.m_Mode.value();
+    if(o.m_Type.has_value())
+        j["type"] = o.m_Type.value();
+    if(o.m_Tags.has_value())
+        j["tags"] = o.m_Tags.value();
+    if(o.m_Params.has_value())
+        j["params"] = o.m_Params.value();
+    if(o.m_Expr.has_value())
+        j["expr"] = o.m_Expr.value();
+    if(o.m_OnSuccess.has_value())
+        j["onSuccess"] = o.m_OnSuccess.value();
+    if(o.m_OnFailure.has_value())
+        j["onFailure"] = o.m_OnFailure.value();
+    if(o.m_Disabled.has_value())
+        j["disabled"] = o.m_Disabled.value();
 }
 
 void from_json(const nlohmann::json& j, Rule& o)
 {
     if(j.find("name") != j.end())
     {
-        j.at("name").get_to(o.m_Name);
-        o.m_NameIsSet = true;
+        std::string temp;
+        j.at("name").get_to(temp);
+        o.m_Name = temp;
     } 
     if(j.find("doc") != j.end())
     {
-        j.at("doc").get_to(o.m_Doc);
-        o.m_DocIsSet = true;
+        std::string temp;
+        j.at("doc").get_to(temp);
+        o.m_Doc = temp;
     } 
     if(j.find("kind") != j.end())
     {
-        j.at("kind").get_to(o.m_Kind);
-        o.m_KindIsSet = true;
+        std::string temp;
+        j.at("kind").get_to(temp);
+        o.m_Kind = temp;
     } 
     if(j.find("mode") != j.end())
     {
-        j.at("mode").get_to(o.m_Mode);
-        o.m_ModeIsSet = true;
+        std::string temp;
+        j.at("mode").get_to(temp);
+        o.m_Mode = temp;
     } 
     if(j.find("type") != j.end())
     {
-        j.at("type").get_to(o.m_Type);
-        o.m_TypeIsSet = true;
+        std::string temp;
+        j.at("type").get_to(temp);
+        o.m_Type = temp;
     } 
     if(j.find("tags") != j.end())
     {
-        j.at("tags").get_to(o.m_Tags);
-        o.m_TagsIsSet = true;
+        std::set<std::string> temp;
+        j.at("tags").get_to(temp);
+        o.m_Tags = temp;
     } 
     if(j.find("params") != j.end())
     {
-        j.at("params").get_to(o.m_Params);
-        o.m_ParamsIsSet = true;
+        std::map<std::string, std::string> temp;
+        j.at("params").get_to(temp);
+        o.m_Params = temp;
     } 
     if(j.find("expr") != j.end())
     {
-        j.at("expr").get_to(o.m_Expr);
-        o.m_ExprIsSet = true;
+        std::string temp;
+        j.at("expr").get_to(temp);
+        o.m_Expr = temp;
     } 
     if(j.find("onSuccess") != j.end())
     {
-        j.at("onSuccess").get_to(o.m_OnSuccess);
-        o.m_OnSuccessIsSet = true;
+        std::string temp;
+        j.at("onSuccess").get_to(temp);
+        o.m_OnSuccess = temp;
     } 
     if(j.find("onFailure") != j.end())
     {
-        j.at("onFailure").get_to(o.m_OnFailure);
-        o.m_OnFailureIsSet = true;
+        std::string temp;
+        j.at("onFailure").get_to(temp);
+        o.m_OnFailure = temp;
     } 
     if(j.find("disabled") != j.end())
     {
-        j.at("disabled").get_to(o.m_Disabled);
-        o.m_DisabledIsSet = true;
+        bool temp;
+        j.at("disabled").get_to(temp);
+        o.m_Disabled = temp;
     } 
-    
 }
 
-std::string Rule::getName() const
+std::optional<std::string> Rule::getName() const
 {
     return m_Name;
 }
-void Rule::setName(std::string const& value)
+
+void Rule::setName(const std::optional<std::string>& value)
 {
     m_Name = value;
-    m_NameIsSet = true;
 }
-bool Rule::nameIsSet() const
-{
-    return m_NameIsSet;
-}
-void Rule::unsetName()
-{
-    m_NameIsSet = false;
-}
-std::string Rule::getDoc() const
+
+std::optional<std::string> Rule::getDoc() const
 {
     return m_Doc;
 }
-void Rule::setDoc(std::string const& value)
+
+void Rule::setDoc(const std::optional<std::string>& value)
 {
     m_Doc = value;
-    m_DocIsSet = true;
 }
-bool Rule::docIsSet() const
-{
-    return m_DocIsSet;
-}
-void Rule::unsetDoc()
-{
-    m_DocIsSet = false;
-}
-std::string Rule::getKind() const
+
+std::optional<std::string> Rule::getKind() const
 {
     return m_Kind;
 }
-void Rule::setKind(std::string const& value)
+
+void Rule::setKind(const std::optional<std::string>& value)
 {
     m_Kind = value;
-    m_KindIsSet = true;
 }
-bool Rule::kindIsSet() const
-{
-    return m_KindIsSet;
-}
-void Rule::unsetKind()
-{
-    m_KindIsSet = false;
-}
-std::string Rule::getMode() const
+
+std::optional<std::string> Rule::getMode() const
 {
     return m_Mode;
 }
-void Rule::setMode(std::string const& value)
+
+void Rule::setMode(const std::optional<std::string>& value)
 {
     m_Mode = value;
-    m_ModeIsSet = true;
 }
-bool Rule::modeIsSet() const
-{
-    return m_ModeIsSet;
-}
-void Rule::unsetMode()
-{
-    m_ModeIsSet = false;
-}
-std::string Rule::getType() const
+
+std::optional<std::string> Rule::getType() const
 {
     return m_Type;
 }
-void Rule::setType(std::string const& value)
+
+void Rule::setType(const std::optional<std::string>& value)
 {
     m_Type = value;
-    m_TypeIsSet = true;
 }
-bool Rule::typeIsSet() const
-{
-    return m_TypeIsSet;
-}
-void Rule::unsetType()
-{
-    m_TypeIsSet = false;
-}
-std::set<std::string> Rule::getTags() const
+
+std::optional<std::set<std::string>> Rule::getTags() const
 {
     return m_Tags;
 }
-void Rule::setTags(std::set<std::string> const& value)
+
+void Rule::setTags(const std::optional<std::set<std::string>>& value)
 {
     m_Tags = value;
-    m_TagsIsSet = true;
 }
-bool Rule::tagsIsSet() const
-{
-    return m_TagsIsSet;
-}
-void Rule::unsetTags()
-{
-    m_TagsIsSet = false;
-}
-std::map<std::string, std::string> Rule::getParams() const
+
+std::optional<std::map<std::string, std::string>> Rule::getParams() const
 {
     return m_Params;
 }
-void Rule::setParams(std::map<std::string, std::string> const& value)
+
+void Rule::setParams(const std::optional<std::map<std::string, std::string>>& value)
 {
     m_Params = value;
-    m_ParamsIsSet = true;
 }
-bool Rule::paramsIsSet() const
-{
-    return m_ParamsIsSet;
-}
-void Rule::unsetParams()
-{
-    m_ParamsIsSet = false;
-}
-std::string Rule::getExpr() const
+
+std::optional<std::string> Rule::getExpr() const
 {
     return m_Expr;
 }
-void Rule::setExpr(std::string const& value)
+
+void Rule::setExpr(const std::optional<std::string>& value)
 {
     m_Expr = value;
-    m_ExprIsSet = true;
 }
-bool Rule::exprIsSet() const
-{
-    return m_ExprIsSet;
-}
-void Rule::unsetExpr()
-{
-    m_ExprIsSet = false;
-}
-std::string Rule::getOnSuccess() const
+
+std::optional<std::string> Rule::getOnSuccess() const
 {
     return m_OnSuccess;
 }
-void Rule::setOnSuccess(std::string const& value)
+
+void Rule::setOnSuccess(const std::optional<std::string>& value)
 {
     m_OnSuccess = value;
-    m_OnSuccessIsSet = true;
 }
-bool Rule::onSuccessIsSet() const
-{
-    return m_OnSuccessIsSet;
-}
-void Rule::unsetOnSuccess()
-{
-    m_OnSuccessIsSet = false;
-}
-std::string Rule::getOnFailure() const
+
+std::optional<std::string> Rule::getOnFailure() const
 {
     return m_OnFailure;
 }
-void Rule::setOnFailure(std::string const& value)
+
+void Rule::setOnFailure(const std::optional<std::string>& value)
 {
     m_OnFailure = value;
-    m_OnFailureIsSet = true;
 }
-bool Rule::onFailureIsSet() const
-{
-    return m_OnFailureIsSet;
-}
-void Rule::unsetOnFailure()
-{
-    m_OnFailureIsSet = false;
-}
-bool Rule::isDisabled() const
+
+std::optional<bool> Rule::isDisabled() const
 {
     return m_Disabled;
 }
-void Rule::setDisabled(bool const value)
+
+void Rule::setDisabled(const std::optional<bool>& value)
 {
     m_Disabled = value;
-    m_DisabledIsSet = true;
 }
-bool Rule::disabledIsSet() const
-{
-    return m_DisabledIsSet;
-}
-void Rule::unsetDisabled()
-{
-    m_DisabledIsSet = false;
-}
-
 
 } // namespace srclient::rest::model
 

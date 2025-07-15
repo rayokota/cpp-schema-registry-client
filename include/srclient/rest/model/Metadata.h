@@ -22,6 +22,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <optional>
 #include <nlohmann/json.hpp>
 
 namespace srclient::rest::model
@@ -63,34 +64,25 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    std::map<std::string, std::set<std::string>> getTags() const;
-    void setTags(std::map<std::string, std::set<std::string>> const& value);
-    bool tagsIsSet() const;
-    void unsetTags();
+    std::optional<std::map<std::string, std::set<std::string>>> getTags() const;
+    void setTags(const std::optional<std::map<std::string, std::set<std::string>>>& value);
     /// <summary>
     /// 
     /// </summary>
-    std::map<std::string, std::string> getProperties() const;
-    void setProperties(std::map<std::string, std::string> const& value);
-    bool propertiesIsSet() const;
-    void unsetProperties();
+    std::optional<std::map<std::string, std::string>> getProperties() const;
+    void setProperties(const std::optional<std::map<std::string, std::string>>& value);
     /// <summary>
     /// 
     /// </summary>
-    std::set<std::string> getSensitive() const;
-    void setSensitive(std::set<std::string> const& value);
-    bool sensitiveIsSet() const;
-    void unsetSensitive();
+    std::optional<std::set<std::string>> getSensitive() const;
+    void setSensitive(const std::optional<std::set<std::string>>& value);
 
     friend  void to_json(nlohmann::json& j, const Metadata& o);
     friend  void from_json(const nlohmann::json& j, Metadata& o);
 protected:
-    std::map<std::string, std::set<std::string>> m_Tags;
-    bool m_TagsIsSet;
-    std::map<std::string, std::string> m_Properties;
-    bool m_PropertiesIsSet;
-    std::set<std::string> m_Sensitive;
-    bool m_SensitiveIsSet;
+    std::optional<std::map<std::string, std::set<std::string>>> m_Tags;
+    std::optional<std::map<std::string, std::string>> m_Properties;
+    std::optional<std::set<std::string>> m_Sensitive;
     
 };
 

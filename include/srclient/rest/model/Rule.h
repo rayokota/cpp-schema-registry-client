@@ -22,6 +22,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <optional>
 #include <nlohmann/json.hpp>
 
 namespace srclient::rest::model
@@ -63,106 +64,73 @@ public:
     /// <summary>
     /// Rule name
     /// </summary>
-    std::string getName() const;
-    void setName(std::string const& value);
-    bool nameIsSet() const;
-    void unsetName();
+    std::optional<std::string> getName() const;
+    void setName(const std::optional<std::string>& value);
     /// <summary>
     /// Rule doc
     /// </summary>
-    std::string getDoc() const;
-    void setDoc(std::string const& value);
-    bool docIsSet() const;
-    void unsetDoc();
+    std::optional<std::string> getDoc() const;
+    void setDoc(const std::optional<std::string>& value);
     /// <summary>
     /// Rule kind
     /// </summary>
-    std::string getKind() const;
-    void setKind(std::string const& value);
-    bool kindIsSet() const;
-    void unsetKind();
+    std::optional<std::string> getKind() const;
+    void setKind(const std::optional<std::string>& value);
     /// <summary>
     /// Rule mode
     /// </summary>
-    std::string getMode() const;
-    void setMode(std::string const& value);
-    bool modeIsSet() const;
-    void unsetMode();
+    std::optional<std::string> getMode() const;
+    void setMode(const std::optional<std::string>& value);
     /// <summary>
     /// Rule type
     /// </summary>
-    std::string getType() const;
-    void setType(std::string const& value);
-    bool typeIsSet() const;
-    void unsetType();
+    std::optional<std::string> getType() const;
+    void setType(const std::optional<std::string>& value);
     /// <summary>
     /// The tags to which this rule applies
     /// </summary>
-    std::set<std::string> getTags() const;
-    void setTags(std::set<std::string> const& value);
-    bool tagsIsSet() const;
-    void unsetTags();
+    std::optional<std::set<std::string>> getTags() const;
+    void setTags(const std::optional<std::set<std::string>>& value);
     /// <summary>
     /// Optional params for the rule
     /// </summary>
-    std::map<std::string, std::string> getParams() const;
-    void setParams(std::map<std::string, std::string> const& value);
-    bool paramsIsSet() const;
-    void unsetParams();
+    std::optional<std::map<std::string, std::string>> getParams() const;
+    void setParams(const std::optional<std::map<std::string, std::string>>& value);
     /// <summary>
     /// Rule expression
     /// </summary>
-    std::string getExpr() const;
-    void setExpr(std::string const& value);
-    bool exprIsSet() const;
-    void unsetExpr();
+    std::optional<std::string> getExpr() const;
+    void setExpr(const std::optional<std::string>& value);
     /// <summary>
     /// Rule action on success
     /// </summary>
-    std::string getOnSuccess() const;
-    void setOnSuccess(std::string const& value);
-    bool onSuccessIsSet() const;
-    void unsetOnSuccess();
+    std::optional<std::string> getOnSuccess() const;
+    void setOnSuccess(const std::optional<std::string>& value);
     /// <summary>
     /// Rule action on failure
     /// </summary>
-    std::string getOnFailure() const;
-    void setOnFailure(std::string const& value);
-    bool onFailureIsSet() const;
-    void unsetOnFailure();
+    std::optional<std::string> getOnFailure() const;
+    void setOnFailure(const std::optional<std::string>& value);
     /// <summary>
     /// Whether the rule is disabled
     /// </summary>
-    bool isDisabled() const;
-    void setDisabled(bool const value);
-    bool disabledIsSet() const;
-    void unsetDisabled();
+    std::optional<bool> isDisabled() const;
+    void setDisabled(const std::optional<bool>& value);
 
     friend  void to_json(nlohmann::json& j, const Rule& o);
     friend  void from_json(const nlohmann::json& j, Rule& o);
 protected:
-    std::string m_Name;
-    bool m_NameIsSet;
-    std::string m_Doc;
-    bool m_DocIsSet;
-    std::string m_Kind;
-    bool m_KindIsSet;
-    std::string m_Mode;
-    bool m_ModeIsSet;
-    std::string m_Type;
-    bool m_TypeIsSet;
-    std::set<std::string> m_Tags;
-    bool m_TagsIsSet;
-    std::map<std::string, std::string> m_Params;
-    bool m_ParamsIsSet;
-    std::string m_Expr;
-    bool m_ExprIsSet;
-    std::string m_OnSuccess;
-    bool m_OnSuccessIsSet;
-    std::string m_OnFailure;
-    bool m_OnFailureIsSet;
-    bool m_Disabled;
-    bool m_DisabledIsSet;
+    std::optional<std::string> m_Name;
+    std::optional<std::string> m_Doc;
+    std::optional<std::string> m_Kind;
+    std::optional<std::string> m_Mode;
+    std::optional<std::string> m_Type;
+    std::optional<std::set<std::string>> m_Tags;
+    std::optional<std::map<std::string, std::string>> m_Params;
+    std::optional<std::string> m_Expr;
+    std::optional<std::string> m_OnSuccess;
+    std::optional<std::string> m_OnFailure;
+    std::optional<bool> m_Disabled;
     
 };
 

@@ -21,6 +21,7 @@
 
 #include "Rule.h"
 #include <vector>
+#include <optional>
 #include <nlohmann/json.hpp>
 
 namespace srclient::rest::model
@@ -62,34 +63,25 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    std::vector<srclient::rest::model::Rule> getMigrationRules() const;
-    void setMigrationRules(std::vector<srclient::rest::model::Rule> const& value);
-    bool migrationRulesIsSet() const;
-    void unsetMigrationRules();
+    std::optional<std::vector<srclient::rest::model::Rule>> getMigrationRules() const;
+    void setMigrationRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value);
     /// <summary>
     /// 
     /// </summary>
-    std::vector<srclient::rest::model::Rule> getDomainRules() const;
-    void setDomainRules(std::vector<srclient::rest::model::Rule> const& value);
-    bool domainRulesIsSet() const;
-    void unsetDomainRules();
+    std::optional<std::vector<srclient::rest::model::Rule>> getDomainRules() const;
+    void setDomainRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value);
     /// <summary>
     /// 
     /// </summary>
-    bool isEmpty() const;
-    void setEmpty(bool const value);
-    bool emptyIsSet() const;
-    void unsetEmpty();
+    std::optional<bool> isEmpty() const;
+    void setEmpty(const std::optional<bool>& value);
 
     friend  void to_json(nlohmann::json& j, const RuleSet& o);
     friend  void from_json(const nlohmann::json& j, RuleSet& o);
 protected:
-    std::vector<srclient::rest::model::Rule> m_MigrationRules;
-    bool m_MigrationRulesIsSet;
-    std::vector<srclient::rest::model::Rule> m_DomainRules;
-    bool m_DomainRulesIsSet;
-    bool m_Empty;
-    bool m_EmptyIsSet;
+    std::optional<std::vector<srclient::rest::model::Rule>> m_MigrationRules;
+    std::optional<std::vector<srclient::rest::model::Rule>> m_DomainRules;
+    std::optional<bool> m_Empty;
     
 };
 
