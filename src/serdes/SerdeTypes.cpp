@@ -80,20 +80,10 @@ void ParsedSchemaCache<T>::clear() {
 
 template<typename T>
 std::string ParsedSchemaCache<T>::getSchemaKey(const Schema& schema) const {
-    // Create a key from schema content and type
-    std::ostringstream key_stream;
-    
-    // Schema class doesn't have getId() or getGuid() - those are in RegisteredSchema
-    // Use schema content and type as key
-    if (schema.getSchema().has_value()) {
-        key_stream << "schema:" << schema.getSchema().value();
-    }
-    
-    if (schema.getSchemaType().has_value()) {
-        key_stream << "_type:" << schema.getSchemaType().value();
-    }
-    
-    return key_stream.str();
+    // Us the JSON representation of the schema to create a hash
+    nlohmann::json j;
+    to_json(j, schema);
+    return j.dump();
 }
 
 // Explicit template instantiations for common types
