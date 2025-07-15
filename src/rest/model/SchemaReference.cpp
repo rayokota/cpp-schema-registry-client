@@ -12,7 +12,6 @@
 
 
 #include "srclient/rest/model/SchemaReference.h"
-#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 
@@ -22,28 +21,6 @@ namespace srclient::rest::model
 SchemaReference::SchemaReference()
 {
     // Optional members are initialized to std::nullopt by default
-}
-
-void SchemaReference::validate() const
-{
-    std::stringstream msg;
-    if (!validate(msg))
-    {
-        throw srclient::rest::model::ValidationException(msg.str());
-    }
-}
-
-bool SchemaReference::validate(std::stringstream& msg) const
-{
-    return validate(msg, "");
-}
-
-bool SchemaReference::validate(std::stringstream& msg, const std::string& pathPrefix) const
-{
-    bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "SchemaReference" : pathPrefix;
-
-    return success;
 }
 
 bool SchemaReference::operator==(const SchemaReference& rhs) const

@@ -12,7 +12,6 @@
 
 
 #include "srclient/rest/model/ErrorMessage.h"
-#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 
@@ -26,29 +25,6 @@ ErrorMessage::ErrorMessage()
     m_Message = "";
     m_MessageIsSet = false;
     
-}
-
-void ErrorMessage::validate() const
-{
-    std::stringstream msg;
-    if (!validate(msg))
-    {
-        throw srclient::rest::model::ValidationException(msg.str());
-    }
-}
-
-bool ErrorMessage::validate(std::stringstream& msg) const
-{
-    return validate(msg, "");
-}
-
-bool ErrorMessage::validate(std::stringstream& msg, const std::string& pathPrefix) const
-{
-    bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "ErrorMessage" : pathPrefix;
-
-            
-    return success;
 }
 
 bool ErrorMessage::operator==(const ErrorMessage& rhs) const

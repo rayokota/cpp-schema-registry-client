@@ -12,7 +12,6 @@
 
 
 #include "srclient/rest/model/Schema.h"
-#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 
@@ -22,66 +21,6 @@ namespace srclient::rest::model
 Schema::Schema()
 {
     // Optional members are initialized to std::nullopt by default
-}
-
-void Schema::validate() const
-{
-    std::stringstream msg;
-    if (!validate(msg))
-    {
-        throw srclient::rest::model::ValidationException(msg.str());
-    }
-}
-
-bool Schema::validate(std::stringstream& msg) const
-{
-    return validate(msg, "");
-}
-
-bool Schema::validate(std::stringstream& msg, const std::string& pathPrefix) const
-{
-    bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "Schema" : pathPrefix;
-
-    if (m_References.has_value())
-    {
-        const std::vector<srclient::rest::model::SchemaReference>& value = m_References.value();
-        const std::string currentValuePath = _pathPrefix + ".references";
-        
-        { // Recursive validation of array elements
-            const std::string oldValuePath = currentValuePath;
-            int i = 0;
-            for (const srclient::rest::model::SchemaReference& value : value)
-            { 
-                const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                success = value.validate(msg, currentValuePath + ".references") && success;
-                i++;
-            }
-        }
-    }
-    
-    if (m_Metadata.has_value())
-    {
-        const srclient::rest::model::Metadata& value = m_Metadata.value();
-        const std::string currentValuePath = _pathPrefix + ".metadata";
-        success = value.validate(msg, currentValuePath + ".metadata") && success;
-    }
-    
-    if (m_Ruleset.has_value())
-    {
-        const srclient::rest::model::RuleSet& value = m_Ruleset.value();
-        const std::string currentValuePath = _pathPrefix + ".ruleset";
-        success = value.validate(msg, currentValuePath + ".ruleset") && success;
-    }
-    
-    if (m_RuleSet.has_value())
-    {
-        const srclient::rest::model::RuleSet& value = m_RuleSet.value();
-        const std::string currentValuePath = _pathPrefix + ".ruleSet";
-        success = value.validate(msg, currentValuePath + ".ruleSet") && success;
-    }
-    
-    return success;
 }
 
 bool Schema::operator==(const Schema& rhs) const

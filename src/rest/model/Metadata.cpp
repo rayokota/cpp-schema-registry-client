@@ -12,7 +12,6 @@
 
 
 #include "srclient/rest/model/Metadata.h"
-#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 
@@ -22,55 +21,6 @@ namespace srclient::rest::model
 Metadata::Metadata()
 {
     // Optional members are initialized to std::nullopt by default
-}
-
-void Metadata::validate() const
-{
-    std::stringstream msg;
-    if (!validate(msg))
-    {
-        throw srclient::rest::model::ValidationException(msg.str());
-    }
-}
-
-bool Metadata::validate(std::stringstream& msg) const
-{
-    return validate(msg, "");
-}
-
-bool Metadata::validate(std::stringstream& msg, const std::string& pathPrefix) const
-{
-    bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "Metadata" : pathPrefix;
-
-                 
-    if (m_Sensitive.has_value())
-    {
-        const std::set<std::string>& value = m_Sensitive.value();
-        const std::string currentValuePath = _pathPrefix + ".sensitive";
-                
-        
-        if (!srclient::rest::model::hasOnlyUniqueItems(value))
-        {
-            success = false;
-            msg << currentValuePath << ": may not contain the same item more than once;";
-        }
-        { // Recursive validation of array elements
-            const std::string oldValuePath = currentValuePath;
-            int i = 0;
-            for (const std::string& value : value)
-            { 
-                const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                        
-        
- 
-                i++;
-            }
-        }
-
-    }
-    
-    return success;
 }
 
 bool Metadata::operator==(const Metadata& rhs) const

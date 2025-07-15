@@ -12,7 +12,6 @@
 
 
 #include "srclient/rest/model/ServerConfig.h"
-#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 
@@ -22,56 +21,6 @@ namespace srclient::rest::model
 ServerConfig::ServerConfig()
 {
     // Optional members are initialized to std::nullopt by default
-}
-
-void ServerConfig::validate() const
-{
-    std::stringstream msg;
-    if (!validate(msg))
-    {
-        throw srclient::rest::model::ValidationException(msg.str());
-    }
-}
-
-bool ServerConfig::validate(std::stringstream& msg) const
-{
-    return validate(msg, "");
-}
-
-bool ServerConfig::validate(std::stringstream& msg, const std::string& pathPrefix) const
-{
-    bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "ServerConfig" : pathPrefix;
-
-    if (m_DefaultMetadata.has_value())
-    {
-        const srclient::rest::model::Metadata& value = m_DefaultMetadata.value();
-        const std::string currentValuePath = _pathPrefix + ".defaultMetadata";
-        success = value.validate(msg, currentValuePath + ".defaultMetadata") && success;
-    }
-    
-    if (m_OverrideMetadata.has_value())
-    {
-        const srclient::rest::model::Metadata& value = m_OverrideMetadata.value();
-        const std::string currentValuePath = _pathPrefix + ".overrideMetadata";
-        success = value.validate(msg, currentValuePath + ".overrideMetadata") && success;
-    }
-    
-    if (m_DefaultRuleSet.has_value())
-    {
-        const srclient::rest::model::RuleSet& value = m_DefaultRuleSet.value();
-        const std::string currentValuePath = _pathPrefix + ".defaultRuleSet";
-        success = value.validate(msg, currentValuePath + ".defaultRuleSet") && success;
-    }
-    
-    if (m_OverrideRuleSet.has_value())
-    {
-        const srclient::rest::model::RuleSet& value = m_OverrideRuleSet.value();
-        const std::string currentValuePath = _pathPrefix + ".overrideRuleSet";
-        success = value.validate(msg, currentValuePath + ".overrideRuleSet") && success;
-    }
-    
-    return success;
 }
 
 bool ServerConfig::operator==(const ServerConfig& rhs) const

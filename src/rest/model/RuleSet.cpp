@@ -12,7 +12,6 @@
 
 
 #include "srclient/rest/model/RuleSet.h"
-#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 
@@ -22,62 +21,6 @@ namespace srclient::rest::model
 RuleSet::RuleSet()
 {
     // Optional members are initialized to std::nullopt by default
-}
-
-void RuleSet::validate() const
-{
-    std::stringstream msg;
-    if (!validate(msg))
-    {
-        throw srclient::rest::model::ValidationException(msg.str());
-    }
-}
-
-bool RuleSet::validate(std::stringstream& msg) const
-{
-    return validate(msg, "");
-}
-
-bool RuleSet::validate(std::stringstream& msg, const std::string& pathPrefix) const
-{
-    bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "RuleSet" : pathPrefix;
-
-    if (m_MigrationRules.has_value())
-    {
-        const std::vector<srclient::rest::model::Rule>& value = m_MigrationRules.value();
-        const std::string currentValuePath = _pathPrefix + ".migrationRules";
-        
-        { // Recursive validation of array elements
-            const std::string oldValuePath = currentValuePath;
-            int i = 0;
-            for (const srclient::rest::model::Rule& value : value)
-            { 
-                const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                success = value.validate(msg, currentValuePath + ".migrationRules") && success;
-                i++;
-            }
-        }
-    }
-    
-    if (m_DomainRules.has_value())
-    {
-        const std::vector<srclient::rest::model::Rule>& value = m_DomainRules.value();
-        const std::string currentValuePath = _pathPrefix + ".domainRules";
-        
-        { // Recursive validation of array elements
-            const std::string oldValuePath = currentValuePath;
-            int i = 0;
-            for (const srclient::rest::model::Rule& value : value)
-            { 
-                const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                success = value.validate(msg, currentValuePath + ".domainRules") && success;
-                i++;
-            }
-        }
-    }
-    
-    return success;
 }
 
 bool RuleSet::operator==(const RuleSet& rhs) const

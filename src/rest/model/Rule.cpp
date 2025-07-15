@@ -12,7 +12,6 @@
 
 
 #include "srclient/rest/model/Rule.h"
-#include "srclient/rest/model/Helpers.h"
 
 #include <sstream>
 
@@ -22,49 +21,6 @@ namespace srclient::rest::model
 Rule::Rule()
 {
     // Optional members are initialized to std::nullopt by default
-}
-
-void Rule::validate() const
-{
-    std::stringstream msg;
-    if (!validate(msg))
-    {
-        throw srclient::rest::model::ValidationException(msg.str());
-    }
-}
-
-bool Rule::validate(std::stringstream& msg) const
-{
-    return validate(msg, "");
-}
-
-bool Rule::validate(std::stringstream& msg, const std::string& pathPrefix) const
-{
-    bool success = true;
-    const std::string _pathPrefix = pathPrefix.empty() ? "Rule" : pathPrefix;
-
-    if (m_Tags.has_value())
-    {
-        const std::set<std::string>& value = m_Tags.value();
-        const std::string currentValuePath = _pathPrefix + ".tags";
-        
-        if (!srclient::rest::model::hasOnlyUniqueItems(value))
-        {
-            success = false;
-            msg << currentValuePath << ": may not contain the same item more than once;";
-        }
-        { // Recursive validation of array elements
-            const std::string oldValuePath = currentValuePath;
-            int i = 0;
-            for (const std::string& value : value)
-            { 
-                const std::string currentValuePath = oldValuePath + "[" + std::to_string(i) + "]";
-                i++;
-            }
-        }
-    }
-    
-    return success;
 }
 
 bool Rule::operator==(const Rule& rhs) const
