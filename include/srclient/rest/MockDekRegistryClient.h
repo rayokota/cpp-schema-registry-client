@@ -1,13 +1,12 @@
 /**
- * DekRegistryClient
- * Synchronous C++ implementation of Data Encryption Key (DEK) Registry Client
+ * MockDekRegistryClient
+ * Mock implementation of Data Encryption Key (DEK) Registry Client for testing
  */
 
-#ifndef SRCLIENT_REST_DEK_REGISTRY_CLIENT_H_
-#define SRCLIENT_REST_DEK_REGISTRY_CLIENT_H_
+#ifndef SRCLIENT_REST_MOCK_DEK_REGISTRY_CLIENT_H_
+#define SRCLIENT_REST_MOCK_DEK_REGISTRY_CLIENT_H_
 
 #include "srclient/rest/IDekRegistryClient.h"
-#include "srclient/rest/RestClient.h"
 #include "srclient/rest/ClientConfiguration.h"
 #include "srclient/rest/RestException.h"
 #include "srclient/rest/DekRegistryTypes.h"
@@ -15,7 +14,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <string>
-#include <map>
+#include <chrono>
 
 namespace srclient::rest {
 
@@ -23,12 +22,12 @@ namespace srclient::rest {
 class DekStore;
 
 /**
- * Store for caching DEK and KEK data
+ * Mock Store for caching DEK and KEK data
  */
-class DekStore {
+class MockDekStore {
 public:
-    DekStore();
-    ~DekStore() = default;
+    MockDekStore();
+    ~MockDekStore() = default;
 
     void setKek(const KekId& kekId, const srclient::rest::model::Kek& kek);
     void setDek(const DekId& dekId, const srclient::rest::model::Dek& dek);
@@ -36,23 +35,25 @@ public:
     std::optional<srclient::rest::model::Kek> getKek(const KekId& kekId) const;
     std::optional<srclient::rest::model::Dek> getDek(const DekId& dekId) const;
     
-    std::optional<srclient::rest::model::Dek> getMutDek(const DekId& dekId);
+    srclient::rest::model::Dek* getMutDek(const DekId& dekId);
     
     void clear();
 
 private:
     std::unordered_map<KekId, srclient::rest::model::Kek> keks;
     std::unordered_map<DekId, srclient::rest::model::Dek> deks;
+    
+    friend class MockDekRegistryClient;
 };
 
 /**
- * DEK Registry Client implementation
+ * Mock DEK Registry Client implementation for testing
  */
-class DekRegistryClient : public IDekRegistryClient {
+class MockDekRegistryClient : public IDekRegistryClient {
 public:
-    explicit DekRegistryClient(std::shared_ptr<const srclient::rest::ClientConfiguration> config);
+    explicit MockDekRegistryClient(std::shared_ptr<const srclient::rest::ClientConfiguration> config);
     
-    virtual ~DekRegistryClient() = default;
+    virtual ~MockDekRegistryClient() = default;
 
     std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const;
 
@@ -88,22 +89,14 @@ public:
     virtual void close() override;
 
 private:
-    std::shared_ptr<srclient::rest::RestClient> restClient;
-    std::shared_ptr<DekStore> store;
+    std::shared_ptr<const srclient::rest::ClientConfiguration> config;
+    std::shared_ptr<MockDekStore> store;
     std::shared_ptr<std::mutex> storeMutex;
 
     // Helper methods
-    std::string urlEncode(const std::string& str) const;
-    std::string sendHttpRequest(const std::string& path, 
-                               const std::string& method,
-                               const std::map<std::string, std::string>& query = {},
-                               const std::string& body = "") const;
-    
-    srclient::rest::model::Kek parseKekFromJson(const std::string& jsonStr) const;
-    srclient::rest::model::Dek parseDekFromJson(const std::string& jsonStr) const;
-    std::string algorithmToString(srclient::rest::model::Algorithm algorithm) const;
+    int64_t getCurrentTimestamp() const;
 };
 
 } // namespace srclient::rest
 
-#endif // SRCLIENT_REST_DEK_REGISTRY_CLIENT_H_ 
+#endif // SRCLIENT_REST_MOCK_DEK_REGISTRY_CLIENT_H_ 
