@@ -84,7 +84,7 @@ private:
 /**
  * Mock Schema Registry Client for testing
  */
-class MockSchemaRegistryClient {
+class MockSchemaRegistryClient : public ISchemaRegistryClient {
 private:
     std::shared_ptr<MockSchemaStore> store;
     std::shared_ptr<const srclient::rest::ClientConfiguration> config;
@@ -93,75 +93,76 @@ private:
 public:
     explicit MockSchemaRegistryClient(std::shared_ptr<const srclient::rest::ClientConfiguration> config);
     
-    ~MockSchemaRegistryClient() = default;
+    virtual ~MockSchemaRegistryClient() = default;
 
+    // Non-virtual method for configuration access (not part of interface)
     std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const;
 
     // Schema operations
-    srclient::rest::model::RegisteredSchema registerSchema(
+    virtual srclient::rest::model::RegisteredSchema registerSchema(
         const std::string& subject,
         const srclient::rest::model::Schema& schema,
-        bool normalize = false);
+        bool normalize = false) override;
 
-    srclient::rest::model::Schema getBySubjectAndId(
+    virtual srclient::rest::model::Schema getBySubjectAndId(
         const std::optional<std::string>& subject,
         int32_t id,
-        const std::optional<std::string>& format = std::nullopt);
+        const std::optional<std::string>& format = std::nullopt) override;
 
-    srclient::rest::model::Schema getByGuid(
+    virtual srclient::rest::model::Schema getByGuid(
         const std::string& guid,
-        const std::optional<std::string>& format = std::nullopt);
+        const std::optional<std::string>& format = std::nullopt) override;
 
-    srclient::rest::model::RegisteredSchema getBySchema(
+    virtual srclient::rest::model::RegisteredSchema getBySchema(
         const std::string& subject,
         const srclient::rest::model::Schema& schema,
         bool normalize = false,
-        bool deleted = false);
+        bool deleted = false) override;
 
-    srclient::rest::model::RegisteredSchema getVersion(
+    virtual srclient::rest::model::RegisteredSchema getVersion(
         const std::string& subject,
         int32_t version,
         bool deleted = false,
-        const std::optional<std::string>& format = std::nullopt);
+        const std::optional<std::string>& format = std::nullopt) override;
 
-    srclient::rest::model::RegisteredSchema getLatestVersion(
+    virtual srclient::rest::model::RegisteredSchema getLatestVersion(
         const std::string& subject,
-        const std::optional<std::string>& format = std::nullopt);
+        const std::optional<std::string>& format = std::nullopt) override;
 
-    srclient::rest::model::RegisteredSchema getLatestWithMetadata(
+    virtual srclient::rest::model::RegisteredSchema getLatestWithMetadata(
         const std::string& subject,
         const std::unordered_map<std::string, std::string>& metadata,
         bool deleted = false,
-        const std::optional<std::string>& format = std::nullopt);
+        const std::optional<std::string>& format = std::nullopt) override;
 
-    std::vector<int32_t> getAllVersions(const std::string& subject);
+    virtual std::vector<int32_t> getAllVersions(const std::string& subject) override;
 
-    std::vector<std::string> getAllSubjects(bool deleted = false);
+    virtual std::vector<std::string> getAllSubjects(bool deleted = false) override;
 
-    std::vector<int32_t> deleteSubject(const std::string& subject, bool permanent = false);
+    virtual std::vector<int32_t> deleteSubject(const std::string& subject, bool permanent = false) override;
 
-    int32_t deleteSubjectVersion(const std::string& subject, int32_t version, bool permanent = false);
+    virtual int32_t deleteSubjectVersion(const std::string& subject, int32_t version, bool permanent = false) override;
 
     // Compatibility operations
-    bool testSubjectCompatibility(const std::string& subject, const srclient::rest::model::Schema& schema);
+    virtual bool testSubjectCompatibility(const std::string& subject, const srclient::rest::model::Schema& schema) override;
 
-    bool testCompatibility(const std::string& subject, int32_t version, const srclient::rest::model::Schema& schema);
+    virtual bool testCompatibility(const std::string& subject, int32_t version, const srclient::rest::model::Schema& schema) override;
 
     // Config operations
-    srclient::rest::model::ServerConfig getConfig(const std::string& subject);
+    virtual srclient::rest::model::ServerConfig getConfig(const std::string& subject) override;
 
-    srclient::rest::model::ServerConfig updateConfig(const std::string& subject, const srclient::rest::model::ServerConfig& config);
+    virtual srclient::rest::model::ServerConfig updateConfig(const std::string& subject, const srclient::rest::model::ServerConfig& config) override;
 
-    srclient::rest::model::ServerConfig getDefaultConfig();
+    virtual srclient::rest::model::ServerConfig getDefaultConfig() override;
 
-    srclient::rest::model::ServerConfig updateDefaultConfig(const srclient::rest::model::ServerConfig& config);
+    virtual srclient::rest::model::ServerConfig updateDefaultConfig(const srclient::rest::model::ServerConfig& config) override;
 
     // Cache operations
-    void clearLatestCaches();
+    virtual void clearLatestCaches() override;
 
-    void clearCaches();
+    virtual void clearCaches() override;
 
-    void close();
+    virtual void close() override;
 };
 
 } // namespace srclient::rest
