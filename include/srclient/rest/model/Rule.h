@@ -28,6 +28,26 @@
 namespace srclient::rest::model
 {
 
+enum class Kind {
+    Transform,
+    Condition,
+};
+
+enum class Phase {
+    Migration,
+    Domain,
+    Encoding,
+};
+
+enum class Mode {
+    Upgrade,
+    Downgrade,
+    UpDown,
+    Write,
+    Read,
+    WriteRead,
+};
+
 /// <summary>
 /// Rule
 /// </summary>
@@ -56,13 +76,13 @@ public:
     /// <summary>
     /// Rule kind
     /// </summary>
-    std::optional<std::string> getKind() const;
-    void setKind(const std::optional<std::string>& value);
+    std::optional<Kind> getKind() const;
+    void setKind(const std::optional<Kind>& value);
     /// <summary>
     /// Rule mode
     /// </summary>
-    std::optional<std::string> getMode() const;
-    void setMode(const std::optional<std::string>& value);
+    std::optional<Mode> getMode() const;
+    void setMode(const std::optional<Mode>& value);
     /// <summary>
     /// Rule type
     /// </summary>
@@ -104,8 +124,8 @@ public:
 protected:
     std::optional<std::string> m_Name;
     std::optional<std::string> m_Doc;
-    std::optional<std::string> m_Kind;
-    std::optional<std::string> m_Mode;
+    std::optional<Kind> m_Kind;
+    std::optional<Mode> m_Mode;
     std::optional<std::string> m_Type;
     std::optional<std::vector<std::string>> m_Tags;
     std::optional<std::map<std::string, std::string>> m_Params;

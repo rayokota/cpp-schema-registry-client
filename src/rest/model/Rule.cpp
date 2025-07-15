@@ -18,6 +18,20 @@
 namespace srclient::rest::model
 {
 
+NLOHMANN_JSON_SERIALIZE_ENUM(Kind, {
+    {Kind::Transform, "TRANSFORM"},
+    {Kind::Condition, "CONDITION"}
+})
+
+NLOHMANN_JSON_SERIALIZE_ENUM(Mode, {
+    {Mode::Upgrade, "UPGRADE"},
+    {Mode::Downgrade, "DOWNGRADE"},
+    {Mode::UpDown, "UPDOWN"},
+    {Mode::Write, "WRITE"},
+    {Mode::Read, "READ"},
+    {Mode::WriteRead, "WRITEREAD"}
+})
+
 Rule::Rule()
 {
     // Optional members are initialized to std::nullopt by default
@@ -87,13 +101,13 @@ void from_json(const nlohmann::json& j, Rule& o)
     } 
     if(j.find("kind") != j.end())
     {
-        std::string temp;
+        Kind temp;
         j.at("kind").get_to(temp);
         o.m_Kind = temp;
     } 
     if(j.find("mode") != j.end())
     {
-        std::string temp;
+        Mode temp;
         j.at("mode").get_to(temp);
         o.m_Mode = temp;
     } 
@@ -161,22 +175,22 @@ void Rule::setDoc(const std::optional<std::string>& value)
     m_Doc = value;
 }
 
-std::optional<std::string> Rule::getKind() const
+std::optional<Kind> Rule::getKind() const
 {
     return m_Kind;
 }
 
-void Rule::setKind(const std::optional<std::string>& value)
+void Rule::setKind(const std::optional<Kind>& value)
 {
     m_Kind = value;
 }
 
-std::optional<std::string> Rule::getMode() const
+std::optional<Mode> Rule::getMode() const
 {
     return m_Mode;
 }
 
-void Rule::setMode(const std::optional<std::string>& value)
+void Rule::setMode(const std::optional<Mode>& value)
 {
     m_Mode = value;
 }

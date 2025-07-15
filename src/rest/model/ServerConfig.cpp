@@ -18,7 +18,7 @@
 namespace srclient::rest::model
 {
 
-NLOHMANN_JSON_SERIALIZE_ENUM( CompatibilityLevel, {
+NLOHMANN_JSON_SERIALIZE_ENUM(CompatibilityLevel, {
     {CompatibilityLevel::Backward, "BACKWARD"},
     {CompatibilityLevel::BackwardTransitive, "BACKWARD_TRANSITIVE"},
     {CompatibilityLevel::Forward, "FORWARD"},
