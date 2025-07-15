@@ -55,16 +55,16 @@ public:
     /// <summary>
     /// 
     /// </summary>
-    std::optional<bool> isEmpty() const;
-    void setEmpty(const std::optional<bool>& value);
+    std::optional<std::vector<srclient::rest::model::Rule>> getEncodingRules() const;
+    void setEncodingRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value);
 
     friend  void to_json(nlohmann::json& j, const RuleSet& o);
     friend  void from_json(const nlohmann::json& j, RuleSet& o);
 protected:
     std::optional<std::vector<srclient::rest::model::Rule>> m_MigrationRules;
     std::optional<std::vector<srclient::rest::model::Rule>> m_DomainRules;
-    std::optional<bool> m_Empty;
-    
+    std::optional<std::vector<srclient::rest::model::Rule>> m_EncodingRules;
+
 };
 
 } // namespace srclient::rest::model

@@ -21,8 +21,8 @@
 
 #include <string>
 #include <map>
-#include <set>
 #include <optional>
+#include <vector>
 #include <nlohmann/json.hpp>
 
 namespace srclient::rest::model
@@ -71,8 +71,8 @@ public:
     /// <summary>
     /// The tags to which this rule applies
     /// </summary>
-    std::optional<std::set<std::string>> getTags() const;
-    void setTags(const std::optional<std::set<std::string>>& value);
+    std::optional<std::vector<std::string>> getTags() const;
+    void setTags(const std::optional<std::vector<std::string>>& value);
     /// <summary>
     /// Optional params for the rule
     /// </summary>
@@ -107,7 +107,7 @@ protected:
     std::optional<std::string> m_Kind;
     std::optional<std::string> m_Mode;
     std::optional<std::string> m_Type;
-    std::optional<std::set<std::string>> m_Tags;
+    std::optional<std::vector<std::string>> m_Tags;
     std::optional<std::map<std::string, std::string>> m_Params;
     std::optional<std::string> m_Expr;
     std::optional<std::string> m_OnSuccess;

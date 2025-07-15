@@ -28,7 +28,7 @@ bool RuleSet::operator==(const RuleSet& rhs) const
     return
         m_MigrationRules == rhs.m_MigrationRules &&
         m_DomainRules == rhs.m_DomainRules &&
-        m_Empty == rhs.m_Empty;
+        m_EncodingRules == rhs.m_EncodingRules;
 }
 
 bool RuleSet::operator!=(const RuleSet& rhs) const
@@ -43,8 +43,8 @@ void to_json(nlohmann::json& j, const RuleSet& o)
         j["migrationRules"] = o.m_MigrationRules.value();
     if(o.m_DomainRules.has_value())
         j["domainRules"] = o.m_DomainRules.value();
-    if(o.m_Empty.has_value())
-        j["empty"] = o.m_Empty.value();
+    if(o.m_EncodingRules.has_value())
+        j["encodingRules"] = o.m_EncodingRules.value();
 }
 
 void from_json(const nlohmann::json& j, RuleSet& o)
@@ -60,13 +60,13 @@ void from_json(const nlohmann::json& j, RuleSet& o)
         std::vector<srclient::rest::model::Rule> temp;
         j.at("domainRules").get_to(temp);
         o.m_DomainRules = temp;
-    } 
-    if(j.find("empty") != j.end())
+    }
+    if(j.find("encodingRules") != j.end())
     {
-        bool temp;
-        j.at("empty").get_to(temp);
-        o.m_Empty = temp;
-    } 
+        std::vector<srclient::rest::model::Rule> temp;
+        j.at("encodingRules").get_to(temp);
+        o.m_EncodingRules = temp;
+    }
 }
 
 std::optional<std::vector<srclient::rest::model::Rule>> RuleSet::getMigrationRules() const
@@ -89,14 +89,14 @@ void RuleSet::setDomainRules(const std::optional<std::vector<srclient::rest::mod
     m_DomainRules = value;
 }
 
-std::optional<bool> RuleSet::isEmpty() const
+std::optional<std::vector<srclient::rest::model::Rule>> RuleSet::getEncodingRules() const
 {
-    return m_Empty;
+    return m_EncodingRules;
 }
 
-void RuleSet::setEmpty(const std::optional<bool>& value)
+void RuleSet::setEncodingRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value)
 {
-    m_Empty = value;
+    m_EncodingRules = value;
 }
 
 } // namespace srclient::rest::model

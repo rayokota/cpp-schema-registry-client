@@ -27,6 +27,16 @@ public:
     /// Config members
 
     /// <summary>
+    /// Compatibility
+    /// </summary>
+    std::optional<std::string> getCompatibility() const;
+    void setCompatibility(const std::optional<std::string>& value);
+    /// <summary>
+    /// Compatibility Level
+    /// </summary>
+    std::optional<std::string> getCompatibilityLevel() const;
+    void setCompatibilityLevel(const std::optional<std::string>& value);
+    /// <summary>
     /// 
     /// </summary>
     std::optional<std::string> getAlias() const;
@@ -46,11 +56,6 @@ public:
     /// </summary>
     std::optional<bool> isValidateRules() const;
     void setValidateRules(const std::optional<bool>& value);
-    /// <summary>
-    /// Compatibility Level
-    /// </summary>
-    std::optional<std::string> getCompatibilityLevel() const;
-    void setCompatibilityLevel(const std::optional<std::string>& value);
     /// <summary>
     /// 
     /// </summary>
@@ -80,11 +85,12 @@ public:
     friend  void to_json(nlohmann::json& j, const ServerConfig& o);
     friend  void from_json(const nlohmann::json& j, ServerConfig& o);
 protected:
+    std::optional<std::string> m_Compatibility;
+    std::optional<std::string> m_CompatibilityLevel;
     std::optional<std::string> m_Alias;
     std::optional<bool> m_Normalize;
     std::optional<bool> m_ValidateFields;
     std::optional<bool> m_ValidateRules;
-    std::optional<std::string> m_CompatibilityLevel;
     std::optional<std::string> m_CompatibilityGroup;
     std::optional<srclient::rest::model::Metadata> m_DefaultMetadata;
     std::optional<srclient::rest::model::Metadata> m_OverrideMetadata;

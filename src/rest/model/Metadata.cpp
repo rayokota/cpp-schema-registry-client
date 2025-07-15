@@ -51,7 +51,7 @@ void from_json(const nlohmann::json& j, Metadata& o)
 {
     if(j.find("tags") != j.end())
     {
-        std::map<std::string, std::set<std::string>> temp;
+        std::map<std::string, std::vector<std::string>> temp;
         j.at("tags").get_to(temp);
         o.m_Tags = temp;
     } 
@@ -63,18 +63,18 @@ void from_json(const nlohmann::json& j, Metadata& o)
     } 
     if(j.find("sensitive") != j.end())
     {
-        std::set<std::string> temp;
+        std::vector<std::string> temp;
         j.at("sensitive").get_to(temp);
         o.m_Sensitive = temp;
     } 
 }
 
-std::optional<std::map<std::string, std::set<std::string>>> Metadata::getTags() const
+std::optional<std::map<std::string, std::vector<std::string>>> Metadata::getTags() const
 {
     return m_Tags;
 }
 
-void Metadata::setTags(const std::optional<std::map<std::string, std::set<std::string>>>& value)
+void Metadata::setTags(const std::optional<std::map<std::string, std::vector<std::string>>>& value)
 {
     m_Tags = value;
 }
@@ -89,12 +89,12 @@ void Metadata::setProperties(const std::optional<std::map<std::string, std::stri
     m_Properties = value;
 }
 
-std::optional<std::set<std::string>> Metadata::getSensitive() const
+std::optional<std::vector<std::string>> Metadata::getSensitive() const
 {
     return m_Sensitive;
 }
 
-void Metadata::setSensitive(const std::optional<std::set<std::string>>& value)
+void Metadata::setSensitive(const std::optional<std::vector<std::string>>& value)
 {
     m_Sensitive = value;
 }

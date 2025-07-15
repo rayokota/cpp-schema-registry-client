@@ -46,26 +46,6 @@ public:
     /// Schema members
 
     /// <summary>
-    /// Name of the subject
-    /// </summary>
-    std::optional<std::string> getSubject() const;
-    void setSubject(const std::optional<std::string>& value);
-    /// <summary>
-    /// Version number
-    /// </summary>
-    std::optional<int32_t> getVersion() const;
-    void setVersion(const std::optional<int32_t>& value);
-    /// <summary>
-    /// Identifier of the schema
-    /// </summary>
-    std::optional<int32_t> getId() const;
-    void setId(const std::optional<int32_t>& value);
-    /// <summary>
-    /// Globally unique identifier of the schema
-    /// </summary>
-    std::optional<std::string> getGuid() const;
-    void setGuid(const std::optional<std::string>& value);
-    /// <summary>
     /// Schema type
     /// </summary>
     std::optional<std::string> getSchemaType() const;
@@ -99,10 +79,6 @@ public:
     friend  void to_json(nlohmann::json& j, const Schema& o);
     friend  void from_json(const nlohmann::json& j, Schema& o);
 protected:
-    std::optional<std::string> m_Subject;
-    std::optional<int32_t> m_Version;
-    std::optional<int32_t> m_Id;
-    std::optional<std::string> m_Guid;
     std::optional<std::string> m_SchemaType;
     std::optional<std::vector<srclient::rest::model::SchemaReference>> m_References;
     std::optional<srclient::rest::model::Metadata> m_Metadata;

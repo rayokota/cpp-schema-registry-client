@@ -105,7 +105,7 @@ void from_json(const nlohmann::json& j, Rule& o)
     } 
     if(j.find("tags") != j.end())
     {
-        std::set<std::string> temp;
+        std::vector<std::string> temp;
         j.at("tags").get_to(temp);
         o.m_Tags = temp;
     } 
@@ -191,12 +191,12 @@ void Rule::setType(const std::optional<std::string>& value)
     m_Type = value;
 }
 
-std::optional<std::set<std::string>> Rule::getTags() const
+std::optional<std::vector<std::string>> Rule::getTags() const
 {
     return m_Tags;
 }
 
-void Rule::setTags(const std::optional<std::set<std::string>>& value)
+void Rule::setTags(const std::optional<std::vector<std::string>>& value)
 {
     m_Tags = value;
 }

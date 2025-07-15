@@ -26,10 +26,6 @@ Schema::Schema()
 bool Schema::operator==(const Schema& rhs) const
 {
     return
-        m_Subject == rhs.m_Subject &&
-        m_Version == rhs.m_Version &&
-        m_Id == rhs.m_Id &&
-        m_Guid == rhs.m_Guid &&
         m_SchemaType == rhs.m_SchemaType &&
         m_References == rhs.m_References &&
         m_Metadata == rhs.m_Metadata &&
@@ -46,14 +42,6 @@ bool Schema::operator!=(const Schema& rhs) const
 void to_json(nlohmann::json& j, const Schema& o)
 {
     j = nlohmann::json::object();
-    if(o.m_Subject.has_value())
-        j["subject"] = o.m_Subject.value();
-    if(o.m_Version.has_value())
-        j["version"] = o.m_Version.value();
-    if(o.m_Id.has_value())
-        j["id"] = o.m_Id.value();
-    if(o.m_Guid.has_value())
-        j["guid"] = o.m_Guid.value();
     if(o.m_SchemaType.has_value())
         j["schemaType"] = o.m_SchemaType.value();
     if(o.m_References.has_value())
@@ -70,30 +58,6 @@ void to_json(nlohmann::json& j, const Schema& o)
 
 void from_json(const nlohmann::json& j, Schema& o)
 {
-    if(j.find("subject") != j.end())
-    {
-        std::string temp;
-        j.at("subject").get_to(temp);
-        o.m_Subject = temp;
-    } 
-    if(j.find("version") != j.end())
-    {
-        int32_t temp;
-        j.at("version").get_to(temp);
-        o.m_Version = temp;
-    } 
-    if(j.find("id") != j.end())
-    {
-        int32_t temp;
-        j.at("id").get_to(temp);
-        o.m_Id = temp;
-    } 
-    if(j.find("guid") != j.end())
-    {
-        std::string temp;
-        j.at("guid").get_to(temp);
-        o.m_Guid = temp;
-    } 
     if(j.find("schemaType") != j.end())
     {
         std::string temp;
@@ -130,46 +94,6 @@ void from_json(const nlohmann::json& j, Schema& o)
         j.at("ruleSet").get_to(temp);
         o.m_RuleSet = temp;
     } 
-}
-
-std::optional<std::string> Schema::getSubject() const
-{
-    return m_Subject;
-}
-
-void Schema::setSubject(const std::optional<std::string>& value)
-{
-    m_Subject = value;
-}
-
-std::optional<int32_t> Schema::getVersion() const
-{
-    return m_Version;
-}
-
-void Schema::setVersion(const std::optional<int32_t>& value)
-{
-    m_Version = value;
-}
-
-std::optional<int32_t> Schema::getId() const
-{
-    return m_Id;
-}
-
-void Schema::setId(const std::optional<int32_t>& value)
-{
-    m_Id = value;
-}
-
-std::optional<std::string> Schema::getGuid() const
-{
-    return m_Guid;
-}
-
-void Schema::setGuid(const std::optional<std::string>& value)
-{
-    m_Guid = value;
 }
 
 std::optional<std::string> Schema::getSchemaType() const
