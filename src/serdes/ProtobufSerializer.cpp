@@ -66,8 +66,7 @@ void ProtobufSerde::resolveNamedSchema(const srclient::rest::model::Schema& sche
 
 // Template method implementations for helper methods
 
-template<typename ClientType>
-std::vector<int32_t> ProtobufSerializer<ClientType>::toIndexArray(const google::protobuf::Descriptor* descriptor) {
+std::vector<int32_t> ProtobufSerializer::toIndexArray(const google::protobuf::Descriptor* descriptor) {
     std::vector<int32_t> indexes;
     
     // Build index path from file descriptor to this message type
@@ -84,8 +83,7 @@ std::vector<int32_t> ProtobufSerializer<ClientType>::toIndexArray(const google::
     return indexes;
 }
 
-template<typename ClientType>
-void ProtobufSerializer<ClientType>::validateSchema(const srclient::rest::model::Schema& schema) {
+void ProtobufSerializer::validateSchema(const srclient::rest::model::Schema& schema) {
     auto schema_str = schema.getSchema();
     if (!schema_str.has_value() || schema_str->empty()) {
         throw protobuf_utils::ProtobufSerdeError("Schema content is empty");
@@ -97,23 +95,18 @@ void ProtobufSerializer<ClientType>::validateSchema(const srclient::rest::model:
     }
 }
 
-template<typename ClientType>
-SerdeValue ProtobufSerializer<ClientType>::messageToSerdeValue(const google::protobuf::Message& message) {
+SerdeValue ProtobufSerializer::messageToSerdeValue(const google::protobuf::Message& message) {
     // Return SerdeValue containing reference to the protobuf message
     // Note: We need to cast away const because reference_wrapper doesn't support const references in this context
     auto& non_const_message = const_cast<google::protobuf::Message&>(message);
     return std::reference_wrapper<google::protobuf::Message>(non_const_message);
 }
 
-template<typename ClientType>
-SerdeValue ProtobufSerializer<ClientType>::transformValue(const SerdeValue& value, 
+SerdeValue ProtobufSerializer::transformValue(const SerdeValue& value,
                                                          const srclient::rest::model::Rule& rule,
                                                          const RuleContext& context) {
     // TODO: Implement value transformation based on rules
     return value;
 }
 
-// Explicit template instantiation
-template class ProtobufSerializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

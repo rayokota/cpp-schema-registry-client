@@ -5,7 +5,4 @@ namespace srclient::serdes {
 
 using namespace json_utils;
 
-// Explicit template instantiation
-template class JsonDeserializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

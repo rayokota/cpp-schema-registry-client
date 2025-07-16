@@ -31,7 +31,6 @@ class BaseDeserializer;
  * Avro-specific deserializer implementation
  * Converts Avro binary format to objects with schema registry integration
  */
-template<typename ClientType>
 class AvroDeserializer {
 public:
     /**
@@ -41,7 +40,7 @@ public:
      * @param config Deserializer configuration
      */
     AvroDeserializer(
-        std::shared_ptr<ClientType> client,
+        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::shared_ptr<RuleRegistry> rule_registry,
         const DeserializerConfig& config
     );

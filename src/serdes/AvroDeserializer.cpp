@@ -7,9 +7,8 @@ namespace srclient::serdes {
 
 // AvroDeserializer implementation
 
-template<typename ClientType>
-AvroDeserializer<ClientType>::AvroDeserializer(
-    std::shared_ptr<ClientType> client,
+AvroDeserializer::AvroDeserializer(
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::shared_ptr<RuleRegistry> rule_registry,
     const DeserializerConfig& config
 ) :     base_(std::make_shared<BaseDeserializer>(
@@ -30,8 +29,7 @@ AvroDeserializer<ClientType>::AvroDeserializer(
     }
 }
 
-template<typename ClientType>
-NamedValue AvroDeserializer<ClientType>::deserialize(
+NamedValue AvroDeserializer::deserialize(
     const SerializationContext& ctx,
     const std::vector<uint8_t>& data
 ) {
@@ -145,8 +143,7 @@ NamedValue AvroDeserializer<ClientType>::deserialize(
     return NamedValue{getName(reader_parsed.first), std::move(value)};
 }
 
-template<typename ClientType>
-nlohmann::json AvroDeserializer<ClientType>::deserializeToJson(
+nlohmann::json AvroDeserializer::deserializeToJson(
     const SerializationContext& ctx,
     const std::vector<uint8_t>& data
 ) {
@@ -154,31 +151,26 @@ nlohmann::json AvroDeserializer<ClientType>::deserializeToJson(
     return avro_utils::avroToJson(named_value.value);
 }
 
-template<typename ClientType>
-void AvroDeserializer<ClientType>::close() {
+void AvroDeserializer::close() {
     if (serde_) {
         serde_->clear();
     }
 }
 
-template<typename ClientType>
-std::optional<std::string> AvroDeserializer<ClientType>::getName(const avro::ValidSchema& schema) {
+std::optional<std::string> AvroDeserializer::getName(const avro::ValidSchema& schema) {
     return avro_utils::getSchemaName(schema);
 }
 
-template<typename ClientType>
-std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>> 
-AvroDeserializer<ClientType>::getParsedSchema(const srclient::rest::model::Schema& schema) {
+std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>
+AvroDeserializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-template<typename ClientType>
-nlohmann::json AvroDeserializer<ClientType>::avroToJson(const avro::GenericDatum& datum) {
+nlohmann::json AvroDeserializer::avroToJson(const avro::GenericDatum& datum) {
     return avro_utils::avroToJson(datum);
 }
 
-template<typename ClientType>
-avro::GenericDatum AvroDeserializer<ClientType>::jsonToAvro(
+avro::GenericDatum AvroDeserializer::jsonToAvro(
     const avro::GenericDatum& input_datum,
     const nlohmann::json& json_value
 ) {
@@ -186,9 +178,7 @@ avro::GenericDatum AvroDeserializer<ClientType>::jsonToAvro(
     // This is a simplified approach - in practice, you'd need the ValidSchema
     throw AvroSerdeError("jsonToAvro with input datum template not implemented");
 }
-
-template<typename ClientType>
-avro::GenericDatum AvroDeserializer<ClientType>::transformFields(
+avro::GenericDatum AvroDeserializer::transformFields(
     RuleContext& ctx,
     const avro::GenericDatum& datum,
     const avro::ValidSchema& schema
@@ -258,28 +248,22 @@ avro::GenericDatum AvroDeserializer<ClientType>::transformFields(
     }
 }
 
-template<typename ClientType>
-std::pair<size_t, avro::ValidSchema> AvroDeserializer<ClientType>::resolveUnion(
+std::pair<size_t, avro::ValidSchema> AvroDeserializer::resolveUnion(
     const avro::ValidSchema& schema,
     const avro::GenericDatum& datum
 ) {
     return avro_utils::resolveUnion(schema, datum);
 }
 
-template<typename ClientType>
-FieldType AvroDeserializer<ClientType>::getFieldType(const avro::ValidSchema& schema) {
+FieldType AvroDeserializer::getFieldType(const avro::ValidSchema& schema) {
     return avro_utils::avroSchemaToFieldType(schema);
 }
 
-template<typename ClientType>
-std::unordered_set<std::string> AvroDeserializer<ClientType>::getInlineTags(
+std::unordered_set<std::string> AvroDeserializer::getInlineTags(
     const avro::GenericRecord& record, 
     const std::string& field_name
 ) {
     return avro_utils::getInlineTags(record, field_name);
 }
 
-// Explicit template instantiation for the main client type
-template class AvroDeserializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

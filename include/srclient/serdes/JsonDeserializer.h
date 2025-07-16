@@ -18,7 +18,6 @@
 namespace srclient::serdes {
 
 // Forward declarations
-template<typename ClientType>
 class JsonDeserializer;
 struct SerializationContext;
 
@@ -26,13 +25,12 @@ struct SerializationContext;
  * JSON deserializer class template
  * Based on JsonDeserializer from json.rs (converted to synchronous)
  */
-template<typename ClientType = srclient::rest::ISchemaRegistryClient>
 class JsonDeserializer {
 public:
     /**
      * Constructor
      */
-    JsonDeserializer(std::shared_ptr<ClientType> client,
+    JsonDeserializer(std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
                     std::shared_ptr<RuleRegistry> rule_registry,
                     const DeserializerConfig& config);
 
@@ -77,9 +75,8 @@ private:
 
 // Template method implementations
 
-template<typename ClientType>
-JsonDeserializer<ClientType>::JsonDeserializer(
-    std::shared_ptr<ClientType> client,
+JsonDeserializer::JsonDeserializer(
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::shared_ptr<RuleRegistry> rule_registry,
     const DeserializerConfig& config
 ) : base_(std::make_shared<BaseDeserializer>(Serde(client, rule_registry), config)),
@@ -103,8 +100,7 @@ JsonDeserializer<ClientType>::JsonDeserializer(
     }
 }
 
-template<typename ClientType>
-nlohmann::json JsonDeserializer<ClientType>::deserialize(
+nlohmann::json JsonDeserializer::deserialize(
     const SerializationContext& ctx,
     const std::vector<uint8_t>& data
 ) {
@@ -211,27 +207,23 @@ nlohmann::json JsonDeserializer<ClientType>::deserialize(
     return value;
 }
 
-template<typename ClientType>
-void JsonDeserializer<ClientType>::close() {
+void JsonDeserializer::close() {
     // Cleanup resources
     serde_->clear();
 }
 
 // Helper method implementations
-template<typename ClientType>
 std::pair<nlohmann::json, std::optional<std::string>>
-JsonDeserializer<ClientType>::getParsedSchema(const srclient::rest::model::Schema& schema) {
+JsonDeserializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-template<typename ClientType>
-bool JsonDeserializer<ClientType>::validateJson(const nlohmann::json& value,
+bool JsonDeserializer::validateJson(const nlohmann::json& value,
                                               const nlohmann::json& schema) {
     return serde_->validateJson(value, schema);
 }
 
-template<typename ClientType>
-nlohmann::json JsonDeserializer<ClientType>::executeFieldTransformations(
+nlohmann::json JsonDeserializer::executeFieldTransformations(
     const nlohmann::json& value,
     const nlohmann::json& schema,
     const RuleContext& context,
@@ -240,8 +232,7 @@ nlohmann::json JsonDeserializer<ClientType>::executeFieldTransformations(
     return value;
 }
 
-template<typename ClientType>
-nlohmann::json JsonDeserializer<ClientType>::executeMigrations(
+nlohmann::json JsonDeserializer::executeMigrations(
     const SerializationContext& ctx,
     const std::string& subject,
     const std::vector<Migration>& migrations,
@@ -255,8 +246,7 @@ nlohmann::json JsonDeserializer<ClientType>::executeMigrations(
     return asJson(migrated_value);
 }
 
-template<typename ClientType>
-bool JsonDeserializer<ClientType>::isEvolutionRequired(
+bool JsonDeserializer::isEvolutionRequired(
     const srclient::rest::model::Schema& writer_schema,
     const srclient::rest::model::Schema& reader_schema) {
     
@@ -267,7 +257,4 @@ bool JsonDeserializer<ClientType>::isEvolutionRequired(
     return writer_schema_str != reader_schema_str;
 }
 
-// Explicit template instantiation declaration
-extern template class JsonDeserializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

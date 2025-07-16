@@ -18,7 +18,6 @@
 namespace srclient::serdes {
 
 // Forward declarations
-template<typename ClientType>
 class JsonSerializer;
 
 class JsonSerde;
@@ -70,13 +69,12 @@ private:
  * JSON serializer class template
  * Based on JsonSerializer from json.rs (converted to synchronous)
  */
-template<typename ClientType = srclient::rest::ISchemaRegistryClient>
 class JsonSerializer {
 public:
     /**
      * Constructor
      */
-    JsonSerializer(std::shared_ptr<ClientType> client,
+    JsonSerializer(std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
                   std::optional<srclient::rest::model::Schema> schema,
                   std::shared_ptr<RuleRegistry> rule_registry,
                   const SerializerConfig& config);
@@ -121,9 +119,8 @@ private:
 
 // Template method implementations
 
-template<typename ClientType>
-JsonSerializer<ClientType>::JsonSerializer(
-    std::shared_ptr<ClientType> client,
+JsonSerializer::JsonSerializer(
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::optional<srclient::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry,
     const SerializerConfig& config
@@ -149,8 +146,7 @@ JsonSerializer<ClientType>::JsonSerializer(
     }
 }
 
-template<typename ClientType>
-std::vector<uint8_t> JsonSerializer<ClientType>::serialize(
+std::vector<uint8_t> JsonSerializer::serialize(
     const SerializationContext& ctx,
     const nlohmann::json& value
 ) {
@@ -262,27 +258,23 @@ std::vector<uint8_t> JsonSerializer<ClientType>::serialize(
     return id_serializer(encoded_bytes, ctx, schema_id);
 }
 
-template<typename ClientType>
-void JsonSerializer<ClientType>::close() {
+void JsonSerializer::close() {
     // Cleanup resources
     serde_->clear();
 }
 
 // Helper method implementations
-template<typename ClientType>
 std::pair<nlohmann::json, std::optional<std::string>>
-JsonSerializer<ClientType>::getParsedSchema(const srclient::rest::model::Schema& schema) {
+JsonSerializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-template<typename ClientType>
-bool JsonSerializer<ClientType>::validateJson(const nlohmann::json& value,
+bool JsonSerializer::validateJson(const nlohmann::json& value,
                                             const nlohmann::json& schema) {
     return serde_->validateJson(value, schema);
 }
 
-template<typename ClientType>
-void JsonSerializer<ClientType>::validateSchema(const srclient::rest::model::Schema& schema) {
+void JsonSerializer::validateSchema(const srclient::rest::model::Schema& schema) {
     auto schema_str = schema.getSchema();
     if (!schema_str.has_value() || schema_str->empty()) {
         throw JsonSerdeError("Schema content is empty");
@@ -294,16 +286,14 @@ void JsonSerializer<ClientType>::validateSchema(const srclient::rest::model::Sch
     }
 }
 
-template<typename ClientType>
-SerdeValue JsonSerializer<ClientType>::transformValue(const SerdeValue& value, 
+SerdeValue JsonSerializer::transformValue(const SerdeValue& value,
                                                      const srclient::rest::model::Rule& rule,
                                                      const RuleContext& context) {
     // TODO: Implement value transformation based on rules
     return value;
 }
 
-template<typename ClientType>
-nlohmann::json JsonSerializer<ClientType>::executeFieldTransformations(
+nlohmann::json JsonSerializer::executeFieldTransformations(
     const nlohmann::json& value,
     const nlohmann::json& schema,
     const RuleContext& context,
@@ -312,7 +302,4 @@ nlohmann::json JsonSerializer<ClientType>::executeFieldTransformations(
     return value;
 }
 
-// Explicit template instantiation declaration
-extern template class JsonSerializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

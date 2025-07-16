@@ -20,7 +20,6 @@
 namespace srclient::serdes {
 
 // Forward declarations
-template<typename ClientType>
 class ProtobufDeserializer;
 struct SerializationContext;
 
@@ -28,13 +27,12 @@ struct SerializationContext;
  * Protobuf deserializer class template
  * Based on ProtobufDeserializer from protobuf.rs (converted to synchronous)
  */
-template<typename ClientType = srclient::rest::ISchemaRegistryClient>
 class ProtobufDeserializer {
 public:
     /**
      * Constructor
      */
-    ProtobufDeserializer(std::shared_ptr<ClientType> client,
+    ProtobufDeserializer(std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
                         std::shared_ptr<RuleRegistry> rule_registry,
                         const DeserializerConfig& config);
 
@@ -97,9 +95,8 @@ private:
 
 // Template method implementations
 
-template<typename ClientType>
-ProtobufDeserializer<ClientType>::ProtobufDeserializer(
-    std::shared_ptr<ClientType> client,
+ProtobufDeserializer::ProtobufDeserializer(
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::shared_ptr<RuleRegistry> rule_registry,
     const DeserializerConfig& config
 ) : base_(std::make_shared<BaseDeserializer>(Serde(client, rule_registry), config)),
@@ -123,8 +120,7 @@ ProtobufDeserializer<ClientType>::ProtobufDeserializer(
     }
 }
 
-template<typename ClientType>
-std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<ClientType>::deserialize(
+std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
     const std::vector<uint8_t>& bytes,
     std::optional<std::string> subject,
     std::optional<std::string> format
@@ -184,9 +180,8 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<ClientType>::des
     return deserializeWithMessageDescriptor(payload, descriptor, writer_schema, subject);
 }
 
-template<typename ClientType>
 template<typename MessageType>
-MessageType ProtobufDeserializer<ClientType>::deserializeTo(
+MessageType ProtobufDeserializer::deserializeTo(
     const std::vector<uint8_t>& bytes,
     std::optional<std::string> subject,
     std::optional<std::string> format
@@ -204,8 +199,7 @@ MessageType ProtobufDeserializer<ClientType>::deserializeTo(
     return result;
 }
 
-template<typename ClientType>
-std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<ClientType>::deserializeWithMessageDescriptor(
+std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserializeWithMessageDescriptor(
     const std::vector<uint8_t>& bytes,
     const google::protobuf::Descriptor* descriptor,
     const srclient::rest::model::Schema& writer_schema,
@@ -233,13 +227,9 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<ClientType>::des
     return message;
 }
 
-template<typename ClientType>
-void ProtobufDeserializer<ClientType>::close() {
+void ProtobufDeserializer::close() {
     // Cleanup resources
     serde_->clear();
 }
 
-// Explicit template instantiation declaration
-extern template class ProtobufDeserializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

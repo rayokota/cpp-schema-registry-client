@@ -66,7 +66,4 @@ void JsonSerde::resolveNamedSchema(const srclient::rest::model::Schema& schema,
     // TODO: Implement reference resolution for JSON schemas
 }
 
-// Explicit template instantiation
-template class JsonSerializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

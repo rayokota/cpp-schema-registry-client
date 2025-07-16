@@ -20,7 +20,6 @@
 namespace srclient::serdes {
 
 // Forward declarations
-template<typename ClientType>
 class ProtobufSerializer;
 
 class ProtobufSerde;
@@ -73,13 +72,12 @@ private:
  * Protobuf serializer class template
  * Based on ProtobufSerializer from protobuf.rs (converted to synchronous)
  */
-template<typename ClientType = srclient::rest::ISchemaRegistryClient>
 class ProtobufSerializer {
 public:
     /**
      * Constructor with default reference subject name strategy
      */
-    ProtobufSerializer(std::shared_ptr<ClientType> client,
+    ProtobufSerializer(std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
                       std::optional<srclient::rest::model::Schema> schema,
                       std::shared_ptr<RuleRegistry> rule_registry,
                       const SerializerConfig& config);
@@ -87,7 +85,7 @@ public:
     /**
      * Constructor with custom reference subject name strategy
      */
-    ProtobufSerializer(std::shared_ptr<ClientType> client,
+    ProtobufSerializer(std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
                       std::optional<srclient::rest::model::Schema> schema,
                       std::shared_ptr<RuleRegistry> rule_registry,
                       const SerializerConfig& config,
@@ -137,9 +135,8 @@ private:
 
 // Template method implementations
 
-template<typename ClientType>
-ProtobufSerializer<ClientType>::ProtobufSerializer(
-    std::shared_ptr<ClientType> client,
+ProtobufSerializer::ProtobufSerializer(
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::optional<srclient::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry,
     const SerializerConfig& config
@@ -166,9 +163,8 @@ ProtobufSerializer<ClientType>::ProtobufSerializer(
     }
 }
 
-template<typename ClientType>
-ProtobufSerializer<ClientType>::ProtobufSerializer(
-    std::shared_ptr<ClientType> client,
+ProtobufSerializer::ProtobufSerializer(
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::optional<srclient::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry,
     const SerializerConfig& config,
@@ -196,18 +192,16 @@ ProtobufSerializer<ClientType>::ProtobufSerializer(
     }
 }
 
-template<typename ClientType>
 template<typename MessageType>
-std::vector<uint8_t> ProtobufSerializer<ClientType>::serialize(
+std::vector<uint8_t> ProtobufSerializer::serialize(
     const SerializationContext& ctx,
     const MessageType& message
 ) {
     return serializeWithMessageDescriptor(ctx, message, message.GetDescriptor());
 }
 
-template<typename ClientType>
 template<typename MessageType>
-std::vector<uint8_t> ProtobufSerializer<ClientType>::serializeWithFileDescriptorSet(
+std::vector<uint8_t> ProtobufSerializer::serializeWithFileDescriptorSet(
     const SerializationContext& ctx,
     const MessageType& message,
     const std::string& message_type_name,
@@ -230,9 +224,8 @@ std::vector<uint8_t> ProtobufSerializer<ClientType>::serializeWithFileDescriptor
     return serializeWithMessageDescriptor(ctx, message, descriptor);
 }
 
-template<typename ClientType>
 template<typename MessageType>
-std::vector<uint8_t> ProtobufSerializer<ClientType>::serializeWithMessageDescriptor(
+std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
     const SerializationContext& ctx,
     const MessageType& message,
     const google::protobuf::Descriptor* descriptor
@@ -291,7 +284,4 @@ std::vector<uint8_t> ProtobufSerializer<ClientType>::serializeWithMessageDescrip
     return id_serializer(encoded_bytes, ctx, schema_id);
 }
 
-// Explicit template instantiation declaration
-extern template class ProtobufSerializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

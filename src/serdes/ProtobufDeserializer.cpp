@@ -7,8 +7,7 @@ namespace srclient::serdes {
 
 // Helper method implementations for ProtobufDeserializer
 
-template<typename ClientType>
-std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<ClientType>::createMessageFromDescriptor(
+std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::createMessageFromDescriptor(
     const google::protobuf::Descriptor* descriptor) {
     
     google::protobuf::DynamicMessageFactory factory;
@@ -20,8 +19,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<ClientType>::cre
     return std::unique_ptr<google::protobuf::Message>(prototype->New());
 }
 
-template<typename ClientType>
-void ProtobufDeserializer<ClientType>::transformFields(
+void ProtobufDeserializer::transformFields(
     google::protobuf::Message* message,
     const google::protobuf::Descriptor* descriptor,
     const srclient::rest::model::Schema& writer_schema,
@@ -31,16 +29,14 @@ void ProtobufDeserializer<ClientType>::transformFields(
     // This would involve comparing field types, applying default values, etc.
 }
 
-template<typename ClientType>
-SerdeValue ProtobufDeserializer<ClientType>::messageToSerdeValue(const google::protobuf::Message& message) {
+SerdeValue ProtobufDeserializer::messageToSerdeValue(const google::protobuf::Message& message) {
     // Return SerdeValue containing reference to the protobuf message
     // Note: We need to cast away const because reference_wrapper doesn't support const references in this context
     auto& non_const_message = const_cast<google::protobuf::Message&>(message);
     return std::reference_wrapper<google::protobuf::Message>(non_const_message);
 }
 
-template<typename ClientType>
-void ProtobufDeserializer<ClientType>::serdeValueToMessage(
+void ProtobufDeserializer::serdeValueToMessage(
     const SerdeValue& value, 
     google::protobuf::Message* message) {
     
@@ -67,8 +63,7 @@ void ProtobufDeserializer<ClientType>::serdeValueToMessage(
     }
 }
 
-template<typename ClientType>
-bool ProtobufDeserializer<ClientType>::isEvolutionRequired(
+bool ProtobufDeserializer::isEvolutionRequired(
     const srclient::rest::model::Schema& writer_schema,
     const srclient::rest::model::Schema& reader_schema) {
     
@@ -79,8 +74,7 @@ bool ProtobufDeserializer<ClientType>::isEvolutionRequired(
     return writer_schema_str != reader_schema_str;
 }
 
-template<typename ClientType>
-std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<ClientType>::evolveMessage(
+std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::evolveMessage(
     const google::protobuf::Message& writer_message,
     const google::protobuf::Descriptor* reader_descriptor,
     const srclient::rest::model::Schema& writer_schema,
@@ -99,7 +93,4 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<ClientType>::evo
     return reader_message;
 }
 
-// Explicit template instantiation
-template class ProtobufDeserializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

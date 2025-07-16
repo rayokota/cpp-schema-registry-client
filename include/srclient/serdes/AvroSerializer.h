@@ -34,7 +34,6 @@ class BaseSerializer;
  * Avro-specific serializer implementation
  * Converts objects to Avro binary format with schema registry integration
  */
-template<typename ClientType>
 class AvroSerializer {
 public:
     /**
@@ -45,7 +44,7 @@ public:
      * @param config Serializer configuration
      */
     AvroSerializer(
-        std::shared_ptr<ClientType> client,
+        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::optional<srclient::rest::model::Schema> schema,
         std::shared_ptr<RuleRegistry> rule_registry,
         const SerializerConfig& config
@@ -137,11 +136,10 @@ public:
      * @param client Client for resolving references
      * @return Tuple of main schema and named schemas
      */
-    template<typename ClientType>
     std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>
     getParsedSchema(
         const srclient::rest::model::Schema& schema,
-        std::shared_ptr<ClientType> client
+        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client
     );
 
     /**
@@ -161,10 +159,9 @@ private:
      * @param schemas Output vector for resolved schema strings
      * @param visited Set of already visited schemas to prevent cycles
      */
-    template<typename ClientType>
     void resolveNamedSchema(
         const srclient::rest::model::Schema& schema,
-        std::shared_ptr<ClientType> client,
+        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::vector<std::string>& schemas,
         std::unordered_set<std::string>& visited
     );

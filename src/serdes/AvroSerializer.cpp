@@ -7,11 +7,10 @@ namespace srclient::serdes {
 
 // AvroSerde implementation
 
-template<typename ClientType>
 std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>
 AvroSerde::getParsedSchema(
     const srclient::rest::model::Schema& schema,
-    std::shared_ptr<ClientType> client
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client
 ) {
     // Generate cache key (reuse the updated SerdeTypes cache key generation)
     nlohmann::json j;
@@ -51,10 +50,9 @@ AvroSerde::getParsedSchema(
     return parsed;
 }
 
-template<typename ClientType>
 void AvroSerde::resolveNamedSchema(
     const srclient::rest::model::Schema& schema,
-    std::shared_ptr<ClientType> client,
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::vector<std::string>& schemas,
     std::unordered_set<std::string>& visited
 ) {
@@ -64,7 +62,7 @@ void AvroSerde::resolveNamedSchema(
     
     for (const auto& ref : schema.getReferences().value()) {
         std::string name = ref.getName().value_or("");
-        if (visited.contains(name)) {
+        if (visited.find(name) != visited.end()) {
             continue;
         }
         visited.insert(name);
@@ -95,25 +93,10 @@ void AvroSerde::clear() {
     parsed_schemas_.clear();
 }
 
-// Explicit template instantiations
-template std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>
-AvroSerde::getParsedSchema<srclient::rest::ISchemaRegistryClient>(
-    const srclient::rest::model::Schema& schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client
-);
-
-template void AvroSerde::resolveNamedSchema<srclient::rest::ISchemaRegistryClient>(
-    const srclient::rest::model::Schema& schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
-    std::vector<std::string>& schemas,
-    std::unordered_set<std::string>& visited
-);
-
 // AvroSerializer implementation
 
-template<typename ClientType>
-AvroSerializer<ClientType>::AvroSerializer(
-    std::shared_ptr<ClientType> client,
+AvroSerializer::AvroSerializer(
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::optional<srclient::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry,
     const SerializerConfig& config
@@ -136,8 +119,7 @@ AvroSerializer<ClientType>::AvroSerializer(
     }
 }
 
-template<typename ClientType>
-std::vector<uint8_t> AvroSerializer<ClientType>::serialize(
+std::vector<uint8_t> AvroSerializer::serialize(
     const SerializationContext& ctx,
     const avro::GenericDatum& datum
 ) {
@@ -218,8 +200,7 @@ std::vector<uint8_t> AvroSerializer<ClientType>::serialize(
     return id_serializer(avro_bytes, ctx, schema_id);
 }
 
-template<typename ClientType>
-std::vector<uint8_t> AvroSerializer<ClientType>::serializeJson(
+std::vector<uint8_t> AvroSerializer::serializeJson(
     const SerializationContext& ctx,
     const nlohmann::json& json_value
 ) {
@@ -233,29 +214,25 @@ std::vector<uint8_t> AvroSerializer<ClientType>::serializeJson(
     return serialize(ctx, datum);
 }
 
-template<typename ClientType>
-void AvroSerializer<ClientType>::close() {
+void AvroSerializer::close() {
     if (serde_) {
         serde_->clear();
     }
 }
 
-template<typename ClientType>
-std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>> 
-AvroSerializer<ClientType>::getParsedSchema(const srclient::rest::model::Schema& schema) {
+std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>
+AvroSerializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-template<typename ClientType>
-avro::GenericDatum AvroSerializer<ClientType>::jsonToAvro(
+avro::GenericDatum AvroSerializer::jsonToAvro(
     const nlohmann::json& json_value,
     const avro::ValidSchema& schema
 ) {
     return avro_utils::jsonToAvro(json_value, schema);
 }
 
-template<typename ClientType>
-avro::GenericDatum AvroSerializer<ClientType>::transformFields(
+avro::GenericDatum AvroSerializer::transformFields(
     RuleContext& ctx,
     const avro::GenericDatum& datum,
     const avro::ValidSchema& schema
@@ -265,7 +242,4 @@ avro::GenericDatum AvroSerializer<ClientType>::transformFields(
     return datum;
 }
 
-// Explicit template instantiation for the main client type
-template class AvroSerializer<srclient::rest::ISchemaRegistryClient>;
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes
