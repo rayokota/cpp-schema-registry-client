@@ -3,8 +3,7 @@
  * Synchronous C++ client for interacting with Confluent Schema Registry
  */
 
-#ifndef SRCLIENT_REST_SCHEMA_REGISTRY_CLIENT_H_
-#define SRCLIENT_REST_SCHEMA_REGISTRY_CLIENT_H_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -152,5 +151,3 @@ public:
 };
 
 }
-
-#endif // SRCLIENT_REST_SCHEMA_REGISTRY_CLIENT_H_

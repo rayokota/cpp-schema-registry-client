@@ -3,8 +3,7 @@
  * Create dek request model
  */
 
-#ifndef SRCLIENT_REST_MODEL_CREATE_DEK_REQUEST_H_
-#define SRCLIENT_REST_MODEL_CREATE_DEK_REQUEST_H_
+#pragma once
 
 #include "Dek.h"
 #include <string>
@@ -54,6 +53,4 @@ private:
     std::optional<std::string> encryptedKeyMaterial_;
 };
 
-} // namespace srclient::rest::model
-
-#endif // SRCLIENT_REST_MODEL_CREATE_DEK_REQUEST_H_ 
+} // namespace srclient::rest::model 

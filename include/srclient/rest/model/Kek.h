@@ -3,8 +3,7 @@
  * Key encryption key model
  */
 
-#ifndef SRCLIENT_REST_MODEL_KEK_H_
-#define SRCLIENT_REST_MODEL_KEK_H_
+#pragma once
 
 #include <string>
 #include <optional>
@@ -70,6 +69,4 @@ private:
     std::optional<bool> deleted_;
 };
 
-} // namespace srclient::rest::model
-
-#endif // SRCLIENT_REST_MODEL_KEK_H_ 
+} // namespace srclient::rest::model 

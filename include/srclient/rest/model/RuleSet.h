@@ -15,9 +15,7 @@
  * Schema rule set
  */
 
-#ifndef SRCLIENT_REST_MODEL_RULE_SET_H_
-#define SRCLIENT_REST_MODEL_RULE_SET_H_
-
+#pragma once
 
 #include "Rule.h"
 #include <vector>
@@ -69,4 +67,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* SRCLIENT_REST_MODEL_RULE_SET_H_ */
+

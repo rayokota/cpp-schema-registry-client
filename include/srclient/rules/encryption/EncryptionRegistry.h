@@ -3,8 +3,7 @@
  * Global registry for KMS drivers and clients - C++ equivalent of Rust mod.rs
  */
 
-#ifndef SRCLIENT_RULES_ENCRYPTION_ENCRYPTION_REGISTRY_H_
-#define SRCLIENT_RULES_ENCRYPTION_ENCRYPTION_REGISTRY_H_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -141,6 +140,4 @@ inline std::shared_ptr<crypto::tink::KmsClient> getKmsClient(const std::string& 
     return EncryptionRegistry::getInstance().getKmsClient(keyUri);
 }
 
-} // namespace srclient::rules::encryption
-
-#endif // SRCLIENT_RULES_ENCRYPTION_ENCRYPTION_REGISTRY_H_ 
+} // namespace srclient::rules::encryption 

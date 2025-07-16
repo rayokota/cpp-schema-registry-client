@@ -3,8 +3,7 @@
  * Synchronous C++ implementation of Data Encryption Key (DEK) Registry Client
  */
 
-#ifndef SRCLIENT_REST_DEK_REGISTRY_CLIENT_H_
-#define SRCLIENT_REST_DEK_REGISTRY_CLIENT_H_
+#pragma once
 
 #include "srclient/rest/IDekRegistryClient.h"
 #include "srclient/rest/RestClient.h"
@@ -104,6 +103,4 @@ private:
     std::string algorithmToString(srclient::rest::model::Algorithm algorithm) const;
 };
 
-} // namespace srclient::rest
-
-#endif // SRCLIENT_REST_DEK_REGISTRY_CLIENT_H_ 
+} // namespace srclient::rest 

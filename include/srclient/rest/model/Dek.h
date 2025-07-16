@@ -3,8 +3,7 @@
  * Data encryption key model
  */
 
-#ifndef SRCLIENT_REST_MODEL_DEK_H_
-#define SRCLIENT_REST_MODEL_DEK_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -93,6 +92,4 @@ private:
     std::optional<bool> m_Deleted;
 };
 
-} // namespace srclient::rest::model
-
-#endif // SRCLIENT_REST_MODEL_DEK_H_ 
+} // namespace srclient::rest::model 

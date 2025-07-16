@@ -3,8 +3,7 @@
  * Create kek request model
  */
 
-#ifndef SRCLIENT_REST_MODEL_CREATE_KEK_REQUEST_H_
-#define SRCLIENT_REST_MODEL_CREATE_KEK_REQUEST_H_
+#pragma once
 
 #include <string>
 #include <optional>
@@ -61,6 +60,4 @@ private:
     bool shared_;
 };
 
-} // namespace srclient::rest::model
-
-#endif // SRCLIENT_REST_MODEL_CREATE_KEK_REQUEST_H_ 
+} // namespace srclient::rest::model 

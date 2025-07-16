@@ -15,9 +15,7 @@
  * Schema
  */
 
-#ifndef SRCLIENT_REST_MODEL_SCHEMA_H_
-#define SRCLIENT_REST_MODEL_SCHEMA_H_
-
+#pragma once
 
 #include "SchemaReference.h"
 #include <string>
@@ -84,4 +82,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* SRCLIENT_REST_MODEL_SCHEMA_H_ */
+

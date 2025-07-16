@@ -3,8 +3,7 @@
  * Mock implementation of Data Encryption Key (DEK) Registry Client for testing
  */
 
-#ifndef SRCLIENT_REST_MOCK_DEK_REGISTRY_CLIENT_H_
-#define SRCLIENT_REST_MOCK_DEK_REGISTRY_CLIENT_H_
+#pragma once
 
 #include "srclient/rest/IDekRegistryClient.h"
 #include "srclient/rest/ClientConfiguration.h"
@@ -97,6 +96,4 @@ private:
     int64_t getCurrentTimestamp() const;
 };
 
-} // namespace srclient::rest
-
-#endif // SRCLIENT_REST_MOCK_DEK_REGISTRY_CLIENT_H_ 
+} // namespace srclient::rest 

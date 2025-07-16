@@ -3,8 +3,7 @@
  * Schema store for caching schema and registered schema information
  */
 
-#ifndef SRCLIENT_REST_SCHEMA_STORE_H_
-#define SRCLIENT_REST_SCHEMA_STORE_H_
+#pragma once
 
 #include <unordered_map>
 #include <string>
@@ -104,5 +103,3 @@ private:
 };
 
 }
-
-#endif // SRCLIENT_REST_SCHEMA_STORE_H_

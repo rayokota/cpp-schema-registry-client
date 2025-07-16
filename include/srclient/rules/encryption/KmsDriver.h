@@ -3,8 +3,7 @@
  * Abstract interface for KMS drivers - C++ equivalent of Rust KmsDriver trait
  */
 
-#ifndef SRCLIENT_RULES_ENCRYPTION_KMS_DRIVER_H_
-#define SRCLIENT_RULES_ENCRYPTION_KMS_DRIVER_H_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -60,6 +59,4 @@ public:
         const std::string& keyUrl) = 0;
 };
 
-} // namespace srclient::rules::encryption
-
-#endif // SRCLIENT_RULES_ENCRYPTION_KMS_DRIVER_H_ 
+} // namespace srclient::rules::encryption 

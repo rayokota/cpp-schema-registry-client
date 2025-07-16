@@ -1,28 +1,20 @@
 # CMake generated build files
-build
-out
-cmake-build-*
-CMakeFiles
+build/
+CMakeLists.txt.user
 CMakeCache.txt
-Makefile
+CMakeFiles
+CMakeScripts
 Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
 _deps
+CMakeUserPresets.json
 *.cmake
-*.dir
-*.pdb
-*.suo
-*.user
-*.vcxproj*
-generated_proto
-generated_test_proto
 
 # Executables and libraries
-*.exe
-*.dll
-*.so
-*.dylib
-*.a
-*.lib
 srclient-test
 
 # IDE specific files (e.g., CLion, VS Code)

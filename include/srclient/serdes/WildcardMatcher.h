@@ -3,8 +3,7 @@
  * Utility for matching text against wildcard patterns
  */
 
-#ifndef SRCLIENT_SERDES_WILDCARD_MATCHER_H_
-#define SRCLIENT_SERDES_WILDCARD_MATCHER_H_
+#pragma once
 
 #include <string>
 #include <regex>
@@ -35,6 +34,4 @@ bool wildcardMatch(const std::string& text, const std::string& matcher);
  */
 std::string wildcardToRegexp(const std::string& pattern, const std::string& separator = ".");
 
-} // namespace srclient::serdes
-
-#endif // SRCLIENT_SERDES_WILDCARD_MATCHER_H_ 
+} // namespace srclient::serdes 

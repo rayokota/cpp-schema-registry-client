@@ -15,9 +15,7 @@
  * This is the exception being thrown in case the api call was not successful
  */
 
-#ifndef SRCLIENT_REST_REST_EXCEPTION_H_
-#define SRCLIENT_REST_REST_EXCEPTION_H_
-
+#pragma once
 
 #include <memory>
 #include <map>
@@ -40,4 +38,4 @@ protected:
 
 }
 
-#endif /* SRCLIENT_REST_REST_EXCEPTION_H_ */
+

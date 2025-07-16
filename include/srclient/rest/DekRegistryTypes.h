@@ -3,8 +3,7 @@
  * Common types and hash functions for DEK Registry Client
  */
 
-#ifndef SRCLIENT_REST_DEK_REGISTRY_TYPES_H_
-#define SRCLIENT_REST_DEK_REGISTRY_TYPES_H_
+#pragma once
 
 #include "srclient/rest/model/Dek.h"
 #include <string>
@@ -65,6 +64,4 @@ namespace std {
                    (std::hash<bool>()(k.deleted) << 4);
         }
     };
-}
-
-#endif // SRCLIENT_REST_DEK_REGISTRY_TYPES_H_ 
+} 

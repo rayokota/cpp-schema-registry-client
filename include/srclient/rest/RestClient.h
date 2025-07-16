@@ -15,9 +15,7 @@
  * This is an API client responsible for stating the HTTP calls
  */
 
-#ifndef SRCLIENT_REST_REST_CLIENT_H_
-#define SRCLIENT_REST_REST_CLIENT_H_
-
+#pragma once
 
 #include "srclient/rest/ClientConfiguration.h"
 #include "srclient/rest/RestException.h"
@@ -56,4 +54,4 @@ protected:
 
 }
 
-#endif /* SRCLIENT_REST_REST_CLIENT_H_ */
+

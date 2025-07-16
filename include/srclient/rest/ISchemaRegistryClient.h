@@ -3,8 +3,7 @@
  * Pure virtual interface for interacting with Confluent Schema Registry
  */
 
-#ifndef SRCLIENT_REST_ISCHEMA_REGISTRY_CLIENT_H_
-#define SRCLIENT_REST_ISCHEMA_REGISTRY_CLIENT_H_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -151,6 +150,4 @@ public:
     virtual void close() = 0;
 };
 
-}
-
-#endif // SRCLIENT_REST_ISCHEMA_REGISTRY_CLIENT_H_ 
+} 

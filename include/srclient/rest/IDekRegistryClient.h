@@ -3,8 +3,7 @@
  * Interface for Data Encryption Key (DEK) Registry Client
  */
 
-#ifndef SRCLIENT_REST_IDEK_REGISTRY_CLIENT_H_
-#define SRCLIENT_REST_IDEK_REGISTRY_CLIENT_H_
+#pragma once
 
 #include "srclient/rest/model/Dek.h"
 #include "srclient/rest/model/Kek.h"
@@ -76,6 +75,4 @@ public:
     virtual void close() = 0;
 };
 
-} // namespace srclient::rest
-
-#endif // SRCLIENT_REST_IDEK_REGISTRY_CLIENT_H_ 
+} // namespace srclient::rest 

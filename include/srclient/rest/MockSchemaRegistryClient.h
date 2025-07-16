@@ -3,8 +3,7 @@
  * Synchronous C++ mock implementation for testing
  */
 
-#ifndef SRCLIENT_REST_MOCK_SCHEMA_REGISTRY_CLIENT_H_
-#define SRCLIENT_REST_MOCK_SCHEMA_REGISTRY_CLIENT_H_
+#pragma once
 
 #include "srclient/rest/SchemaRegistryClient.h"
 #include "srclient/rest/model/Schema.h"
@@ -165,6 +164,4 @@ public:
     virtual void close() override;
 };
 
-} // namespace srclient::rest
-
-#endif // SRCLIENT_REST_MOCK_SCHEMA_REGISTRY_CLIENT_H_ 
+} // namespace srclient::rest 

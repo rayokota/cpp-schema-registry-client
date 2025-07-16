@@ -15,9 +15,7 @@
  * Schema register response
  */
 
-#ifndef SRCLIENT_REST_MODEL_REGISTERED_SCHEMA_H_
-#define SRCLIENT_REST_MODEL_REGISTERED_SCHEMA_H_
-
+#pragma once
 
 #include "Schema.h"
 #include "SchemaReference.h"
@@ -118,4 +116,4 @@ protected:
 
 } // namespace srclient::rest::model
 
-#endif /* SRCLIENT_REST_MODEL_REGISTERED_SCHEMA_H_ */
+

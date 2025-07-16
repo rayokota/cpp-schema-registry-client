@@ -3,8 +3,7 @@
  * Example implementation of KmsDriver interface for demonstration purposes
  */
 
-#ifndef SRCLIENT_RULES_ENCRYPTION_EXAMPLE_KMS_DRIVER_H_
-#define SRCLIENT_RULES_ENCRYPTION_EXAMPLE_KMS_DRIVER_H_
+#pragma once
 
 #include "srclient/rules/encryption/KmsDriver.h"
 #include <memory>
@@ -48,6 +47,4 @@ private:
     std::string keyUrlPrefix_;
 };
 
-} // namespace srclient::rules::encryption
-
-#endif // SRCLIENT_RULES_ENCRYPTION_EXAMPLE_KMS_DRIVER_H_ 
+} // namespace srclient::rules::encryption 

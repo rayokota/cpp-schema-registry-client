@@ -15,9 +15,7 @@
  * This class represents a single item of a multipart-formdata request.
  */
 
-#ifndef SRCLIENT_REST_CLIENT_CONFIGURATION_H_
-#define SRCLIENT_REST_CLIENT_CONFIGURATION_H_
-
+#pragma once
 
 #include <map>
 
@@ -36,5 +34,3 @@ protected:
 };
 
 }
-
-#endif /* SRCLIENT_REST_CLIENT_CONFIGURATION_H_ */

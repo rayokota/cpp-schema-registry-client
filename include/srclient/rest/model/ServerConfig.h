@@ -1,6 +1,4 @@
-#ifndef SRCLIENT_REST_MODEL_SERVER_CONFIG_H_
-#define SRCLIENT_REST_MODEL_SERVER_CONFIG_H_
-
+#pragma once
 
 #include <string>
 #include "Metadata.h"
@@ -110,5 +108,3 @@ protected:
 };
 
 } // namespace srclient::rest::model
-
-#endif /* SRCLIENT_REST_MODEL_SERVER_CONFIG_H_ */

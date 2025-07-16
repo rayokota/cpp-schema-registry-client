@@ -3,8 +3,7 @@
  * Local KMS client implementation using local secrets - C++ port of Rust local_client.rs
  */
 
-#ifndef SRCLIENT_RULES_ENCRYPTION_LOCALKMS_LOCAL_KMS_CLIENT_H_
-#define SRCLIENT_RULES_ENCRYPTION_LOCALKMS_LOCAL_KMS_CLIENT_H_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -91,6 +90,4 @@ private:
     bool isValidKeyUri(absl::string_view key_uri) const;
 };
 
-} // namespace srclient::rules::encryption::localkms
-
-#endif // SRCLIENT_RULES_ENCRYPTION_LOCALKMS_LOCAL_KMS_CLIENT_H_ 
+} // namespace srclient::rules::encryption::localkms 
