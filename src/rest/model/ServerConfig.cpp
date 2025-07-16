@@ -36,17 +36,17 @@ ServerConfig::ServerConfig()
 bool ServerConfig::operator==(const ServerConfig& rhs) const
 {
     return
-        m_Compatibility == rhs.m_Compatibility&&
-        m_CompatibilityLevel == rhs.m_CompatibilityLevel &&
-        m_Alias == rhs.m_Alias &&
-        m_Normalize == rhs.m_Normalize &&
-        m_ValidateFields == rhs.m_ValidateFields &&
-        m_ValidateRules == rhs.m_ValidateRules &&
-        m_CompatibilityGroup == rhs.m_CompatibilityGroup &&
-        m_DefaultMetadata == rhs.m_DefaultMetadata &&
-        m_OverrideMetadata == rhs.m_OverrideMetadata &&
-        m_DefaultRuleSet == rhs.m_DefaultRuleSet &&
-        m_OverrideRuleSet == rhs.m_OverrideRuleSet;
+        compatibility_ == rhs.compatibility_ &&
+        compatibilityLevel_ == rhs.compatibilityLevel_ &&
+        alias_ == rhs.alias_ &&
+        normalize_ == rhs.normalize_ &&
+        validateFields_ == rhs.validateFields_ &&
+        validateRules_ == rhs.validateRules_ &&
+        compatibilityGroup_ == rhs.compatibilityGroup_ &&
+        defaultMetadata_ == rhs.defaultMetadata_ &&
+        overrideMetadata_ == rhs.overrideMetadata_ &&
+        defaultRuleSet_ == rhs.defaultRuleSet_ &&
+        overrideRuleSet_ == rhs.overrideRuleSet_;
 }
 
 bool ServerConfig::operator!=(const ServerConfig& rhs) const
@@ -57,28 +57,28 @@ bool ServerConfig::operator!=(const ServerConfig& rhs) const
 void to_json(nlohmann::json& j, const ServerConfig& o)
 {
     j = nlohmann::json::object();
-    if(o.m_Compatibility.has_value())
-        j["compatibility"] = o.m_Compatibility.value();
-    if(o.m_CompatibilityLevel.has_value())
-        j["compatibilityLevel"] = o.m_CompatibilityLevel.value();
-    if(o.m_Alias.has_value())
-        j["alias"] = o.m_Alias.value();
-    if(o.m_Normalize.has_value())
-        j["normalize"] = o.m_Normalize.value();
-    if(o.m_ValidateFields.has_value())
-        j["validateFields"] = o.m_ValidateFields.value();
-    if(o.m_ValidateRules.has_value())
-        j["validateRules"] = o.m_ValidateRules.value();
-    if(o.m_CompatibilityGroup.has_value())
-        j["compatibilityGroup"] = o.m_CompatibilityGroup.value();
-    if(o.m_DefaultMetadata.has_value())
-        j["defaultMetadata"] = o.m_DefaultMetadata.value();
-    if(o.m_OverrideMetadata.has_value())
-        j["overrideMetadata"] = o.m_OverrideMetadata.value();
-    if(o.m_DefaultRuleSet.has_value())
-        j["defaultRuleSet"] = o.m_DefaultRuleSet.value();
-    if(o.m_OverrideRuleSet.has_value())
-        j["overrideRuleSet"] = o.m_OverrideRuleSet.value();
+    if(o.compatibility_.has_value())
+        j["compatibility"] = o.compatibility_.value();
+    if(o.compatibilityLevel_.has_value())
+        j["compatibilityLevel"] = o.compatibilityLevel_.value();
+    if(o.alias_.has_value())
+        j["alias"] = o.alias_.value();
+    if(o.normalize_.has_value())
+        j["normalize"] = o.normalize_.value();
+    if(o.validateFields_.has_value())
+        j["validateFields"] = o.validateFields_.value();
+    if(o.validateRules_.has_value())
+        j["validateRules"] = o.validateRules_.value();
+    if(o.compatibilityGroup_.has_value())
+        j["compatibilityGroup"] = o.compatibilityGroup_.value();
+    if(o.defaultMetadata_.has_value())
+        j["defaultMetadata"] = o.defaultMetadata_.value();
+    if(o.overrideMetadata_.has_value())
+        j["overrideMetadata"] = o.overrideMetadata_.value();
+    if(o.defaultRuleSet_.has_value())
+        j["defaultRuleSet"] = o.defaultRuleSet_.value();
+    if(o.overrideRuleSet_.has_value())
+        j["overrideRuleSet"] = o.overrideRuleSet_.value();
 }
 
 void from_json(const nlohmann::json& j, ServerConfig& o)
@@ -87,178 +87,178 @@ void from_json(const nlohmann::json& j, ServerConfig& o)
     {
         CompatibilityLevel temp;
         j.at("compatibility").get_to(temp);
-        o.m_Compatibility= temp;
+        o.compatibility_ = temp;
     }
     if(j.find("compatibilityLevel") != j.end())
     {
         CompatibilityLevel temp;
         j.at("compatibilityLevel").get_to(temp);
-        o.m_CompatibilityLevel = temp;
+        o.compatibilityLevel_ = temp;
     }
     if(j.find("alias") != j.end())
     {
         std::string temp;
         j.at("alias").get_to(temp);
-        o.m_Alias = temp;
+        o.alias_ = temp;
     } 
     if(j.find("normalize") != j.end())
     {
         bool temp;
         j.at("normalize").get_to(temp);
-        o.m_Normalize = temp;
+        o.normalize_ = temp;
     } 
     if(j.find("validateFields") != j.end())
     {
         bool temp;
         j.at("validateFields").get_to(temp);
-        o.m_ValidateFields = temp;
+        o.validateFields_ = temp;
     } 
     if(j.find("validateRules") != j.end())
     {
         bool temp;
         j.at("validateRules").get_to(temp);
-        o.m_ValidateRules = temp;
+        o.validateRules_ = temp;
     } 
     if(j.find("compatibilityGroup") != j.end())
     {
         std::string temp;
         j.at("compatibilityGroup").get_to(temp);
-        o.m_CompatibilityGroup = temp;
+        o.compatibilityGroup_ = temp;
     } 
     if(j.find("defaultMetadata") != j.end())
     {
         srclient::rest::model::Metadata temp;
         j.at("defaultMetadata").get_to(temp);
-        o.m_DefaultMetadata = temp;
+        o.defaultMetadata_ = temp;
     } 
     if(j.find("overrideMetadata") != j.end())
     {
         srclient::rest::model::Metadata temp;
         j.at("overrideMetadata").get_to(temp);
-        o.m_OverrideMetadata = temp;
+        o.overrideMetadata_ = temp;
     } 
     if(j.find("defaultRuleSet") != j.end())
     {
         srclient::rest::model::RuleSet temp;
         j.at("defaultRuleSet").get_to(temp);
-        o.m_DefaultRuleSet = temp;
+        o.defaultRuleSet_ = temp;
     } 
     if(j.find("overrideRuleSet") != j.end())
     {
         srclient::rest::model::RuleSet temp;
         j.at("overrideRuleSet").get_to(temp);
-        o.m_OverrideRuleSet = temp;
+        o.overrideRuleSet_ = temp;
     } 
 }
 
 std::optional<CompatibilityLevel> ServerConfig::getCompatibility() const
 {
-    return m_Compatibility;
+    return compatibility_;
 }
 
 void ServerConfig::setCompatibility(const std::optional<CompatibilityLevel>& value)
 {
-    m_Compatibility= value;
+    compatibility_ = value;
 }
 
 std::optional<CompatibilityLevel> ServerConfig::getCompatibilityLevel() const
 {
-    return m_CompatibilityLevel;
+    return compatibilityLevel_;
 }
 
 void ServerConfig::setCompatibilityLevel(const std::optional<CompatibilityLevel>& value)
 {
-    m_CompatibilityLevel = value;
+    compatibilityLevel_ = value;
 }
 
 std::optional<std::string> ServerConfig::getAlias() const
 {
-    return m_Alias;
+    return alias_;
 }
 
 void ServerConfig::setAlias(const std::optional<std::string>& value)
 {
-    m_Alias = value;
+    alias_ = value;
 }
 
 std::optional<bool> ServerConfig::isNormalize() const
 {
-    return m_Normalize;
+    return normalize_;
 }
 
 void ServerConfig::setNormalize(const std::optional<bool>& value)
 {
-    m_Normalize = value;
+    normalize_ = value;
 }
 
 std::optional<bool> ServerConfig::isValidateFields() const
 {
-    return m_ValidateFields;
+    return validateFields_;
 }
 
 void ServerConfig::setValidateFields(const std::optional<bool>& value)
 {
-    m_ValidateFields = value;
+    validateFields_ = value;
 }
 
 std::optional<bool> ServerConfig::isValidateRules() const
 {
-    return m_ValidateRules;
+    return validateRules_;
 }
 
 void ServerConfig::setValidateRules(const std::optional<bool>& value)
 {
-    m_ValidateRules = value;
+    validateRules_ = value;
 }
 
 std::optional<std::string> ServerConfig::getCompatibilityGroup() const
 {
-    return m_CompatibilityGroup;
+    return compatibilityGroup_;
 }
 
 void ServerConfig::setCompatibilityGroup(const std::optional<std::string>& value)
 {
-    m_CompatibilityGroup = value;
+    compatibilityGroup_ = value;
 }
 
 std::optional<srclient::rest::model::Metadata> ServerConfig::getDefaultMetadata() const
 {
-    return m_DefaultMetadata;
+    return defaultMetadata_;
 }
 
 void ServerConfig::setDefaultMetadata(const std::optional<srclient::rest::model::Metadata>& value)
 {
-    m_DefaultMetadata = value;
+    defaultMetadata_ = value;
 }
 
 std::optional<srclient::rest::model::Metadata> ServerConfig::getOverrideMetadata() const
 {
-    return m_OverrideMetadata;
+    return overrideMetadata_;
 }
 
 void ServerConfig::setOverrideMetadata(const std::optional<srclient::rest::model::Metadata>& value)
 {
-    m_OverrideMetadata = value;
+    overrideMetadata_ = value;
 }
 
 std::optional<srclient::rest::model::RuleSet> ServerConfig::getDefaultRuleSet() const
 {
-    return m_DefaultRuleSet;
+    return defaultRuleSet_;
 }
 
 void ServerConfig::setDefaultRuleSet(const std::optional<srclient::rest::model::RuleSet>& value)
 {
-    m_DefaultRuleSet = value;
+    defaultRuleSet_ = value;
 }
 
 std::optional<srclient::rest::model::RuleSet> ServerConfig::getOverrideRuleSet() const
 {
-    return m_OverrideRuleSet;
+    return overrideRuleSet_;
 }
 
 void ServerConfig::setOverrideRuleSet(const std::optional<srclient::rest::model::RuleSet>& value)
 {
-    m_OverrideRuleSet = value;
+    overrideRuleSet_ = value;
 }
 
 } // namespace srclient::rest::model

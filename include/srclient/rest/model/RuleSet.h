@@ -59,9 +59,9 @@ public:
     friend  void to_json(nlohmann::json& j, const RuleSet& o);
     friend  void from_json(const nlohmann::json& j, RuleSet& o);
 protected:
-    std::optional<std::vector<srclient::rest::model::Rule>> m_MigrationRules;
-    std::optional<std::vector<srclient::rest::model::Rule>> m_DomainRules;
-    std::optional<std::vector<srclient::rest::model::Rule>> m_EncodingRules;
+    std::optional<std::vector<srclient::rest::model::Rule>> migrationRules_;
+    std::optional<std::vector<srclient::rest::model::Rule>> domainRules_;
+    std::optional<std::vector<srclient::rest::model::Rule>> encodingRules_;
 
 };
 

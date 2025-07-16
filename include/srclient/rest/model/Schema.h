@@ -72,11 +72,11 @@ public:
     friend  void to_json(nlohmann::json& j, const Schema& o);
     friend  void from_json(const nlohmann::json& j, Schema& o);
 protected:
-    std::optional<std::string> m_SchemaType;
-    std::optional<std::vector<srclient::rest::model::SchemaReference>> m_References;
-    std::optional<srclient::rest::model::Metadata> m_Metadata;
-    std::optional<srclient::rest::model::RuleSet> m_RuleSet;
-    std::optional<std::string> m_Schema;
+    std::optional<std::string> schemaType_;
+    std::optional<std::vector<srclient::rest::model::SchemaReference>> references_;
+    std::optional<srclient::rest::model::Metadata> metadata_;
+    std::optional<srclient::rest::model::RuleSet> ruleSet_;
+    std::optional<std::string> schema_;
 
 };
 

@@ -28,25 +28,25 @@ RegisteredSchema::RegisteredSchema(
         const std::optional<std::string>& guid,
         const std::optional<std::string>& subject,
         const std::optional<int32_t>& version,
-        const Schema& schema) : m_Id(id), m_Guid(guid), m_Subject(subject), m_Version(version),
-        m_SchemaType(schema.getSchemaType()), m_References(schema.getReferences()),
-        m_Metadata(schema.getMetadata()), m_RuleSet(schema.getRuleSet()),
-        m_Schema(schema.getSchema())
+        const Schema& schema) : id_(id), guid_(guid), subject_(subject), version_(version),
+        schemaType_(schema.getSchemaType()), references_(schema.getReferences()),
+        metadata_(schema.getMetadata()), ruleSet_(schema.getRuleSet()),
+        schema_(schema.getSchema())
 {
 }
 
 bool RegisteredSchema::operator==(const RegisteredSchema& rhs) const
 {
     return
-        m_Id == rhs.m_Id &&
-        m_Guid == rhs.m_Guid &&
-        m_Subject == rhs.m_Subject &&
-        m_Version == rhs.m_Version &&
-        m_SchemaType == rhs.m_SchemaType &&
-        m_References == rhs.m_References &&
-        m_Metadata == rhs.m_Metadata &&
-        m_RuleSet == rhs.m_RuleSet &&
-        m_Schema == rhs.m_Schema;
+        id_ == rhs.id_ &&
+        guid_ == rhs.guid_ &&
+        subject_ == rhs.subject_ &&
+        version_ == rhs.version_ &&
+        schemaType_ == rhs.schemaType_ &&
+        references_ == rhs.references_ &&
+        metadata_ == rhs.metadata_ &&
+        ruleSet_ == rhs.ruleSet_ &&
+        schema_ == rhs.schema_;
 }
 
 bool RegisteredSchema::operator!=(const RegisteredSchema& rhs) const
@@ -57,24 +57,24 @@ bool RegisteredSchema::operator!=(const RegisteredSchema& rhs) const
 void to_json(nlohmann::json& j, const RegisteredSchema& o)
 {
     j = nlohmann::json::object();
-    if(o.m_Id.has_value())
-        j["id"] = o.m_Id.value();
-    if(o.m_Guid.has_value())
-        j["guid"] = o.m_Guid.value();
-    if(o.m_Subject.has_value())
-        j["subject"] = o.m_Subject.value();
-    if(o.m_Version.has_value())
-        j["version"] = o.m_Version.value();
-    if(o.m_SchemaType.has_value())
-        j["schemaType"] = o.m_SchemaType.value();
-    if(o.m_References.has_value())
-        j["references"] = o.m_References.value();
-    if(o.m_Metadata.has_value())
-        j["metadata"] = o.m_Metadata.value();
-    if(o.m_RuleSet.has_value())
-        j["ruleSet"] = o.m_RuleSet.value();
-    if(o.m_Schema.has_value())
-        j["schema"] = o.m_Schema.value();
+    if(o.id_.has_value())
+        j["id"] = o.id_.value();
+    if(o.guid_.has_value())
+        j["guid"] = o.guid_.value();
+    if(o.subject_.has_value())
+        j["subject"] = o.subject_.value();
+    if(o.version_.has_value())
+        j["version"] = o.version_.value();
+    if(o.schemaType_.has_value())
+        j["schemaType"] = o.schemaType_.value();
+    if(o.references_.has_value())
+        j["references"] = o.references_.value();
+    if(o.metadata_.has_value())
+        j["metadata"] = o.metadata_.value();
+    if(o.ruleSet_.has_value())
+        j["ruleSet"] = o.ruleSet_.value();
+    if(o.schema_.has_value())
+        j["schema"] = o.schema_.value();
 }
 
 void from_json(const nlohmann::json& j, RegisteredSchema& o)
@@ -83,156 +83,156 @@ void from_json(const nlohmann::json& j, RegisteredSchema& o)
     {
         int32_t temp;
         j.at("id").get_to(temp);
-        o.m_Id = temp;
+        o.id_ = temp;
     } 
     if(j.find("guid") != j.end())
     {
         std::string temp;
         j.at("guid").get_to(temp);
-        o.m_Guid = temp;
+        o.guid_ = temp;
     } 
     if(j.find("subject") != j.end())
     {
         std::string temp;
         j.at("subject").get_to(temp);
-        o.m_Subject = temp;
+        o.subject_ = temp;
     } 
     if(j.find("version") != j.end())
     {
         int32_t temp;
         j.at("version").get_to(temp);
-        o.m_Version = temp;
+        o.version_ = temp;
     } 
     if(j.find("schemaType") != j.end())
     {
         std::string temp;
         j.at("schemaType").get_to(temp);
-        o.m_SchemaType = temp;
+        o.schemaType_ = temp;
     } 
     if(j.find("references") != j.end())
     {
         std::vector<srclient::rest::model::SchemaReference> temp;
         j.at("references").get_to(temp);
-        o.m_References = temp;
+        o.references_ = temp;
     } 
     if(j.find("metadata") != j.end())
     {
         srclient::rest::model::Metadata temp;
         j.at("metadata").get_to(temp);
-        o.m_Metadata = temp;
+        o.metadata_ = temp;
     } 
     if(j.find("ruleSet") != j.end())
     {
         srclient::rest::model::RuleSet temp;
         j.at("ruleSet").get_to(temp);
-        o.m_RuleSet = temp;
+        o.ruleSet_ = temp;
     } 
     if(j.find("schema") != j.end())
     {
         std::string temp;
         j.at("schema").get_to(temp);
-        o.m_Schema = temp;
+        o.schema_ = temp;
     } 
 }
 
 std::optional<int32_t> RegisteredSchema::getId() const
 {
-    return m_Id;
+    return id_;
 }
 
 void RegisteredSchema::setId(const std::optional<int32_t>& value)
 {
-    m_Id = value;
+    id_ = value;
 }
 
 std::optional<std::string> RegisteredSchema::getGuid() const
 {
-    return m_Guid;
+    return guid_;
 }
 
 void RegisteredSchema::setGuid(const std::optional<std::string>& value)
 {
-    m_Guid = value;
+    guid_ = value;
 }
 
 std::optional<std::string> RegisteredSchema::getSubject() const
 {
-    return m_Subject;
+    return subject_;
 }
 
 void RegisteredSchema::setSubject(const std::optional<std::string>& value)
 {
-    m_Subject = value;
+    subject_ = value;
 }
 
 std::optional<int32_t> RegisteredSchema::getVersion() const
 {
-    return m_Version;
+    return version_;
 }
 
 void RegisteredSchema::setVersion(const std::optional<int32_t>& value)
 {
-    m_Version = value;
+    version_ = value;
 }
 
 std::optional<std::string> RegisteredSchema::getSchemaType() const
 {
-    return m_SchemaType;
+    return schemaType_;
 }
 
 void RegisteredSchema::setSchemaType(const std::optional<std::string>& value)
 {
-    m_SchemaType = value;
+    schemaType_ = value;
 }
 
 std::optional<std::vector<srclient::rest::model::SchemaReference>> RegisteredSchema::getReferences() const
 {
-    return m_References;
+    return references_;
 }
 
 void RegisteredSchema::setReferences(const std::optional<std::vector<srclient::rest::model::SchemaReference>>& value)
 {
-    m_References = value;
+    references_ = value;
 }
 
 std::optional<srclient::rest::model::Metadata> RegisteredSchema::getMetadata() const
 {
-    return m_Metadata;
+    return metadata_;
 }
 
 void RegisteredSchema::setMetadata(const std::optional<srclient::rest::model::Metadata>& value)
 {
-    m_Metadata = value;
+    metadata_ = value;
 }
 
 std::optional<srclient::rest::model::RuleSet> RegisteredSchema::getRuleSet() const
 {
-    return m_RuleSet;
+    return ruleSet_;
 }
 
 void RegisteredSchema::setRuleSet(const std::optional<srclient::rest::model::RuleSet>& value)
 {
-    m_RuleSet = value;
+    ruleSet_ = value;
 }
 
 std::optional<std::string> RegisteredSchema::getSchema() const
 {
-    return m_Schema;
+    return schema_;
 }
 
 void RegisteredSchema::setSchema(const std::optional<std::string>& value)
 {
-    m_Schema = value;
+    schema_ = value;
 }
 
 Schema RegisteredSchema::toSchema() const
 {
     Schema schema;
-    schema.setSchemaType(m_SchemaType);
-    schema.setReferences(m_References);
-    schema.setMetadata(m_Metadata);
-    schema.setRuleSet(m_RuleSet);
-    schema.setSchema(m_Schema);
+    schema.setSchemaType(schemaType_);
+    schema.setReferences(references_);
+    schema.setMetadata(metadata_);
+    schema.setRuleSet(ruleSet_);
+    schema.setSchema(schema_);
     return schema;
 }
 

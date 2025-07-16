@@ -26,9 +26,9 @@ RuleSet::RuleSet()
 bool RuleSet::operator==(const RuleSet& rhs) const
 {
     return
-        m_MigrationRules == rhs.m_MigrationRules &&
-        m_DomainRules == rhs.m_DomainRules &&
-        m_EncodingRules == rhs.m_EncodingRules;
+        migrationRules_ == rhs.migrationRules_ &&
+        domainRules_ == rhs.domainRules_ &&
+        encodingRules_ == rhs.encodingRules_;
 }
 
 bool RuleSet::operator!=(const RuleSet& rhs) const
@@ -39,12 +39,12 @@ bool RuleSet::operator!=(const RuleSet& rhs) const
 void to_json(nlohmann::json& j, const RuleSet& o)
 {
     j = nlohmann::json::object();
-    if(o.m_MigrationRules.has_value())
-        j["migrationRules"] = o.m_MigrationRules.value();
-    if(o.m_DomainRules.has_value())
-        j["domainRules"] = o.m_DomainRules.value();
-    if(o.m_EncodingRules.has_value())
-        j["encodingRules"] = o.m_EncodingRules.value();
+    if(o.migrationRules_.has_value())
+        j["migrationRules"] = o.migrationRules_.value();
+    if(o.domainRules_.has_value())
+        j["domainRules"] = o.domainRules_.value();
+    if(o.encodingRules_.has_value())
+        j["encodingRules"] = o.encodingRules_.value();
 }
 
 void from_json(const nlohmann::json& j, RuleSet& o)
@@ -53,50 +53,50 @@ void from_json(const nlohmann::json& j, RuleSet& o)
     {
         std::vector<srclient::rest::model::Rule> temp;
         j.at("migrationRules").get_to(temp);
-        o.m_MigrationRules = temp;
+        o.migrationRules_ = temp;
     } 
     if(j.find("domainRules") != j.end())
     {
         std::vector<srclient::rest::model::Rule> temp;
         j.at("domainRules").get_to(temp);
-        o.m_DomainRules = temp;
+        o.domainRules_ = temp;
     }
     if(j.find("encodingRules") != j.end())
     {
         std::vector<srclient::rest::model::Rule> temp;
         j.at("encodingRules").get_to(temp);
-        o.m_EncodingRules = temp;
+        o.encodingRules_ = temp;
     }
 }
 
 std::optional<std::vector<srclient::rest::model::Rule>> RuleSet::getMigrationRules() const
 {
-    return m_MigrationRules;
+    return migrationRules_;
 }
 
 void RuleSet::setMigrationRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value)
 {
-    m_MigrationRules = value;
+    migrationRules_ = value;
 }
 
 std::optional<std::vector<srclient::rest::model::Rule>> RuleSet::getDomainRules() const
 {
-    return m_DomainRules;
+    return domainRules_;
 }
 
 void RuleSet::setDomainRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value)
 {
-    m_DomainRules = value;
+    domainRules_ = value;
 }
 
 std::optional<std::vector<srclient::rest::model::Rule>> RuleSet::getEncodingRules() const
 {
-    return m_EncodingRules;
+    return encodingRules_;
 }
 
 void RuleSet::setEncodingRules(const std::optional<std::vector<srclient::rest::model::Rule>>& value)
 {
-    m_EncodingRules = value;
+    encodingRules_ = value;
 }
 
 } // namespace srclient::rest::model
