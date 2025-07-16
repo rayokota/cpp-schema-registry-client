@@ -16,7 +16,7 @@ namespace srclient::rest {
 RestException::RestException(const std::string_view message
     , int errorCode
     , std::shared_ptr<std::istream> content /*= nullptr*/ )
-    : m_Content(content)
+    : content_(content)
 {
 }
 
@@ -26,7 +26,7 @@ RestException::~RestException()
 
 std::shared_ptr<std::istream> RestException::getContent() const
 {
-    return m_Content;
+    return content_;
 }
 
 }

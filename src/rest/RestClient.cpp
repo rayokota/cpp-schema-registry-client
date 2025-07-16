@@ -19,12 +19,12 @@
 namespace srclient::rest {
 
 RestClient::RestClient(std::shared_ptr<const ClientConfiguration> configuration )
-    : m_Configuration(configuration)
+    : configuration_(configuration)
 {
     // Initialize a client for each base URL
     for (const auto& baseUrl : configuration->getBaseUrls()) {
         std::unique_ptr<httplib::Client> client = std::make_unique<httplib::Client>(baseUrl);
-        m_Clients.push_back(std::move(client));
+        clients_.push_back(std::move(client));
     }
 }
 RestClient::~RestClient()
@@ -33,7 +33,7 @@ RestClient::~RestClient()
 
 std::shared_ptr<const ClientConfiguration> RestClient::getConfiguration() const
 {
-    return m_Configuration;
+    return configuration_;
 }
 
 httplib::Result RestClient::sendRequest(
@@ -51,7 +51,7 @@ httplib::Result RestClient::sendRequest(
     req.headers = headers;
     req.body = body;
 
-    return m_Clients.front()->send(req);
+    return clients_.front()->send(req);
 }
 
 }

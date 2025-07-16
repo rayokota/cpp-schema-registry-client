@@ -7,7 +7,7 @@
 
 namespace srclient::rest::model {
 
-CreateKekRequest::CreateKekRequest() : m_Shared(false) {}
+CreateKekRequest::CreateKekRequest() : shared_(false) {}
 
 CreateKekRequest::CreateKekRequest(
     const std::string& name,
@@ -16,20 +16,20 @@ CreateKekRequest::CreateKekRequest(
     const std::optional<std::unordered_map<std::string, std::string>>& kmsProps,
     const std::optional<std::string>& doc,
     bool shared
-) : m_Name(name),
-    m_KmsType(kmsType),
-    m_KmsKeyId(kmsKeyId),
-    m_KmsProps(kmsProps),
-    m_Doc(doc),
-    m_Shared(shared) {}
+) : name_(name),
+    kmsType_(kmsType),
+    kmsKeyId_(kmsKeyId),
+    kmsProps_(kmsProps),
+    doc_(doc),
+    shared_(shared) {}
 
 bool CreateKekRequest::operator==(const CreateKekRequest& rhs) const {
-    return m_Name == rhs.m_Name &&
-           m_KmsType == rhs.m_KmsType &&
-           m_KmsKeyId == rhs.m_KmsKeyId &&
-           m_KmsProps == rhs.m_KmsProps &&
-           m_Doc == rhs.m_Doc &&
-           m_Shared == rhs.m_Shared;
+    return name_ == rhs.name_ &&
+           kmsType_ == rhs.kmsType_ &&
+           kmsKeyId_ == rhs.kmsKeyId_ &&
+           kmsProps_ == rhs.kmsProps_ &&
+           doc_ == rhs.doc_ &&
+           shared_ == rhs.shared_;
 }
 
 bool CreateKekRequest::operator!=(const CreateKekRequest& rhs) const {
@@ -37,51 +37,51 @@ bool CreateKekRequest::operator!=(const CreateKekRequest& rhs) const {
 }
 
 // Getters
-std::string CreateKekRequest::getName() const { return m_Name; }
-std::string CreateKekRequest::getKmsType() const { return m_KmsType; }
-std::string CreateKekRequest::getKmsKeyId() const { return m_KmsKeyId; }
-std::optional<std::unordered_map<std::string, std::string>> CreateKekRequest::getKmsProps() const { return m_KmsProps; }
-std::optional<std::string> CreateKekRequest::getDoc() const { return m_Doc; }
-bool CreateKekRequest::getShared() const { return m_Shared; }
+std::string CreateKekRequest::getName() const { return name_; }
+std::string CreateKekRequest::getKmsType() const { return kmsType_; }
+std::string CreateKekRequest::getKmsKeyId() const { return kmsKeyId_; }
+std::optional<std::unordered_map<std::string, std::string>> CreateKekRequest::getKmsProps() const { return kmsProps_; }
+std::optional<std::string> CreateKekRequest::getDoc() const { return doc_; }
+bool CreateKekRequest::getShared() const { return shared_; }
 
 // Setters
-void CreateKekRequest::setName(const std::string& name) { m_Name = name; }
-void CreateKekRequest::setKmsType(const std::string& kmsType) { m_KmsType = kmsType; }
-void CreateKekRequest::setKmsKeyId(const std::string& kmsKeyId) { m_KmsKeyId = kmsKeyId; }
-void CreateKekRequest::setKmsProps(const std::optional<std::unordered_map<std::string, std::string>>& kmsProps) { m_KmsProps = kmsProps; }
-void CreateKekRequest::setDoc(const std::optional<std::string>& doc) { m_Doc = doc; }
-void CreateKekRequest::setShared(bool shared) { m_Shared = shared; }
+void CreateKekRequest::setName(const std::string& name) { name_ = name; }
+void CreateKekRequest::setKmsType(const std::string& kmsType) { kmsType_ = kmsType; }
+void CreateKekRequest::setKmsKeyId(const std::string& kmsKeyId) { kmsKeyId_ = kmsKeyId; }
+void CreateKekRequest::setKmsProps(const std::optional<std::unordered_map<std::string, std::string>>& kmsProps) { kmsProps_ = kmsProps; }
+void CreateKekRequest::setDoc(const std::optional<std::string>& doc) { doc_ = doc; }
+void CreateKekRequest::setShared(bool shared) { shared_ = shared; }
 
 // JSON serialization
 void to_json(nlohmann::json& j, const CreateKekRequest& o) {
     j = nlohmann::json{
-        {"name", o.m_Name},
-        {"kmsType", o.m_KmsType},
-        {"kmsKeyId", o.m_KmsKeyId},
-        {"shared", o.m_Shared}
+        {"name", o.name_},
+        {"kmsType", o.kmsType_},
+        {"kmsKeyId", o.kmsKeyId_},
+        {"shared", o.shared_}
     };
     
-    if (o.m_KmsProps.has_value()) {
-        j["kmsProps"] = o.m_KmsProps.value();
+    if (o.kmsProps_.has_value()) {
+        j["kmsProps"] = o.kmsProps_.value();
     }
     
-    if (o.m_Doc.has_value()) {
-        j["doc"] = o.m_Doc.value();
+    if (o.doc_.has_value()) {
+        j["doc"] = o.doc_.value();
     }
 }
 
 void from_json(const nlohmann::json& j, CreateKekRequest& o) {
-    j.at("name").get_to(o.m_Name);
-    j.at("kmsType").get_to(o.m_KmsType);
-    j.at("kmsKeyId").get_to(o.m_KmsKeyId);
-    j.at("shared").get_to(o.m_Shared);
+    j.at("name").get_to(o.name_);
+    j.at("kmsType").get_to(o.kmsType_);
+    j.at("kmsKeyId").get_to(o.kmsKeyId_);
+    j.at("shared").get_to(o.shared_);
     
     if (j.contains("kmsProps") && !j["kmsProps"].is_null()) {
-        o.m_KmsProps = j["kmsProps"].get<std::unordered_map<std::string, std::string>>();
+        o.kmsProps_ = j["kmsProps"].get<std::unordered_map<std::string, std::string>>();
     }
     
     if (j.contains("doc") && !j["doc"].is_null()) {
-        o.m_Doc = j["doc"].get<std::string>();
+        o.doc_ = j["doc"].get<std::string>();
     }
 }
 

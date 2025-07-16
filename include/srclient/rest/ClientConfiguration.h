@@ -32,7 +32,7 @@ public:
     std::vector<std::string> getBaseUrls() const;
 
 protected:
-    std::vector<std::string> m_BaseUrls;
+    std::vector<std::string> baseUrls_;
 };
 
 }

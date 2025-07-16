@@ -14,7 +14,7 @@
 namespace srclient::rest {
 
 ClientConfiguration::ClientConfiguration(const std::vector<std::string>& baseUrls)
-    : m_BaseUrls(baseUrls)
+    : baseUrls_(baseUrls)
 {
 }
 
@@ -24,7 +24,7 @@ ClientConfiguration::~ClientConfiguration()
 
 std::vector<std::string> ClientConfiguration::getBaseUrls() const
 {
-    return m_BaseUrls;
+    return baseUrls_;
 }
 
 }

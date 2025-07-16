@@ -35,7 +35,7 @@ public:
     std::shared_ptr<std::istream> getContent() const;
 
 protected:
-    std::shared_ptr<std::istream> m_Content;
+    std::shared_ptr<std::istream> content_;
 };
 
 }

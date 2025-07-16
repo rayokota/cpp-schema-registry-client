@@ -53,12 +53,12 @@ public:
     friend void from_json(const nlohmann::json& j, CreateKekRequest& o);
 
 private:
-    std::string m_Name;
-    std::string m_KmsType;
-    std::string m_KmsKeyId;
-    std::optional<std::unordered_map<std::string, std::string>> m_KmsProps;
-    std::optional<std::string> m_Doc;
-    bool m_Shared;
+    std::string name_;
+    std::string kmsType_;
+    std::string kmsKeyId_;
+    std::optional<std::unordered_map<std::string, std::string>> kmsProps_;
+    std::optional<std::string> doc_;
+    bool shared_;
 };
 
 } // namespace srclient::rest::model

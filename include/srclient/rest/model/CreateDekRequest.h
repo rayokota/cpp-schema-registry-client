@@ -48,10 +48,10 @@ public:
     friend void from_json(const nlohmann::json& j, CreateDekRequest& o);
 
 private:
-    std::string m_Subject;
-    std::optional<int32_t> m_Version;
-    std::optional<Algorithm> m_Algorithm;
-    std::optional<std::string> m_EncryptedKeyMaterial;
+    std::string subject_;
+    std::optional<int32_t> version_;
+    std::optional<Algorithm> algorithm_;
+    std::optional<std::string> encryptedKeyMaterial_;
 };
 
 } // namespace srclient::rest::model

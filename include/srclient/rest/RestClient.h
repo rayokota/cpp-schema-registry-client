@@ -50,8 +50,8 @@ public:
     ) const;
 
 protected:
-    std::shared_ptr<const ClientConfiguration> m_Configuration;
-    std::vector<std::unique_ptr<httplib::Client>> m_Clients;
+    std::shared_ptr<const ClientConfiguration> configuration_;
+    std::vector<std::unique_ptr<httplib::Client>> clients_;
 };
 
 }
