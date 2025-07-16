@@ -120,17 +120,17 @@ public:
     friend  void to_json(nlohmann::json& j, const Rule& o);
     friend  void from_json(const nlohmann::json& j, Rule& o);
 protected:
-    std::optional<std::string> m_Name;
-    std::optional<std::string> m_Doc;
-    std::optional<Kind> m_Kind;
-    std::optional<Mode> m_Mode;
-    std::optional<std::string> m_Type;
-    std::optional<std::vector<std::string>> m_Tags;
-    std::optional<std::map<std::string, std::string>> m_Params;
-    std::optional<std::string> m_Expr;
-    std::optional<std::string> m_OnSuccess;
-    std::optional<std::string> m_OnFailure;
-    std::optional<bool> m_Disabled;
+    std::optional<std::string> name_;
+    std::optional<std::string> doc_;
+    std::optional<Kind> kind_;
+    std::optional<Mode> mode_;
+    std::optional<std::string> type_;
+    std::optional<std::vector<std::string>> tags_;
+    std::optional<std::map<std::string, std::string>> params_;
+    std::optional<std::string> expr_;
+    std::optional<std::string> onSuccess_;
+    std::optional<std::string> onFailure_;
+    std::optional<bool> disabled_;
     
 };
 

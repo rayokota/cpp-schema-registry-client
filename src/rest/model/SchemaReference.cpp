@@ -26,9 +26,9 @@ SchemaReference::SchemaReference()
 bool SchemaReference::operator==(const SchemaReference& rhs) const
 {
     return
-        m_Name == rhs.m_Name &&
-        m_Subject == rhs.m_Subject &&
-        m_Version == rhs.m_Version;
+        name_ == rhs.name_ &&
+        subject_ == rhs.subject_ &&
+        version_ == rhs.version_;
 }
 
 bool SchemaReference::operator!=(const SchemaReference& rhs) const
@@ -39,12 +39,12 @@ bool SchemaReference::operator!=(const SchemaReference& rhs) const
 void to_json(nlohmann::json& j, const SchemaReference& o)
 {
     j = nlohmann::json::object();
-    if(o.m_Name.has_value())
-        j["name"] = o.m_Name.value();
-    if(o.m_Subject.has_value())
-        j["subject"] = o.m_Subject.value();
-    if(o.m_Version.has_value())
-        j["version"] = o.m_Version.value();
+    if(o.name_.has_value())
+        j["name"] = o.name_.value();
+    if(o.subject_.has_value())
+        j["subject"] = o.subject_.value();
+    if(o.version_.has_value())
+        j["version"] = o.version_.value();
 }
 
 void from_json(const nlohmann::json& j, SchemaReference& o)
@@ -53,50 +53,50 @@ void from_json(const nlohmann::json& j, SchemaReference& o)
     {
         std::string temp;
         j.at("name").get_to(temp);
-        o.m_Name = temp;
+        o.name_ = temp;
     } 
     if(j.find("subject") != j.end())
     {
         std::string temp;
         j.at("subject").get_to(temp);
-        o.m_Subject = temp;
+        o.subject_ = temp;
     } 
     if(j.find("version") != j.end())
     {
         int32_t temp;
         j.at("version").get_to(temp);
-        o.m_Version = temp;
+        o.version_ = temp;
     } 
 }
 
 std::optional<std::string> SchemaReference::getName() const
 {
-    return m_Name;
+    return name_;
 }
 
 void SchemaReference::setName(const std::optional<std::string>& value)
 {
-    m_Name = value;
+    name_ = value;
 }
 
 std::optional<std::string> SchemaReference::getSubject() const
 {
-    return m_Subject;
+    return subject_;
 }
 
 void SchemaReference::setSubject(const std::optional<std::string>& value)
 {
-    m_Subject = value;
+    subject_ = value;
 }
 
 std::optional<int32_t> SchemaReference::getVersion() const
 {
-    return m_Version;
+    return version_;
 }
 
 void SchemaReference::setVersion(const std::optional<int32_t>& value)
 {
-    m_Version = value;
+    version_ = value;
 }
 
 } // namespace srclient::rest::model

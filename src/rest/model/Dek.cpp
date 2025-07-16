@@ -111,7 +111,7 @@ namespace {
     }
 }
 
-Dek::Dek() : m_Version(0), m_Algorithm(Algorithm::Aes256Gcm), m_Ts(0) {}
+Dek::Dek() : version_(0), algorithm_(Algorithm::Aes256Gcm), ts_(0) {}
 
 Dek::Dek(
     const std::string& kekName,
@@ -122,24 +122,24 @@ Dek::Dek(
     const std::optional<std::string>& keyMaterial,
     int64_t ts,
     const std::optional<bool>& deleted
-) : m_KekName(kekName),
-    m_Subject(subject),
-    m_Version(version),
-    m_Algorithm(algorithm),
-    m_EncryptedKeyMaterial(encryptedKeyMaterial),
-    m_KeyMaterial(keyMaterial),
-    m_Ts(ts),
-    m_Deleted(deleted) {}
+) : kekName_(kekName),
+    subject_(subject),
+    version_(version),
+    algorithm_(algorithm),
+    encryptedKeyMaterial_(encryptedKeyMaterial),
+    keyMaterial_(keyMaterial),
+    ts_(ts),
+    deleted_(deleted) {}
 
 bool Dek::operator==(const Dek& rhs) const {
-    return m_KekName == rhs.m_KekName &&
-           m_Subject == rhs.m_Subject &&
-           m_Version == rhs.m_Version &&
-           m_Algorithm == rhs.m_Algorithm &&
-           m_EncryptedKeyMaterial == rhs.m_EncryptedKeyMaterial &&
-           m_KeyMaterial == rhs.m_KeyMaterial &&
-           m_Ts == rhs.m_Ts &&
-           m_Deleted == rhs.m_Deleted;
+    return kekName_ == rhs.kekName_ &&
+           subject_ == rhs.subject_ &&
+           version_ == rhs.version_ &&
+           algorithm_ == rhs.algorithm_ &&
+           encryptedKeyMaterial_ == rhs.encryptedKeyMaterial_ &&
+           keyMaterial_ == rhs.keyMaterial_ &&
+           ts_ == rhs.ts_ &&
+           deleted_ == rhs.deleted_;
 }
 
 bool Dek::operator!=(const Dek& rhs) const {
@@ -147,28 +147,28 @@ bool Dek::operator!=(const Dek& rhs) const {
 }
 
 // Getters
-std::string Dek::getKekName() const { return m_KekName; }
-std::string Dek::getSubject() const { return m_Subject; }
-int32_t Dek::getVersion() const { return m_Version; }
-Algorithm Dek::getAlgorithm() const { return m_Algorithm; }
-std::optional<std::string> Dek::getEncryptedKeyMaterial() const { return m_EncryptedKeyMaterial; }
-std::optional<std::vector<uint8_t>> Dek::getEncryptedKeyMaterialBytes() const { return m_EncryptedKeyMaterialBytes; }
-std::optional<std::string> Dek::getKeyMaterial() const { return m_KeyMaterial; }
-std::optional<std::vector<uint8_t>> Dek::getKeyMaterialBytes() const { return m_KeyMaterialBytes; }
-int64_t Dek::getTs() const { return m_Ts; }
-std::optional<bool> Dek::getDeleted() const { return m_Deleted; }
+std::string Dek::getKekName() const { return kekName_; }
+std::string Dek::getSubject() const { return subject_; }
+int32_t Dek::getVersion() const { return version_; }
+Algorithm Dek::getAlgorithm() const { return algorithm_; }
+std::optional<std::string> Dek::getEncryptedKeyMaterial() const { return encryptedKeyMaterial_; }
+std::optional<std::vector<uint8_t>> Dek::getEncryptedKeyMaterialBytes() const { return encryptedKeyMaterialBytes_; }
+std::optional<std::string> Dek::getKeyMaterial() const { return keyMaterial_; }
+std::optional<std::vector<uint8_t>> Dek::getKeyMaterialBytes() const { return keyMaterialBytes_; }
+int64_t Dek::getTs() const { return ts_; }
+std::optional<bool> Dek::getDeleted() const { return deleted_; }
 
 // Setters
-void Dek::setKekName(const std::string& kekName) { m_KekName = kekName; }
-void Dek::setSubject(const std::string& subject) { m_Subject = subject; }
-void Dek::setVersion(int32_t version) { m_Version = version; }
-void Dek::setAlgorithm(Algorithm algorithm) { m_Algorithm = algorithm; }
-void Dek::setEncryptedKeyMaterial(const std::optional<std::string>& encryptedKeyMaterial) { m_EncryptedKeyMaterial = encryptedKeyMaterial; }
-void Dek::setEncryptedKeyMaterialBytes(const std::optional<std::vector<uint8_t>>& encryptedKeyMaterialBytes) { m_EncryptedKeyMaterialBytes = encryptedKeyMaterialBytes; }
-void Dek::setKeyMaterial(const std::optional<std::string>& keyMaterial) { m_KeyMaterial = keyMaterial; }
-void Dek::setKeyMaterialBytes(const std::optional<std::vector<uint8_t>>& keyMaterialBytes) { m_KeyMaterialBytes = keyMaterialBytes; }
-void Dek::setTs(int64_t ts) { m_Ts = ts; }
-void Dek::setDeleted(const std::optional<bool>& deleted) { m_Deleted = deleted; }
+void Dek::setKekName(const std::string& kekName) { kekName_ = kekName; }
+void Dek::setSubject(const std::string& subject) { subject_ = subject; }
+void Dek::setVersion(int32_t version) { version_ = version; }
+void Dek::setAlgorithm(Algorithm algorithm) { algorithm_ = algorithm; }
+void Dek::setEncryptedKeyMaterial(const std::optional<std::string>& encryptedKeyMaterial) { encryptedKeyMaterial_ = encryptedKeyMaterial; }
+void Dek::setEncryptedKeyMaterialBytes(const std::optional<std::vector<uint8_t>>& encryptedKeyMaterialBytes) { encryptedKeyMaterialBytes_ = encryptedKeyMaterialBytes; }
+void Dek::setKeyMaterial(const std::optional<std::string>& keyMaterial) { keyMaterial_ = keyMaterial; }
+void Dek::setKeyMaterialBytes(const std::optional<std::vector<uint8_t>>& keyMaterialBytes) { keyMaterialBytes_ = keyMaterialBytes; }
+void Dek::setTs(int64_t ts) { ts_ = ts; }
+void Dek::setDeleted(const std::optional<bool>& deleted) { deleted_ = deleted; }
 
 // Utility methods
 void Dek::populateKeyMaterialBytes() {
@@ -177,73 +177,73 @@ void Dek::populateKeyMaterialBytes() {
 }
 
 std::optional<std::vector<uint8_t>> Dek::getEncryptedKeyMaterialBytesComputed() {
-    if (!m_EncryptedKeyMaterial.has_value()) {
+    if (!encryptedKeyMaterial_.has_value()) {
         return std::nullopt;
     }
     
-    if (!m_EncryptedKeyMaterialBytes.has_value()) {
-        m_EncryptedKeyMaterialBytes = base64_decode(m_EncryptedKeyMaterial.value());
+    if (!encryptedKeyMaterialBytes_.has_value()) {
+        encryptedKeyMaterialBytes_ = base64_decode(encryptedKeyMaterial_.value());
     }
     
-    return m_EncryptedKeyMaterialBytes;
+    return encryptedKeyMaterialBytes_;
 }
 
 std::optional<std::vector<uint8_t>> Dek::getKeyMaterialBytesComputed() {
-    if (!m_KeyMaterial.has_value()) {
+    if (!keyMaterial_.has_value()) {
         return std::nullopt;
     }
     
-    if (!m_KeyMaterialBytes.has_value()) {
-        m_KeyMaterialBytes = base64_decode(m_KeyMaterial.value());
+    if (!keyMaterialBytes_.has_value()) {
+        keyMaterialBytes_ = base64_decode(keyMaterial_.value());
     }
     
-    return m_KeyMaterialBytes;
+    return keyMaterialBytes_;
 }
 
 void Dek::setKeyMaterialFromBytes(const std::vector<uint8_t>& keyMaterialBytes) {
-    m_KeyMaterial = base64_encode(keyMaterialBytes);
+    keyMaterial_ = base64_encode(keyMaterialBytes);
 }
 
 // JSON serialization
 void to_json(nlohmann::json& j, const Dek& o) {
     j = nlohmann::json{
-        {"kekName", o.m_KekName},
-        {"subject", o.m_Subject},
-        {"version", o.m_Version},
-        {"algorithm", o.m_Algorithm},
-        {"ts", o.m_Ts}
+        {"kekName", o.kekName_},
+        {"subject", o.subject_},
+        {"version", o.version_},
+        {"algorithm", o.algorithm_},
+        {"ts", o.ts_}
     };
     
-    if (o.m_EncryptedKeyMaterial.has_value()) {
-        j["encryptedKeyMaterial"] = o.m_EncryptedKeyMaterial.value();
+    if (o.encryptedKeyMaterial_.has_value()) {
+        j["encryptedKeyMaterial"] = o.encryptedKeyMaterial_.value();
     }
     
-    if (o.m_KeyMaterial.has_value()) {
-        j["keyMaterial"] = o.m_KeyMaterial.value();
+    if (o.keyMaterial_.has_value()) {
+        j["keyMaterial"] = o.keyMaterial_.value();
     }
     
-    if (o.m_Deleted.has_value()) {
-        j["deleted"] = o.m_Deleted.value();
+    if (o.deleted_.has_value()) {
+        j["deleted"] = o.deleted_.value();
     }
 }
 
 void from_json(const nlohmann::json& j, Dek& o) {
-    j.at("kekName").get_to(o.m_KekName);
-    j.at("subject").get_to(o.m_Subject);
-    j.at("version").get_to(o.m_Version);
-    j.at("algorithm").get_to(o.m_Algorithm);
-    j.at("ts").get_to(o.m_Ts);
+    j.at("kekName").get_to(o.kekName_);
+    j.at("subject").get_to(o.subject_);
+    j.at("version").get_to(o.version_);
+    j.at("algorithm").get_to(o.algorithm_);
+    j.at("ts").get_to(o.ts_);
     
     if (j.contains("encryptedKeyMaterial") && !j["encryptedKeyMaterial"].is_null()) {
-        o.m_EncryptedKeyMaterial = j["encryptedKeyMaterial"].get<std::string>();
+        o.encryptedKeyMaterial_ = j["encryptedKeyMaterial"].get<std::string>();
     }
     
     if (j.contains("keyMaterial") && !j["keyMaterial"].is_null()) {
-        o.m_KeyMaterial = j["keyMaterial"].get<std::string>();
+        o.keyMaterial_ = j["keyMaterial"].get<std::string>();
     }
     
     if (j.contains("deleted") && !j["deleted"].is_null()) {
-        o.m_Deleted = j["deleted"].get<bool>();
+        o.deleted_ = j["deleted"].get<bool>();
     }
 }
 

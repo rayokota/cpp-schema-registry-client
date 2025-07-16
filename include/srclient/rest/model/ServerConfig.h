@@ -93,17 +93,17 @@ public:
     friend  void to_json(nlohmann::json& j, const ServerConfig& o);
     friend  void from_json(const nlohmann::json& j, ServerConfig& o);
 protected:
-    std::optional<CompatibilityLevel> m_Compatibility;
-    std::optional<CompatibilityLevel> m_CompatibilityLevel;
-    std::optional<std::string> m_Alias;
-    std::optional<bool> m_Normalize;
-    std::optional<bool> m_ValidateFields;
-    std::optional<bool> m_ValidateRules;
-    std::optional<std::string> m_CompatibilityGroup;
-    std::optional<srclient::rest::model::Metadata> m_DefaultMetadata;
-    std::optional<srclient::rest::model::Metadata> m_OverrideMetadata;
-    std::optional<srclient::rest::model::RuleSet> m_DefaultRuleSet;
-    std::optional<srclient::rest::model::RuleSet> m_OverrideRuleSet;
+    std::optional<CompatibilityLevel> compatibility_;
+    std::optional<CompatibilityLevel> compatibilityLevel_;
+    std::optional<std::string> alias_;
+    std::optional<bool> normalize_;
+    std::optional<bool> validateFields_;
+    std::optional<bool> validateRules_;
+    std::optional<std::string> compatibilityGroup_;
+    std::optional<srclient::rest::model::Metadata> defaultMetadata_;
+    std::optional<srclient::rest::model::Metadata> overrideMetadata_;
+    std::optional<srclient::rest::model::RuleSet> defaultRuleSet_;
+    std::optional<srclient::rest::model::RuleSet> overrideRuleSet_;
     
 };
 

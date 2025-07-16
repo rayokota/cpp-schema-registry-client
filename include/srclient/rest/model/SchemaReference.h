@@ -58,9 +58,9 @@ public:
     friend  void to_json(nlohmann::json& j, const SchemaReference& o);
     friend  void from_json(const nlohmann::json& j, SchemaReference& o);
 protected:
-    std::optional<std::string> m_Name;
-    std::optional<std::string> m_Subject;
-    std::optional<int32_t> m_Version;
+    std::optional<std::string> name_;
+    std::optional<std::string> subject_;
+    std::optional<int32_t> version_;
     
 };
 

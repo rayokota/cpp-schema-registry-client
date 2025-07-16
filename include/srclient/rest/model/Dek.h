@@ -80,16 +80,16 @@ public:
     friend void from_json(const nlohmann::json& j, Algorithm& o);
 
 private:
-    std::string m_KekName;
-    std::string m_Subject;
-    int32_t m_Version;
-    Algorithm m_Algorithm;
-    std::optional<std::string> m_EncryptedKeyMaterial;
-    mutable std::optional<std::vector<uint8_t>> m_EncryptedKeyMaterialBytes;
-    std::optional<std::string> m_KeyMaterial;
-    mutable std::optional<std::vector<uint8_t>> m_KeyMaterialBytes;
-    int64_t m_Ts;
-    std::optional<bool> m_Deleted;
+    std::string kekName_;
+    std::string subject_;
+    int32_t version_;
+    Algorithm algorithm_;
+    std::optional<std::string> encryptedKeyMaterial_;
+    mutable std::optional<std::vector<uint8_t>> encryptedKeyMaterialBytes_;
+    std::optional<std::string> keyMaterial_;
+    mutable std::optional<std::vector<uint8_t>> keyMaterialBytes_;
+    int64_t ts_;
+    std::optional<bool> deleted_;
 };
 
 } // namespace srclient::rest::model 

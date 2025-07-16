@@ -40,17 +40,17 @@ Rule::Rule()
 bool Rule::operator==(const Rule& rhs) const
 {
     return
-        m_Name == rhs.m_Name &&
-        m_Doc == rhs.m_Doc &&
-        m_Kind == rhs.m_Kind &&
-        m_Mode == rhs.m_Mode &&
-        m_Type == rhs.m_Type &&
-        m_Tags == rhs.m_Tags &&
-        m_Params == rhs.m_Params &&
-        m_Expr == rhs.m_Expr &&
-        m_OnSuccess == rhs.m_OnSuccess &&
-        m_OnFailure == rhs.m_OnFailure &&
-        m_Disabled == rhs.m_Disabled;
+        name_ == rhs.name_ &&
+        doc_ == rhs.doc_ &&
+        kind_ == rhs.kind_ &&
+        mode_ == rhs.mode_ &&
+        type_ == rhs.type_ &&
+        tags_ == rhs.tags_ &&
+        params_ == rhs.params_ &&
+        expr_ == rhs.expr_ &&
+        onSuccess_ == rhs.onSuccess_ &&
+        onFailure_ == rhs.onFailure_ &&
+        disabled_ == rhs.disabled_;
 }
 
 bool Rule::operator!=(const Rule& rhs) const
@@ -61,28 +61,28 @@ bool Rule::operator!=(const Rule& rhs) const
 void to_json(nlohmann::json& j, const Rule& o)
 {
     j = nlohmann::json::object();
-    if(o.m_Name.has_value())
-        j["name"] = o.m_Name.value();
-    if(o.m_Doc.has_value())
-        j["doc"] = o.m_Doc.value();
-    if(o.m_Kind.has_value())
-        j["kind"] = o.m_Kind.value();
-    if(o.m_Mode.has_value())
-        j["mode"] = o.m_Mode.value();
-    if(o.m_Type.has_value())
-        j["type"] = o.m_Type.value();
-    if(o.m_Tags.has_value())
-        j["tags"] = o.m_Tags.value();
-    if(o.m_Params.has_value())
-        j["params"] = o.m_Params.value();
-    if(o.m_Expr.has_value())
-        j["expr"] = o.m_Expr.value();
-    if(o.m_OnSuccess.has_value())
-        j["onSuccess"] = o.m_OnSuccess.value();
-    if(o.m_OnFailure.has_value())
-        j["onFailure"] = o.m_OnFailure.value();
-    if(o.m_Disabled.has_value())
-        j["disabled"] = o.m_Disabled.value();
+    if(o.name_.has_value())
+        j["name"] = o.name_.value();
+    if(o.doc_.has_value())
+        j["doc"] = o.doc_.value();
+    if(o.kind_.has_value())
+        j["kind"] = o.kind_.value();
+    if(o.mode_.has_value())
+        j["mode"] = o.mode_.value();
+    if(o.type_.has_value())
+        j["type"] = o.type_.value();
+    if(o.tags_.has_value())
+        j["tags"] = o.tags_.value();
+    if(o.params_.has_value())
+        j["params"] = o.params_.value();
+    if(o.expr_.has_value())
+        j["expr"] = o.expr_.value();
+    if(o.onSuccess_.has_value())
+        j["onSuccess"] = o.onSuccess_.value();
+    if(o.onFailure_.has_value())
+        j["onFailure"] = o.onFailure_.value();
+    if(o.disabled_.has_value())
+        j["disabled"] = o.disabled_.value();
 }
 
 void from_json(const nlohmann::json& j, Rule& o)
@@ -91,178 +91,178 @@ void from_json(const nlohmann::json& j, Rule& o)
     {
         std::string temp;
         j.at("name").get_to(temp);
-        o.m_Name = temp;
+        o.name_ = temp;
     } 
     if(j.find("doc") != j.end())
     {
         std::string temp;
         j.at("doc").get_to(temp);
-        o.m_Doc = temp;
+        o.doc_ = temp;
     } 
     if(j.find("kind") != j.end())
     {
         Kind temp;
         j.at("kind").get_to(temp);
-        o.m_Kind = temp;
+        o.kind_ = temp;
     } 
     if(j.find("mode") != j.end())
     {
         Mode temp;
         j.at("mode").get_to(temp);
-        o.m_Mode = temp;
+        o.mode_ = temp;
     } 
     if(j.find("type") != j.end())
     {
         std::string temp;
         j.at("type").get_to(temp);
-        o.m_Type = temp;
+        o.type_ = temp;
     } 
     if(j.find("tags") != j.end())
     {
         std::vector<std::string> temp;
         j.at("tags").get_to(temp);
-        o.m_Tags = temp;
+        o.tags_ = temp;
     } 
     if(j.find("params") != j.end())
     {
         std::map<std::string, std::string> temp;
         j.at("params").get_to(temp);
-        o.m_Params = temp;
+        o.params_ = temp;
     } 
     if(j.find("expr") != j.end())
     {
         std::string temp;
         j.at("expr").get_to(temp);
-        o.m_Expr = temp;
+        o.expr_ = temp;
     } 
     if(j.find("onSuccess") != j.end())
     {
         std::string temp;
         j.at("onSuccess").get_to(temp);
-        o.m_OnSuccess = temp;
+        o.onSuccess_ = temp;
     } 
     if(j.find("onFailure") != j.end())
     {
         std::string temp;
         j.at("onFailure").get_to(temp);
-        o.m_OnFailure = temp;
+        o.onFailure_ = temp;
     } 
     if(j.find("disabled") != j.end())
     {
         bool temp;
         j.at("disabled").get_to(temp);
-        o.m_Disabled = temp;
+        o.disabled_ = temp;
     } 
 }
 
 std::optional<std::string> Rule::getName() const
 {
-    return m_Name;
+    return name_;
 }
 
 void Rule::setName(const std::optional<std::string>& value)
 {
-    m_Name = value;
+    name_ = value;
 }
 
 std::optional<std::string> Rule::getDoc() const
 {
-    return m_Doc;
+    return doc_;
 }
 
 void Rule::setDoc(const std::optional<std::string>& value)
 {
-    m_Doc = value;
+    doc_ = value;
 }
 
 std::optional<Kind> Rule::getKind() const
 {
-    return m_Kind;
+    return kind_;
 }
 
 void Rule::setKind(const std::optional<Kind>& value)
 {
-    m_Kind = value;
+    kind_ = value;
 }
 
 std::optional<Mode> Rule::getMode() const
 {
-    return m_Mode;
+    return mode_;
 }
 
 void Rule::setMode(const std::optional<Mode>& value)
 {
-    m_Mode = value;
+    mode_ = value;
 }
 
 std::optional<std::string> Rule::getType() const
 {
-    return m_Type;
+    return type_;
 }
 
 void Rule::setType(const std::optional<std::string>& value)
 {
-    m_Type = value;
+    type_ = value;
 }
 
 std::optional<std::vector<std::string>> Rule::getTags() const
 {
-    return m_Tags;
+    return tags_;
 }
 
 void Rule::setTags(const std::optional<std::vector<std::string>>& value)
 {
-    m_Tags = value;
+    tags_ = value;
 }
 
 std::optional<std::map<std::string, std::string>> Rule::getParams() const
 {
-    return m_Params;
+    return params_;
 }
 
 void Rule::setParams(const std::optional<std::map<std::string, std::string>>& value)
 {
-    m_Params = value;
+    params_ = value;
 }
 
 std::optional<std::string> Rule::getExpr() const
 {
-    return m_Expr;
+    return expr_;
 }
 
 void Rule::setExpr(const std::optional<std::string>& value)
 {
-    m_Expr = value;
+    expr_ = value;
 }
 
 std::optional<std::string> Rule::getOnSuccess() const
 {
-    return m_OnSuccess;
+    return onSuccess_;
 }
 
 void Rule::setOnSuccess(const std::optional<std::string>& value)
 {
-    m_OnSuccess = value;
+    onSuccess_ = value;
 }
 
 std::optional<std::string> Rule::getOnFailure() const
 {
-    return m_OnFailure;
+    return onFailure_;
 }
 
 void Rule::setOnFailure(const std::optional<std::string>& value)
 {
-    m_OnFailure = value;
+    onFailure_ = value;
 }
 
 std::optional<bool> Rule::isDisabled() const
 {
-    return m_Disabled;
+    return disabled_;
 }
 
 void Rule::setDisabled(const std::optional<bool>& value)
 {
-    m_Disabled = value;
+    disabled_ = value;
 }
 
 } // namespace srclient::rest::model

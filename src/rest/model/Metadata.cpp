@@ -26,9 +26,9 @@ Metadata::Metadata()
 bool Metadata::operator==(const Metadata& rhs) const
 {
     return
-        m_Tags == rhs.m_Tags &&
-        m_Properties == rhs.m_Properties &&
-        m_Sensitive == rhs.m_Sensitive;
+        tags_ == rhs.tags_ &&
+        properties_ == rhs.properties_ &&
+        sensitive_ == rhs.sensitive_;
 }
 
 bool Metadata::operator!=(const Metadata& rhs) const
@@ -39,12 +39,12 @@ bool Metadata::operator!=(const Metadata& rhs) const
 void to_json(nlohmann::json& j, const Metadata& o)
 {
     j = nlohmann::json::object();
-    if(o.m_Tags.has_value())
-        j["tags"] = o.m_Tags.value();
-    if(o.m_Properties.has_value())
-        j["properties"] = o.m_Properties.value();
-    if(o.m_Sensitive.has_value())
-        j["sensitive"] = o.m_Sensitive.value();
+    if(o.tags_.has_value())
+        j["tags"] = o.tags_.value();
+    if(o.properties_.has_value())
+        j["properties"] = o.properties_.value();
+    if(o.sensitive_.has_value())
+        j["sensitive"] = o.sensitive_.value();
 }
 
 void from_json(const nlohmann::json& j, Metadata& o)
@@ -53,50 +53,50 @@ void from_json(const nlohmann::json& j, Metadata& o)
     {
         std::map<std::string, std::vector<std::string>> temp;
         j.at("tags").get_to(temp);
-        o.m_Tags = temp;
+        o.tags_ = temp;
     } 
     if(j.find("properties") != j.end())
     {
         std::map<std::string, std::string> temp;
         j.at("properties").get_to(temp);
-        o.m_Properties = temp;
+        o.properties_ = temp;
     } 
     if(j.find("sensitive") != j.end())
     {
         std::vector<std::string> temp;
         j.at("sensitive").get_to(temp);
-        o.m_Sensitive = temp;
+        o.sensitive_ = temp;
     } 
 }
 
 std::optional<std::map<std::string, std::vector<std::string>>> Metadata::getTags() const
 {
-    return m_Tags;
+    return tags_;
 }
 
 void Metadata::setTags(const std::optional<std::map<std::string, std::vector<std::string>>>& value)
 {
-    m_Tags = value;
+    tags_ = value;
 }
 
 std::optional<std::map<std::string, std::string>> Metadata::getProperties() const
 {
-    return m_Properties;
+    return properties_;
 }
 
 void Metadata::setProperties(const std::optional<std::map<std::string, std::string>>& value)
 {
-    m_Properties = value;
+    properties_ = value;
 }
 
 std::optional<std::vector<std::string>> Metadata::getSensitive() const
 {
-    return m_Sensitive;
+    return sensitive_;
 }
 
 void Metadata::setSensitive(const std::optional<std::vector<std::string>>& value)
 {
-    m_Sensitive = value;
+    sensitive_ = value;
 }
 
 } // namespace srclient::rest::model

@@ -60,9 +60,9 @@ public:
     friend  void to_json(nlohmann::json& j, const Metadata& o);
     friend  void from_json(const nlohmann::json& j, Metadata& o);
 protected:
-    std::optional<std::map<std::string, std::vector<std::string>>> m_Tags;
-    std::optional<std::map<std::string, std::string>> m_Properties;
-    std::optional<std::vector<std::string>> m_Sensitive;
+    std::optional<std::map<std::string, std::vector<std::string>>> tags_;
+    std::optional<std::map<std::string, std::string>> properties_;
+    std::optional<std::vector<std::string>> sensitive_;
     
 };
 
