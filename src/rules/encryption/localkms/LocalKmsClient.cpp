@@ -3,7 +3,7 @@
  * Implementation of local KMS client using Tink C++ APIs
  */
 
-#include "srclient/rules/encryption/LocalKmsClient.h"
+#include "srclient/rules/encryption/localkms/LocalKmsClient.h"
 #include "tink/aead/aes_gcm_key_manager.h"
 #include "tink/util/status.h"
 #include "tink/util/statusor.h"
@@ -14,7 +14,7 @@
 #include "absl/strings/string_view.h"
 #include <openssl/sha.h>
 
-namespace srclient::rules::encryption {
+namespace srclient::rules::encryption::localkms {
 
 namespace {
     constexpr absl::string_view kPrefix = "local-kms://";
@@ -108,4 +108,4 @@ bool LocalKmsClient::isValidKeyUri(absl::string_view key_uri) const {
     return key_uri.substr(0, kPrefix.size()) == kPrefix;
 }
 
-} // namespace srclient::rules::encryption 
+} // namespace srclient::rules::encryption::localkms 

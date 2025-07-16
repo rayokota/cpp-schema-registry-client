@@ -3,17 +3,17 @@
  * Local KMS driver implementation - C++ port of Rust local_driver.rs
  */
 
-#ifndef SRCLIENT_RULES_ENCRYPTION_LOCAL_KMS_DRIVER_H_
-#define SRCLIENT_RULES_ENCRYPTION_LOCAL_KMS_DRIVER_H_
+#ifndef SRCLIENT_RULES_ENCRYPTION_LOCALKMS_LOCAL_KMS_DRIVER_H_
+#define SRCLIENT_RULES_ENCRYPTION_LOCALKMS_LOCAL_KMS_DRIVER_H_
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include "srclient/rules/encryption/KmsDriver.h"
-#include "srclient/rules/encryption/LocalKmsClient.h"
+#include "srclient/rules/encryption/localkms/LocalKmsClient.h"
 #include "tink/kms_client.h"
 
-namespace srclient::rules::encryption {
+namespace srclient::rules::encryption::localkms {
 
 /**
  * Local KMS driver implementation
@@ -110,6 +110,6 @@ private:
     std::string getEnvVar(const std::string& name) const;
 };
 
-} // namespace srclient::rules::encryption
+} // namespace srclient::rules::encryption::localkms
 
-#endif // SRCLIENT_RULES_ENCRYPTION_LOCAL_KMS_DRIVER_H_ 
+#endif // SRCLIENT_RULES_ENCRYPTION_LOCALKMS_LOCAL_KMS_DRIVER_H_ 

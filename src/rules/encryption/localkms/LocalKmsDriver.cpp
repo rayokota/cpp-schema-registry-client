@@ -3,13 +3,13 @@
  * Implementation of local KMS driver
  */
 
-#include "srclient/rules/encryption/LocalKmsDriver.h"
+#include "srclient/rules/encryption/localkms/LocalKmsDriver.h"
 #include "srclient/rules/encryption/EncryptionRegistry.h"
 #include "srclient/rules/encryption/KmsDriver.h"
 #include <cstdlib>
 #include <string>
 
-namespace srclient::rules::encryption {
+namespace srclient::rules::encryption::localkms {
 
 const std::string& LocalKmsDriver::getKeyUrlPrefix() const {
     return keyUrlPrefix_;
@@ -79,4 +79,4 @@ std::string LocalKmsDriver::getEnvVar(const std::string& name) const {
     return value ? std::string(value) : std::string();
 }
 
-} // namespace srclient::rules::encryption 
+} // namespace srclient::rules::encryption::localkms 
