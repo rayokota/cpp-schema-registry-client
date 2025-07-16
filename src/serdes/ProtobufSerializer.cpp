@@ -135,18 +135,16 @@ ProtobufSerializer::ProtobufSerializer(
     }
 }
 
-template<typename MessageType>
 std::vector<uint8_t> ProtobufSerializer::serialize(
         const SerializationContext& ctx,
-        const MessageType& message
+        const google::protobuf::Message& message
 ) {
     return serializeWithMessageDescriptor(ctx, message, message.GetDescriptor());
 }
 
-template<typename MessageType>
 std::vector<uint8_t> ProtobufSerializer::serializeWithFileDescriptorSet(
         const SerializationContext& ctx,
-        const MessageType& message,
+        const google::protobuf::Message& message,
         const std::string& message_type_name,
         const google::protobuf::FileDescriptorSet& fds
 ) {
@@ -167,10 +165,9 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithFileDescriptorSet(
     return serializeWithMessageDescriptor(ctx, message, descriptor);
 }
 
-template<typename MessageType>
 std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
         const SerializationContext& ctx,
-        const MessageType& message,
+        const google::protobuf::Message& message,
         const google::protobuf::Descriptor* descriptor
 ) {
     // Get subject using strategy

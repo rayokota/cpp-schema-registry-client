@@ -94,25 +94,22 @@ public:
     /**
      * Serialize a protobuf message
      */
-    template<typename MessageType>
-    std::vector<uint8_t> serialize(const SerializationContext& ctx, 
-                                  const MessageType& message);
+    std::vector<uint8_t> serialize(const SerializationContext& ctx,
+                                  const google::protobuf::Message& message);
 
     /**
      * Serialize with file descriptor set
      */
-    template<typename MessageType>
     std::vector<uint8_t> serializeWithFileDescriptorSet(const SerializationContext& ctx,
-                                                        const MessageType& message,
+                                                        const google::protobuf::Message& message,
                                                         const std::string& message_type_name,
                                                         const google::protobuf::FileDescriptorSet& fds);
 
     /**
      * Serialize with message descriptor
      */
-    template<typename MessageType>
     std::vector<uint8_t> serializeWithMessageDescriptor(const SerializationContext& ctx,
-                                                        const MessageType& message,
+                                                        const google::protobuf::Message& message,
                                                         const google::protobuf::Descriptor* descriptor);
 
 private:

@@ -178,23 +178,12 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
     return deserializeWithMessageDescriptor(payload, descriptor, writer_schema, subject);
 }
 
-template<typename MessageType>
-MessageType ProtobufDeserializer::deserializeTo(
+std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserializeTo(
         const std::vector<uint8_t>& bytes,
         std::optional<std::string> subject,
         std::optional<std::string> format
 ) {
-    auto message = deserialize(bytes, subject, format);
-
-    // Try to cast to specific type
-    auto typed_message = dynamic_cast<MessageType*>(message.get());
-    if (!typed_message) {
-        throw protobuf_utils::ProtobufSerdeError("Cannot cast deserialized message to requested type");
-    }
-
-    MessageType result = *typed_message;
-    message.release(); // Transfer ownership
-    return result;
+    return deserialize(bytes, subject, format);
 }
 
 std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserializeWithMessageDescriptor(

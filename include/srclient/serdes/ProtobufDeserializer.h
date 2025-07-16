@@ -46,8 +46,7 @@ public:
     /**
      * Deserialize bytes to specific message type
      */
-    template<typename MessageType>
-    MessageType deserializeTo(const std::vector<uint8_t>& bytes,
+    std::unique_ptr<google::protobuf::Message> deserializeTo(const std::vector<uint8_t>& bytes,
                              std::optional<std::string> subject = std::nullopt,
                              std::optional<std::string> format = std::nullopt);
 
