@@ -3,10 +3,6 @@
 
 namespace srclient::serdes {
 
-SerdeSchema::SerdeSchema(Type type, const std::string& schema_data) 
-    : type_(type), schema_data_(schema_data) {}
-
-SerdeSchema::SerdeSchema(Type type, const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& avro_schema) 
-    : type_(type), avro_schema_(avro_schema) {}
+// SerdeSchema implementations are now in the header file as part of the interface pattern
 
 } // namespace srclient::serdes 

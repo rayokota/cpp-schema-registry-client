@@ -72,37 +72,144 @@ private:
 };
 
 /**
- * Schema wrapper for different formats
- * Based on SerdeSchema enum from serde.rs
+ * Schema format enum
+ */
+enum class SerdeSchemaFormat {
+    Avro,
+    Json,
+    Protobuf
+};
+
+/**
+ * Base interface for schema wrappers
+ * Based on SerdeSchema from serde.rs
  */
 class SerdeSchema {
 public:
-    enum class Type {
-        Avro,
-        Json,
-        Protobuf
-    };
+    virtual ~SerdeSchema() = default;
+    
+    // Type checking methods
+    virtual bool isAvro() const = 0;
+    virtual bool isJson() const = 0;
+    virtual bool isProtobuf() const = 0;
+    
+    // Format accessor
+    virtual SerdeSchemaFormat getFormat() const = 0;
+    
+    // Schema data access methods
+    virtual std::string getSchemaData() const = 0;
+    virtual std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> getAvroSchema() const = 0;
+    
+    // Clone method
+    virtual std::unique_ptr<SerdeSchema> clone() const = 0;
+};
 
+/**
+ * JSON Schema implementation
+ */
+class JsonSchema : public SerdeSchema {
 private:
-    Type type_;
     std::string schema_data_;
-    std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> avro_schema_;
     
 public:
-    SerdeSchema(Type type, const std::string& schema_data);
+    explicit JsonSchema(const std::string& schema_data) : schema_data_(schema_data) {}
     
-    // Avro-specific constructors
-    SerdeSchema(Type type, const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& avro_schema);
+    bool isAvro() const override { return false; }
+    bool isJson() const override { return true; }
+    bool isProtobuf() const override { return false; }
     
-    Type getType() const { return type_; }
-    const std::string& getSchemaData() const { return schema_data_; }
+    SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Json; }
     
-    // Copy/move constructors and assignment operators
-    SerdeSchema(const SerdeSchema&) = default;
-    SerdeSchema(SerdeSchema&&) = default;
-    SerdeSchema& operator=(const SerdeSchema&) = default;
-    SerdeSchema& operator=(SerdeSchema&&) = default;
+    std::string getSchemaData() const override { return schema_data_; }
+    std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> getAvroSchema() const override {
+        return std::nullopt;
+    }
+    
+    std::unique_ptr<SerdeSchema> clone() const override {
+        return std::make_unique<JsonSchema>(schema_data_);
+    }
+    
+    // Direct access to JSON schema
+    const std::string& getJsonSchema() const { return schema_data_; }
 };
+
+/**
+ * Avro Schema implementation
+ */
+class AvroSchema : public SerdeSchema {
+private:
+    std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>> avro_schema_;
+    
+public:
+    explicit AvroSchema(const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& avro_schema)
+        : avro_schema_(avro_schema) {}
+    
+    bool isAvro() const override { return true; }
+    bool isJson() const override { return false; }
+    bool isProtobuf() const override { return false; }
+    
+    SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Avro; }
+    
+    std::string getSchemaData() const override {
+        // Convert Avro schema to string representation
+        return avro_schema_.first.toJson(false);
+    }
+    
+    std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> getAvroSchema() const override {
+        return avro_schema_;
+    }
+    
+    std::unique_ptr<SerdeSchema> clone() const override {
+        return std::make_unique<AvroSchema>(avro_schema_);
+    }
+    
+    // Direct access to Avro schema
+    const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& getAvroSchemaPair() const {
+        return avro_schema_;
+    }
+};
+
+/**
+ * Protobuf Schema implementation
+ */
+class ProtobufSchema : public SerdeSchema {
+private:
+    std::string schema_data_;
+    
+public:
+    explicit ProtobufSchema(const std::string& schema_data) : schema_data_(schema_data) {}
+    
+    bool isAvro() const override { return false; }
+    bool isJson() const override { return false; }
+    bool isProtobuf() const override { return true; }
+    
+    SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Protobuf; }
+    
+    std::string getSchemaData() const override { return schema_data_; }
+    std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> getAvroSchema() const override {
+        return std::nullopt;
+    }
+    
+    std::unique_ptr<SerdeSchema> clone() const override {
+        return std::make_unique<ProtobufSchema>(schema_data_);
+    }
+    
+    // Direct access to Protobuf schema
+    const std::string& getProtobufSchema() const { return schema_data_; }
+};
+
+// Helper functions for creating SerdeSchema instances
+inline std::unique_ptr<SerdeSchema> makeJsonSchema(const std::string& schema_data) {
+    return std::make_unique<JsonSchema>(schema_data);
+}
+
+inline std::unique_ptr<SerdeSchema> makeAvroSchema(const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& avro_schema) {
+    return std::make_unique<AvroSchema>(avro_schema);
+}
+
+inline std::unique_ptr<SerdeSchema> makeProtobufSchema(const std::string& schema_data) {
+    return std::make_unique<ProtobufSchema>(schema_data);
+}
 
 /**
  * Kafka message header
@@ -221,7 +328,7 @@ private:
     SerializationContext ser_ctx_;
     std::optional<Schema> source_;
     std::optional<Schema> target_;
-    std::optional<SerdeSchema> parsed_target_;
+    std::optional<std::unique_ptr<SerdeSchema>> parsed_target_;
     std::string subject_;
     Mode rule_mode_;
     Rule rule_;
@@ -235,7 +342,7 @@ public:
     RuleContext(const SerializationContext& ser_ctx,
                std::optional<Schema> source,
                std::optional<Schema> target,
-               std::optional<SerdeSchema> parsed_target,
+               std::optional<std::unique_ptr<SerdeSchema>> parsed_target,
                const std::string& subject,
                Mode rule_mode,
                const Rule& rule,
@@ -248,7 +355,7 @@ public:
     const SerializationContext& getSerializationContext() const { return ser_ctx_; }
     const std::optional<Schema>& getSource() const { return source_; }
     const std::optional<Schema>& getTarget() const { return target_; }
-    const std::optional<SerdeSchema>& getParsedTarget() const { return parsed_target_; }
+    const std::optional<std::unique_ptr<SerdeSchema>>& getParsedTarget() const { return parsed_target_; }
     const std::string& getSubject() const { return subject_; }
     Mode getRuleMode() const { return rule_mode_; }
     const Rule& getRule() const { return rule_; }
@@ -272,10 +379,10 @@ public:
     // Tag handling
     std::unordered_set<std::string> getTags(const std::string& full_name) const;
     
-    // Copy/move constructors and assignment operators
-    RuleContext(const RuleContext&) = default;
+    // Copy/move constructors and assignment operators are deleted due to unique_ptr
+    RuleContext(const RuleContext&) = delete;
     RuleContext(RuleContext&&) = default;
-    RuleContext& operator=(const RuleContext&) = default;
+    RuleContext& operator=(const RuleContext&) = delete;
     RuleContext& operator=(RuleContext&&) = default;
 };
 
@@ -303,7 +410,7 @@ public:
                            Mode rule_mode,
                            std::optional<Schema> source,
                            std::optional<Schema> target,
-                           std::optional<SerdeSchema> parsed_target,
+                           const std::optional<SerdeSchema*>& parsed_target,
                            SerdeValue& msg,
                            std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     
@@ -313,7 +420,7 @@ public:
                                    Mode rule_mode,
                                    std::optional<Schema> source,
                                    std::optional<Schema> target,
-                                   std::optional<SerdeSchema> parsed_target,
+                                   const std::optional<SerdeSchema*>& parsed_target,
                                    SerdeValue& msg,
                                    std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     

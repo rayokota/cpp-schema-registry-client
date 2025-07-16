@@ -130,11 +130,11 @@ NamedValue AvroDeserializer::deserialize(
     // Apply transformation rules
     if (base_->getSerde().getRuleRegistry()) {
         auto serde_value = makeAvroSerdeValue(value);
-        SerdeSchema avro_schema(SerdeSchema::Type::Avro, reader_parsed);
+        auto avro_schema = makeAvroSchema(reader_parsed);
         
         auto& transformed = base_->getSerde().executeRules(ctx, subject, Mode::Read, 
                                                          std::nullopt, std::make_optional(reader_schema_raw),
-                                                         std::make_optional(avro_schema), *serde_value);
+                                                         std::make_optional(avro_schema.get()), *serde_value);
         if (transformed.isAvro()) {
             value = transformed.asAvro();
         }
