@@ -252,7 +252,7 @@ nlohmann::json JsonDeserializer<ClientType>::executeMigrations(
     auto migrated_value = base_->getSerde().executeMigrations(ctx, subject, migrations, serde_value);
     
     // Convert back to nlohmann::json
-    return migrated_value.asJson();
+    return asJson(migrated_value);
 }
 
 template<typename ClientType>

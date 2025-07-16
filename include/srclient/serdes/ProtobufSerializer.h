@@ -128,6 +128,8 @@ private:
     
     void validateSchema(const srclient::rest::model::Schema& schema);
     
+    SerdeValue messageToSerdeValue(const google::protobuf::Message& message);
+    
     SerdeValue transformValue(const SerdeValue& value, 
                             const srclient::rest::model::Rule& rule,
                             const RuleContext& context);

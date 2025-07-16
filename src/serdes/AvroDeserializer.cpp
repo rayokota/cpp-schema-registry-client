@@ -119,7 +119,7 @@ NamedValue AvroDeserializer<ClientType>::deserialize(
         
         // 3. Apply migrations
         auto migrated = base_->getSerde().executeMigrations(ctx, subject, migrations, json_serde_value);
-        auto migrated_json = std::get<nlohmann::json>(migrated.getValue());
+        auto migrated_json = std::get<nlohmann::json>(migrated);
         
         // 4. Convert back to Avro with reader schema
         value = avro_utils::jsonToAvro(migrated_json, reader_parsed.first, &intermediate);
@@ -131,13 +131,13 @@ NamedValue AvroDeserializer<ClientType>::deserialize(
     
     // Apply transformation rules
     if (base_->getSerde().getRuleRegistry()) {
-        SerdeValue serde_value(SerdeValue::Type::Avro, value);
+        SerdeValue serde_value(value);
         SerdeSchema avro_schema(SerdeSchema::Type::Avro, reader_parsed);
         
         auto transformed = base_->getSerde().executeRules(ctx, subject, Mode::Read, 
                                                          std::nullopt, std::make_optional(reader_schema_raw),
                                                          std::make_optional(avro_schema), serde_value);
-        if (auto avro_val = std::get_if<avro::GenericDatum>(&transformed.getValue())) {
+        if (auto avro_val = std::get_if<avro::GenericDatum>(&transformed)) {
             value = *avro_val;
         }
     }

@@ -10,6 +10,10 @@
 #include <variant>
 #include <mutex>
 #include <functional>
+#include <nlohmann/json.hpp>
+#include <avro/ValidSchema.hh>
+#include <avro/GenericDatum.hh>
+#include <google/protobuf/message.h>
 
 // Include actual schema model types
 #include "srclient/rest/model/Schema.h"
@@ -17,11 +21,63 @@
 #include "srclient/rest/model/Rule.h"
 #include "srclient/rest/model/RuleSet.h"
 
+#include "srclient/serdes/SerdeError.h"
+
 namespace srclient::rest {
     class ClientConfiguration;
 }
 
 namespace srclient::serdes {
+
+/**
+ * Serialization value wrapper for different formats
+ * Based on SerdeValue enum from serde.rs
+ */
+using SerdeValue = std::variant<
+    nlohmann::json,  // For JSON values (used in migrations)
+    avro::GenericDatum, // For Avro values
+    std::reference_wrapper<google::protobuf::Message> // For Protobuf values
+>;
+
+// Helper functions for SerdeValue type checking and access
+template<typename T>
+bool isType(const SerdeValue& value) {
+    return std::holds_alternative<T>(value);
+}
+
+inline bool isJson(const SerdeValue& value) {
+    return isType<nlohmann::json>(value);
+}
+
+inline bool isAvro(const SerdeValue& value) {
+    return isType<avro::GenericDatum>(value);
+}
+
+inline bool isProtobuf(const SerdeValue& value) {
+    return isType<std::reference_wrapper<google::protobuf::Message>>(value);
+}
+
+// Accessor functions for SerdeValue
+inline nlohmann::json asJson(const SerdeValue& value) {
+    if (auto val = std::get_if<nlohmann::json>(&value)) {
+        return *val;
+    }
+    throw SerdeError("SerdeValue is not JSON");
+}
+
+inline avro::GenericDatum asAvro(const SerdeValue& value) {
+    if (auto val = std::get_if<avro::GenericDatum>(&value)) {
+        return *val;
+    }
+    throw SerdeError("SerdeValue is not Avro");
+}
+
+inline google::protobuf::Message& asProtobuf(const SerdeValue& value) {
+    if (auto val = std::get_if<std::reference_wrapper<google::protobuf::Message>>(&value)) {
+        return val->get();
+    }
+    throw SerdeError("SerdeValue is not Protobuf");
+}
 
 // Magic bytes for schema ID encoding (from serde.rs)
 constexpr uint8_t MAGIC_BYTE_V0 = 0;
@@ -74,7 +130,6 @@ enum class FieldType {
 std::string fieldTypeToString(FieldType type);
 
 // Forward declarations for serdes classes
-class SerdeValue;
 class SerdeSchema;
 class SerdeHeaders;
 class SchemaId;

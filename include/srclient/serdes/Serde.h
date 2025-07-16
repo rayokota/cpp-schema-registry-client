@@ -7,9 +7,6 @@
 #include <variant>
 #include <unordered_map>
 #include <functional>
-#include <nlohmann/json.hpp>
-#include <avro/ValidSchema.hh>
-#include <avro/GenericDatum.hh>
 
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/SerdeError.h"
@@ -72,72 +69,6 @@ public:
 private:
     std::pair<std::vector<int32_t>, size_t> readIndexArrayAndData(const std::vector<uint8_t>& buf) const;
     std::optional<std::vector<uint8_t>> toEncodedIndexArray() const;
-};
-
-/**
- * Serialization value wrapper for different formats
- * Based on SerdeValue enum from serde.rs
- */
-class SerdeValue {
-public:
-    enum class Type {
-        Avro,
-        Json,
-        Protobuf
-    };
-
-private:
-    Type type_;
-    std::variant<
-        std::monostate,  // For empty/null values
-        std::string,     // For string values
-        std::vector<uint8_t>, // For bytes values
-        bool,            // For boolean values
-        int64_t,         // For integer values
-        double,          // For float values
-        std::vector<SerdeValue>, // For array values
-        std::unordered_map<std::string, SerdeValue>, // For object/map values
-        nlohmann::json,  // For JSON values (used in migrations)
-        avro::GenericDatum // For Avro values
-    > value_;
-
-public:
-    SerdeValue() = default;
-    SerdeValue(Type type, const std::string& value);
-    SerdeValue(Type type, const std::vector<uint8_t>& value);
-    SerdeValue(Type type, bool value);
-    SerdeValue(Type type, int64_t value);
-    SerdeValue(Type type, double value);
-    SerdeValue(const nlohmann::json& json_value);
-    
-    // Avro-specific constructors
-    SerdeValue(Type type, const avro::GenericDatum& avro_value);
-    
-    // Static factory methods (based on SerdeValue methods from serde.rs)
-    static SerdeValue createString(SerdeFormat format, const std::string& value);
-    static SerdeValue createBytes(SerdeFormat format, const std::vector<uint8_t>& value);
-    static SerdeValue createBool(SerdeFormat format, bool value);
-    static SerdeValue createInt(SerdeFormat format, int64_t value);
-    static SerdeValue createFloat(SerdeFormat format, double value);
-    
-    // Accessor methods (based on SerdeValue methods from serde.rs)
-    Type getType() const { return type_; }
-    bool asBool() const;
-    std::string asString() const;
-    std::vector<uint8_t> asBytes() const;
-    int64_t asInt() const;
-    double asFloat() const;
-    nlohmann::json asJson() const;
-    
-    // Copy/move constructors and assignment operators
-    SerdeValue(const SerdeValue&) = default;
-    SerdeValue(SerdeValue&&) = default;
-    SerdeValue& operator=(const SerdeValue&) = default;
-    SerdeValue& operator=(SerdeValue&&) = default;
-
-    // Getter methods
-    const auto& getValue() const { return value_; }
-    auto& getValue() { return value_; }
 };
 
 /**

@@ -33,14 +33,10 @@ void ProtobufDeserializer<ClientType>::transformFields(
 
 template<typename ClientType>
 SerdeValue ProtobufDeserializer<ClientType>::messageToSerdeValue(const google::protobuf::Message& message) {
-    // Convert protobuf message to JSON first, then to SerdeValue
-    std::string json_str;
-    auto status = google::protobuf::util::MessageToJsonString(message, &json_str);
-    if (!status.ok()) {
-        throw protobuf_utils::ProtobufSerdeError("Failed to convert message to JSON: " + status.ToString());
-    }
-    nlohmann::json json_value = nlohmann::json::parse(json_str);
-    return SerdeValue(json_value);
+    // Return SerdeValue containing reference to the protobuf message
+    // Note: We need to cast away const because reference_wrapper doesn't support const references in this context
+    auto& non_const_message = const_cast<google::protobuf::Message&>(message);
+    return std::reference_wrapper<google::protobuf::Message>(non_const_message);
 }
 
 template<typename ClientType>
@@ -48,14 +44,26 @@ void ProtobufDeserializer<ClientType>::serdeValueToMessage(
     const SerdeValue& value, 
     google::protobuf::Message* message) {
     
-    // Convert SerdeValue to JSON, then to protobuf message
-    auto json_value = value.asJson();
-    std::string json_str = json_value.dump();
-    
-    google::protobuf::util::JsonParseOptions options;
-    auto status = google::protobuf::util::JsonStringToMessage(json_str, message, options);
-    if (!status.ok()) {
-        throw protobuf_utils::ProtobufSerdeError("Failed to parse JSON to protobuf message: " + status.ToString());
+    if (isProtobuf(value)) {
+        // If SerdeValue contains a protobuf message, copy it
+        try {
+            const auto& source_message = asProtobuf(value);
+            message->CopyFrom(source_message);
+        } catch (const SerdeError& e) {
+            throw protobuf_utils::ProtobufSerdeError("Failed to extract protobuf from SerdeValue: " + std::string(e.what()));
+        }
+    } else if (isJson(value)) {
+        // Convert SerdeValue to JSON, then to protobuf message (fallback)
+        auto json_value = asJson(value);
+        std::string json_str = json_value.dump();
+        
+        google::protobuf::util::JsonParseOptions options;
+        auto status = google::protobuf::util::JsonStringToMessage(json_str, message, options);
+        if (!status.ok()) {
+            throw protobuf_utils::ProtobufSerdeError("Failed to parse JSON to protobuf message: " + status.ToString());
+        }
+    } else {
+        throw protobuf_utils::ProtobufSerdeError("SerdeValue must be Protobuf or Json type for conversion to protobuf message");
     }
 }
 

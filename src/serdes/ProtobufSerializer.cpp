@@ -98,6 +98,14 @@ void ProtobufSerializer<ClientType>::validateSchema(const srclient::rest::model:
 }
 
 template<typename ClientType>
+SerdeValue ProtobufSerializer<ClientType>::messageToSerdeValue(const google::protobuf::Message& message) {
+    // Return SerdeValue containing reference to the protobuf message
+    // Note: We need to cast away const because reference_wrapper doesn't support const references in this context
+    auto& non_const_message = const_cast<google::protobuf::Message&>(message);
+    return std::reference_wrapper<google::protobuf::Message>(non_const_message);
+}
+
+template<typename ClientType>
 SerdeValue ProtobufSerializer<ClientType>::transformValue(const SerdeValue& value, 
                                                          const srclient::rest::model::Rule& rule,
                                                          const RuleContext& context) {
