@@ -169,7 +169,7 @@ nlohmann::json JsonDeserializer::executeMigrations(
         const nlohmann::json& value) {
 
     // Convert to SerdeValue for migration execution
-    auto serde_value = makeJsonSerdeValue(value);
+    auto serde_value = makeJsonValue(value);
     auto& migrated_value = base_->getSerde().executeMigrations(ctx, subject, migrations, *serde_value);
 
     // Convert back to nlohmann::json

@@ -13,7 +13,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::createMessageFr
     google::protobuf::DynamicMessageFactory factory;
     const google::protobuf::Message* prototype = factory.GetPrototype(descriptor);
     if (!prototype) {
-        throw protobuf_utils::ProtobufSerdeError("Failed to get message prototype for descriptor: " + descriptor->full_name());
+        throw ProtobufSerdeError("Failed to get message prototype for descriptor: " + descriptor->full_name());
     }
     
     return std::unique_ptr<google::protobuf::Message>(prototype->New());
@@ -32,7 +32,7 @@ void ProtobufDeserializer::transformFields(
 SerdeValue& ProtobufDeserializer::messageToSerdeValue(const google::protobuf::Message& message) {
     // Create and store the SerdeValue, return reference
     static thread_local std::unique_ptr<SerdeValue> stored_value;
-    stored_value = makeProtobufSerdeValue(const_cast<google::protobuf::Message&>(message));
+    stored_value = makeProtobufValue(const_cast<google::protobuf::Message&>(message));
     return *stored_value;
 }
 
@@ -46,7 +46,7 @@ void ProtobufDeserializer::serdeValueToMessage(
             const auto& source_message = value.asProtobuf();
             message->CopyFrom(source_message);
         } catch (const SerdeError& e) {
-            throw protobuf_utils::ProtobufSerdeError("Failed to extract protobuf from SerdeValue: " + std::string(e.what()));
+            throw ProtobufSerdeError("Failed to extract protobuf from SerdeValue: " + std::string(e.what()));
         }
     } else if (value.isJson()) {
         // Convert SerdeValue to JSON, then to protobuf message (fallback)
@@ -56,10 +56,10 @@ void ProtobufDeserializer::serdeValueToMessage(
         google::protobuf::util::JsonParseOptions options;
         auto status = google::protobuf::util::JsonStringToMessage(json_str, message, options);
         if (!status.ok()) {
-            throw protobuf_utils::ProtobufSerdeError("Failed to parse JSON to protobuf message: " + status.ToString());
+            throw ProtobufSerdeError("Failed to parse JSON to protobuf message: " + status.ToString());
         }
     } else {
-        throw protobuf_utils::ProtobufSerdeError("SerdeValue must be Protobuf or Json type for conversion to protobuf message");
+        throw ProtobufSerdeError("SerdeValue must be Protobuf or Json type for conversion to protobuf message");
     }
 }
 
@@ -112,7 +112,7 @@ ProtobufDeserializer::ProtobufDeserializer(
                     // executor->configure(client->getConfig("default"), config.rule_config);
                 }
             } catch (const std::exception& e) {
-                throw protobuf_utils::ProtobufSerdeError("Failed to configure rule executor: " + std::string(e.what()));
+                throw ProtobufSerdeError("Failed to configure rule executor: " + std::string(e.what()));
             }
         }
     }
@@ -172,7 +172,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
     }
 
     if (!descriptor) {
-        throw protobuf_utils::ProtobufSerdeError("Could not find message descriptor in schema");
+        throw ProtobufSerdeError("Could not find message descriptor in schema");
     }
 
     return deserializeWithMessageDescriptor(payload, descriptor, writer_schema, subject);
@@ -203,7 +203,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserializeWith
 
     // Parse protobuf message from bytes
     if (!message->ParseFromArray(bytes.data(), bytes.size())) {
-        throw protobuf_utils::ProtobufSerdeError("Failed to parse protobuf message from bytes");
+        throw ProtobufSerdeError("Failed to parse protobuf message from bytes");
     }
 
     // Apply post-deserialization rules

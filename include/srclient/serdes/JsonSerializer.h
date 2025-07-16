@@ -11,6 +11,7 @@
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/JsonTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/rest/ISchemaRegistryClient.h"
@@ -22,13 +23,7 @@ class JsonSerializer;
 
 class JsonSerde;
 
-/**
- * JSON-specific serialization error
- */
-class JsonSerdeError : public SerdeError {
-public:
-    explicit JsonSerdeError(const std::string& message) : SerdeError("JSON serde error: " + message) {}
-};
+
 
 /**
  * JSON schema caching and validation class

@@ -13,6 +13,7 @@
 #include <google/protobuf/util/json_util.h>
 
 #include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/ProtobufTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/rest/model/Schema.h"
@@ -20,14 +21,7 @@
 
 namespace srclient::serdes::protobuf_utils {
 
-/**
- * Protobuf-specific error class
- */
-class ProtobufSerdeError : public SerdeError {
-public:
-    explicit ProtobufSerdeError(const std::string& message) 
-        : SerdeError("Protobuf: " + message) {}
-};
+
 
 /**
  * Convert a FileDescriptor to base64-encoded string

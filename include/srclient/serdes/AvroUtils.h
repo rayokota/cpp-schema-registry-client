@@ -17,6 +17,7 @@
 
 // Project includes
 #include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/AvroTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/rest/model/Schema.h"
 #include <nlohmann/json.hpp>
@@ -137,17 +138,7 @@ namespace avro_utils {
 
 } // namespace avro_utils
 
-/**
- * Exception wrapper for Avro-specific errors
- */
-class AvroSerdeError : public SerdeError {
-public:
-    explicit AvroSerdeError(const std::string& message) 
-        : SerdeError("Avro error: " + message) {}
-    
-    explicit AvroSerdeError(const avro::Exception& avro_ex)
-        : SerdeError("Avro error: " + std::string(avro_ex.what())) {}
-};
+
 
 /**
  * RAII wrapper for Avro encoders/decoders with automatic stream management

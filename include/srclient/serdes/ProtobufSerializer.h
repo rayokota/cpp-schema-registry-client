@@ -12,6 +12,7 @@
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/ProtobufTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/ProtobufUtils.h"

@@ -67,7 +67,7 @@ void ProtobufSerde::resolveNamedSchema(const srclient::rest::model::Schema& sche
 SerdeValue& ProtobufSerializer::messageToSerdeValue(const google::protobuf::Message& message) {
     // Create and store the SerdeValue, return reference
     static thread_local std::unique_ptr<SerdeValue> stored_value;
-    stored_value = makeProtobufSerdeValue(const_cast<google::protobuf::Message&>(message));
+    stored_value = makeProtobufValue(const_cast<google::protobuf::Message&>(message));
     return *stored_value;
 }
 
@@ -101,7 +101,7 @@ ProtobufSerializer::ProtobufSerializer(
                     // executor->configure(client->getConfig("default"), config.rule_config);
                 }
             } catch (const std::exception& e) {
-                throw protobuf_utils::ProtobufSerdeError("Failed to configure rule executor: " + std::string(e.what()));
+                throw ProtobufSerdeError("Failed to configure rule executor: " + std::string(e.what()));
             }
         }
     }
@@ -130,7 +130,7 @@ ProtobufSerializer::ProtobufSerializer(
                     // executor->configure(client->getConfig("default"), config.rule_config);
                 }
             } catch (const std::exception& e) {
-                throw protobuf_utils::ProtobufSerdeError("Failed to configure rule executor: " + std::string(e.what()));
+                throw ProtobufSerdeError("Failed to configure rule executor: " + std::string(e.what()));
             }
         }
     }
@@ -154,13 +154,13 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithFileDescriptorSet(
     for (const auto& file_desc : fds.file()) {
         const google::protobuf::FileDescriptor* file = pool.BuildFile(file_desc);
         if (!file) {
-            throw protobuf_utils::ProtobufSerdeError("Failed to build file descriptor from set");
+            throw ProtobufSerdeError("Failed to build file descriptor from set");
         }
     }
 
     const google::protobuf::Descriptor* descriptor = pool.FindMessageTypeByName(message_type_name);
     if (!descriptor) {
-        throw protobuf_utils::ProtobufSerdeError("Message descriptor " + message_type_name + " not found");
+        throw ProtobufSerdeError("Message descriptor " + message_type_name + " not found");
     }
 
     return serializeWithMessageDescriptor(ctx, message, descriptor);
@@ -175,7 +175,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
     auto strategy = base_->getConfig().subject_name_strategy;
     auto subject_opt = strategy(ctx.topic, ctx.serde_type, schema_);
     if (!subject_opt.has_value()) {
-        throw protobuf_utils::ProtobufSerdeError("Subject name strategy returned no subject");
+        throw ProtobufSerdeError("Subject name strategy returned no subject");
     }
     std::string subject = subject_opt.value();
 
@@ -202,7 +202,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
 
         // Serialize message to bytes
         if (!message.SerializeToString(reinterpret_cast<std::string*>(&encoded_bytes))) {
-            throw protobuf_utils::ProtobufSerdeError("Failed to serialize protobuf message");
+            throw ProtobufSerdeError("Failed to serialize protobuf message");
         }
 
         // Apply encoding rules if present
@@ -213,7 +213,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
     } else {
         // Direct serialization without schema evolution
         if (!message.SerializeToString(reinterpret_cast<std::string*>(&encoded_bytes))) {
-            throw protobuf_utils::ProtobufSerdeError("Failed to serialize protobuf message");
+            throw ProtobufSerdeError("Failed to serialize protobuf message");
         }
     }
 
@@ -245,12 +245,12 @@ std::vector<int32_t> ProtobufSerializer::toIndexArray(const google::protobuf::De
 void ProtobufSerializer::validateSchema(const srclient::rest::model::Schema& schema) {
     auto schema_str = schema.getSchema();
     if (!schema_str.has_value() || schema_str->empty()) {
-        throw protobuf_utils::ProtobufSerdeError("Schema content is empty");
+        throw ProtobufSerdeError("Schema content is empty");
     }
 
     auto schema_type = schema.getSchemaType();
     if (schema_type.has_value() && schema_type.value() != "PROTOBUF") {
-        throw protobuf_utils::ProtobufSerdeError("Schema type must be PROTOBUF");
+        throw ProtobufSerdeError("Schema type must be PROTOBUF");
     }
 }
 

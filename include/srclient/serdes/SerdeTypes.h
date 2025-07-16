@@ -22,6 +22,10 @@
 #include "srclient/rest/model/RuleSet.h"
 
 #include "srclient/serdes/SerdeError.h"
+#include "srclient/serdes/SerdeBase.h"
+#include "srclient/serdes/JsonTypes.h"
+#include "srclient/serdes/AvroTypes.h"
+#include "srclient/serdes/ProtobufTypes.h"
 
 namespace srclient::rest {
     class ClientConfiguration;
@@ -29,164 +33,10 @@ namespace srclient::rest {
 
 namespace srclient::serdes {
 
-/**
- * Serialization format types (from serde.rs)
- */
-enum class SerdeFormat {
-    Avro,
-    Json,
-    Protobuf
-};
+// SerdeValue and SerdeFormat are now defined in individual type files
+// to avoid circular dependencies
 
-/**
- * Base interface for serialization values of different formats
- * Based on SerdeValue enum from serde.rs
- */
-class SerdeValue {
-public:
-    virtual ~SerdeValue() = default;
-    
-    // Type checking methods
-    virtual bool isJson() const = 0;
-    virtual bool isAvro() const = 0;
-    virtual bool isProtobuf() const = 0;
-    
-    // Value access methods - these will throw if wrong type
-    virtual nlohmann::json asJson() const = 0;
-    virtual avro::GenericDatum asAvro() const = 0;
-    virtual google::protobuf::Message& asProtobuf() const = 0;
-    
-    // Get the format type
-    virtual SerdeFormat getFormat() const = 0;
-    
-    // Clone method for copying
-    virtual std::unique_ptr<SerdeValue> clone() const = 0;
-};
 
-/**
- * JSON implementation of SerdeValue
- */
-class JsonSerdeValue : public SerdeValue {
-private:
-    nlohmann::json value_;
-    
-public:
-    explicit JsonSerdeValue(const nlohmann::json& value) : value_(value) {}
-    explicit JsonSerdeValue(nlohmann::json&& value) : value_(std::move(value)) {}
-    
-    bool isJson() const override { return true; }
-    bool isAvro() const override { return false; }
-    bool isProtobuf() const override { return false; }
-    
-    nlohmann::json asJson() const override { return value_; }
-    avro::GenericDatum asAvro() const override { 
-        throw SerdeError("SerdeValue is not Avro"); 
-    }
-    google::protobuf::Message& asProtobuf() const override { 
-        throw SerdeError("SerdeValue is not Protobuf"); 
-    }
-    
-    SerdeFormat getFormat() const override { return SerdeFormat::Json; }
-    
-    std::unique_ptr<SerdeValue> clone() const override {
-        return std::make_unique<JsonSerdeValue>(value_);
-    }
-    
-    // Direct access to the JSON value
-    const nlohmann::json& getValue() const { return value_; }
-    nlohmann::json& getValue() { return value_; }
-};
-
-/**
- * Avro implementation of SerdeValue
- */
-class AvroSerdeValue : public SerdeValue {
-private:
-    avro::GenericDatum value_;
-    
-public:
-    explicit AvroSerdeValue(const avro::GenericDatum& value) : value_(value) {}
-    explicit AvroSerdeValue(avro::GenericDatum&& value) : value_(std::move(value)) {}
-    
-    bool isJson() const override { return false; }
-    bool isAvro() const override { return true; }
-    bool isProtobuf() const override { return false; }
-    
-    nlohmann::json asJson() const override { 
-        throw SerdeError("SerdeValue is not JSON"); 
-    }
-    avro::GenericDatum asAvro() const override { return value_; }
-    google::protobuf::Message& asProtobuf() const override { 
-        throw SerdeError("SerdeValue is not Protobuf"); 
-    }
-    
-    SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
-    
-    std::unique_ptr<SerdeValue> clone() const override {
-        return std::make_unique<AvroSerdeValue>(value_);
-    }
-    
-    // Direct access to the Avro value
-    const avro::GenericDatum& getValue() const { return value_; }
-    avro::GenericDatum& getValue() { return value_; }
-};
-
-/**
- * Protobuf implementation of SerdeValue
- */
-class ProtobufSerdeValue : public SerdeValue {
-private:
-    google::protobuf::Message& value_;
-    
-public:
-    explicit ProtobufSerdeValue(google::protobuf::Message& value) : value_(value) {}
-    
-    bool isJson() const override { return false; }
-    bool isAvro() const override { return false; }
-    bool isProtobuf() const override { return true; }
-    
-    nlohmann::json asJson() const override { 
-        throw SerdeError("SerdeValue is not JSON"); 
-    }
-    avro::GenericDatum asAvro() const override { 
-        throw SerdeError("SerdeValue is not Avro"); 
-    }
-    google::protobuf::Message& asProtobuf() const override { 
-        return value_;
-    }
-    
-    SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
-    
-    std::unique_ptr<SerdeValue> clone() const override {
-        // Note: Protobuf messages can't be easily cloned without knowing the concrete type
-        // This may need to be handled differently in actual usage
-        return std::make_unique<ProtobufSerdeValue>(value_);
-    }
-    
-    // Direct access to the Protobuf value
-    google::protobuf::Message& getValue() const { return value_; }
-};
-
-// Helper functions for creating SerdeValue instances
-inline std::unique_ptr<SerdeValue> makeJsonSerdeValue(const nlohmann::json& value) {
-    return std::make_unique<JsonSerdeValue>(value);
-}
-
-inline std::unique_ptr<SerdeValue> makeJsonSerdeValue(nlohmann::json&& value) {
-    return std::make_unique<JsonSerdeValue>(std::move(value));
-}
-
-inline std::unique_ptr<SerdeValue> makeAvroSerdeValue(const avro::GenericDatum& value) {
-    return std::make_unique<AvroSerdeValue>(value);
-}
-
-inline std::unique_ptr<SerdeValue> makeAvroSerdeValue(avro::GenericDatum&& value) {
-    return std::make_unique<AvroSerdeValue>(std::move(value));
-}
-
-inline std::unique_ptr<SerdeValue> makeProtobufSerdeValue(google::protobuf::Message& value) {
-    return std::make_unique<ProtobufSerdeValue>(value);
-}
 
 // Backward compatibility helper functions (for easier migration)
 inline bool isJson(const SerdeValue& value) {

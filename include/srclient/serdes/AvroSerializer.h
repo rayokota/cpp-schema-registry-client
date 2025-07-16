@@ -17,6 +17,7 @@
 
 // Project includes
 #include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/AvroTypes.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/Serde.h"

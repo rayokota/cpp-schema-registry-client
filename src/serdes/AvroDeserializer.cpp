@@ -113,7 +113,7 @@ NamedValue AvroDeserializer::deserialize(
         
         // 2. Convert to JSON for migration
         auto json_value = avro_utils::avroToJson(intermediate);
-        auto json_serde_value = makeJsonSerdeValue(json_value);
+        auto json_serde_value = makeJsonValue(json_value);
         
         // 3. Apply migrations
         auto& migrated = base_->getSerde().executeMigrations(ctx, subject, migrations, *json_serde_value);
@@ -129,7 +129,7 @@ NamedValue AvroDeserializer::deserialize(
     
     // Apply transformation rules
     if (base_->getSerde().getRuleRegistry()) {
-        auto serde_value = makeAvroSerdeValue(value);
+        auto serde_value = makeAvroValue(value);
         auto avro_schema = makeAvroSchema(reader_parsed);
         
         auto& transformed = base_->getSerde().executeRules(ctx, subject, Mode::Read, 

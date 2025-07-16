@@ -10,6 +10,7 @@
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/JsonTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/JsonSerializer.h" // For JsonSerde
