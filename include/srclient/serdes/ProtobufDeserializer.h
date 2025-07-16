@@ -77,7 +77,7 @@ private:
                         const srclient::rest::model::Schema& writer_schema,
                         const srclient::rest::model::Schema& reader_schema);
     
-    SerdeValue messageToSerdeValue(const google::protobuf::Message& message);
+    SerdeValue& messageToSerdeValue(const google::protobuf::Message& message);
     
     void serdeValueToMessage(const SerdeValue& value, 
                            google::protobuf::Message* message);

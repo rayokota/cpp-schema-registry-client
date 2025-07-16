@@ -179,7 +179,7 @@ struct SerializationContext {
  */
 class FieldContext {
 private:
-    SerdeValue containing_message_;
+    const SerdeValue& containing_message_;
     std::string full_name_;
     std::string name_;
     mutable std::mutex field_type_mutex_;
@@ -298,23 +298,23 @@ public:
                                                    const std::optional<SchemaSelectorData>& use_schema) const;
     
     // Rule execution (synchronous versions)
-    SerdeValue executeRules(const SerializationContext& ser_ctx,
+    SerdeValue& executeRules(const SerializationContext& ser_ctx,
                            const std::string& subject,
                            Mode rule_mode,
                            std::optional<Schema> source,
                            std::optional<Schema> target,
                            std::optional<SerdeSchema> parsed_target,
-                           const SerdeValue& msg,
+                           SerdeValue& msg,
                            std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     
-    SerdeValue executeRulesWithPhase(const SerializationContext& ser_ctx,
+    SerdeValue& executeRulesWithPhase(const SerializationContext& ser_ctx,
                                    const std::string& subject,
                                    Phase rule_phase,
                                    Mode rule_mode,
                                    std::optional<Schema> source,
                                    std::optional<Schema> target,
                                    std::optional<SerdeSchema> parsed_target,
-                                   const SerdeValue& msg,
+                                   SerdeValue& msg,
                                    std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     
     // Migration support (synchronous versions)
@@ -328,10 +328,10 @@ public:
                                                    const RegisteredSchema& last,
                                                    std::optional<std::string> format = std::nullopt) const;
     
-    SerdeValue executeMigrations(const SerializationContext& ser_ctx,
-                               const std::string& subject,
-                               const std::vector<Migration>& migrations,
-                               const SerdeValue& msg) const;
+        SerdeValue& executeMigrations(const SerializationContext& ser_ctx,
+                                const std::string& subject,
+                                const std::vector<Migration>& migrations,
+                                SerdeValue& msg) const;
     
     // Accessors
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> getClient() const { return client_; }

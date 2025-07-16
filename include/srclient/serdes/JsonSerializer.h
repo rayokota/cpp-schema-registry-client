@@ -107,9 +107,9 @@ private:
     
     void validateSchema(const srclient::rest::model::Schema& schema);
     
-    SerdeValue transformValue(const SerdeValue& value, 
-                            const srclient::rest::model::Rule& rule,
-                            const RuleContext& context);
+    SerdeValue& transformValue(SerdeValue& value,
+                              const Schema& schema,
+                              const std::string& subject);
     
     nlohmann::json executeFieldTransformations(const nlohmann::json& value,
                                                const nlohmann::json& schema,

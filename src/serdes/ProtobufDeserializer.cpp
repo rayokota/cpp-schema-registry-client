@@ -29,28 +29,28 @@ void ProtobufDeserializer::transformFields(
     // This would involve comparing field types, applying default values, etc.
 }
 
-SerdeValue ProtobufDeserializer::messageToSerdeValue(const google::protobuf::Message& message) {
-    // Return SerdeValue containing reference to the protobuf message
-    // Note: We need to cast away const because reference_wrapper doesn't support const references in this context
-    auto& non_const_message = const_cast<google::protobuf::Message&>(message);
-    return std::reference_wrapper<google::protobuf::Message>(non_const_message);
+SerdeValue& ProtobufDeserializer::messageToSerdeValue(const google::protobuf::Message& message) {
+    // Create and store the SerdeValue, return reference
+    static thread_local std::unique_ptr<SerdeValue> stored_value;
+    stored_value = makeProtobufSerdeValue(const_cast<google::protobuf::Message&>(message));
+    return *stored_value;
 }
 
 void ProtobufDeserializer::serdeValueToMessage(
     const SerdeValue& value, 
     google::protobuf::Message* message) {
     
-    if (isProtobuf(value)) {
+    if (value.isProtobuf()) {
         // If SerdeValue contains a protobuf message, copy it
         try {
-            const auto& source_message = asProtobuf(value);
+            const auto& source_message = value.asProtobuf();
             message->CopyFrom(source_message);
         } catch (const SerdeError& e) {
             throw protobuf_utils::ProtobufSerdeError("Failed to extract protobuf from SerdeValue: " + std::string(e.what()));
         }
-    } else if (isJson(value)) {
+    } else if (value.isJson()) {
         // Convert SerdeValue to JSON, then to protobuf message (fallback)
-        auto json_value = asJson(value);
+        auto json_value = value.asJson();
         std::string json_str = json_value.dump();
         
         google::protobuf::util::JsonParseOptions options;
@@ -81,7 +81,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::evolveMessage(
     const srclient::rest::model::Schema& reader_schema) {
     
     // Convert writer message to JSON for evolution
-    auto writer_serde_value = messageToSerdeValue(writer_message);
+    auto& writer_serde_value = messageToSerdeValue(writer_message);
     
     // Apply schema evolution transformations
     // TODO: Implement actual schema evolution logic based on migration rules

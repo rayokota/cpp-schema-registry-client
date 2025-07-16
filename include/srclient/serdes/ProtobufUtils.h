@@ -133,25 +133,25 @@ namespace value_transform {
     /**
      * Extract SerdeValue from protobuf field
      */
-    SerdeValue extractFieldValue(
+    SerdeValue& extractFieldValue(
         const google::protobuf::FieldDescriptor* field_desc,
         const google::protobuf::Message& message);
-    
+
     /**
      * Handle repeated field transformations
      */
     bool transformRepeatedField(
         const google::protobuf::FieldDescriptor* field_desc,
         google::protobuf::Message* message,
-        const std::vector<SerdeValue>& values);
-    
+        const std::vector<std::reference_wrapper<const SerdeValue>>& values);
+
     /**
      * Handle map field transformations
      */
     bool transformMapField(
         const google::protobuf::FieldDescriptor* field_desc,
         google::protobuf::Message* message,
-        const std::unordered_map<std::string, SerdeValue>& map_values);
+        const std::unordered_map<std::string, std::reference_wrapper<const SerdeValue>>& map_values);
 }
 
 /**

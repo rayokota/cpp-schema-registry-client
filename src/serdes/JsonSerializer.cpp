@@ -233,10 +233,11 @@ void JsonSerializer::validateSchema(const srclient::rest::model::Schema& schema)
     }
 }
 
-SerdeValue JsonSerializer::transformValue(const SerdeValue& value,
-                                          const srclient::rest::model::Rule& rule,
-                                          const RuleContext& context) {
-    // TODO: Implement value transformation based on rules
+SerdeValue& JsonSerializer::transformValue(SerdeValue& value,
+                                        const Schema& schema,
+                                        const std::string& subject) {
+    // Apply transformations and return reference to the modified value
+    // For now, just return the same value
     return value;
 }
 

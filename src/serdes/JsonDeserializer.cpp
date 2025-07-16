@@ -169,11 +169,11 @@ nlohmann::json JsonDeserializer::executeMigrations(
         const nlohmann::json& value) {
 
     // Convert to SerdeValue for migration execution
-    SerdeValue serde_value(value);
-    auto migrated_value = base_->getSerde().executeMigrations(ctx, subject, migrations, serde_value);
+    auto serde_value = makeJsonSerdeValue(value);
+    auto& migrated_value = base_->getSerde().executeMigrations(ctx, subject, migrations, *serde_value);
 
     // Convert back to nlohmann::json
-    return asJson(migrated_value);
+    return migrated_value.asJson();
 }
 
 bool JsonDeserializer::isEvolutionRequired(
