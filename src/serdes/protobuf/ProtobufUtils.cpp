@@ -116,7 +116,7 @@ const google::protobuf::FileDescriptor* stringToSchema(
     google::protobuf::DescriptorPool* pool,
     const std::string& name,
     const std::string& schema_string) {
-    
+
     // Base64 decode
     std::vector<uint8_t> bytes = base64_decode(schema_string);
     
@@ -146,6 +146,12 @@ void decodeFileDescriptorProtoWithName(
     if (!file_desc) {
         throw ProtobufError("Failed to build FileDescriptor from proto");
     }
+}
+
+bool isBuiltin(const std::string& name) {
+    return name.find("confluent/") == 0
+           || name.find("google/protobuf/") == 0
+           || name.find("google/type/") == 0;
 }
 
 nlohmann::json messageToJson(const google::protobuf::Message& message) {
@@ -235,4 +241,4 @@ std::vector<int32_t> createMessageIndexArray(const google::protobuf::Descriptor*
     return indexes;
 }
 
-} // namespace srclient::serdes::protobuf::utils 
+} // namespace srclient::serdes::protobuf::utils

@@ -92,11 +92,6 @@ public:
  */
 namespace error_utils {
     /**
-     * Convert generic exception to appropriate SerdeError
-     */
-    SerdeError convertException(const std::exception& e);
-    
-    /**
      * Create serialization error from string message
      */
     SerializationError createSerializationError(const std::string& message);
