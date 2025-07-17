@@ -43,14 +43,14 @@ void ProtobufDeserializer::serdeValueToMessage(
     if (value.isProtobuf()) {
         // If SerdeValue contains a protobuf message, copy it
         try {
-            const auto& source_message = value.asProtobuf();
+            const auto& source_message = std::any_cast<std::reference_wrapper<google::protobuf::Message>>(value.getValue()).get();
             message->CopyFrom(source_message);
         } catch (const SerdeError& e) {
             throw ProtobufSerdeError("Failed to extract protobuf from SerdeValue: " + std::string(e.what()));
         }
     } else if (value.isJson()) {
         // Convert SerdeValue to JSON, then to protobuf message (fallback)
-        auto json_value = value.asJson();
+        auto json_value = std::any_cast<nlohmann::json>(value.getValue());
         std::string json_str = json_value.dump();
         
         google::protobuf::util::JsonParseOptions options;

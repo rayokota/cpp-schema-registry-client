@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <any>
 #include <nlohmann/json.hpp>
 #include <avro/Generic.hh>
 #include <google/protobuf/message.h>
@@ -28,10 +29,8 @@ public:
     virtual bool isAvro() const = 0;
     virtual bool isProtobuf() const = 0;
     
-    // Value access methods - these will throw if wrong type
-    virtual nlohmann::json asJson() const = 0;
-    virtual ::avro::GenericDatum asAvro() const = 0;
-    virtual google::protobuf::Message& asProtobuf() const = 0;
+    // Value access method - returns std::any, use std::any_cast to get the actual type
+    virtual std::any getValue() const = 0;
     
     // Get the format type
     virtual SerdeFormat getFormat() const = 0;

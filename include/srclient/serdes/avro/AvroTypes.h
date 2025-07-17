@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <any>
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
 #include <avro/Compiler.hh>
@@ -42,23 +43,14 @@ public:
     bool isAvro() const override { return true; }
     bool isProtobuf() const override { return false; }
     
-    nlohmann::json asJson() const override { 
-        throw SerdeError("SerdeValue is not JSON"); 
-    }
-    ::avro::GenericDatum asAvro() const override { return value_; }
-    google::protobuf::Message& asProtobuf() const override { 
-        throw SerdeError("SerdeValue is not Protobuf"); 
-    }
+    std::any getValue() const override { return value_; }
     
     SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
     
     std::unique_ptr<SerdeValue> clone() const override {
         return std::make_unique<AvroValue>(value_);
     }
-    
-    // Direct access to the Avro value
-    const ::avro::GenericDatum& getValue() const { return value_; }
-    ::avro::GenericDatum& getValue() { return value_; }
+
 };
 
 // Helper functions for creating Avro SerdeValue instances

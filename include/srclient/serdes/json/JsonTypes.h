@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <any>
 #include <nlohmann/json.hpp>
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeBase.h"
@@ -31,23 +32,14 @@ public:
     bool isAvro() const override { return false; }
     bool isProtobuf() const override { return false; }
     
-    nlohmann::json asJson() const override { return value_; }
-    avro::GenericDatum asAvro() const override { 
-        throw SerdeError("SerdeValue is not Avro"); 
-    }
-    google::protobuf::Message& asProtobuf() const override { 
-        throw SerdeError("SerdeValue is not Protobuf"); 
-    }
+    std::any getValue() const override { return value_; }
     
     SerdeFormat getFormat() const override { return SerdeFormat::Json; }
     
     std::unique_ptr<SerdeValue> clone() const override {
         return std::make_unique<JsonValue>(value_);
     }
-    
-    // Direct access to the JSON value
-    const nlohmann::json& getValue() const { return value_; }
-    nlohmann::json& getValue() { return value_; }
+
 };
 
 // Helper functions for creating JSON SerdeValue instances
