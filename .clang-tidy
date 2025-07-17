@@ -1,56 +1,19 @@
-# .clang-tidy
-# Place this file in the root of your project's source tree
-
-Checks: '-*,
-  bugprone-*,
-  cppcoreguidelines-*,
-  google-*,
-  llvm-*,
-  modernize-*,
-  performance-*,
-  readability-*,
-  hicpp-*' # Enable common check categories
-
-# Specific checks to disable even if their category is enabled
-# Example: If you don't like 'use auto', you can disable it here.
-# -modernize-use-auto,
-
-# Treat specific warnings as errors, failing the build
-WarningsAsErrors: >
-  'bugprone-macro-parentheses'
-  'modernize-use-trailing-return-type'
-  'cppcoreguidelines-pro-bounds-array-to-pointer-decay'
-
-# Regular expression to filter which header files get diagnostics.
-# By default, clang-tidy often only checks the main .cpp file.
-# This is CRUCIAL for getting diagnostics for your own headers.
-# Examples:
-#   '^.*': Check all files (including system headers if not careful, may be noisy)
-#   '^(src|include)/.*': Check only files in 'src/' or 'include/' directories
-#   '.*your_project_name/.*': More specific to your project's structure
-HeaderFilterRegex: '^(src|include|my_module)/.*'
-
-# Check-specific options
-CheckOptions:
-  # Example: For the readability-magic-numbers check
-  readability-magic-numbers.IgnoredValues: >
-    '0'
-    '1'
-    '100'
-
-  # Example: For a custom check (if you have one)
-  my-custom-check.SomeSetting: 'value'
-
-  # Modernize-pass-by-value related
-  modernize-pass-by-value.IncludeHeaders: >
-    'string'
-    'vector'
-    'stdexcept'
-
-# Specifies the desired format style for clang-tidy's suggestions
-# Can be 'llvm', 'google', 'webkit', 'mozilla', 'chromium', or 'file' (to use .clang-format)
-FormatStyle: 'file' # This means clang-tidy will look for a .clang-format file
-
-# Other less common options:
-# AnalyzeTemporaryDtors: false # Don't analyze destructors of temporaries
-# EnableMacros: false # Don't analyze macro expansions
+---
+Checks: "*,
+        -abseil-*,
+        -altera-*,
+        -android-*,
+        -fuchsia-*,
+        -google-*,
+        -llvm*,
+        -modernize-use-trailing-return-type,
+        -zircon-*,
+        -readability-else-after-return,
+        -readability-static-accessed-through-instance,
+        -readability-avoid-const-params-in-decls,
+        -cppcoreguidelines-non-private-member-variables-in-classes,
+        -misc-non-private-member-variables-in-classes,
+"
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle:     none
