@@ -58,10 +58,7 @@ public:
     
     SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Json; }
     
-    std::string getSchemaData() const override { return schema_data_; }
-    std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const override {
-        return std::nullopt;
-    }
+    std::any getSchema() const override { return schema_data_; }
     
     std::unique_ptr<SerdeSchema> clone() const override {
         return std::make_unique<JsonSchema>(schema_data_);

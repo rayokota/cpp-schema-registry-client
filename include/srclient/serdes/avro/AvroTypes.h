@@ -70,12 +70,7 @@ public:
     
     SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Avro; }
     
-    std::string getSchemaData() const override {
-        // Convert Avro schema to string representation
-        return avro_schema_.first.toJson(false);
-    }
-    
-    std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const override {
+    std::any getSchema() const override {
         return avro_schema_;
     }
     

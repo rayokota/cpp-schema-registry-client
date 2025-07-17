@@ -1,5 +1,6 @@
 #pragma once
 
+#include <any>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -85,15 +86,33 @@ public:
     // Format accessor
     virtual SerdeSchemaFormat getFormat() const = 0;
     
-    // Schema data access methods
-    virtual std::string getSchemaData() const = 0;
-    virtual std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const = 0;
+    // Schema data access method - returns appropriate schema representation for the format
+    virtual std::any getSchema() const = 0;
     
     // Clone method
     virtual std::unique_ptr<SerdeSchema> clone() const = 0;
 };
 
+/**
+ * Helper functions for extracting schema data from SerdeSchema::getSchema()
+ */
+inline std::string getSchemaData(const SerdeSchema& schema) {
+    if (schema.isAvro()) {
+        // For Avro schemas, convert the ValidSchema to JSON string
+        auto avro_schema = std::any_cast<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>>(schema.getSchema());
+        return avro_schema.first.toJson(false);
+    } else {
+        // For JSON and Protobuf schemas, return the string directly
+        return std::any_cast<std::string>(schema.getSchema());
+    }
+}
 
+inline std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema(const SerdeSchema& schema) {
+    if (!schema.isAvro()) {
+        return std::nullopt;
+    }
+    return std::any_cast<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>>(schema.getSchema());
+}
 
 // Backward compatibility helper functions (for easier migration)
 inline bool isJson(const SerdeValue& value) {
