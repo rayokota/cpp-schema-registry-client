@@ -17,8 +17,6 @@ endif()
 
 project(srclient CXX)
 
-# Force -fPIC even if the project is configured for building a static library.
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
 
