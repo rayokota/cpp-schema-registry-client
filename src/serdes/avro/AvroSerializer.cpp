@@ -149,11 +149,40 @@ std::vector<uint8_t> AvroSerializer::serialize(
         auto schema = latest_schema->toSchema();
         auto parsed_schema = serde_->getParsedSchema(schema, base_->getSerde().getClient());
         
-        // Apply rules if configured  
-        if (base_->getSerde().getRuleRegistry()) {
-            // TODO: Implement rule execution properly
-            // For now, skip rule execution and use original value
-            // The RuleContext constructor requires more parameters than we have here
+        // Create field transformer lambda
+        auto field_transformer = [this, &parsed_schema](RuleContext& ctx, const std::string& rule_type, SerdeValue& msg) -> SerdeValue& {
+            if (msg.isAvro()) {
+                auto avro_datum = std::any_cast<::avro::GenericDatum>(msg.getValue());
+                auto transformed = transformFields(ctx, avro_datum, parsed_schema.first);
+                // Create new SerdeValue and store it in a static thread_local to return reference
+                static thread_local std::unique_ptr<SerdeValue> stored_value;
+                stored_value = makeAvroValue(transformed);
+                return *stored_value;
+            }
+            return msg;
+        };
+        
+        // Create SerdeValue and SerdeSchema instances
+        auto avro_value = makeAvroValue(value);
+        auto avro_schema = makeAvroSchema(parsed_schema);
+        
+        // Execute rules on the serde value
+        auto& transformed_value = base_->getSerde().executeRules(
+            ctx,
+            subject,
+            Mode::Write,
+            std::nullopt,
+            std::make_optional(schema),
+            std::make_optional(avro_schema.get()),
+            *avro_value,
+            std::make_shared<FieldTransformer>(field_transformer)
+        );
+        
+        // Extract Avro value from result
+        if (transformed_value.isAvro()) {
+            value = std::any_cast<::avro::GenericDatum>(transformed_value.getValue());
+        } else {
+            throw AvroError("Unexpected serde value type returned from rule execution");
         }
     } else {
         // Use provided schema and register/lookup
