@@ -61,7 +61,7 @@ endfunction()
 # Compile test protobuf files
 compile_test_proto_files()
 
-file(GLOB TEST_SOURCE_FILES "*.cpp")
+file(GLOB TEST_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 # Add the test executable
 add_executable(srclient-test
