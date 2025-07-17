@@ -195,7 +195,7 @@ private:
     Rule rule_;
     size_t index_;
     std::vector<Rule> rules_;
-    std::vector<FieldContext> field_contexts_;
+    std::vector<std::unique_ptr<FieldContext>> field_contexts_;
     std::shared_ptr<FieldTransformer> field_transformer_;
     std::shared_ptr<RuleRegistry> rule_registry_;
     
