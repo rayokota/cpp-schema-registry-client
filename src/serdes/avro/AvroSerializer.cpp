@@ -279,13 +279,6 @@ AvroSerializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-::avro::GenericDatum AvroSerializer::jsonToAvro(
-    const nlohmann::json& json_value,
-    const ::avro::ValidSchema& schema
-) {
-    return utils::jsonToAvro(json_value, schema);
-}
-
 ::avro::GenericDatum AvroSerializer::transformFields(
     RuleContext& ctx,
     const ::avro::GenericDatum& datum,

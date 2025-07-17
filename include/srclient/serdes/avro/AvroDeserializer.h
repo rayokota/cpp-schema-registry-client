@@ -99,24 +99,6 @@ private:
     getParsedSchema(const srclient::rest::model::Schema& schema);
 
     /**
-     * Convert Avro GenericDatum to JSON
-     * @param datum Avro datum to convert
-     * @return JSON representation
-     */
-    nlohmann::json avroToJson(const ::avro::GenericDatum& datum);
-
-    /**
-     * Convert JSON back to Avro datum using input template
-     * @param input_datum Template datum for type information
-     * @param json_value JSON value to convert
-     * @return Converted Avro datum
-     */
-    ::avro::GenericDatum jsonToAvro(
-        const ::avro::GenericDatum& input_datum,
-        const nlohmann::json& json_value
-    );
-
-    /**
      * Apply field transformation rules
      * @param ctx Rule context
      * @param datum Avro datum to transform

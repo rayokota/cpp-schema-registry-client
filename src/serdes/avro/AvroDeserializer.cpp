@@ -192,18 +192,6 @@ AvroDeserializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-nlohmann::json AvroDeserializer::avroToJson(const ::avro::GenericDatum& datum) {
-    return utils::avroToJson(datum);
-}
-
-::avro::GenericDatum AvroDeserializer::jsonToAvro(
-    const ::avro::GenericDatum& input_datum,
-    const nlohmann::json& json_value
-) {
-    // Extract schema from input datum
-    // This is a simplified approach - in practice, you'd need the ValidSchema
-    throw AvroError("jsonToAvro with input datum template not implemented");
-}
 ::avro::GenericDatum AvroDeserializer::transformFields(
     RuleContext& ctx,
     const ::avro::GenericDatum& datum,
