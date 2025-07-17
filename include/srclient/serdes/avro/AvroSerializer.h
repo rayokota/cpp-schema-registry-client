@@ -107,19 +107,6 @@ private:
         const nlohmann::json& json_value,
         const ::avro::ValidSchema& schema
     );
-
-    /**
-     * Apply field transformation rules
-     * @param ctx Rule context
-     * @param datum Avro datum to transform
-     * @param schema Schema for the datum
-     * @return Transformed datum
-     */
-    ::avro::GenericDatum transformFields(
-        RuleContext& ctx,
-        const ::avro::GenericDatum& datum,
-        const ::avro::ValidSchema& schema
-    );
 };
 
 /**

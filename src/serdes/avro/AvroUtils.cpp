@@ -8,6 +8,76 @@ namespace srclient::serdes::avro {
 
 namespace utils {
 
+::avro::GenericDatum transformFields(
+    RuleContext& ctx,
+    const ::avro::GenericDatum& datum,
+    const ::avro::ValidSchema& schema
+) {
+    // Field transformation logic would be implemented here
+    // This would recursively process records, arrays, maps, and unions
+    // applying field-level rules as configured
+    
+    switch (schema.root()->type()) {
+        case ::avro::AVRO_RECORD: {
+            auto record = datum.value<::avro::GenericRecord>();
+            ::avro::GenericRecord result(schema.root());
+            
+            for (size_t i = 0; i < record.fieldCount(); ++i) {
+                auto field = record.fieldAt(i);
+                auto field_schema_node = schema.root()->leafAt(i);
+                ::avro::ValidSchema field_schema(field_schema_node);
+                auto transformed = transformFields(ctx, field, field_schema);
+                result.setFieldAt(i, transformed);
+            }
+            
+            return ::avro::GenericDatum(schema);
+        }
+        
+        case ::avro::AVRO_ARRAY: {
+            auto array = datum.value<::avro::GenericArray>();
+            ::avro::GenericArray result(schema.root());
+            auto item_schema_node = schema.root()->leafAt(0);
+            ::avro::ValidSchema item_schema(item_schema_node);
+            
+            for (size_t i = 0; i < array.value().size(); ++i) {
+                auto transformed = transformFields(ctx, array.value()[i], item_schema);
+                result.value().push_back(transformed);
+            }
+            
+            return ::avro::GenericDatum(schema);
+        }
+        
+        case ::avro::AVRO_MAP: {
+            auto map = datum.value<::avro::GenericMap>();
+            ::avro::GenericMap result(schema.root());
+            for (const auto& [key, value] : map.value()) {
+                auto value_schema_node = schema.root()->leafAt(0);
+                ::avro::ValidSchema value_schema(value_schema_node);
+                auto transformed = transformFields(ctx, value, value_schema);
+                result.value().emplace_back(key, transformed);
+            }
+            return ::avro::GenericDatum(schema);
+        }
+        
+        case ::avro::AVRO_UNION: {
+            auto union_val = datum.value<::avro::GenericUnion>();
+            auto [branch_idx, branch_schema] = resolveUnion(schema, datum);
+            auto transformed = transformFields(ctx, union_val.datum(), branch_schema);
+            
+            ::avro::GenericUnion result(schema.root());
+            result.selectBranch(branch_idx);
+            result.datum() = transformed;
+            
+            return ::avro::GenericDatum(schema);
+        }
+        
+        default:
+            // For primitive types, apply field rules if applicable
+            // This would check if there are any field rules that apply to this field
+            return datum;
+    }
+}
+
 FieldType avroSchemaToFieldType(const ::avro::ValidSchema& schema) {
     switch (schema.root()->type()) {
         case ::avro::AVRO_NULL:

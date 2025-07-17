@@ -99,19 +99,6 @@ private:
     getParsedSchema(const srclient::rest::model::Schema& schema);
 
     /**
-     * Apply field transformation rules
-     * @param ctx Rule context
-     * @param datum Avro datum to transform
-     * @param schema Schema for the datum
-     * @return Transformed datum
-     */
-    ::avro::GenericDatum transformFields(
-        RuleContext& ctx,
-        const ::avro::GenericDatum& datum,
-        const ::avro::ValidSchema& schema
-    );
-
-    /**
      * Resolve union schema for a given datum
      * @param schema Union schema
      * @param datum Datum to resolve against

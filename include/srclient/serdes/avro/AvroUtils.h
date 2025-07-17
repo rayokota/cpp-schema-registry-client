@@ -30,6 +30,19 @@ namespace srclient::serdes::avro {
 namespace utils {
 
     /**
+     * Apply field transformation rules
+     * @param ctx Rule context
+     * @param datum Avro datum to transform
+     * @param schema Schema for the datum
+     * @return Transformed datum
+     */
+    ::avro::GenericDatum transformFields(
+        RuleContext& ctx,
+        const ::avro::GenericDatum& datum,
+        const ::avro::ValidSchema& schema
+    );
+
+    /**
      * Convert Avro schema type to FieldType enum
      * @param schema Avro schema to convert
      * @return Corresponding FieldType
