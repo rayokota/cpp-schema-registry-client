@@ -1,5 +1,6 @@
 #include "srclient/serdes/avro/AvroDeserializer.h"
 #include "srclient/serdes/avro/AvroUtils.h"
+#include "srclient/serdes/json/JsonTypes.h"
 #include <algorithm>
 #include <sstream>
 

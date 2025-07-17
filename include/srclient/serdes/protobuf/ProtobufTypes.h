@@ -8,7 +8,7 @@
 #include <google/protobuf/descriptor.h>
 #include <nlohmann/json.hpp>
 #include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/SerdeBase.h"
+#include "srclient/serdes/SerdeTypes.h"
 
 namespace srclient::serdes::protobuf {
 
