@@ -56,7 +56,7 @@ public:
     bool isJson() const override { return true; }
     bool isProtobuf() const override { return false; }
     
-    SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Json; }
+    SerdeFormat getFormat() const override { return SerdeFormat::Json; }
     
     std::any getSchema() const override { return schema_data_; }
     

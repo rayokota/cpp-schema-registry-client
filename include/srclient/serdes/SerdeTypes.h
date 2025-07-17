@@ -62,15 +62,6 @@ public:
 };
 
 /**
- * Schema format enum
- */
-enum class SerdeSchemaFormat {
-    Avro,
-    Json,
-    Protobuf
-};
-
-/**
  * Base interface for schema wrappers
  * Based on SerdeSchema from serde.rs
  */
@@ -84,7 +75,7 @@ public:
     virtual bool isProtobuf() const = 0;
     
     // Format accessor
-    virtual SerdeSchemaFormat getFormat() const = 0;
+    virtual SerdeFormat getFormat() const = 0;
     
     // Schema data access method - returns appropriate schema representation for the format
     virtual std::any getSchema() const = 0;
