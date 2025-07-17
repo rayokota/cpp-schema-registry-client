@@ -26,6 +26,21 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Find clang-tidy
+find_program(CLANG_TIDY_EXE clang-tidy)
+
+function(enable_clang_tidy target)
+    if(CLANG_TIDY_EXE)
+        set_target_properties(${target} PROPERTIES
+            CXX_CLANG_TIDY "${CLANG_TIDY_EXE}"
+            #-checks=-*,readability-*,performance-*,bugprone-*;
+            #-header-filter=.*"
+        )
+    endif()
+endfunction()
+
 include(FetchContent)
 
 FetchContent_Declare(avrocpp
@@ -126,6 +141,7 @@ if(PROJECT_PROTO_SOURCES)
 endif()
 
 add_library(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
+enable_clang_tidy(${PROJECT_NAME})
 
 target_compile_options(${PROJECT_NAME}
     PRIVATE
