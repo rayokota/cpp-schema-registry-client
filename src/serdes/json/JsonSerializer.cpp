@@ -1,9 +1,9 @@
-#include "srclient/serdes/JsonSerializer.h"
-#include "srclient/serdes/JsonUtils.h"
+#include "srclient/serdes/json/JsonSerializer.h"
+#include "srclient/serdes/json/JsonUtils.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::json {
 
-using namespace json_utils;
+using namespace utils;
 
 // JsonSerde implementation
 JsonSerde::JsonSerde() {}
@@ -250,4 +250,4 @@ nlohmann::json JsonSerializer::executeFieldTransformations(
     return value;
 }
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::json

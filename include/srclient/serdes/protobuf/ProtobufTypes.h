@@ -8,7 +8,7 @@
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeBase.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::protobuf {
 
 /**
  * Protobuf-specific error class
@@ -36,7 +36,7 @@ public:
     nlohmann::json asJson() const override { 
         throw SerdeError("SerdeValue is not JSON"); 
     }
-    avro::GenericDatum asAvro() const override { 
+    ::avro::GenericDatum asAvro() const override { 
         throw SerdeError("SerdeValue is not Avro"); 
     }
     google::protobuf::Message& asProtobuf() const override { 
@@ -62,4 +62,4 @@ inline std::unique_ptr<SerdeValue> makeProtobufValue(google::protobuf::Message& 
 
 
 
-} // namespace srclient::serdes 
+} // namespace srclient::serdes::protobuf 

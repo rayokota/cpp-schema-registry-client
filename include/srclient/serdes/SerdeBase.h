@@ -30,7 +30,7 @@ public:
     
     // Value access methods - these will throw if wrong type
     virtual nlohmann::json asJson() const = 0;
-    virtual avro::GenericDatum asAvro() const = 0;
+    virtual ::avro::GenericDatum asAvro() const = 0;
     virtual google::protobuf::Message& asProtobuf() const = 0;
     
     // Get the format type

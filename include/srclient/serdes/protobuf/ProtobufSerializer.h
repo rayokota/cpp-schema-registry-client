@@ -12,13 +12,13 @@
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/ProtobufTypes.h"
+#include "srclient/serdes/protobuf/ProtobufTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeConfig.h"
-#include "srclient/serdes/ProtobufUtils.h"
+#include "srclient/serdes/protobuf/ProtobufUtils.h"
 #include "srclient/rest/ISchemaRegistryClient.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::protobuf {
 
 // Forward declarations
 class ProtobufSerializer;
@@ -131,4 +131,4 @@ private:
                               const std::string& subject);
 };
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::protobuf

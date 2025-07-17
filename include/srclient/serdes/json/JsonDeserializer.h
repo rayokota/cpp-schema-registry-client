@@ -10,17 +10,17 @@
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/JsonTypes.h"
+#include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeConfig.h"
-#include "srclient/serdes/JsonSerializer.h" // For JsonSerde
+#include "srclient/serdes/json/JsonSerializer.h" // For JsonSerde
 #include "srclient/rest/ISchemaRegistryClient.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::json {
 
 // Forward declarations
 class JsonDeserializer;
-struct SerializationContext;
+using SerializationContext = srclient::serdes::SerializationContext;
 
 /**
  * JSON deserializer class template
@@ -74,4 +74,4 @@ private:
                            const srclient::rest::model::Schema& reader_schema);
 };
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::json

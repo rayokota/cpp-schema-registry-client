@@ -1,9 +1,9 @@
-#include "srclient/serdes/ProtobufDeserializer.h"
-#include "srclient/serdes/ProtobufUtils.h"
+#include "srclient/serdes/protobuf/ProtobufDeserializer.h"
+#include "srclient/serdes/protobuf/ProtobufUtils.h"
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/util/json_util.h>
 
-namespace srclient::serdes {
+namespace srclient::serdes::protobuf {
 
 // Helper method implementations for ProtobufDeserializer
 
@@ -219,4 +219,4 @@ void ProtobufDeserializer::close() {
     serde_->clear();
 }
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::protobuf

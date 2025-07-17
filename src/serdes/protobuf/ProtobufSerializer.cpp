@@ -1,9 +1,9 @@
-#include "srclient/serdes/ProtobufSerializer.h"
-#include "srclient/serdes/ProtobufUtils.h"
+#include "srclient/serdes/protobuf/ProtobufSerializer.h"
+#include "srclient/serdes/protobuf/ProtobufUtils.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::protobuf {
 
-using namespace protobuf_utils;
+using namespace utils;
 
 // Default reference subject name strategy implementation
 std::string defaultReferenceSubjectNameStrategy(const std::string& ref_name, SerdeType serde_type) {
@@ -254,4 +254,4 @@ void ProtobufSerializer::validateSchema(const srclient::rest::model::Schema& sch
     }
 }
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::protobuf

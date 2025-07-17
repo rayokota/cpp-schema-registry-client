@@ -11,12 +11,12 @@
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/JsonTypes.h"
+#include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/rest/ISchemaRegistryClient.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::json {
 
 // Forward declarations
 class JsonSerializer;
@@ -112,4 +112,4 @@ private:
                                                const std::string& field_executor_type);
 };
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::json

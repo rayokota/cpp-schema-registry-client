@@ -14,19 +14,19 @@
 
 // Project includes
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/AvroTypes.h"
+#include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/Serde.h"
-#include "srclient/serdes/AvroSerializer.h" // For AvroSerde and NamedValue
+#include "srclient/serdes/avro/AvroSerializer.h" // For AvroSerde and NamedValue
 #include "srclient/rest/model/Schema.h"
 #include "srclient/rest/SchemaRegistryClient.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::avro {
 
-// Forward declarations
-struct SerializationContext;
-class BaseDeserializer;
+// Forward declarations from parent namespace
+using SerializationContext = srclient::serdes::SerializationContext;
+using BaseDeserializer = srclient::serdes::BaseDeserializer;
 
 /**
  * Avro-specific deserializer implementation
@@ -88,14 +88,14 @@ private:
      * @param schema Avro schema to extract name from
      * @return Optional schema name
      */
-    std::optional<std::string> getName(const avro::ValidSchema& schema);
+    std::optional<std::string> getName(const ::avro::ValidSchema& schema);
 
     /**
      * Get parsed Avro schema with caching
      * @param schema Schema to parse
      * @return Tuple of main schema and named schemas
      */
-    std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>> 
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> 
     getParsedSchema(const srclient::rest::model::Schema& schema);
 
     /**
@@ -103,7 +103,7 @@ private:
      * @param datum Avro datum to convert
      * @return JSON representation
      */
-    nlohmann::json avroToJson(const avro::GenericDatum& datum);
+    nlohmann::json avroToJson(const ::avro::GenericDatum& datum);
 
     /**
      * Convert JSON back to Avro datum using input template
@@ -111,8 +111,8 @@ private:
      * @param json_value JSON value to convert
      * @return Converted Avro datum
      */
-    avro::GenericDatum jsonToAvro(
-        const avro::GenericDatum& input_datum,
+    ::avro::GenericDatum jsonToAvro(
+        const ::avro::GenericDatum& input_datum,
         const nlohmann::json& json_value
     );
 
@@ -123,10 +123,10 @@ private:
      * @param schema Schema for the datum
      * @return Transformed datum
      */
-    avro::GenericDatum transformFields(
+    ::avro::GenericDatum transformFields(
         RuleContext& ctx,
-        const avro::GenericDatum& datum,
-        const avro::ValidSchema& schema
+        const ::avro::GenericDatum& datum,
+        const ::avro::ValidSchema& schema
     );
 
     /**
@@ -135,9 +135,9 @@ private:
      * @param datum Datum to resolve against
      * @return Index and schema of the matching union branch
      */
-    std::pair<size_t, avro::ValidSchema> resolveUnion(
-        const avro::ValidSchema& schema,
-        const avro::GenericDatum& datum
+    std::pair<size_t, ::avro::ValidSchema> resolveUnion(
+        const ::avro::ValidSchema& schema,
+        const ::avro::GenericDatum& datum
     );
 
     /**
@@ -145,14 +145,14 @@ private:
      * @param schema Avro schema
      * @return Corresponding FieldType
      */
-    FieldType getFieldType(const avro::ValidSchema& schema);
+    FieldType getFieldType(const ::avro::ValidSchema& schema);
 
     /**
      * Extract inline tags from Avro field
      * @param field Avro record field
      * @return Set of tags from field attributes
      */
-    std::unordered_set<std::string> getInlineTags(const avro::GenericRecord& record, const std::string& field_name);
+    std::unordered_set<std::string> getInlineTags(const ::avro::GenericRecord& record, const std::string& field_name);
 };
 
-} // namespace srclient::serdes 
+} // namespace srclient::serdes::avro 

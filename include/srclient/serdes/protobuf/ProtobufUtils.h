@@ -13,13 +13,13 @@
 #include <google/protobuf/util/json_util.h>
 
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/ProtobufTypes.h"
+#include "srclient/serdes/protobuf/ProtobufTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/rest/model/Schema.h"
 #include "srclient/serdes/Serde.h"
 
-namespace srclient::serdes::protobuf_utils {
+namespace srclient::serdes::protobuf::utils {
 
 
 
@@ -216,4 +216,4 @@ namespace stream_utils {
     bool parseMessage(google::protobuf::Message& message, const uint8_t* data, size_t size);
 }
 
-} // namespace srclient::serdes::protobuf_utils 
+} // namespace srclient::serdes::protobuf::utils 

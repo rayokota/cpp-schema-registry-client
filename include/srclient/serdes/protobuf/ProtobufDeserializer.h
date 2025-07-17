@@ -11,18 +11,18 @@
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/ProtobufTypes.h"
+#include "srclient/serdes/protobuf/ProtobufTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeConfig.h"
-#include "srclient/serdes/ProtobufSerializer.h" // For ProtobufSerde
-#include "srclient/serdes/ProtobufUtils.h"
+#include "srclient/serdes/protobuf/ProtobufSerializer.h" // For ProtobufSerde
+#include "srclient/serdes/protobuf/ProtobufUtils.h"
 #include "srclient/rest/ISchemaRegistryClient.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::protobuf {
 
 // Forward declarations
 class ProtobufDeserializer;
-struct SerializationContext;
+using SerializationContext = srclient::serdes::SerializationContext;
 
 /**
  * Protobuf deserializer class template
@@ -93,4 +93,4 @@ private:
         const srclient::rest::model::Schema& reader_schema);
 };
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::protobuf

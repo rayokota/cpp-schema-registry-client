@@ -17,31 +17,31 @@
 
 // Project includes
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/AvroTypes.h"
+#include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/rest/model/Schema.h"
 #include <nlohmann/json.hpp>
 
-namespace srclient::serdes {
+namespace srclient::serdes::avro {
 
 /**
  * Utility functions for Avro schema and data manipulation
  */
-namespace avro_utils {
+namespace utils {
 
     /**
      * Convert Avro schema type to FieldType enum
      * @param schema Avro schema to convert
      * @return Corresponding FieldType
      */
-    FieldType avroSchemaToFieldType(const avro::ValidSchema& schema);
+    FieldType avroSchemaToFieldType(const ::avro::ValidSchema& schema);
 
     /**
      * Convert Avro GenericDatum to JSON
      * @param datum Avro datum to convert
      * @return JSON representation
      */
-    nlohmann::json avroToJson(const avro::GenericDatum& datum);
+    nlohmann::json avroToJson(const ::avro::GenericDatum& datum);
 
     /**
      * Convert JSON to Avro GenericDatum
@@ -50,10 +50,10 @@ namespace avro_utils {
      * @param input_datum Optional template datum for type hints
      * @return Converted Avro datum
      */
-    avro::GenericDatum jsonToAvro(
+    ::avro::GenericDatum jsonToAvro(
         const nlohmann::json& json_value,
-        const avro::ValidSchema& schema,
-        const avro::GenericDatum* input_datum = nullptr
+        const ::avro::ValidSchema& schema,
+        const ::avro::GenericDatum* input_datum = nullptr
     );
 
     /**
@@ -62,9 +62,9 @@ namespace avro_utils {
      * @param datum Datum to match against union branches
      * @return Pair of branch index and corresponding schema
      */
-    std::pair<size_t, avro::ValidSchema> resolveUnion(
-        const avro::ValidSchema& union_schema,
-        const avro::GenericDatum& datum
+    std::pair<size_t, ::avro::ValidSchema> resolveUnion(
+        const ::avro::ValidSchema& union_schema,
+        const ::avro::GenericDatum& datum
     );
 
     /**
@@ -72,7 +72,7 @@ namespace avro_utils {
      * @param schema Avro schema
      * @return Optional schema name
      */
-    std::optional<std::string> getSchemaName(const avro::ValidSchema& schema);
+    std::optional<std::string> getSchemaName(const ::avro::ValidSchema& schema);
 
     /**
      * Extract inline tags from Avro record field attributes
@@ -81,7 +81,7 @@ namespace avro_utils {
      * @return Set of tags found in field attributes
      */
     std::unordered_set<std::string> getInlineTags(
-        const avro::GenericRecord& record, 
+        const ::avro::GenericRecord& record, 
         const std::string& field_name
     );
 
@@ -93,9 +93,9 @@ namespace avro_utils {
      * @return Serialized bytes
      */
     std::vector<uint8_t> serializeAvroData(
-        const avro::GenericDatum& datum,
-        const avro::ValidSchema& writer_schema,
-        const std::vector<avro::ValidSchema>& named_schemas = {}
+        const ::avro::GenericDatum& datum,
+        const ::avro::ValidSchema& writer_schema,
+        const std::vector<::avro::ValidSchema>& named_schemas = {}
     );
 
     /**
@@ -106,11 +106,11 @@ namespace avro_utils {
      * @param named_schemas Additional named schemas for resolution
      * @return Deserialized Avro datum
      */
-    avro::GenericDatum deserializeAvroData(
+    ::avro::GenericDatum deserializeAvroData(
         const std::vector<uint8_t>& data,
-        const avro::ValidSchema& writer_schema,
-        const avro::ValidSchema* reader_schema = nullptr,
-        const std::vector<avro::ValidSchema>& named_schemas = {}
+        const ::avro::ValidSchema& writer_schema,
+        const ::avro::ValidSchema* reader_schema = nullptr,
+        const std::vector<::avro::ValidSchema>& named_schemas = {}
     );
 
     /**
@@ -119,7 +119,7 @@ namespace avro_utils {
      * @param named_schemas Vector of named schema strings
      * @return Tuple of parsed main schema and named schemas
      */
-    std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
     parseSchemaWithNamed(
         const std::string& schema_str,
         const std::vector<std::string>& named_schemas = {}
@@ -132,11 +132,11 @@ namespace avro_utils {
      * @return True if schemas are compatible
      */
     bool isSchemaCompatible(
-        const avro::ValidSchema& writer_schema,
-        const avro::ValidSchema& reader_schema
+        const ::avro::ValidSchema& writer_schema,
+        const ::avro::ValidSchema& reader_schema
     );
 
-} // namespace avro_utils
+} // namespace utils
 
 
 
@@ -149,21 +149,21 @@ public:
      * Create encoder for serialization
      * @return Unique pointer to binary encoder
      */
-    static std::unique_ptr<avro::Encoder> createEncoder();
+    static std::unique_ptr<::avro::Encoder> createEncoder();
 
     /**
      * Create decoder for deserialization
      * @param data Input data buffer
      * @return Unique pointer to binary decoder
      */
-    static std::unique_ptr<avro::Decoder> createDecoder(const std::vector<uint8_t>& data);
+    static std::unique_ptr<::avro::Decoder> createDecoder(const std::vector<uint8_t>& data);
 
     /**
      * Get serialized data from encoder stream
      * @param encoder Encoder to extract data from
      * @return Serialized bytes
      */
-    static std::vector<uint8_t> getEncodedData(avro::Encoder& encoder);
+    static std::vector<uint8_t> getEncodedData(::avro::Encoder& encoder);
 };
 
-} // namespace srclient::serdes 
+} // namespace srclient::serdes::avro 

@@ -98,7 +98,7 @@ public:
     
     // Schema data access methods
     virtual std::string getSchemaData() const = 0;
-    virtual std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> getAvroSchema() const = 0;
+    virtual std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const = 0;
     
     // Clone method
     virtual std::unique_ptr<SerdeSchema> clone() const = 0;
@@ -121,7 +121,7 @@ public:
     SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Json; }
     
     std::string getSchemaData() const override { return schema_data_; }
-    std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> getAvroSchema() const override {
+    std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const override {
         return std::nullopt;
     }
     
@@ -138,10 +138,10 @@ public:
  */
 class AvroSchema : public SerdeSchema {
 private:
-    std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>> avro_schema_;
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> avro_schema_;
     
 public:
-    explicit AvroSchema(const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& avro_schema)
+    explicit AvroSchema(const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& avro_schema)
         : avro_schema_(avro_schema) {}
     
     bool isAvro() const override { return true; }
@@ -155,7 +155,7 @@ public:
         return avro_schema_.first.toJson(false);
     }
     
-    std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> getAvroSchema() const override {
+    std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const override {
         return avro_schema_;
     }
     
@@ -164,7 +164,7 @@ public:
     }
     
     // Direct access to Avro schema
-    const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& getAvroSchemaPair() const {
+    const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& getAvroSchemaPair() const {
         return avro_schema_;
     }
 };
@@ -186,7 +186,7 @@ public:
     SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Protobuf; }
     
     std::string getSchemaData() const override { return schema_data_; }
-    std::optional<std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> getAvroSchema() const override {
+    std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const override {
         return std::nullopt;
     }
     
@@ -203,7 +203,7 @@ inline std::unique_ptr<SerdeSchema> makeJsonSchema(const std::string& schema_dat
     return std::make_unique<JsonSchema>(schema_data);
 }
 
-inline std::unique_ptr<SerdeSchema> makeAvroSchema(const std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>& avro_schema) {
+inline std::unique_ptr<SerdeSchema> makeAvroSchema(const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& avro_schema) {
     return std::make_unique<AvroSchema>(avro_schema);
 }
 

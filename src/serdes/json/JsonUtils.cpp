@@ -1,8 +1,8 @@
-#include "srclient/serdes/JsonUtils.h"
+#include "srclient/serdes/json/JsonUtils.h"
 #include <algorithm>
 #include <sstream>
 
-namespace srclient::serdes::json_utils {
+namespace srclient::serdes::json::utils {
 
 // Schema resolution implementations
 namespace schema_resolution {
@@ -449,4 +449,4 @@ nlohmann::json normalizeSchema(const nlohmann::json& schema) {
     return schema;
 }
 
-} // namespace srclient::serdes::json_utils 
+} // namespace srclient::serdes::json::utils 

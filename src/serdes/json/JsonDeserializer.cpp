@@ -1,9 +1,9 @@
-#include "srclient/serdes/JsonDeserializer.h"
-#include "srclient/serdes/JsonUtils.h"
+#include "srclient/serdes/json/JsonDeserializer.h"
+#include "srclient/serdes/json/JsonUtils.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::json {
 
-using namespace json_utils;
+using namespace utils;
 
 JsonDeserializer::JsonDeserializer(
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
@@ -187,4 +187,4 @@ bool JsonDeserializer::isEvolutionRequired(
     return writer_schema_str != reader_schema_str;
 }
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::json

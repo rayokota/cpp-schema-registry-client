@@ -23,9 +23,9 @@
 
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeBase.h"
-#include "srclient/serdes/JsonTypes.h"
-#include "srclient/serdes/AvroTypes.h"
-#include "srclient/serdes/ProtobufTypes.h"
+#include "srclient/serdes/json/JsonTypes.h"
+#include "srclient/serdes/avro/AvroTypes.h"
+#include "srclient/serdes/protobuf/ProtobufTypes.h"
 
 namespace srclient::rest {
     class ClientConfiguration;
@@ -55,7 +55,7 @@ inline nlohmann::json asJson(const SerdeValue& value) {
     return value.asJson();
 }
 
-inline avro::GenericDatum asAvro(const SerdeValue& value) {
+inline ::avro::GenericDatum asAvro(const SerdeValue& value) {
     return value.asAvro();
 }
 

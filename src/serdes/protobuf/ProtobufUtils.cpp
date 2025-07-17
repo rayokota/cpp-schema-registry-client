@@ -1,10 +1,10 @@
-#include "srclient/serdes/ProtobufUtils.h"
+#include "srclient/serdes/protobuf/ProtobufUtils.h"
 #include <google/protobuf/util/json_util.h>
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-namespace srclient::serdes::protobuf_utils {
+namespace srclient::serdes::protobuf::utils {
 
 // Base64 encoding/decoding utilities (copied from Dek.cpp)
 namespace {
@@ -235,4 +235,4 @@ std::vector<int32_t> createMessageIndexArray(const google::protobuf::Descriptor*
     return indexes;
 }
 
-} // namespace srclient::serdes::protobuf_utils 
+} // namespace srclient::serdes::protobuf::utils 

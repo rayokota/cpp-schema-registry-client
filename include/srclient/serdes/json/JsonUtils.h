@@ -15,7 +15,7 @@
 #include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/rest/model/Schema.h"
 
-namespace srclient::serdes::json_utils {
+namespace srclient::serdes::json::utils {
 
 /**
  * JSON-specific serde error for utilities
@@ -291,4 +291,4 @@ bool hasConfluentExtensions(const nlohmann::json& schema);
  */
 nlohmann::json normalizeSchema(const nlohmann::json& schema);
 
-} // namespace srclient::serdes::json_utils 
+} // namespace srclient::serdes::json::utils 

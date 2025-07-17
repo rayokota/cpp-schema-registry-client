@@ -6,7 +6,7 @@
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeBase.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::json {
 
 /**
  * JSON-specific serialization error
@@ -61,4 +61,4 @@ inline std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json&& value) {
 
 
 
-} // namespace srclient::serdes 
+} // namespace srclient::serdes::json 

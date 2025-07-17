@@ -1,9 +1,9 @@
-#include "srclient/serdes/AvroDeserializer.h"
-#include "srclient/serdes/AvroUtils.h"
+#include "srclient/serdes/avro/AvroDeserializer.h"
+#include "srclient/serdes/avro/AvroUtils.h"
 #include <algorithm>
 #include <sstream>
 
-namespace srclient::serdes {
+namespace srclient::serdes::avro {
 
 // AvroDeserializer implementation
 
@@ -89,7 +89,7 @@ NamedValue AvroDeserializer::deserialize(
     // Migrations processing
     std::vector<Migration> migrations;
     srclient::rest::model::Schema reader_schema_raw;
-    std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>> reader_parsed;
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> reader_parsed;
     
     if (latest_schema.has_value()) {
         // Schema evolution path
@@ -104,26 +104,26 @@ NamedValue AvroDeserializer::deserialize(
     }
     
     // Deserialize Avro data
-    avro::GenericDatum value;
+    ::avro::GenericDatum value;
     if (latest_schema.has_value()) {
         // Two-step process for schema evolution
         // 1. Deserialize with writer schema
-        auto intermediate = avro_utils::deserializeAvroData(
+        auto intermediate = utils::deserializeAvroData(
             payload_data, writer_parsed.first, nullptr, writer_parsed.second);
         
         // 2. Convert to JSON for migration
-        auto json_value = avro_utils::avroToJson(intermediate);
-        auto json_serde_value = makeJsonValue(json_value);
+        auto json_value = utils::avroToJson(intermediate);
+        auto json_serde_value = srclient::serdes::json::makeJsonValue(json_value);
         
         // 3. Apply migrations
         auto& migrated = base_->getSerde().executeMigrations(ctx, subject, migrations, *json_serde_value);
         auto migrated_json = migrated.asJson();
         
         // 4. Convert back to Avro with reader schema
-        value = avro_utils::jsonToAvro(migrated_json, reader_parsed.first, &intermediate);
+        value = utils::jsonToAvro(migrated_json, reader_parsed.first, &intermediate);
     } else {
         // Direct deserialization without evolution
-        value = avro_utils::deserializeAvroData(
+        value = utils::deserializeAvroData(
             payload_data, writer_parsed.first, &reader_parsed.first, reader_parsed.second);
     }
     
@@ -148,7 +148,7 @@ nlohmann::json AvroDeserializer::deserializeToJson(
     const std::vector<uint8_t>& data
 ) {
     auto named_value = deserialize(ctx, data);
-    return avro_utils::avroToJson(named_value.value);
+    return utils::avroToJson(named_value.value);
 }
 
 void AvroDeserializer::close() {
@@ -157,88 +157,88 @@ void AvroDeserializer::close() {
     }
 }
 
-std::optional<std::string> AvroDeserializer::getName(const avro::ValidSchema& schema) {
-    return avro_utils::getSchemaName(schema);
+std::optional<std::string> AvroDeserializer::getName(const ::avro::ValidSchema& schema) {
+    return utils::getSchemaName(schema);
 }
 
-std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>
+std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
 AvroDeserializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-nlohmann::json AvroDeserializer::avroToJson(const avro::GenericDatum& datum) {
-    return avro_utils::avroToJson(datum);
+nlohmann::json AvroDeserializer::avroToJson(const ::avro::GenericDatum& datum) {
+    return utils::avroToJson(datum);
 }
 
-avro::GenericDatum AvroDeserializer::jsonToAvro(
-    const avro::GenericDatum& input_datum,
+::avro::GenericDatum AvroDeserializer::jsonToAvro(
+    const ::avro::GenericDatum& input_datum,
     const nlohmann::json& json_value
 ) {
     // Extract schema from input datum
     // This is a simplified approach - in practice, you'd need the ValidSchema
     throw AvroSerdeError("jsonToAvro with input datum template not implemented");
 }
-avro::GenericDatum AvroDeserializer::transformFields(
+::avro::GenericDatum AvroDeserializer::transformFields(
     RuleContext& ctx,
-    const avro::GenericDatum& datum,
-    const avro::ValidSchema& schema
+    const ::avro::GenericDatum& datum,
+    const ::avro::ValidSchema& schema
 ) {
     // Field transformation logic would be implemented here
     // This would recursively process records, arrays, maps, and unions
     // applying field-level rules as configured
     
     switch (schema.root()->type()) {
-        case avro::AVRO_RECORD: {
-            auto record = datum.value<avro::GenericRecord>();
-            avro::GenericRecord result(schema.root());
+        case ::avro::AVRO_RECORD: {
+            auto record = datum.value<::avro::GenericRecord>();
+            ::avro::GenericRecord result(schema.root());
             
             for (size_t i = 0; i < record.fieldCount(); ++i) {
                 auto field = record.fieldAt(i);
                 auto field_schema_node = schema.root()->leafAt(i);
-                avro::ValidSchema field_schema(field_schema_node);
+                ::avro::ValidSchema field_schema(field_schema_node);
                 auto transformed = transformFields(ctx, field, field_schema);
                 result.setFieldAt(i, transformed);
             }
             
-            return avro::GenericDatum(schema);
+            return ::avro::GenericDatum(schema);
         }
         
-        case avro::AVRO_ARRAY: {
-            auto array = datum.value<avro::GenericArray>();
-            avro::GenericArray result(schema.root());
+        case ::avro::AVRO_ARRAY: {
+            auto array = datum.value<::avro::GenericArray>();
+            ::avro::GenericArray result(schema.root());
             auto item_schema_node = schema.root()->leafAt(0);
-            avro::ValidSchema item_schema(item_schema_node);
+            ::avro::ValidSchema item_schema(item_schema_node);
             
             for (size_t i = 0; i < array.value().size(); ++i) {
                 auto transformed = transformFields(ctx, array.value()[i], item_schema);
                 result.value().push_back(transformed);
             }
             
-            return avro::GenericDatum(schema);
+            return ::avro::GenericDatum(schema);
         }
         
-        case avro::AVRO_MAP: {
-            auto map = datum.value<avro::GenericMap>();
-            avro::GenericMap result(schema.root());
+        case ::avro::AVRO_MAP: {
+            auto map = datum.value<::avro::GenericMap>();
+            ::avro::GenericMap result(schema.root());
             for (const auto& [key, value] : map.value()) {
                 auto value_schema_node = schema.root()->leafAt(0);
-                avro::ValidSchema value_schema(value_schema_node);
+                ::avro::ValidSchema value_schema(value_schema_node);
                 auto transformed = transformFields(ctx, value, value_schema);
                 result.value().emplace_back(key, transformed);
             }
-            return avro::GenericDatum(schema);
+            return ::avro::GenericDatum(schema);
         }
         
-        case avro::AVRO_UNION: {
-            auto union_val = datum.value<avro::GenericUnion>();
+        case ::avro::AVRO_UNION: {
+            auto union_val = datum.value<::avro::GenericUnion>();
             auto [branch_idx, branch_schema] = resolveUnion(schema, datum);
             auto transformed = transformFields(ctx, union_val.datum(), branch_schema);
             
-            avro::GenericUnion result(schema.root());
+            ::avro::GenericUnion result(schema.root());
             result.selectBranch(branch_idx);
             result.datum() = transformed;
             
-            return avro::GenericDatum(schema);
+            return ::avro::GenericDatum(schema);
         }
         
         default:
@@ -248,22 +248,22 @@ avro::GenericDatum AvroDeserializer::transformFields(
     }
 }
 
-std::pair<size_t, avro::ValidSchema> AvroDeserializer::resolveUnion(
-    const avro::ValidSchema& schema,
-    const avro::GenericDatum& datum
+std::pair<size_t, ::avro::ValidSchema> AvroDeserializer::resolveUnion(
+    const ::avro::ValidSchema& schema,
+    const ::avro::GenericDatum& datum
 ) {
-    return avro_utils::resolveUnion(schema, datum);
+    return utils::resolveUnion(schema, datum);
 }
 
-FieldType AvroDeserializer::getFieldType(const avro::ValidSchema& schema) {
-    return avro_utils::avroSchemaToFieldType(schema);
+FieldType AvroDeserializer::getFieldType(const ::avro::ValidSchema& schema) {
+    return utils::avroSchemaToFieldType(schema);
 }
 
 std::unordered_set<std::string> AvroDeserializer::getInlineTags(
-    const avro::GenericRecord& record, 
+    const ::avro::GenericRecord& record, 
     const std::string& field_name
 ) {
-    return avro_utils::getInlineTags(record, field_name);
+    return utils::getInlineTags(record, field_name);
 }
 
-} // namespace srclient::serdes
+} // namespace srclient::serdes::avro

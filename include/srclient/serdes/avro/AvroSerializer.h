@@ -17,19 +17,19 @@
 
 // Project includes
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/AvroTypes.h"
+#include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/Serde.h"
 #include "srclient/rest/model/Schema.h"
 #include "srclient/rest/SchemaRegistryClient.h"
 
-namespace srclient::serdes {
+namespace srclient::serdes::avro {
 
 // Forward declarations
 class AvroSerde;
-struct SerializationContext;
-class BaseSerializer;
+using SerializationContext = srclient::serdes::SerializationContext;
+using BaseSerializer = srclient::serdes::BaseSerializer;
 
 /**
  * Avro-specific serializer implementation
@@ -64,7 +64,7 @@ public:
      */
     std::vector<uint8_t> serialize(
         const SerializationContext& ctx,
-        const avro::GenericDatum& datum
+        const ::avro::GenericDatum& datum
     );
 
     /**
@@ -94,7 +94,7 @@ private:
      * @param schema Schema to parse
      * @return Tuple of main schema and named schemas
      */
-    std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>> 
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> 
     getParsedSchema(const srclient::rest::model::Schema& schema);
 
     /**
@@ -103,9 +103,9 @@ private:
      * @param schema Avro schema for the conversion
      * @return Converted Avro datum
      */
-    avro::GenericDatum jsonToAvro(
+    ::avro::GenericDatum jsonToAvro(
         const nlohmann::json& json_value,
-        const avro::ValidSchema& schema
+        const ::avro::ValidSchema& schema
     );
 
     /**
@@ -115,10 +115,10 @@ private:
      * @param schema Schema for the datum
      * @return Transformed datum
      */
-    avro::GenericDatum transformFields(
+    ::avro::GenericDatum transformFields(
         RuleContext& ctx,
-        const avro::GenericDatum& datum,
-        const avro::ValidSchema& schema
+        const ::avro::GenericDatum& datum,
+        const ::avro::ValidSchema& schema
     );
 };
 
@@ -137,7 +137,7 @@ public:
      * @param client Client for resolving references
      * @return Tuple of main schema and named schemas
      */
-    std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
     getParsedSchema(
         const srclient::rest::model::Schema& schema,
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client
@@ -150,7 +150,7 @@ public:
 
 private:
     mutable std::shared_mutex mutex_;
-    std::unordered_map<std::string, std::pair<avro::ValidSchema, std::vector<avro::ValidSchema>>> 
+    std::unordered_map<std::string, std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> 
         parsed_schemas_;
 
     /**
@@ -173,11 +173,11 @@ private:
  */
 struct NamedValue {
     std::optional<std::string> name;
-    avro::GenericDatum value;
+    ::avro::GenericDatum value;
 
     NamedValue() = default;
-    NamedValue(std::optional<std::string> n, avro::GenericDatum v)
+    NamedValue(std::optional<std::string> n, ::avro::GenericDatum v)
         : name(std::move(n)), value(std::move(v)) {}
 };
 
-} // namespace srclient::serdes 
+} // namespace srclient::serdes::avro 
