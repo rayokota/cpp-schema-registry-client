@@ -61,10 +61,11 @@ endfunction()
 # Compile test protobuf files
 compile_test_proto_files()
 
+file(GLOB TEST_SOURCE_FILES "*.cpp")
+
 # Add the test executable
 add_executable(srclient-test
-        test.cpp
-        WildcardMatcherTest.cpp
+        ${TEST_SOURCE_FILES}
         ${TEST_PROTO_SOURCES}
 )
 

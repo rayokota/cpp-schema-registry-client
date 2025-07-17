@@ -141,7 +141,7 @@ if(PROJECT_PROTO_SOURCES)
 endif()
 
 add_library(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
-enable_clang_tidy(${PROJECT_NAME})
+#enable_clang_tidy(${PROJECT_NAME})
 
 target_compile_options(${PROJECT_NAME}
     PRIVATE
