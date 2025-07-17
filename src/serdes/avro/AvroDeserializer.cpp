@@ -146,7 +146,7 @@ NamedValue AvroDeserializer::deserialize(
         auto migrated_json = std::any_cast<nlohmann::json>(migrated.getValue());
         
         // 4. Convert back to Avro with reader schema
-        value = utils::jsonToAvro(migrated_json, reader_parsed.first, &intermediate);
+        value = utils::jsonToAvro(migrated_json, reader_parsed.first);
     } else {
         // Direct deserialization without evolution
         value = utils::deserializeAvroData(

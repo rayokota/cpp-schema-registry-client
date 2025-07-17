@@ -130,8 +130,7 @@ nlohmann::json avroToJson(const ::avro::GenericDatum& datum) {
 
 ::avro::GenericDatum jsonToAvro(
     const nlohmann::json& json_value,
-    const ::avro::ValidSchema& schema,
-    const ::avro::GenericDatum* input_datum
+    const ::avro::ValidSchema& schema
 ) {
     switch (schema.root()->type()) {
         case ::avro::AVRO_NULL:

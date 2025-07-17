@@ -47,13 +47,11 @@ namespace utils {
      * Convert JSON to Avro GenericDatum
      * @param json_value JSON value to convert
      * @param schema Avro schema to guide conversion
-     * @param input_datum Optional template datum for type hints
      * @return Converted Avro datum
      */
     ::avro::GenericDatum jsonToAvro(
         const nlohmann::json& json_value,
-        const ::avro::ValidSchema& schema,
-        const ::avro::GenericDatum* input_datum = nullptr
+        const ::avro::ValidSchema& schema
     );
 
     /**
