@@ -10,20 +10,13 @@
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 
 #include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/Serde.h"
 #include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/rest/model/Schema.h"
 
 namespace srclient::serdes::json::utils {
-
-/**
- * JSON-specific serde error for utilities
- */
-class JsonUtilsError : public SerdeError {
-public:
-    explicit JsonUtilsError(const std::string& message) : SerdeError("JSON utils error: " + message) {}
-};
 
 /**
  * Schema resolution utilities

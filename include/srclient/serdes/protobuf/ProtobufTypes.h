@@ -13,12 +13,20 @@
 namespace srclient::serdes::protobuf {
 
 /**
- * Protobuf-specific error class
+ * Protobuf errors
  */
-class ProtobufSerdeError : public SerdeError {
+class ProtobufError : public SerdeError {
 public:
-    explicit ProtobufSerdeError(const std::string& message) 
-        : SerdeError("Protobuf: " + message) {}
+    explicit ProtobufError(const std::string& message) : SerdeError("Protobuf error: " + message) {}
+};
+
+/**
+ * Protobuf reflection errors
+ * Maps to SerdeError::ProtobufReflect variant
+ */
+class ProtobufReflectError : public SerdeError {
+public:
+    explicit ProtobufReflectError(const std::string& message) : SerdeError("Protobuf reflect error: " + message) {}
 };
 
 /**

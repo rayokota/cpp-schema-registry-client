@@ -17,15 +17,16 @@
 namespace srclient::serdes::avro {
 
 /**
- * Exception wrapper for Avro-specific errors
+ * Avro-specific serialization errors
+ * Maps to SerdeError::Avro variant
  */
-class AvroSerdeError : public SerdeError {
+class AvroError : public SerdeError {
 public:
-    explicit AvroSerdeError(const std::string& message) 
-        : SerdeError("Avro error: " + message) {}
-    
-    explicit AvroSerdeError(const ::avro::Exception& avro_ex)
+    explicit AvroError(const std::string& message) : SerdeError("Avro error: " + message) {}
+
+    explicit AvroError(const ::avro::Exception& avro_ex)
         : SerdeError("Avro error: " + std::string(avro_ex.what())) {}
+
 };
 
 /**

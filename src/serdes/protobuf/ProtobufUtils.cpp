@@ -104,7 +104,7 @@ std::string schemaToString(const google::protobuf::FileDescriptor* file_desc) {
     google::protobuf::FileDescriptorProto proto;
     file_desc->CopyTo(&proto);
     if (!proto.SerializeToString(&serialized)) {
-        throw ProtobufSerdeError("Failed to serialize FileDescriptor to string");
+        throw ProtobufError("Failed to serialize FileDescriptor to string");
     }
     
     // Base64 encode the serialized data
@@ -124,7 +124,7 @@ const google::protobuf::FileDescriptor* stringToSchema(
     
     const google::protobuf::FileDescriptor* file_desc = pool->FindFileByName(name);
     if (!file_desc) {
-        throw ProtobufSerdeError("File descriptor not found after decoding: " + name);
+        throw ProtobufError("File descriptor not found after decoding: " + name);
     }
     
     return file_desc;
@@ -137,14 +137,14 @@ void decodeFileDescriptorProtoWithName(
     
     google::protobuf::FileDescriptorProto proto;
     if (!proto.ParseFromArray(data.data(), data.size())) {
-        throw ProtobufSerdeError("Failed to parse FileDescriptorProto from data");
+        throw ProtobufError("Failed to parse FileDescriptorProto from data");
     }
     
     proto.set_name(name);
     
     const google::protobuf::FileDescriptor* file_desc = pool->BuildFile(proto);
     if (!file_desc) {
-        throw ProtobufSerdeError("Failed to build FileDescriptor from proto");
+        throw ProtobufError("Failed to build FileDescriptor from proto");
     }
 }
 
@@ -152,7 +152,7 @@ nlohmann::json messageToJson(const google::protobuf::Message& message) {
     std::string json_string;
     auto status = google::protobuf::util::MessageToJsonString(message, &json_string);
     if (!status.ok()) {
-        throw ProtobufSerdeError("Failed to convert message to JSON: " + status.ToString());
+        throw ProtobufError("Failed to convert message to JSON: " + status.ToString());
     }
     return nlohmann::json::parse(json_string);
 }
@@ -162,7 +162,7 @@ void jsonToMessage(const nlohmann::json& json_value, google::protobuf::Message* 
     google::protobuf::util::JsonParseOptions options;
     auto status = google::protobuf::util::JsonStringToMessage(json_string, message, options);
     if (!status.ok()) {
-        throw ProtobufSerdeError("Failed to parse JSON to message: " + status.ToString());
+        throw ProtobufError("Failed to parse JSON to message: " + status.ToString());
     }
 }
 

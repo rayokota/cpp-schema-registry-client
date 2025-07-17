@@ -33,7 +33,7 @@ AvroSerde::getParsedSchema(
     
     // Parse the schema
     if (!schema.getSchema().has_value()) {
-        throw AvroSerdeError("Schema string is not available");
+        throw AvroError("Schema string is not available");
     }
     
     auto parsed = utils::parseSchemaWithNamed(
@@ -83,7 +83,7 @@ void AvroSerde::resolveNamedSchema(
                 schemas.push_back(ref_schema.getSchema().value());
             }
         } catch (const std::exception& e) {
-            throw AvroSerdeError("Failed to resolve schema reference: " + std::string(e.what()));
+            throw AvroError("Failed to resolve schema reference: " + std::string(e.what()));
         }
     }
 }
@@ -113,7 +113,7 @@ AvroSerializer::AvroSerializer(
                 // TODO: Fix ClientConfiguration vs ServerConfig conversion
                 // executor->configure(client->getConfig("default"), config.rule_config);
             } catch (const std::exception& e) {
-                throw AvroSerdeError("Failed to configure rule executor: " + std::string(e.what()));
+                throw AvroError("Failed to configure rule executor: " + std::string(e.what()));
             }
         }
     }
@@ -129,7 +129,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
     auto strategy = base_->getConfig().subject_name_strategy;
     auto subject_opt = strategy(ctx.topic, ctx.serde_type, schema_.has_value() ? std::make_optional(schema_.value()) : std::nullopt);
     if (!subject_opt.has_value()) {
-        throw AvroSerdeError("Subject name strategy returned no subject");
+        throw AvroError("Subject name strategy returned no subject");
     }
     std::string subject = subject_opt.value();
     
@@ -159,7 +159,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
     } else {
         // Use provided schema and register/lookup
         if (!schema_.has_value()) {
-            throw AvroSerdeError("No schema provided and none found in registry");
+            throw AvroError("No schema provided and none found in registry");
         }
         
         srclient::rest::model::RegisteredSchema registered_schema;
@@ -205,7 +205,7 @@ std::vector<uint8_t> AvroSerializer::serializeJson(
     const nlohmann::json& json_value
 ) {
     if (!schema_.has_value()) {
-        throw AvroSerdeError("Schema required for JSON to Avro conversion");
+        throw AvroError("Schema required for JSON to Avro conversion");
     }
     
     auto parsed_schema = serde_->getParsedSchema(schema_.value(), base_->getSerde().getClient());

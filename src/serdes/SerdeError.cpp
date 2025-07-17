@@ -10,30 +10,6 @@ RuleConditionError::RuleConditionError(std::shared_ptr<srclient::rest::model::Ru
 
 namespace error_utils {
 
-SerdeError convertException(const std::exception& e) {
-    const std::string msg = e.what();
-    
-    // Try to identify the type of exception based on the message
-    if (msg.find("avro") != std::string::npos || msg.find("Avro") != std::string::npos) {
-        return AvroError(msg);
-    } else if (msg.find("json") != std::string::npos || msg.find("JSON") != std::string::npos) {
-        return JsonError(msg);
-    } else if (msg.find("protobuf") != std::string::npos || msg.find("Protobuf") != std::string::npos) {
-        return ProtobufDecodeError(msg);
-    } else if (msg.find("rule") != std::string::npos || msg.find("Rule") != std::string::npos) {
-        return RuleError(msg);
-    } else if (msg.find("REST") != std::string::npos || msg.find("HTTP") != std::string::npos) {
-        return RestError(msg);
-    } else if (msg.find("UUID") != std::string::npos || msg.find("uuid") != std::string::npos) {
-        return UuidError(msg);
-    } else if (msg.find("IO") != std::string::npos || msg.find("file") != std::string::npos) {
-        return IoError(msg);
-    }
-    
-    // Default to general serialization error
-    return SerializationError(msg);
-}
-
 SerializationError createSerializationError(const std::string& message) {
     return SerializationError(message);
 }

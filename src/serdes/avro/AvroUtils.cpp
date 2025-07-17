@@ -124,7 +124,7 @@ nlohmann::json avroToJson(const ::avro::GenericDatum& datum) {
         }
         
         default:
-            throw AvroSerdeError("Unsupported Avro type for JSON conversion");
+            throw AvroError("Unsupported Avro type for JSON conversion");
     }
 }
 
@@ -139,48 +139,48 @@ nlohmann::json avroToJson(const ::avro::GenericDatum& datum) {
             
         case ::avro::AVRO_BOOL:
             if (!json_value.is_boolean()) {
-                throw AvroSerdeError("Expected boolean value");
+                throw AvroError("Expected boolean value");
             }
             return ::avro::GenericDatum(json_value.get<bool>());
             
         case ::avro::AVRO_INT:
             if (!json_value.is_number_integer()) {
-                throw AvroSerdeError("Expected integer value");
+                throw AvroError("Expected integer value");
             }
             return ::avro::GenericDatum(json_value.get<int32_t>());
             
         case ::avro::AVRO_LONG:
             if (!json_value.is_number()) {
-                throw AvroSerdeError("Expected number value for long");
+                throw AvroError("Expected number value for long");
             }
             return ::avro::GenericDatum(json_value.get<int64_t>());
             
         case ::avro::AVRO_FLOAT:
             if (!json_value.is_number()) {
-                throw AvroSerdeError("Expected number value for float");
+                throw AvroError("Expected number value for float");
             }
             return ::avro::GenericDatum(json_value.get<float>());
             
         case ::avro::AVRO_DOUBLE:
             if (!json_value.is_number()) {
-                throw AvroSerdeError("Expected number value for double");
+                throw AvroError("Expected number value for double");
             }
             return ::avro::GenericDatum(json_value.get<double>());
             
         case ::avro::AVRO_STRING:
             if (!json_value.is_string()) {
-                throw AvroSerdeError("Expected string value");
+                throw AvroError("Expected string value");
             }
             return ::avro::GenericDatum(json_value.get<std::string>());
             
         case ::avro::AVRO_BYTES: {
             if (!json_value.is_array()) {
-                throw AvroSerdeError("Expected array for bytes");
+                throw AvroError("Expected array for bytes");
             }
             std::vector<uint8_t> bytes;
             for (const auto& elem : json_value) {
                 if (!elem.is_number_unsigned()) {
-                    throw AvroSerdeError("Expected unsigned integers in bytes array");
+                    throw AvroError("Expected unsigned integers in bytes array");
                 }
                 bytes.push_back(elem.get<uint8_t>());
             }
@@ -189,7 +189,7 @@ nlohmann::json avroToJson(const ::avro::GenericDatum& datum) {
         
         case ::avro::AVRO_ENUM: {
             if (!json_value.is_string()) {
-                throw AvroSerdeError("Expected string value for enum");
+                throw AvroError("Expected string value for enum");
             }
             ::avro::GenericDatum datum(schema);
             auto& enum_val = datum.value<::avro::GenericEnum>();
@@ -199,7 +199,7 @@ nlohmann::json avroToJson(const ::avro::GenericDatum& datum) {
         
         case ::avro::AVRO_ARRAY: {
             if (!json_value.is_array()) {
-                throw AvroSerdeError("Expected array value");
+                throw AvroError("Expected array value");
             }
             ::avro::GenericDatum datum(schema);
             auto& array = datum.value<::avro::GenericArray>();
@@ -214,7 +214,7 @@ nlohmann::json avroToJson(const ::avro::GenericDatum& datum) {
         
         case ::avro::AVRO_MAP: {
             if (!json_value.is_object()) {
-                throw AvroSerdeError("Expected object value for map");
+                throw AvroError("Expected object value for map");
             }
             ::avro::GenericDatum datum(schema);
             auto& map = datum.value<::avro::GenericMap>();
@@ -229,7 +229,7 @@ nlohmann::json avroToJson(const ::avro::GenericDatum& datum) {
         
         case ::avro::AVRO_RECORD: {
             if (!json_value.is_object()) {
-                throw AvroSerdeError("Expected object value for record");
+                throw AvroError("Expected object value for record");
             }
             ::avro::GenericDatum datum(schema);
             auto& record = datum.value<::avro::GenericRecord>();
@@ -247,7 +247,7 @@ nlohmann::json avroToJson(const ::avro::GenericDatum& datum) {
         }
         
         default:
-            throw AvroSerdeError("Unsupported schema type for JSON to Avro conversion");
+            throw AvroError("Unsupported schema type for JSON to Avro conversion");
     }
 }
 
@@ -256,7 +256,7 @@ std::pair<size_t, ::avro::ValidSchema> resolveUnion(
     const ::avro::GenericDatum& datum
 ) {
     if (union_schema.root()->type() != ::avro::AVRO_UNION) {
-        throw AvroSerdeError("Schema is not a union type");
+        throw AvroError("Schema is not a union type");
     }
     
     // Try to find matching branch based on datum type
@@ -267,7 +267,7 @@ std::pair<size_t, ::avro::ValidSchema> resolveUnion(
         }
     }
     
-    throw AvroSerdeError("No matching union branch found for datum type");
+    throw AvroError("No matching union branch found for datum type");
 }
 
 std::optional<std::string> getSchemaName(const ::avro::ValidSchema& schema) {
@@ -309,7 +309,7 @@ std::vector<uint8_t> serializeAvroData(
         }
         return {};
     } catch (const ::avro::Exception& e) {
-        throw AvroSerdeError(e);
+        throw AvroError(e);
     }
 }
 
@@ -329,7 +329,7 @@ std::vector<uint8_t> serializeAvroData(
         
         return datum;
     } catch (const ::avro::Exception& e) {
-        throw AvroSerdeError(e);
+        throw AvroError(e);
     }
 }
 
@@ -355,7 +355,7 @@ parseSchemaWithNamed(
         
         return {main_schema, parsed_named};
     } catch (const ::avro::Exception& e) {
-        throw AvroSerdeError(e);
+        throw AvroError(e);
     }
 }
 
@@ -373,18 +373,18 @@ bool isSchemaCompatible(
 // AvroStreamManager implementation
 std::unique_ptr<::avro::Encoder> AvroStreamManager::createEncoder() {
     // For now, just throw - this utility method can be implemented later if needed
-    throw AvroSerdeError("createEncoder not implemented - use serializeAvroData instead");
+    throw AvroError("createEncoder not implemented - use serializeAvroData instead");
 }
 
 std::unique_ptr<::avro::Decoder> AvroStreamManager::createDecoder(const std::vector<uint8_t>& data) {
     // For now, just throw - this utility method can be implemented later if needed
-    throw AvroSerdeError("createDecoder not implemented - use deserializeAvroData instead");
+    throw AvroError("createDecoder not implemented - use deserializeAvroData instead");
 }
 
 std::vector<uint8_t> AvroStreamManager::getEncodedData(::avro::Encoder& encoder) {
     // This would need to extract data from the encoder's output stream
     // Implementation depends on how the stream was set up
-    throw AvroSerdeError("getEncodedData not implemented - use serializeAvroData instead");
+    throw AvroError("getEncodedData not implemented - use serializeAvroData instead");
 }
 
 } // namespace srclient::serdes::avro 

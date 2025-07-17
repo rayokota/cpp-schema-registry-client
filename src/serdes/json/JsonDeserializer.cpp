@@ -24,7 +24,7 @@ JsonDeserializer::JsonDeserializer(
                     // executor->configure(client->getConfig("default"), config.rule_config);
                 }
             } catch (const std::exception& e) {
-                throw JsonSerdeError("Failed to configure rule executor: " + std::string(e.what()));
+                throw JsonError("Failed to configure rule executor: " + std::string(e.what()));
             }
         }
     }
@@ -69,7 +69,7 @@ nlohmann::json JsonDeserializer::deserialize(
     }
 
     if (!subject_opt.has_value()) {
-        throw JsonSerdeError("Could not determine subject name");
+        throw JsonError("Could not determine subject name");
     }
     std::string subject = subject_opt.value();
 
@@ -111,7 +111,7 @@ nlohmann::json JsonDeserializer::deserialize(
     try {
         value = nlohmann::json::parse(json_string);
     } catch (const nlohmann::json::parse_error& e) {
-        throw JsonSerdeError("Failed to parse JSON: " + std::string(e.what()));
+        throw JsonError("Failed to parse JSON: " + std::string(e.what()));
     }
 
     // Apply migrations if needed

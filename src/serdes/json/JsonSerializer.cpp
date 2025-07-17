@@ -27,7 +27,7 @@ JsonSerde::getParsedSchema(const srclient::rest::model::Schema& schema,
     try {
         parsed_schema = nlohmann::json::parse(cache_key);
     } catch (const nlohmann::json::parse_error& e) {
-        throw JsonSerdeError("Failed to parse JSON schema: " + std::string(e.what()));
+        throw JsonError("Failed to parse JSON schema: " + std::string(e.what()));
     }
     
     // TODO: Resolve named schemas/references
@@ -87,7 +87,7 @@ JsonSerializer::JsonSerializer(
                     // executor->configure(client->getConfig("default"), config.rule_config);
                 }
             } catch (const std::exception& e) {
-                throw JsonSerdeError("Failed to configure rule executor: " + std::string(e.what()));
+                throw JsonError("Failed to configure rule executor: " + std::string(e.what()));
             }
         }
     }
@@ -103,7 +103,7 @@ std::vector<uint8_t> JsonSerializer::serialize(
     auto strategy = base_->getConfig().subject_name_strategy;
     auto subject_opt = strategy(ctx.topic, ctx.serde_type, schema_);
     if (!subject_opt.has_value()) {
-        throw JsonSerdeError("Subject name strategy returned no subject");
+        throw JsonError("Subject name strategy returned no subject");
     }
     std::string subject = subject_opt.value();
 
@@ -143,7 +143,7 @@ std::vector<uint8_t> JsonSerializer::serialize(
     } else {
         // Use provided schema
         if (!schema_.has_value()) {
-            throw JsonSerdeError("Schema needs to be set for auto-registration");
+            throw JsonError("Schema needs to be set for auto-registration");
         }
         target_schema = schema_.value();
 
@@ -224,12 +224,12 @@ bool JsonSerializer::validateJson(const nlohmann::json& value,
 void JsonSerializer::validateSchema(const srclient::rest::model::Schema& schema) {
     auto schema_str = schema.getSchema();
     if (!schema_str.has_value() || schema_str->empty()) {
-        throw JsonSerdeError("Schema content is empty");
+        throw JsonError("Schema content is empty");
     }
 
     auto schema_type = schema.getSchemaType();
     if (schema_type.has_value() && schema_type.value() != "JSON") {
-        throw JsonSerdeError("Schema type must be JSON");
+        throw JsonError("Schema type must be JSON");
     }
 }
 

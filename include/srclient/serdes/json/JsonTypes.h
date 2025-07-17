@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <any>
+#include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <nlohmann/json.hpp>
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
@@ -10,11 +11,31 @@
 namespace srclient::serdes::json {
 
 /**
- * JSON-specific serialization error
+ * JSON referencing errors
+ * Maps to SerdeError::JsonReferencing variant
  */
-class JsonSerdeError : public SerdeError {
+class JsonReferencingError : public SerdeError {
 public:
-    explicit JsonSerdeError(const std::string& message) : SerdeError("JSON serde error: " + message) {}
+    explicit JsonReferencingError(const std::string& message) : SerdeError("JSON referencing error: " + message) {}
+    explicit JsonReferencingError() : SerdeError("JSON referencing error") {}
+};
+
+/**
+ * JSON serialization errors
+ * Maps to SerdeError::Json variant
+ */
+class JsonError : public SerdeError {
+public:
+    explicit JsonError(const std::string& message) : SerdeError("JSON serde error: " + message) {}
+};
+
+/**
+ * JSON validation errors
+ * Maps to SerdeError::JsonValidation variant
+ */
+class JsonValidationError : public SerdeError {
+public:
+    explicit JsonValidationError(const std::string& message) : SerdeError("JSON validation error: " + message) {}
 };
 
 /**
@@ -45,12 +66,13 @@ public:
 /**
  * JSON Schema implementation
  */
+template<typename Json>
 class JsonSchema : public SerdeSchema {
 private:
-    std::string schema_data_;
+    jsoncons::jsonschema::json_schema<Json>& schema_;
     
 public:
-    explicit JsonSchema(const std::string& schema_data) : schema_data_(schema_data) {}
+    explicit JsonSchema(const jsoncons::jsonschema::json_schema<Json>& schema) : schema_(schema) {}
     
     bool isAvro() const override { return false; }
     bool isJson() const override { return true; }
@@ -58,14 +80,14 @@ public:
     
     SerdeFormat getFormat() const override { return SerdeFormat::Json; }
     
-    std::any getSchema() const override { return schema_data_; }
+    std::any getSchema() const override { return schema_; }
     
     std::unique_ptr<SerdeSchema> clone() const override {
-        return std::make_unique<JsonSchema>(schema_data_);
+        return std::make_unique<JsonSchema>(schema_);
     }
     
     // Direct access to JSON schema
-    const std::string& getJsonSchema() const { return schema_data_; }
+    const jsoncons::jsonschema::json_schema<Json>& getJsonSchema() const { return schema_; }
 };
 
 // Helper functions for creating JSON SerdeValue instances
@@ -78,8 +100,9 @@ inline std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json&& value) {
 }
 
 // Helper function for creating JSON SerdeSchema instances
-inline std::unique_ptr<SerdeSchema> makeJsonSchema(const std::string& schema_data) {
-    return std::make_unique<JsonSchema>(schema_data);
+template<typename Json>
+inline std::unique_ptr<SerdeSchema> makeJsonSchema(const jsoncons::jsonschema::json_schema<Json>& schema) {
+    return std::make_unique<JsonSchema>(schema);
 }
 
 

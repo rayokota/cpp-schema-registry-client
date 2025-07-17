@@ -24,7 +24,7 @@ AvroDeserializer::AvroDeserializer(
                 // TODO: Fix ClientConfiguration vs ServerConfig conversion
                 // executor->configure(client->getConfig("default"), config.rule_config);
             } catch (const std::exception& e) {
-                throw AvroSerdeError("Failed to configure rule executor: " + std::string(e.what()));
+                throw AvroError("Failed to configure rule executor: " + std::string(e.what()));
             }
         }
     }
@@ -73,7 +73,7 @@ NamedValue AvroDeserializer::deserialize(
     }
     
     if (!subject_opt.has_value()) {
-        throw AvroSerdeError("Could not determine subject for deserialization");
+        throw AvroError("Could not determine subject for deserialization");
     }
     std::string subject = subject_opt.value();
     
@@ -177,7 +177,7 @@ nlohmann::json AvroDeserializer::avroToJson(const ::avro::GenericDatum& datum) {
 ) {
     // Extract schema from input datum
     // This is a simplified approach - in practice, you'd need the ValidSchema
-    throw AvroSerdeError("jsonToAvro with input datum template not implemented");
+    throw AvroError("jsonToAvro with input datum template not implemented");
 }
 ::avro::GenericDatum AvroDeserializer::transformFields(
     RuleContext& ctx,

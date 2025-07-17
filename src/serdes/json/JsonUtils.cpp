@@ -378,7 +378,7 @@ jsoncons::json nlohmannToJsoncons(const nlohmann::json& nlohmann_json) {
         std::string json_str = nlohmann_json.dump();
         return jsoncons::json::parse(json_str);
     } catch (const std::exception& e) {
-        throw JsonUtilsError("Failed to convert nlohmann to jsoncons: " + std::string(e.what()));
+        throw JsonError("Failed to convert nlohmann to jsoncons: " + std::string(e.what()));
     }
 }
 
@@ -388,7 +388,7 @@ nlohmann::json jsonconsToNlohmann(const jsoncons::json& jsoncons_json) {
         std::string json_str = jsoncons_json.to_string();
         return nlohmann::json::parse(json_str);
     } catch (const std::exception& e) {
-        throw JsonUtilsError("Failed to convert jsoncons to nlohmann: " + std::string(e.what()));
+        throw JsonError("Failed to convert jsoncons to nlohmann: " + std::string(e.what()));
     }
 }
 
