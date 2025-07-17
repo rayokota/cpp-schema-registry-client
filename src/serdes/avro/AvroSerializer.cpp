@@ -110,8 +110,7 @@ AvroSerializer::AvroSerializer(
         auto executors = rule_registry->getExecutors();
         for (const auto& executor : executors) {
             try {
-                // TODO: Fix ClientConfiguration vs ServerConfig conversion
-                // executor->configure(client->getConfig("default"), config.rule_config);
+                executor->configure(client->getConfiguration(), config.rule_config);
             } catch (const std::exception& e) {
                 throw AvroError("Failed to configure rule executor: " + std::string(e.what()));
             }

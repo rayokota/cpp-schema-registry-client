@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "srclient/rest/ClientConfiguration.h"
 #include "srclient/rest/model/Dek.h"
 #include "srclient/rest/model/Kek.h"
 #include "srclient/rest/model/CreateDekRequest.h"
@@ -22,6 +23,11 @@ namespace srclient::rest {
 class IDekRegistryClient {
 public:
     virtual ~IDekRegistryClient() = default;
+
+    /**
+     * Get client configuration
+     */
+    virtual std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const = 0;
 
     /**
      * Register a new Key Encryption Key (KEK)

@@ -14,8 +14,8 @@
 #include <thread>
 #include <chrono>
 
-#include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/rest/ClientConfiguration.h"
+#include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/rest/RestClient.h"
 #include "srclient/rest/RestException.h"
 #include "srclient/rest/SchemaStore.h"
@@ -82,7 +82,7 @@ public:
     /**
      * Get client configuration
      */
-    std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const;
+    std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const override;
 
     // Implement ISchemaRegistryClient methods
     srclient::rest::model::RegisteredSchema registerSchema(

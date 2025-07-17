@@ -127,7 +127,7 @@ public:
     /**
      * Configure the rule with client and rule-specific configuration
      */
-    virtual void configure(const ClientConfiguration& client_config, 
+    virtual void configure(std::shared_ptr<const ClientConfiguration> client_config,
                           const std::unordered_map<std::string, std::string>& rule_config) {}
     
     /**

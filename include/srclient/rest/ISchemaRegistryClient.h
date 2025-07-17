@@ -11,8 +11,9 @@
 #include <unordered_map>
 #include <optional>
 
-#include "srclient/rest/model/Schema.h"
+#include "srclient/rest/ClientConfiguration.h"
 #include "srclient/rest/model/RegisteredSchema.h"
+#include "srclient/rest/model/ServerConfig.h"
 #include "srclient/rest/model/ServerConfig.h"
 
 namespace srclient::rest {
@@ -23,6 +24,11 @@ namespace srclient::rest {
 class ISchemaRegistryClient {
 public:
     virtual ~ISchemaRegistryClient() = default;
+
+    /**
+     * Get client configuration
+     */
+    virtual std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const = 0;
 
     /**
      * Register a schema for the given subject

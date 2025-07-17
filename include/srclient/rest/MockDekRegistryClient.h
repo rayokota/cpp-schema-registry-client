@@ -54,7 +54,7 @@ public:
     
     virtual ~MockDekRegistryClient() = default;
 
-    std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const;
+    virtual std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const override;
 
     // IDekRegistryClient implementation
     virtual srclient::rest::model::Kek registerKek(

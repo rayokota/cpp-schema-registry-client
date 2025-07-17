@@ -94,8 +94,7 @@ public:
     
     virtual ~MockSchemaRegistryClient() = default;
 
-    // Non-virtual method for configuration access (not part of interface)
-    std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const;
+    virtual std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const override;
 
     // Schema operations
     virtual srclient::rest::model::RegisteredSchema registerSchema(
