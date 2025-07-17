@@ -53,6 +53,42 @@ public:
 
 };
 
+/**
+ * Avro Schema implementation
+ */
+class AvroSchema : public SerdeSchema {
+private:
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> avro_schema_;
+    
+public:
+    explicit AvroSchema(const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& avro_schema)
+        : avro_schema_(avro_schema) {}
+    
+    bool isAvro() const override { return true; }
+    bool isJson() const override { return false; }
+    bool isProtobuf() const override { return false; }
+    
+    SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Avro; }
+    
+    std::string getSchemaData() const override {
+        // Convert Avro schema to string representation
+        return avro_schema_.first.toJson(false);
+    }
+    
+    std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const override {
+        return avro_schema_;
+    }
+    
+    std::unique_ptr<SerdeSchema> clone() const override {
+        return std::make_unique<AvroSchema>(avro_schema_);
+    }
+    
+    // Direct access to Avro schema
+    const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& getAvroSchemaPair() const {
+        return avro_schema_;
+    }
+};
+
 // Helper functions for creating Avro SerdeValue instances
 inline std::unique_ptr<SerdeValue> makeAvroValue(const ::avro::GenericDatum& value) {
     return std::make_unique<AvroValue>(value);
@@ -60,6 +96,11 @@ inline std::unique_ptr<SerdeValue> makeAvroValue(const ::avro::GenericDatum& val
 
 inline std::unique_ptr<SerdeValue> makeAvroValue(::avro::GenericDatum&& value) {
     return std::make_unique<AvroValue>(std::move(value));
+}
+
+// Helper function for creating Avro SerdeSchema instances
+inline std::unique_ptr<SerdeSchema> makeAvroSchema(const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& avro_schema) {
+    return std::make_unique<AvroSchema>(avro_schema);
 }
 
 

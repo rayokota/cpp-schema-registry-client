@@ -47,9 +47,43 @@ public:
 
 };
 
+/**
+ * Protobuf Schema implementation
+ */
+class ProtobufSchema : public SerdeSchema {
+private:
+    std::string schema_data_;
+    
+public:
+    explicit ProtobufSchema(const std::string& schema_data) : schema_data_(schema_data) {}
+    
+    bool isAvro() const override { return false; }
+    bool isJson() const override { return false; }
+    bool isProtobuf() const override { return true; }
+    
+    SerdeSchemaFormat getFormat() const override { return SerdeSchemaFormat::Protobuf; }
+    
+    std::string getSchemaData() const override { return schema_data_; }
+    std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema() const override {
+        return std::nullopt;
+    }
+    
+    std::unique_ptr<SerdeSchema> clone() const override {
+        return std::make_unique<ProtobufSchema>(schema_data_);
+    }
+    
+    // Direct access to Protobuf schema
+    const std::string& getProtobufSchema() const { return schema_data_; }
+};
+
 // Helper functions for creating Protobuf SerdeValue instances
 inline std::unique_ptr<SerdeValue> makeProtobufValue(google::protobuf::Message& value) {
     return std::make_unique<ProtobufValue>(value);
+}
+
+// Helper function for creating Protobuf SerdeSchema instances
+inline std::unique_ptr<SerdeSchema> makeProtobufSchema(const std::string& schema_data) {
+    return std::make_unique<ProtobufSchema>(schema_data);
 }
 
 
