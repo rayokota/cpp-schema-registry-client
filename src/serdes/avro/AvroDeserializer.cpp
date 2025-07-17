@@ -21,8 +21,7 @@ AvroDeserializer::AvroDeserializer(
         auto executors = rule_registry->getExecutors();
         for (const auto& executor : executors) {
             try {
-                // TODO: Fix ClientConfiguration vs ServerConfig conversion
-                // executor->configure(client->getConfig("default"), config.rule_config);
+                executor->configure(client->getConfiguration(), config.rule_config);
             } catch (const std::exception& e) {
                 throw AvroError("Failed to configure rule executor: " + std::string(e.what()));
             }
@@ -81,9 +80,35 @@ NamedValue AvroDeserializer::deserialize(
     if (writer_schema_raw.getRuleSet().has_value()) {
         auto rule_set = writer_schema_raw.getRuleSet().value();
         if (rule_set.getEncodingRules().has_value()) {
-            // TODO: Implement rule execution properly
-            // For now, skip rule execution and use original payload
-            // The RuleContext constructor requires more parameters than we have here
+            // Create a SerdeValue wrapper for the payload bytes
+            class BytesValue : public SerdeValue {
+            private:
+                std::vector<uint8_t> bytes_;
+            public:
+                explicit BytesValue(const std::vector<uint8_t>& bytes) : bytes_(bytes) {}
+                bool isJson() const override { return false; }
+                bool isAvro() const override { return false; }
+                bool isProtobuf() const override { return false; }
+                std::any getValue() const override { return bytes_; }
+                SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
+                std::unique_ptr<SerdeValue> clone() const override {
+                    return std::make_unique<BytesValue>(bytes_);
+                }
+            };
+            
+            auto bytes_value = std::make_unique<BytesValue>(payload_data);
+            auto& result = base_->getSerde().executeRulesWithPhase(
+                ctx,
+                subject,
+                Phase::Encoding,
+                Mode::Read,
+                std::nullopt,
+                std::make_optional(writer_schema_raw),
+                std::nullopt,
+                *bytes_value,
+                nullptr
+            );
+            payload_data = std::any_cast<std::vector<uint8_t>>(result.getValue());
         }
     }
     

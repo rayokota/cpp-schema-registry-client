@@ -216,9 +216,35 @@ std::vector<uint8_t> AvroSerializer::serialize(
         if (schema.getRuleSet().has_value()) {
             auto rule_set = schema.getRuleSet().value();
             if (rule_set.getEncodingRules().has_value()) {
-                // TODO: Implement rule execution properly
-                // For now, skip rule execution and use original bytes
-                // The RuleContext constructor requires more parameters than we have here
+                // Create a SerdeValue wrapper for the encoded bytes
+                class BytesValue : public SerdeValue {
+                private:
+                    std::vector<uint8_t> bytes_;
+                public:
+                    explicit BytesValue(const std::vector<uint8_t>& bytes) : bytes_(bytes) {}
+                    bool isJson() const override { return false; }
+                    bool isAvro() const override { return false; }
+                    bool isProtobuf() const override { return false; }
+                    std::any getValue() const override { return bytes_; }
+                    SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
+                    std::unique_ptr<SerdeValue> clone() const override {
+                        return std::make_unique<BytesValue>(bytes_);
+                    }
+                };
+                
+                auto bytes_value = std::make_unique<BytesValue>(avro_bytes);
+                auto& result = base_->getSerde().executeRulesWithPhase(
+                    ctx,
+                    subject,
+                    Phase::Encoding,
+                    Mode::Write,
+                    std::nullopt,
+                    std::make_optional(schema),
+                    std::nullopt,
+                    *bytes_value,
+                    nullptr
+                );
+                avro_bytes = std::any_cast<std::vector<uint8_t>>(result.getValue());
             }
         }
     }
