@@ -18,7 +18,6 @@ namespace srclient::serdes::avro {
 
 /**
  * Avro-specific serialization errors
- * Maps to SerdeError::Avro variant
  */
 class AvroError : public SerdeError {
 public:

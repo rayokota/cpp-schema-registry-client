@@ -138,32 +138,4 @@ namespace utils {
 
 } // namespace utils
 
-
-
-/**
- * RAII wrapper for Avro encoders/decoders with automatic stream management
- */
-class AvroStreamManager {
-public:
-    /**
-     * Create encoder for serialization
-     * @return Unique pointer to binary encoder
-     */
-    static std::unique_ptr<::avro::Encoder> createEncoder();
-
-    /**
-     * Create decoder for deserialization
-     * @param data Input data buffer
-     * @return Unique pointer to binary decoder
-     */
-    static std::unique_ptr<::avro::Decoder> createDecoder(const std::vector<uint8_t>& data);
-
-    /**
-     * Get serialized data from encoder stream
-     * @param encoder Encoder to extract data from
-     * @return Serialized bytes
-     */
-    static std::vector<uint8_t> getEncodedData(::avro::Encoder& encoder);
-};
-
 } // namespace srclient::serdes::avro 

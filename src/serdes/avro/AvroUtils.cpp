@@ -281,6 +281,7 @@ std::unordered_set<std::string> getInlineTags(
     const ::avro::GenericRecord& record, 
     const std::string& field_name
 ) {
+    // TODO: Implement this
     // Note: Avro C++ doesn't directly support custom attributes like confluent:tags
     // This would need to be implemented by parsing the schema JSON and extracting
     // custom attributes. For now, return empty set.
@@ -338,6 +339,8 @@ parseSchemaWithNamed(
     const std::string& schema_str,
     const std::vector<std::string>& named_schemas
 ) {
+    // Currently Avro does not support references to named schema
+    // The code below is a placeholder for future implementation
     try {
         // Parse named schemas first
         std::vector<::avro::ValidSchema> parsed_named;
@@ -359,6 +362,7 @@ parseSchemaWithNamed(
     }
 }
 
+// TODO: remove?
 bool isSchemaCompatible(
     const ::avro::ValidSchema& writer_schema,
     const ::avro::ValidSchema& reader_schema
@@ -369,22 +373,5 @@ bool isSchemaCompatible(
 }
 
 } // namespace utils
-
-// AvroStreamManager implementation
-std::unique_ptr<::avro::Encoder> AvroStreamManager::createEncoder() {
-    // For now, just throw - this utility method can be implemented later if needed
-    throw AvroError("createEncoder not implemented - use serializeAvroData instead");
-}
-
-std::unique_ptr<::avro::Decoder> AvroStreamManager::createDecoder(const std::vector<uint8_t>& data) {
-    // For now, just throw - this utility method can be implemented later if needed
-    throw AvroError("createDecoder not implemented - use deserializeAvroData instead");
-}
-
-std::vector<uint8_t> AvroStreamManager::getEncodedData(::avro::Encoder& encoder) {
-    // This would need to extract data from the encoder's output stream
-    // Implementation depends on how the stream was set up
-    throw AvroError("getEncodedData not implemented - use serializeAvroData instead");
-}
 
 } // namespace srclient::serdes::avro 
