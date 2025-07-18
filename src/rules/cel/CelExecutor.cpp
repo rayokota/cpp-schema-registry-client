@@ -21,14 +21,12 @@ namespace srclient::rules::cel {
 using namespace srclient::serdes;
 
 CelExecutor::CelExecutor() {
-    // Comment out runtime initialization for now
-    /*
+    // Try to initialize the CEL runtime
     auto runtime_result = newRuleBuilder(nullptr);
     if (!runtime_result.ok()) {
         throw SerdeError("Failed to create CEL runtime: " + std::string(runtime_result.status().message()));
     }
     runtime_ = std::move(runtime_result.value());
-    */
 }
 
 CelExecutor::CelExecutor(std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime)
@@ -64,27 +62,26 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>
   if (!register_status.ok()) {
     return register_status;
   }
-  // Comment out extra func registration for now
-  // register_status = RegisterExtraFuncs(*builder->GetRegistry(), arena);
-  // if (!register_status.ok()) {
-  //   return register_status;
-  // }
+  // Register our custom extra functions
+  register_status = RegisterExtraFuncs(*builder->GetRegistry(), arena);
+  if (!register_status.ok()) {
+    return register_status;
+  }
   return builder;
 }
 
 
 SerdeValue& CelExecutor::transform(RuleContext& ctx, SerdeValue& msg) {
-    // Comment out the actual implementation and return a sentinel value
-    /*
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
     args.emplace("msg", fromSerdeValue(msg));
 
     auto result = execute(ctx, msg, args);
     if (result) {
-        // Since the original message is non-const, we can move the result
-        msg = std::move(*result);
+        // TODO: Replace the original message with the result once we have proper message replacement
+        // For now, just return the original - the execute method currently returns nullptr anyway
+        // auto converted_msg = std::move(*result);  // This line causes abstract class error - commented out
+        return msg;
     }
-    */
     return msg;
 }
 
@@ -171,43 +168,45 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpression>> CelEx
 }
 
 google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValue& value) {
-    /*
     switch (value.getFormat()) {
-        case SerdeFormat::Json:
-            return fromJsonValue(value.getValue());
-        case SerdeFormat::Avro:
-            return fromAvroValue(value.getValue());
-        case SerdeFormat::Protobuf:
-            return fromProtobufValue(*value.protobuf_value);
+        case SerdeFormat::Json: {
+            auto json_value = std::any_cast<nlohmann::json>(value.getValue());
+            return fromJsonValue(json_value);
+        }
+        case SerdeFormat::Avro: {
+            auto avro_value = std::any_cast<::avro::GenericDatum>(value.getValue());
+            return fromAvroValue(avro_value);
+        }
+        case SerdeFormat::Protobuf: {
+            auto proto_ref = std::any_cast<std::reference_wrapper<google::protobuf::Message>>(value.getValue());
+            return fromProtobufValue(proto_ref.get());
+        }
         default:
             return google::api::expr::runtime::CelValue::CreateNull();
     }
-    */
-    return google::api::expr::runtime::CelValue::CreateNull(); // Placeholder, implement actual conversion
 }
 
 std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(const SerdeValue& original, const google::api::expr::runtime::CelValue& cel_value) {
-    // Comment out implementation for now and return copy of original
-    /*
-    auto result = std::make_unique<SerdeValue>();
-    result->schema = original.schema;
-    result->type = original.type;
-    switch (original.type) {
-        case SerdeType::JSON:
-            result->json_value = toJsonValue(original.json_value, cel_value);
-            break;
-        case SerdeType::AVRO:
-            result->avro_value = toAvroValue(original.avro_value, cel_value);
-            break;
-        case SerdeType::PROTOBUF:
-            result->protobuf_value = toProtobufValue(*original.protobuf_value, cel_value);
-            break;
+    switch (original.getFormat()) {
+        case SerdeFormat::Json: {
+            auto original_json = std::any_cast<nlohmann::json>(original.getValue());
+            auto converted_json = toJsonValue(original_json, cel_value);
+            return srclient::serdes::json::makeJsonValue(converted_json);
+        }
+        case SerdeFormat::Avro: {
+            auto original_avro = std::any_cast<::avro::GenericDatum>(original.getValue());
+            auto converted_avro = toAvroValue(original_avro, cel_value);
+            return srclient::serdes::avro::makeAvroValue(converted_avro);
+        }
+        case SerdeFormat::Protobuf: {
+            auto proto_ref = std::any_cast<std::reference_wrapper<google::protobuf::Message>>(original.getValue());
+            auto converted_proto = toProtobufValue(proto_ref.get(), cel_value);
+            return srclient::serdes::protobuf::makeProtobufValue(*converted_proto);
+        }
+        default:
+            // For unknown formats, return a copy of the original
+            return original.clone();
     }
-    return result;
-    */
-    // SerdeValue is abstract so we can't create instances of it
-    // Return nullptr for now - caller should handle this
-    return nullptr;
 }
 
 google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(const nlohmann::json& json) {
@@ -246,16 +245,22 @@ google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(const nlohmann::
 }
 
 nlohmann::json CelExecutor::toJsonValue(const nlohmann::json& original, const google::api::expr::runtime::CelValue& cel_value) {
-    // Comment out implementation and return original for now
-    /*
-    // This is a simplified conversion. A full implementation would require more type checking.
-    if (cel_value.Is<cel::IntValue>()) return nlohmann::json(cel_value.As<cel::IntValue>().value());
-    if (cel_value.Is<cel::UintValue>()) return nlohmann::json(cel_value.As<cel::UintValue>().value());
-    if (cel_value.Is<cel::DoubleValue>()) return nlohmann::json(cel_value.As<cel::DoubleValue>().value());
-    if (cel_value.Is<cel::BoolValue>()) return nlohmann::json(cel_value.As<cel::BoolValue>().value());
-    if (cel_value.Is<cel::StringValue>()) return nlohmann::json(std::string(cel_value.As<cel::StringValue>().value()));
-    // More complex types like List and Map would need recursive conversion.
-    */
+    // Convert CEL values back to JSON
+    if (cel_value.IsBool()) {
+        return nlohmann::json(cel_value.BoolOrDie());
+    } else if (cel_value.IsInt64()) {
+        return nlohmann::json(cel_value.Int64OrDie());
+    } else if (cel_value.IsUint64()) {
+        return nlohmann::json(cel_value.Uint64OrDie());
+    } else if (cel_value.IsDouble()) {
+        return nlohmann::json(cel_value.DoubleOrDie());
+    } else if (cel_value.IsString()) {
+        return nlohmann::json(std::string(cel_value.StringOrDie().value()));
+    } else if (cel_value.IsNull()) {
+        return nlohmann::json(nullptr);
+    }
+    // For more complex types (List, Map) or unknown types, return the original
+    // TODO: Implement recursive conversion for lists and maps
     return original;
 }
 
@@ -313,14 +318,22 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::Ge
 }
 
 ::avro::GenericDatum CelExecutor::toAvroValue(const ::avro::GenericDatum& original, const google::api::expr::runtime::CelValue& cel_value) {
-    // Comment out implementation and return original for now
-    /*
-    // Simplified conversion, similar to toJsonValue
-    if (cel_value.Is<cel::IntValue>()) return ::avro::GenericDatum(cel_value.As<cel::IntValue>().value());
-    if (cel_value.Is<cel::DoubleValue>()) return ::avro::GenericDatum(cel_value.As<cel::DoubleValue>().value());
-    if (cel_value.Is<cel::BoolValue>()) return ::avro::GenericDatum(cel_value.As<cel::BoolValue>().value());
-    if (cel_value.Is<cel::StringValue>()) return ::avro::GenericDatum(std::string(cel_value.As<cel::StringValue>().value()));
-    */
+    // Convert CEL values back to Avro
+    if (cel_value.IsBool()) {
+        return ::avro::GenericDatum(cel_value.BoolOrDie());
+    } else if (cel_value.IsInt64()) {
+        // Avro int is 32-bit, but we can handle both int32 and int64
+        return ::avro::GenericDatum(static_cast<int64_t>(cel_value.Int64OrDie()));
+    } else if (cel_value.IsUint64()) {
+        return ::avro::GenericDatum(static_cast<int64_t>(cel_value.Uint64OrDie()));
+    } else if (cel_value.IsDouble()) {
+        return ::avro::GenericDatum(cel_value.DoubleOrDie());
+    } else if (cel_value.IsString()) {
+        return ::avro::GenericDatum(std::string(cel_value.StringOrDie().value()));
+    } else if (cel_value.IsNull()) {
+        return ::avro::GenericDatum();  // Creates null datum
+    }
+    // For more complex types or unknown types, return the original
     return original;
 }
 
