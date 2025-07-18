@@ -1,95 +1,60 @@
 #pragma once
 
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeError.h"
-#include "srclient/rules/cel/CelLib.h"
 #include "runtime/runtime.h"
-#include "parser/parser.h"
-#include "runtime/activation.h"
-#include "common/value.h"
-#include "common/value_manager.h"
 #include "absl/container/flat_hash_map.h"
+#include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
-#include "google/api/expr/v1alpha1/syntax.pb.h"
+#include "eval/public/cel_expression.h"
+#include "runtime/runtime.h"
+#include "nlohmann/json.hpp"
+#include "avro/Generic.hh"
 #include <memory>
-#include <string>
-#include <unordered_map>
 
 namespace srclient::rules::cel {
 
-/**
- * CEL (Common Expression Language) rule executor
- * Ported from cel_executor.rs
- */
-class CelExecutor : public srclient::serdes::RuleExecutor, 
-                    public std::enable_shared_from_this<CelExecutor> {
-private:
-    std::unique_ptr<const ::cel::Runtime> runtime_;
-    absl::flat_hash_map<std::string, google::api::expr::v1alpha1::ParsedExpr> expression_cache_;
-    mutable absl::Mutex cache_mutex_;
-    
+using namespace srclient::serdes;
+
+class CelExecutor : public RuleExecutor {
 public:
     CelExecutor();
-    explicit CelExecutor(std::unique_ptr<const ::cel::Runtime> runtime);
-    
-    // RuleBase interface
-    std::string getType() const override { return "CEL"; }
-    
-    // RuleExecutor interface
-    srclient::serdes::SerdeValue& transform(srclient::serdes::RuleContext& ctx, 
-                                           srclient::serdes::SerdeValue& msg) override;
-    
-    /**
-     * Execute a CEL expression with the given message and arguments
-     */
-    std::unique_ptr<srclient::serdes::SerdeValue> execute(srclient::serdes::RuleContext& ctx,
-                                        const srclient::serdes::SerdeValue& msg,
-                                        const absl::flat_hash_map<std::string, ::cel::Value>& args);
-    
-    /**
-     * Register this executor with the global rule registry
-     */
+    explicit CelExecutor(std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime);
+    SerdeValue& transform(RuleContext& ctx, SerdeValue& msg) override;
+
     static void registerExecutor();
-    
-    /**
-     * Convert SerdeValue to CEL Value for evaluation
-     */
-    ::cel::Value fromSerdeValue(const srclient::serdes::SerdeValue& value, ::cel::ValueManager& value_manager);
-    
-    /**
-     * Get the CEL runtime for accessing value manager
-     */
-    const ::cel::Runtime& getRuntime() const { return *runtime_; }
-    
+
 private:
-    /**
-     * Execute a specific rule expression
-     */
-    std::unique_ptr<srclient::serdes::SerdeValue> executeRule(srclient::serdes::RuleContext& ctx,
-                                            const srclient::serdes::SerdeValue& msg,
-                                            const std::string& expr,
-                                            const absl::flat_hash_map<std::string, ::cel::Value>& args);
-    
-    /**
-     * Get or compile a CEL expression
-     */
-    absl::StatusOr<google::api::expr::v1alpha1::ParsedExpr> getOrCompileExpression(const std::string& expr);
-    
-    /**
-     * Convert CEL Value back to SerdeValue, preserving the original type
-     */
-    std::unique_ptr<srclient::serdes::SerdeValue> toSerdeValue(const srclient::serdes::SerdeValue& original, 
-                                             const ::cel::Value& cel_value);
-    
-    // Helper conversion methods
-    ::cel::Value fromJsonValue(const nlohmann::json& json, ::cel::ValueManager& value_manager);
-    ::cel::Value fromAvroValue(const ::avro::GenericDatum& avro, ::cel::ValueManager& value_manager);
-    ::cel::Value fromProtobufValue(const google::protobuf::Message& protobuf, ::cel::ValueManager& value_manager);
-    
-    nlohmann::json toJsonValue(const nlohmann::json& original, const ::cel::Value& cel_value);
-    ::avro::GenericDatum toAvroValue(const ::avro::GenericDatum& original, const ::cel::Value& cel_value);
-    std::unique_ptr<google::protobuf::Message> toProtobufValue(const google::protobuf::Message& original, const ::cel::Value& cel_value);
+    static absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>> newRuleBuilder(
+        google::protobuf::Arena* arena);
+
+    std::unique_ptr<SerdeValue> execute(RuleContext& ctx, 
+                                       const SerdeValue& msg, 
+                                       const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args);
+    std::unique_ptr<SerdeValue> executeRule(RuleContext& ctx,
+                                           const SerdeValue& msg,
+                                           const std::string& expr,
+                                           const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args);
+
+    absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpression>> getOrCompileExpression(const std::string& expr);
+
+    static google::api::expr::runtime::CelValue fromSerdeValue(const SerdeValue& value);
+    static std::unique_ptr<SerdeValue> toSerdeValue(const SerdeValue& original, const google::api::expr::runtime::CelValue& cel_value);
+
+    static google::api::expr::runtime::CelValue fromJsonValue(const nlohmann::json& json);
+    static nlohmann::json toJsonValue(const nlohmann::json& original, const google::api::expr::runtime::CelValue& cel_value);
+
+    static google::api::expr::runtime::CelValue fromAvroValue(const ::avro::GenericDatum& avro);
+    static ::avro::GenericDatum toAvroValue(const ::avro::GenericDatum& original, const google::api::expr::runtime::CelValue& cel_value);
+
+    static google::api::expr::runtime::CelValue fromProtobufValue(const google::protobuf::Message& protobuf);
+    static std::unique_ptr<google::protobuf::Message> toProtobufValue(const google::protobuf::Message& original, const google::api::expr::runtime::CelValue& cel_value);
+
+    std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime_;
+    absl::Mutex cache_mutex_;
+    absl::flat_hash_map<std::string, std::unique_ptr<google::api::expr::runtime::CelExpression>> expression_cache_ ABSL_GUARDED_BY(cache_mutex_);
+
+    friend class CelFieldExecutor;
 };
 
-} // namespace srclient::rules::cel 
+}

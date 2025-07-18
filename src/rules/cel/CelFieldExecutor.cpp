@@ -1,70 +1,46 @@
 #include "srclient/rules/cel/CelFieldExecutor.h"
-#include "srclient/serdes/Serde.h"
-#include "common/value.h"
-#include <vector>
+#include "srclient/serdes/json/JsonTypes.h"
+#include "srclient/serdes/avro/AvroTypes.h"
+#include "srclient/serdes/protobuf/ProtobufTypes.h"
 
 namespace srclient::rules::cel {
 
-using namespace srclient::serdes;
+CelFieldExecutor::CelFieldExecutor() : executor_(std::make_shared<CelExecutor>()) {}
 
-CelFieldExecutor::CelFieldExecutor() 
-    : executor_(std::make_unique<CelExecutor>()) {
-}
-
-CelFieldExecutor::CelFieldExecutor(std::unique_ptr<CelExecutor> executor)
-    : executor_(std::move(executor)) {
-    if (!executor_) {
-        throw SerdeError("CelExecutor cannot be null");
-    }
-}
+CelFieldExecutor::CelFieldExecutor(std::shared_ptr<CelExecutor> executor) : executor_(std::move(executor)) {}
 
 SerdeValue& CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field_value) {
-    auto field_ctx_opt = ctx.currentField();
-    if (!field_ctx_opt.has_value()) {
-        throw SerdeError("No field context available");
-    }
-    
-    const auto& field_ctx = field_ctx_opt.value();
-    
-    // Only process primitive fields
-    if (!field_ctx.isPrimitive()) {
+    auto field_ctx = ctx.currentField();
+    if (!field_ctx || !field_ctx->isPrimitive()) {
         return field_value;
     }
-    
-    // Create field-specific arguments for CEL execution
-    auto args = createFieldArguments(ctx, field_value);
-    
-    try {
-        auto result = executor_->execute(ctx, field_value, args);
-        // TODO: Update the field value with the result once proper value assignment is implemented
-        // For now, just return the original field value
-        return field_value;
-    } catch (const std::exception& e) {
-        throw SerdeError("CEL field execution failed: " + std::string(e.what()));
-    }
-}
 
-absl::flat_hash_map<std::string, ::cel::Value> CelFieldExecutor::createFieldArguments(
-    const RuleContext& ctx,
-    const SerdeValue& field_value) {
-    
-    absl::flat_hash_map<std::string, ::cel::Value> args;
-    
-    auto field_ctx_opt = ctx.currentField();
-    if (!field_ctx_opt.has_value()) {
-        throw SerdeError("No field context available for argument creation");
+    absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
+
+    args.emplace("value", CelExecutor::fromSerdeValue(field_value));
+    args.emplace("fullName", google::api::expr::runtime::CelValue::CreateString(field_ctx->getFullName()));
+    args.emplace("name", google::api::expr::runtime::CelValue::CreateString(field_ctx->getName()));
+    args.emplace("typeName", google::api::expr::runtime::CelValue::CreateString(field_ctx->getFieldType()));
+
+    std::vector<google::api::expr::runtime::CelValue> tags_vec;
+    for (const auto& tag : field_ctx->getTags()) {
+        tags_vec.push_back(google::api::expr::runtime::CelValue::CreateString(tag));
     }
+    // TODO tags
+    //args.emplace("tags", google::api::expr::CelValue::CreateList(cel::ListType(), tags_vec).value());
     
-    const auto& field_ctx = field_ctx_opt.value();
-    
-    // TODO: Implement proper field argument creation once value manager access is resolved
-    // For now, return empty arguments
-    return args;
+    args.emplace("message", CelExecutor::fromSerdeValue(field_ctx->getContainingMessage()));
+
+    auto result = executor_->execute(ctx, field_value, args);
+    if (result) {
+        field_value = std::move(*result);
+    }
+
+    return field_value;
 }
 
 void CelFieldExecutor::registerExecutor() {
-    auto executor = std::make_shared<CelFieldExecutor>();
-    global_registry::registerRuleExecutor(executor);
+    // global_registry::registerRuleExecutor(std::make_shared<CelFieldExecutor>());
 }
 
-} // namespace srclient::rules::cel 
+} 

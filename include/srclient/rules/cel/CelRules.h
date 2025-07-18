@@ -1,6 +1,5 @@
 #pragma once
 
-#include "srclient/rules/cel/CelLib.h"
 #include "srclient/rules/cel/CelExecutor.h"
 #include "srclient/rules/cel/CelFieldExecutor.h"
 
