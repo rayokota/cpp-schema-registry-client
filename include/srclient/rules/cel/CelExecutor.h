@@ -21,6 +21,9 @@ public:
     CelExecutor();
     explicit CelExecutor(std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime);
     SerdeValue& transform(RuleContext& ctx, SerdeValue& msg) override;
+    
+    // Implement the required getType method from RuleBase
+    std::string getType() const override;
 
     static void registerExecutor();
 
@@ -31,7 +34,7 @@ private:
     std::unique_ptr<SerdeValue> execute(RuleContext& ctx, 
                                        const SerdeValue& msg, 
                                        const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args);
-    std::unique_ptr<SerdeValue> executeRule(RuleContext& ctx,
+    std::unique_ptr<google::api::expr::runtime::CelValue> executeRule(RuleContext& ctx,
                                            const SerdeValue& msg,
                                            const std::string& expr,
                                            const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args);
