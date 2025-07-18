@@ -17,12 +17,8 @@ endif()
 
 project(srclient CXX)
 
-set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
-
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
+set(CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -41,11 +37,13 @@ endfunction()
 
 include(FetchContent)
 
-FetchContent_Declare(avrocpp
+FetchContent_Declare(
+        avrocpp
         GIT_REPOSITORY https://github.com/apache/avro.git
         GIT_TAG release-1.12.0
         EXCLUDE_FROM_ALL
-        SOURCE_SUBDIR lang/c++)
+        SOURCE_SUBDIR lang/c++
+)
 
 FetchContent_MakeAvailable(avrocpp)
 
