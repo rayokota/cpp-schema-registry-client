@@ -56,6 +56,15 @@ FetchContent_Declare(
 set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
 FetchContent_MakeAvailable(jsoncons)
 
+# Note that cel-cpp has no CMake build and is not packaged anywhere,
+# so we build protovalidate_cc as an in-tree dependency to get cel-cpp.
+FetchContent_Declare(
+    protovalidate_cc
+    GIT_REPOSITORY "https://github.com/bufbuild/protovalidate-cc.git"
+    GIT_TAG "v0.5.0"
+)
+FetchContent_MakeAvailable(protovalidate_cc)
+
 # Import Tink as an in-tree dependency.
 # See https://developers.google.com/tink/setup/cc
 FetchContent_Declare(
@@ -158,6 +167,9 @@ target_link_libraries(${PROJECT_NAME}
     PUBLIC 
         avrocpp
         Boost::headers
+        cel_cpp
+        cel_cpp_parser
+        cel_cpp_minimal_descriptor_set
         jsoncons
         ${Protobuf_LIBRARIES}
     PRIVATE
