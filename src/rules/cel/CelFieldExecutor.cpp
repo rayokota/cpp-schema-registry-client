@@ -6,9 +6,8 @@
 namespace srclient::rules::cel {
 
 CelFieldExecutor::CelFieldExecutor() {
-    // Comment out make_shared creation for now since CelExecutor is abstract
-    // executor_ = std::make_shared<CelExecutor>();
-    executor_ = nullptr;
+    // Create a proper CelExecutor instance like Rust version
+    executor_ = std::make_shared<CelExecutor>();
 }
 
 CelFieldExecutor::CelFieldExecutor(std::shared_ptr<CelExecutor> executor) : executor_(std::move(executor)) {}
@@ -36,9 +35,10 @@ SerdeValue& CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field
 
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
 
+    // Add field value like Rust version
     args.emplace("value", CelExecutor::fromSerdeValue(field_value));
     
-    // Fix string creation to use pointers - store in static variables to ensure lifetime
+    // Add field context information like Rust version
     static thread_local std::string temp_full_name;
     temp_full_name = field_ctx->getFullName();
     args.emplace("fullName", google::api::expr::runtime::CelValue::CreateString(&temp_full_name));
@@ -47,23 +47,30 @@ SerdeValue& CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field
     temp_name = field_ctx->getName();
     args.emplace("name", google::api::expr::runtime::CelValue::CreateString(&temp_name));
     
-    // Convert FieldType to string representation for typeName
+    // Convert FieldType to string representation for typeName using existing function
     static thread_local std::string temp_type_name;
-    temp_type_name = fieldTypeToString(field_ctx->getFieldType());
+    temp_type_name = srclient::serdes::fieldTypeToString(field_ctx->getFieldType());
     args.emplace("typeName", google::api::expr::runtime::CelValue::CreateString(&temp_type_name));
 
-    // Convert tags to CEL list
-    std::vector<google::api::expr::runtime::CelValue> tags_vec;
+    // Create CEL list for tags like Rust version
+    static thread_local std::vector<google::api::expr::runtime::CelValue> tags_vec;
+    static thread_local std::vector<std::string> temp_tags;
+    tags_vec.clear();
+    temp_tags.clear();
+    
     for (const auto& tag : field_ctx->getTags()) {
-        static thread_local std::string temp_tag;
-        temp_tag = tag;
-        tags_vec.push_back(google::api::expr::runtime::CelValue::CreateString(&temp_tag));
+        temp_tags.push_back(tag);
+        tags_vec.push_back(google::api::expr::runtime::CelValue::CreateString(&temp_tags.back()));
     }
-    // TODO: Implement list creation when CEL API is available
+    
+    // Create the CEL list for tags using proper API
+    // TODO: Use proper CEL list creation when available - for now comment out
     // args.emplace("tags", google::api::expr::runtime::CelValue::CreateList(tags_vec));
     
+    // Add containing message like Rust version
     args.emplace("message", CelExecutor::fromSerdeValue(field_ctx->getContainingMessage()));
 
+    // Execute the CEL expression using the shared executor
     auto result = executor_->execute(ctx, field_value, args);
     if (result) {
         // TODO: Replace field_value with result when message replacement is implemented
@@ -75,8 +82,10 @@ SerdeValue& CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field
 }
 
 void CelFieldExecutor::registerExecutor() {
-    // Comment out global registry registration for now
-    // global_registry::registerRuleExecutor(std::make_shared<CelFieldExecutor>());
+    // Register this field executor with the global rule registry
+    // This matches the Rust version: crate::serdes::rule_registry::register_rule_executor(CelFieldExecutor::new());
+    // TODO: Implement when rule registry is available
+    // RuleRegistry::instance().registerRuleExecutor(std::make_shared<CelFieldExecutor>());
 }
 
 } 
