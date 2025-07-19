@@ -172,6 +172,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
             std::make_optional(schema),
             std::make_optional(avro_schema.get()),
             *avro_value,
+            std::nullopt,
             std::make_shared<FieldTransformer>(field_transformer)
         );
         
@@ -239,7 +240,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
                     std::make_optional(schema),
                     std::nullopt,
                     *bytes_value,
-                    nullptr
+                    std::nullopt
                 );
                 avro_bytes = std::any_cast<std::vector<uint8_t>>(result->getValue());
             }

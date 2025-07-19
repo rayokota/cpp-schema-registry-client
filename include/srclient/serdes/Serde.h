@@ -195,6 +195,7 @@ private:
     Rule rule_;
     size_t index_;
     std::vector<Rule> rules_;
+    std::optional<std::unordered_set<std::string>> inline_tags;
     std::vector<std::unique_ptr<FieldContext>> field_contexts_;
     std::shared_ptr<FieldTransformer> field_transformer_;
     std::shared_ptr<RuleRegistry> rule_registry_;
@@ -209,6 +210,7 @@ public:
                const Rule& rule,
                size_t index,
                const std::vector<Rule>& rules,
+               std::optional<std::unordered_set<std::string>> inline_tags,
                std::shared_ptr<FieldTransformer> field_transformer = nullptr,
                std::shared_ptr<RuleRegistry> rule_registry = nullptr);
     
@@ -222,6 +224,7 @@ public:
     const Rule& getRule() const { return rule_; }
     size_t getIndex() const { return index_; }
     const std::vector<Rule>& getRules() const { return rules_; }
+    const std::optional<std::unordered_set<std::string>>& getInlineTags() const { return inline_tags; }
     std::shared_ptr<FieldTransformer> getFieldTransformer() const { return field_transformer_; }
     std::shared_ptr<RuleRegistry> getRuleRegistry() const { return rule_registry_; }
     
@@ -273,6 +276,7 @@ public:
                            std::optional<Schema> target,
                            const std::optional<SerdeSchema*>& parsed_target,
                            const SerdeValue& msg,
+                           std::optional<std::unordered_set<std::string>> inline_tags,
                            std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     
     std::unique_ptr<SerdeValue> executeRulesWithPhase(const SerializationContext& ser_ctx,
@@ -283,6 +287,7 @@ public:
                                    std::optional<Schema> target,
                                    const std::optional<SerdeSchema*>& parsed_target,
                                    const SerdeValue& msg,
+                                   std::optional<std::unordered_set<std::string>> inline_tags,
                                    std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     
     // Migration support (synchronous versions)
