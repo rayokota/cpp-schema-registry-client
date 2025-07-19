@@ -28,34 +28,29 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, c
         return field_value.clone();
     }
 
+    google::protobuf::Arena arena;
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
 
     // Add field value like Rust version
-    args.emplace("value", CelExecutor::fromSerdeValue(field_value));
+    args.emplace("value", executor_->fromSerdeValue(field_value, &arena));
     
     // Add field context information like Rust version
-    static thread_local std::string temp_full_name;
-    temp_full_name = field_ctx->getFullName();
-    args.emplace("fullName", google::api::expr::runtime::CelValue::CreateString(&temp_full_name));
+    auto* full_name_str = google::protobuf::Arena::Create<std::string>(&arena, field_ctx->getFullName());
+    args.emplace("fullName", google::api::expr::runtime::CelValue::CreateString(full_name_str));
     
-    static thread_local std::string temp_name;
-    temp_name = field_ctx->getName();
-    args.emplace("name", google::api::expr::runtime::CelValue::CreateString(&temp_name));
+    auto* name_str = google::protobuf::Arena::Create<std::string>(&arena, field_ctx->getName());
+    args.emplace("name", google::api::expr::runtime::CelValue::CreateString(name_str));
     
     // Convert FieldType to string representation for typeName using existing function
-    static thread_local std::string temp_type_name;
-    temp_type_name = srclient::serdes::fieldTypeToString(field_ctx->getFieldType());
-    args.emplace("typeName", google::api::expr::runtime::CelValue::CreateString(&temp_type_name));
+    auto* type_name_str = google::protobuf::Arena::Create<std::string>(&arena, srclient::serdes::fieldTypeToString(field_ctx->getFieldType()));
+    args.emplace("typeName", google::api::expr::runtime::CelValue::CreateString(type_name_str));
 
     // Create CEL list for tags like Rust version
-    static thread_local std::vector<google::api::expr::runtime::CelValue> tags_vec;
-    static thread_local std::vector<std::string> temp_tags;
-    tags_vec.clear();
-    temp_tags.clear();
+    auto* tags_vec = google::protobuf::Arena::Create<std::vector<google::api::expr::runtime::CelValue>>(&arena);
     
     for (const auto& tag : field_ctx->getTags()) {
-        temp_tags.push_back(tag);
-        tags_vec.push_back(google::api::expr::runtime::CelValue::CreateString(&temp_tags.back()));
+        auto* tag_str = google::protobuf::Arena::Create<std::string>(&arena, tag);
+        tags_vec->push_back(google::api::expr::runtime::CelValue::CreateString(tag_str));
     }
     
     // Create the CEL list for tags using proper API
@@ -63,7 +58,7 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, c
     // args.emplace("tags", google::api::expr::runtime::CelValue::CreateList(tags_vec));
     
     // Add containing message like Rust version
-    args.emplace("message", CelExecutor::fromSerdeValue(field_ctx->getContainingMessage()));
+    args.emplace("message", executor_->fromSerdeValue(field_ctx->getContainingMessage(), &arena));
 
     // Execute the CEL expression using the shared executor
     auto result = executor_->execute(ctx, field_value, args);

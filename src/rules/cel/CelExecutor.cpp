@@ -22,7 +22,8 @@ using namespace srclient::serdes;
 
 CelExecutor::CelExecutor() {
     // Try to initialize the CEL runtime
-    auto runtime_result = newRuleBuilder(&arena_);
+    google::protobuf::Arena arena;
+    auto runtime_result = newRuleBuilder(&arena);
     if (!runtime_result.ok()) {
         throw SerdeError("Failed to create CEL runtime: " + std::string(runtime_result.status().message()));
     }
@@ -46,7 +47,6 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>
   google::api::expr::runtime::InterpreterOptions options;
   options.enable_qualified_type_identifiers = true;
   options.enable_timestamp_duration_overflow_errors = true;
-  options.enable_heterogeneous_equality = true;
   options.enable_empty_wrapper_null_unboxing = true;
   options.enable_regex_precompilation = true;
   options.constant_folding = true;
@@ -72,8 +72,9 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>
 
 
 std::unique_ptr<SerdeValue> CelExecutor::transform(RuleContext& ctx, const SerdeValue& msg) {
+    google::protobuf::Arena arena;
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
-    args.emplace("msg", fromSerdeValue(msg));
+    args.emplace("msg", fromSerdeValue(msg, &arena));
 
     return execute(ctx, msg, args);
 }
@@ -81,6 +82,8 @@ std::unique_ptr<SerdeValue> CelExecutor::transform(RuleContext& ctx, const Serde
 std::unique_ptr<SerdeValue> CelExecutor::execute(RuleContext& ctx, 
                                const SerdeValue& msg, 
                                const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args) {
+    google::protobuf::Arena arena;
+    
     // Get the expression from the rule context
     const Rule& rule = ctx.getRule();
     
@@ -101,7 +104,7 @@ std::unique_ptr<SerdeValue> CelExecutor::execute(RuleContext& ctx,
         // Handle guard expression
         absl::string_view guard = parts[0];
         if (!guard.empty()) {
-            auto guard_result = executeRule(ctx, msg, std::string(guard), args);
+            auto guard_result = executeRule(ctx, msg, std::string(guard), args, &arena);
             if (guard_result) {
                 // Check if guard evaluates to false - if so, return copy of original message
                 if (guard_result->IsBool() && !guard_result->BoolOrDie()) {
@@ -115,7 +118,7 @@ std::unique_ptr<SerdeValue> CelExecutor::execute(RuleContext& ctx,
     }
 
     // Execute the main expression
-    auto result = executeRule(ctx, msg, expr, args);
+    auto result = executeRule(ctx, msg, expr, args, &arena);
     if (result) {
         return toSerdeValue(msg, *result);
     }
@@ -126,7 +129,8 @@ std::unique_ptr<SerdeValue> CelExecutor::execute(RuleContext& ctx,
 std::unique_ptr<google::api::expr::runtime::CelValue> CelExecutor::executeRule(RuleContext& ctx,
                                    const SerdeValue& msg,
                                    const std::string& expr,
-                                   const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args) {
+                                   const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args,
+                                   google::protobuf::Arena* arena) {
     // Get or compile the expression (with caching)
     auto parsed_expr_status = getOrCompileExpression(expr);
     if (!parsed_expr_status.ok()) {
@@ -140,8 +144,8 @@ std::unique_ptr<google::api::expr::runtime::CelValue> CelExecutor::executeRule(R
         activation.InsertValue(pair.first, pair.second);
     }
     
-    // Evaluate the expression using the member arena
-    auto eval_status = parsed_expr->Evaluate(activation, &arena_);
+    // Evaluate the expression using the passed arena
+    auto eval_status = parsed_expr->Evaluate(activation, arena);
     if (!eval_status.ok()) {
         throw SerdeError("CEL evaluation failed: " + std::string(eval_status.status().message()));
     }
@@ -194,19 +198,21 @@ absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>> CelEx
     return shared_expr;
 }
 
-google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValue& value) {
+
+
+google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValue& value, google::protobuf::Arena* arena) {
     switch (value.getFormat()) {
         case SerdeFormat::Json: {
             auto json_value = std::any_cast<nlohmann::json>(value.getValue());
-            return fromJsonValue(json_value);
+            return fromJsonValue(json_value, arena);
         }
         case SerdeFormat::Avro: {
             auto avro_value = std::any_cast<::avro::GenericDatum>(value.getValue());
-            return fromAvroValue(avro_value);
+            return fromAvroValue(avro_value, arena);
         }
         case SerdeFormat::Protobuf: {
             auto proto_ref = std::any_cast<std::reference_wrapper<google::protobuf::Message>>(value.getValue());
-            return fromProtobufValue(proto_ref.get());
+            return fromProtobufValue(proto_ref.get(), arena);
         }
         default:
             return google::api::expr::runtime::CelValue::CreateNull();
@@ -236,38 +242,31 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(const SerdeValue& original
     }
 }
 
-google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(const nlohmann::json& json) {
+
+
+google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(const nlohmann::json& json, google::protobuf::Arena* arena) {
     if (json.is_null()) return google::api::expr::runtime::CelValue::CreateNull();
     if (json.is_boolean()) return google::api::expr::runtime::CelValue::CreateBool(json.get<bool>());
     if (json.is_number_integer()) return google::api::expr::runtime::CelValue::CreateInt64(json.get<int64_t>());
     if (json.is_number_unsigned()) return google::api::expr::runtime::CelValue::CreateUint64(json.get<uint64_t>());
     if (json.is_number_float()) return google::api::expr::runtime::CelValue::CreateDouble(json.get<double>());
-    // Fix string creation to use pointer
+    // Use arena allocation for string storage
     if (json.is_string()) {
         auto str_value = json.get<std::string>();
-        // Store string in static storage or member variable to ensure lifetime
-        static thread_local std::string temp_str;
-        temp_str = str_value;
-        return google::api::expr::runtime::CelValue::CreateString(&temp_str);
+        // Allocate string in arena to ensure proper lifetime
+        auto* arena_str = google::protobuf::Arena::Create<std::string>(arena, str_value);
+        return google::api::expr::runtime::CelValue::CreateString(arena_str);
     }
-    // TODO
-    /*
     if (json.is_array()) {
-        std::vector<google::api::expr::runtime::CelValue> vec;
-        for (const auto& item : json) {
-            vec.push_back(fromJsonValue(item));
-        }
-        auto list_value = value_manager.CreateListValue(cel::ListType(), vec);
-        return list_value.value();
+        // TODO: Implement proper CelList interface for JSON arrays
+        // For now, return null to avoid compilation errors
+        return google::api::expr::runtime::CelValue::CreateNull();
     }
     if (json.is_object()) {
-        auto map_builder = value_manager.NewMapValueBuilder(cel::MapType());
-        for (auto& el : json.items()) {
-            map_builder->Add(value_manager.CreateStringValue(el.key()), fromJsonValue(el.value(), value_manager));
-        }
-        return std::move(*map_builder).Build();
+        // TODO: Implement proper CelMap interface for JSON objects
+        // For now, return null to avoid compilation errors
+        return google::api::expr::runtime::CelValue::CreateNull();
     }
-    */
     return google::api::expr::runtime::CelValue::CreateNull();
 }
 
@@ -291,7 +290,9 @@ nlohmann::json CelExecutor::toJsonValue(const nlohmann::json& original, const go
     return original;
 }
 
-google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::GenericDatum& avro) {
+
+
+google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::GenericDatum& avro, google::protobuf::Arena* arena) {
     switch (avro.type()) {
         case ::avro::AVRO_BOOL: return google::api::expr::runtime::CelValue::CreateBool(avro.value<bool>());
         case ::avro::AVRO_INT: return google::api::expr::runtime::CelValue::CreateInt64(avro.value<int32_t>());
@@ -299,17 +300,16 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::Ge
         case ::avro::AVRO_FLOAT: return google::api::expr::runtime::CelValue::CreateDouble(avro.value<float>());
         case ::avro::AVRO_DOUBLE: return google::api::expr::runtime::CelValue::CreateDouble(avro.value<double>());
         case ::avro::AVRO_STRING: {
-            // Fix string creation to use pointer
-            static thread_local std::string temp_str;
-            temp_str = avro.value<std::string>();
-            return google::api::expr::runtime::CelValue::CreateString(&temp_str);
+            // Use arena allocation for string storage
+            auto* arena_str = google::protobuf::Arena::Create<std::string>(arena, avro.value<std::string>());
+            return google::api::expr::runtime::CelValue::CreateString(arena_str);
         }
         case ::avro::AVRO_BYTES: {
             auto bytes_vec = avro.value<std::vector<uint8_t>>();
-            // Convert vector to string for CreateBytes with pointer
-            static thread_local std::string temp_bytes;
-            temp_bytes.assign(bytes_vec.begin(), bytes_vec.end());
-            return google::api::expr::runtime::CelValue::CreateBytes(&temp_bytes);
+            // Use arena allocation for bytes storage
+            auto* arena_bytes = google::protobuf::Arena::Create<std::string>(arena);
+            arena_bytes->assign(bytes_vec.begin(), bytes_vec.end());
+            return google::api::expr::runtime::CelValue::CreateBytes(arena_bytes);
         }
         // TODO
         /*
@@ -379,47 +379,9 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(const go
     return new_msg;
 }
 
-static google::api::expr::runtime::CelValue ConvertProtobufFieldToCel(const google::protobuf::Message& message,
-                                              const google::protobuf::FieldDescriptor* field,
-                                              int index = -1) {
-    const auto* reflection = message.GetReflection();
-    switch (field->cpp_type()) {
-        case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
-            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedInt32(message, field, index) : reflection->GetInt32(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
-            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedInt64(message, field, index) : reflection->GetInt64(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
-            return google::api::expr::runtime::CelValue::CreateUint64(index != -1 ? reflection->GetRepeatedUInt32(message, field, index) : reflection->GetUInt32(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
-            return google::api::expr::runtime::CelValue::CreateUint64(index != -1 ? reflection->GetRepeatedUInt64(message, field, index) : reflection->GetUInt64(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
-            return google::api::expr::runtime::CelValue::CreateDouble(index != -1 ? reflection->GetRepeatedFloat(message, field, index) : reflection->GetFloat(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
-            return google::api::expr::runtime::CelValue::CreateDouble(index != -1 ? reflection->GetRepeatedDouble(message, field, index) : reflection->GetDouble(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
-            return google::api::expr::runtime::CelValue::CreateBool(index != -1 ? reflection->GetRepeatedBool(message, field, index) : reflection->GetBool(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
-            // Fix string creation to use pointer
-            static thread_local std::string temp_str;
-            temp_str = index != -1 ? reflection->GetRepeatedString(message, field, index) : reflection->GetString(message, field);
-            return google::api::expr::runtime::CelValue::CreateString(&temp_str);
-        }
-        case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
-            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedEnum(message, field, index)->number() : reflection->GetEnum(message, field)->number());
-        // TODO
-        /*
-        case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
-            {
-                const auto& sub_message = index != -1 ? reflection->GetRepeatedMessage(message, field, index) : reflection->GetMessage(message, field);
-                return CelExecutor::fromProtobufValue(sub_message, value_manager);
-            }
-        */
-        default:
-            return google::api::expr::runtime::CelValue::CreateNull();
-    }
-}
 
-google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(const google::protobuf::Message& protobuf) {
+
+google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(const google::protobuf::Message& protobuf, google::protobuf::Arena* arena) {
     const auto* descriptor = protobuf.GetDescriptor();
     if (!descriptor) return google::api::expr::runtime::CelValue::CreateNull();
     const auto* reflection = protobuf.GetReflection();
@@ -456,6 +418,47 @@ google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(const google
     }
     */
     return google::api::expr::runtime::CelValue::CreateNull();
+}
+
+static google::api::expr::runtime::CelValue ConvertProtobufFieldToCel(const google::protobuf::Message& message,
+                                              const google::protobuf::FieldDescriptor* field,
+                                              google::protobuf::Arena* arena,
+                                              int index = -1) {
+    const auto* reflection = message.GetReflection();
+    switch (field->cpp_type()) {
+        case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedInt32(message, field, index) : reflection->GetInt32(message, field));
+        case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
+            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedInt64(message, field, index) : reflection->GetInt64(message, field));
+        case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+            return google::api::expr::runtime::CelValue::CreateUint64(index != -1 ? reflection->GetRepeatedUInt32(message, field, index) : reflection->GetUInt32(message, field));
+        case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
+            return google::api::expr::runtime::CelValue::CreateUint64(index != -1 ? reflection->GetRepeatedUInt64(message, field, index) : reflection->GetUInt64(message, field));
+        case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
+            return google::api::expr::runtime::CelValue::CreateDouble(index != -1 ? reflection->GetRepeatedFloat(message, field, index) : reflection->GetFloat(message, field));
+        case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
+            return google::api::expr::runtime::CelValue::CreateDouble(index != -1 ? reflection->GetRepeatedDouble(message, field, index) : reflection->GetDouble(message, field));
+        case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
+            return google::api::expr::runtime::CelValue::CreateBool(index != -1 ? reflection->GetRepeatedBool(message, field, index) : reflection->GetBool(message, field));
+        case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
+            // Use arena allocation for string storage
+            auto str_value = index != -1 ? reflection->GetRepeatedString(message, field, index) : reflection->GetString(message, field);
+            auto* arena_str = google::protobuf::Arena::Create<std::string>(arena, str_value);
+            return google::api::expr::runtime::CelValue::CreateString(arena_str);
+        }
+        case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
+            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedEnum(message, field, index)->number() : reflection->GetEnum(message, field)->number());
+        // TODO
+        /*
+        case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
+            {
+                const auto& sub_message = index != -1 ? reflection->GetRepeatedMessage(message, field, index) : reflection->GetMessage(message, field);
+                return CelExecutor::fromProtobufValue(sub_message, value_manager);
+            }
+        */
+        default:
+            return google::api::expr::runtime::CelValue::CreateNull();
+    }
 }
 
 void CelExecutor::registerExecutor() {
