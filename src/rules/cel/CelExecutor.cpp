@@ -4,6 +4,7 @@
 #include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
 #include "srclient/serdes/Serde.h"
+#include "srclient/serdes/RuleRegistry.h"
 #include "absl/strings/str_split.h"
 #include "eval/public/activation.h"
 #include "eval/public/builtin_func_registrar.h"
@@ -969,8 +970,9 @@ google::api::expr::runtime::CelValue CelExecutor::convertProtobufMapToCel(
 void CelExecutor::registerExecutor() {
     // Register this executor with the global rule registry
     // This matches the Rust version: crate::serdes::rule_registry::register_rule_executor(CelExecutor::new());
-    // TODO: Implement when rule registry is available
-    // RuleRegistry::instance().registerRuleExecutor(std::make_shared<CelExecutor>());
+    global_registry::registerRuleExecutor(
+        std::make_shared<CelExecutor>()
+    );
 }
 
 } 
