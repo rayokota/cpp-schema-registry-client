@@ -12,8 +12,10 @@
 #include "eval/public/containers/container_backed_list_impl.h"
 #include "eval/public/containers/container_backed_map_impl.h"
 #include "eval/public/string_extension_func_registrar.h"
+#include "eval/public/structs/cel_proto_wrapper.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
+#include "parser/parser.h"
 #include <regex>
 
 namespace srclient::rules::cel {
@@ -169,24 +171,17 @@ absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>> CelEx
         return absl::FailedPreconditionError("CEL runtime not initialized");
     }
     
-    // Parse the CEL expression
-    google::api::expr::v1alpha1::Expr cel_expr;
-    google::api::expr::v1alpha1::SourceInfo source_info;
-    
-    // For now, we'll use a simplified compilation approach
-    // In a full implementation, we'd use cel::parser::Parse() 
-    auto expr_builder = runtime_->GetRegistry();
-    if (!expr_builder) {
-        return absl::FailedPreconditionError("Failed to get expression builder");
+    auto pexpr_or = google::api::expr::parser::Parse(expr);
+    if (!pexpr_or.ok()) {
+        return pexpr_or.status();
     }
-    
-    // Create the expression
-    auto expression_result = runtime_->CreateExpression(&cel_expr, &source_info);
-    if (!expression_result.ok()) {
-        return expression_result.status();
+    auto pexpr = std::move(pexpr_or).value();
+    auto expr_or = runtime_->CreateExpression(&pexpr.expr(), &pexpr.source_info());
+    if (!expr_or.ok()) {
+        return expr_or.status();
     }
-    
-    auto compiled_expr = std::move(expression_result.value());
+
+    auto compiled_expr = std::move(expr_or.value());
     
     // Cache the compiled expression using shared_ptr
     std::shared_ptr<google::api::expr::runtime::CelExpression> shared_expr(compiled_expr.release());
