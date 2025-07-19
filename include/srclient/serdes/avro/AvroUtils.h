@@ -158,7 +158,7 @@ namespace utils {
      * @param name Fully qualified name (e.g., "com.example.MyRecord")
      * @return Implied namespace (e.g., "com.example") or empty string if no namespace
      */
-    std::string _implied_namespace(const std::string& name);
+    std::string impliedNamespace(const std::string& name);
 
     /**
      * Get inline tags from an Avro schema

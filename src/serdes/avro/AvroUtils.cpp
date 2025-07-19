@@ -547,7 +547,7 @@ bool isSchemaCompatible(
     return writer_schema.root()->type() == reader_schema.root()->type();
 }
 
-std::string _implied_namespace(const std::string& name) {
+std::string impliedNamespace(const std::string& name) {
     size_t last_dot = name.find_last_of('.');
     if (last_dot != std::string::npos && last_dot > 0) {
         return name.substr(0, last_dot);
@@ -604,7 +604,7 @@ void getInlineTagsRecursively(
             if (ns_it != schema.end() && ns_it->is_string()) {
                 record_ns = ns_it->get<std::string>();
             } else {
-                record_ns = _implied_namespace(name);
+                record_ns = impliedNamespace(name);
                 if (record_ns.empty()) {
                     record_ns = ns;
                 }
