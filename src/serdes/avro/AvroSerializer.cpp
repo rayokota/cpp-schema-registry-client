@@ -172,7 +172,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
             std::make_optional(schema),
             std::make_optional(avro_schema.get()),
             *avro_value,
-            std::nullopt,
+            {},
             std::make_shared<FieldTransformer>(field_transformer)
         );
         
@@ -240,7 +240,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
                     std::make_optional(schema),
                     std::nullopt,
                     *bytes_value,
-                    std::nullopt
+                    {}
                 );
                 avro_bytes = std::any_cast<std::vector<uint8_t>>(result->getValue());
             }
@@ -276,5 +276,7 @@ std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
 AvroSerializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
+
+
 
 } // namespace srclient::serdes::avro

@@ -106,7 +106,7 @@ NamedValue AvroDeserializer::deserialize(
                 std::make_optional(writer_schema_raw),
                 std::nullopt,
                 *bytes_value,
-                std::nullopt
+                {}
             );
             payload_data = std::any_cast<std::vector<uint8_t>>(result->getValue());
         }
@@ -178,7 +178,7 @@ NamedValue AvroDeserializer::deserialize(
             std::make_optional(reader_schema_raw),
             std::make_optional(avro_schema.get()), 
             *serde_value,
-            std::nullopt,
+            {},
             std::make_shared<FieldTransformer>(field_transformer)
         );
         if (transformed->isAvro()) {

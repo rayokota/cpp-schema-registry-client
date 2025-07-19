@@ -467,10 +467,11 @@ std::unordered_set<std::string> getInlineTags(
     const ::avro::GenericRecord& record, 
     const std::string& field_name
 ) {
-    // TODO: Implement this
+    // TODO: Implement this by using get_inline_tags() with the schema JSON
     // Note: Avro C++ doesn't directly support custom attributes like confluent:tags
     // This would need to be implemented by parsing the schema JSON and extracting
-    // custom attributes. For now, return empty set.
+    // custom attributes. The new get_inline_tags() function provides this functionality
+    // for JSON schemas. For now, return empty set.
     return {};
 }
 
@@ -556,6 +557,110 @@ bool isSchemaCompatible(
     // Basic compatibility check - in practice, this would need more sophisticated logic
     // For now, just check if they're the same type
     return writer_schema.root()->type() == reader_schema.root()->type();
+}
+
+std::string _implied_namespace(const std::string& name) {
+    size_t last_dot = name.find_last_of('.');
+    if (last_dot != std::string::npos && last_dot > 0) {
+        return name.substr(0, last_dot);
+    }
+    return "";
+}
+
+std::unordered_map<std::string, std::unordered_set<std::string>> get_inline_tags(const nlohmann::json& schema) {
+    std::unordered_map<std::string, std::unordered_set<std::string>> inline_tags;
+    _get_inline_tags_recursively("", "", schema, inline_tags);
+    return inline_tags;
+}
+
+void _get_inline_tags_recursively(
+    const std::string& ns, 
+    const std::string& name, 
+    const nlohmann::json& schema,
+    std::unordered_map<std::string, std::unordered_set<std::string>>& tags
+) {
+    if (schema.is_null()) {
+        return;
+    }
+    
+    if (schema.is_array()) {
+        for (const auto& subschema : schema) {
+            _get_inline_tags_recursively(ns, name, subschema, tags);
+        }
+    } else if (!schema.is_object()) {
+        // string schemas; this could be either a named schema or a primitive type
+        return;
+    } else {
+        auto schema_type_it = schema.find("type");
+        if (schema_type_it == schema.end()) {
+            return;
+        }
+        
+        std::string schema_type = schema_type_it->is_string() ? schema_type_it->get<std::string>() : "";
+        
+        if (schema_type == "array") {
+            auto items_it = schema.find("items");
+            if (items_it != schema.end()) {
+                _get_inline_tags_recursively(ns, name, *items_it, tags);
+            }
+        } else if (schema_type == "map") {
+            auto values_it = schema.find("values");
+            if (values_it != schema.end()) {
+                _get_inline_tags_recursively(ns, name, *values_it, tags);
+            }
+        } else if (schema_type == "record") {
+            std::string record_ns;
+            std::string record_name;
+            
+            auto ns_it = schema.find("namespace");
+            if (ns_it != schema.end() && ns_it->is_string()) {
+                record_ns = ns_it->get<std::string>();
+            } else {
+                record_ns = _implied_namespace(name);
+                if (record_ns.empty()) {
+                    record_ns = ns;
+                }
+            }
+            
+            auto name_it = schema.find("name");
+            if (name_it != schema.end() && name_it->is_string()) {
+                record_name = name_it->get<std::string>();
+                
+                // Add namespace prefix if needed
+                if (!record_ns.empty() && record_name.find(record_ns) != 0) {
+                    record_name = record_ns + "." + record_name;
+                }
+            }
+            
+            auto fields_it = schema.find("fields");
+            if (fields_it != schema.end() && fields_it->is_array()) {
+                for (const auto& field : *fields_it) {
+                    if (!field.is_object()) continue;
+                    
+                    auto field_tags_it = field.find("confluent:tags");
+                    auto field_name_it = field.find("name");
+                    auto field_type_it = field.find("type");
+                    
+                    if (field_tags_it != field.end() && field_name_it != field.end() && 
+                        field_tags_it->is_array() && field_name_it->is_string()) {
+                        
+                        std::string field_name = field_name_it->get<std::string>();
+                        std::string full_field_name = record_name + "." + field_name;
+                        
+                        for (const auto& tag : *field_tags_it) {
+                            if (tag.is_string()) {
+                                tags[full_field_name].insert(tag.get<std::string>());
+                            }
+                        }
+                    }
+                    
+                    if (field_type_it != field.end()) {
+                        _get_inline_tags_recursively(record_ns, record_name, *field_type_it, tags);
+                    }
+                }
+            }
+        }
+    }
 }
 
 } // namespace utils

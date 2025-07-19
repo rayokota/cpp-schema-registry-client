@@ -164,6 +164,34 @@ namespace utils {
         const ::avro::ValidSchema& reader_schema
     );
 
+    /**
+     * Extract the implied namespace from a qualified name
+     * @param name Fully qualified name (e.g., "com.example.MyRecord")
+     * @return Implied namespace (e.g., "com.example") or empty string if no namespace
+     */
+    std::string _implied_namespace(const std::string& name);
+
+    /**
+     * Get inline tags from an Avro schema
+     * @param schema Avro schema as JSON object
+     * @return Map of field paths to their tag sets
+     */
+    std::unordered_map<std::string, std::unordered_set<std::string>> get_inline_tags(const nlohmann::json& schema);
+
+    /**
+     * Recursively extract inline tags from Avro schema
+     * @param ns Current namespace
+     * @param name Current name/path
+     * @param schema Schema object to process
+     * @param tags Output map of field paths to tag sets
+     */
+    void _get_inline_tags_recursively(
+        const std::string& ns, 
+        const std::string& name, 
+        const nlohmann::json& schema,
+        std::unordered_map<std::string, std::unordered_set<std::string>>& tags
+    );
+
 } // namespace utils
 
 } // namespace srclient::serdes::avro 
