@@ -2,14 +2,13 @@
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeError.h"
-#include "runtime/runtime.h"
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
 #include "eval/public/cel_expression.h"
-#include "runtime/runtime.h"
 #include "nlohmann/json.hpp"
 #include "avro/Generic.hh"
+#include "google/protobuf/arena.h"
 #include <memory>
 #include <unordered_map>
 #include <mutex>
@@ -36,6 +35,7 @@ public:
     static void registerExecutor();
 
 private:
+    google::protobuf::Arena arena_;
     std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime_;
     
     std::unordered_map<std::string, std::shared_ptr<google::api::expr::runtime::CelExpression>> expression_cache_;

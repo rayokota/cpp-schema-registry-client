@@ -24,8 +24,7 @@ using namespace srclient::serdes;
 
 CelExecutor::CelExecutor() {
     // Try to initialize the CEL runtime
-    google::protobuf::Arena arena;
-    auto runtime_result = newRuleBuilder(&arena);
+    auto runtime_result = newRuleBuilder(&arena_);
     if (!runtime_result.ok()) {
         throw SerdeError("Failed to create CEL runtime: " + std::string(runtime_result.status().message()));
     }
@@ -74,9 +73,8 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>
 
 
 std::unique_ptr<SerdeValue> CelExecutor::transform(RuleContext& ctx, const SerdeValue& msg) {
-    google::protobuf::Arena arena;
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
-    args.emplace("msg", fromSerdeValue(msg, &arena));
+    args.emplace("msg", fromSerdeValue(msg, &arena_));
 
     return execute(ctx, msg, args);
 }
