@@ -43,6 +43,23 @@ namespace utils {
     );
 
     /**
+     * Transform individual field with context handling
+     * @param ctx Rule context
+     * @param record_schema Schema of the parent record
+     * @param field_name Name of the field
+     * @param field_datum Field datum to transform
+     * @param field_schema Schema of the field
+     * @return Transformed field datum
+     */
+    ::avro::GenericDatum transformFieldWithCtx(
+        RuleContext& ctx,
+        const ::avro::ValidSchema& record_schema,
+        const std::string& field_name,
+        const ::avro::GenericDatum& field_datum,
+        const ::avro::ValidSchema& field_schema
+    );
+
+    /**
      * Convert Avro schema type to FieldType enum
      * @param schema Avro schema to convert
      * @return Corresponding FieldType

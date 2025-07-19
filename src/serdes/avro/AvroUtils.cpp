@@ -1,4 +1,7 @@
 #include "srclient/serdes/avro/AvroUtils.h"
+#include "srclient/serdes/avro/AvroTypes.h"
+#include "srclient/serdes/RuleRegistry.h"
+#include "srclient/serdes/Serde.h"
 #include <avro/Stream.hh>
 #include <avro/Exception.hh>
 #include <sstream>
@@ -23,19 +26,31 @@ namespace utils {
             ::avro::GenericRecord result(schema.root());
             
             for (size_t i = 0; i < record.fieldCount(); ++i) {
-                auto field = record.fieldAt(i);
+                auto field_datum = record.fieldAt(i);
                 auto field_schema_node = schema.root()->leafAt(i);
                 ::avro::ValidSchema field_schema(field_schema_node);
-                auto transformed = transformFields(ctx, field, field_schema);
-                result.setFieldAt(i, transformed);
+                const std::string& field_name = schema.root()->nameAt(i);
+                
+                auto transformed_field = transformFieldWithCtx(
+                    ctx,
+                    schema,
+                    field_name,
+                    field_datum,
+                    field_schema
+                );
+                result.setFieldAt(i, transformed_field);
             }
             
-            return ::avro::GenericDatum(schema);
+            // Create a new GenericDatum with the schema and set the record value
+            ::avro::GenericDatum result_datum(schema);
+            result_datum.value<::avro::GenericRecord>() = result;
+            return result_datum;
         }
         
         case ::avro::AVRO_ARRAY: {
             auto array = datum.value<::avro::GenericArray>();
-            ::avro::GenericArray result(schema.root());
+            ::avro::GenericDatum result_datum(schema);
+            auto& result = result_datum.value<::avro::GenericArray>();
             auto item_schema_node = schema.root()->leafAt(0);
             ::avro::ValidSchema item_schema(item_schema_node);
             
@@ -44,19 +59,20 @@ namespace utils {
                 result.value().push_back(transformed);
             }
             
-            return ::avro::GenericDatum(schema);
+            return result_datum;
         }
         
         case ::avro::AVRO_MAP: {
             auto map = datum.value<::avro::GenericMap>();
-            ::avro::GenericMap result(schema.root());
+            ::avro::GenericDatum result_datum(schema);
+            auto& result = result_datum.value<::avro::GenericMap>();
             for (const auto& [key, value] : map.value()) {
                 auto value_schema_node = schema.root()->leafAt(0);
                 ::avro::ValidSchema value_schema(value_schema_node);
                 auto transformed = transformFields(ctx, value, value_schema);
                 result.value().emplace_back(key, transformed);
             }
-            return ::avro::GenericDatum(schema);
+            return result_datum;
         }
         
         case ::avro::AVRO_UNION: {
@@ -64,17 +80,118 @@ namespace utils {
             auto [branch_idx, branch_schema] = resolveUnion(schema, datum);
             auto transformed = transformFields(ctx, union_val.datum(), branch_schema);
             
-            ::avro::GenericUnion result(schema.root());
+            ::avro::GenericDatum result_datum(schema);
+            auto& result = result_datum.value<::avro::GenericUnion>();
             result.selectBranch(branch_idx);
             result.datum() = transformed;
             
-            return ::avro::GenericDatum(schema);
+            return result_datum;
         }
         
-        default:
-            // For primitive types, apply field rules if applicable
-            // This would check if there are any field rules that apply to this field
+        default: {
+            // Field-level transformation logic
+            auto field_ctx = ctx.currentField();
+            if (field_ctx.has_value()) {
+                field_ctx->setFieldType(avroSchemaToFieldType(schema));
+                
+                auto rule_tags = ctx.getRule().getTags();
+                std::unordered_set<std::string> rule_tags_set;
+                if (rule_tags.has_value()) {
+                    rule_tags_set = std::unordered_set<std::string>(rule_tags->begin(), rule_tags->end());
+                }
+                
+                // Check if rule tags overlap with field context tags (empty rule_tags means apply to all)
+                bool should_apply = !rule_tags.has_value() || rule_tags_set.empty();
+                if (!should_apply) {
+                    const auto& field_tags = field_ctx->getTags();
+                    for (const auto& field_tag : field_tags) {
+                        if (rule_tags_set.find(field_tag) != rule_tags_set.end()) {
+                            should_apply = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (should_apply) {
+                    auto message_value = makeAvroValue(datum);
+                    
+                    // Get field executor type from the rule
+                    auto field_executor_type = ctx.getRule().getType().value_or("");
+                    
+                    // Try to get executor from context's rule registry first, then global
+                    std::shared_ptr<RuleExecutor> executor;
+                    if (ctx.getRuleRegistry()) {
+                        executor = ctx.getRuleRegistry()->getExecutor(field_executor_type);
+                    }
+                    if (!executor) {
+                        executor = global_registry::getRuleExecutor(field_executor_type);
+                    }
+                    
+                    if (executor) {
+                        auto field_executor = std::dynamic_pointer_cast<FieldRuleExecutor>(executor);
+                        if (!field_executor) {
+                            throw AvroError("executor " + field_executor_type + " is not a field rule executor");
+                        }
+                        
+                        auto new_value = field_executor->transformField(ctx, *message_value);
+                        if (new_value && new_value->isAvro()) {
+                            return std::any_cast<::avro::GenericDatum>(new_value->getValue());
+                        }
+                    }
+                }
+            }
+            
             return datum;
+        }
+    }
+}
+
+// Transform individual field with context handling
+::avro::GenericDatum transformFieldWithCtx(
+    RuleContext& ctx,
+    const ::avro::ValidSchema& record_schema,
+    const std::string& field_name,
+    const ::avro::GenericDatum& field_datum,
+    const ::avro::ValidSchema& field_schema
+) {
+    // Get field type from schema
+    FieldType field_type = avroSchemaToFieldType(field_schema);
+    
+    // Create full field name
+    std::string schema_name = getSchemaName(record_schema).value_or("unknown");
+    std::string full_name = schema_name + "." + field_name;
+    
+    // Create message value from current field datum
+    auto message_value = makeAvroValue(field_datum);
+    
+    // Get inline tags for the field (placeholder implementation)
+    std::unordered_set<std::string> inline_tags = {}; // TODO: Implement getInlineTagsFromSchema
+    
+    // Enter field context
+    ctx.enterField(*message_value, full_name, field_name, field_type, inline_tags);
+    
+    try {
+        // Transform the field value (synchronous call)
+        ::avro::GenericDatum new_value = transformFields(ctx, field_datum, field_schema);
+        
+        // Check for condition rules
+        auto rule_kind = ctx.getRule().getKind();
+        if (rule_kind.has_value() && rule_kind.value() == Kind::Condition) {
+            if (new_value.type() == ::avro::AVRO_BOOL) {
+                bool condition_result = new_value.value<bool>();
+                if (!condition_result) {
+                    ctx.exitField();
+                    throw AvroError("Rule condition failed for field: " + field_name);
+                }
+            }
+        }
+        
+        ctx.exitField();
+        return new_value;
+        
+    } catch (const std::exception& e) {
+        ctx.exitField();
+        throw;
     }
 }
 
