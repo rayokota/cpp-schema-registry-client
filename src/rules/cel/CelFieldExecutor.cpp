@@ -2,6 +2,7 @@
 #include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
+#include "eval/public/containers/container_backed_list_impl.h"
 
 namespace srclient::rules::cel {
 
@@ -63,9 +64,7 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, c
     // Execute the CEL expression using the shared executor
     auto result = executor_->execute(ctx, field_value, args);
     if (result) {
-        // TODO: Replace field_value with result when message replacement is implemented
-        // For now, just return a clone of the original field_value
-        return field_value.clone();
+        return result;
     }
 
     return field_value.clone();
