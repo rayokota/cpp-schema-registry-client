@@ -272,7 +272,7 @@ public:
                            std::optional<Schema> source,
                            std::optional<Schema> target,
                            const std::optional<SerdeSchema*>& parsed_target,
-                           SerdeValue& msg,
+                           const SerdeValue& msg,
                            std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     
     std::unique_ptr<SerdeValue> executeRulesWithPhase(const SerializationContext& ser_ctx,
@@ -282,7 +282,7 @@ public:
                                    std::optional<Schema> source,
                                    std::optional<Schema> target,
                                    const std::optional<SerdeSchema*>& parsed_target,
-                                   SerdeValue& msg,
+                                   const SerdeValue& msg,
                                    std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     
     // Migration support (synchronous versions)
@@ -299,7 +299,7 @@ public:
         std::unique_ptr<SerdeValue> executeMigrations(const SerializationContext& ser_ctx,
                                 const std::string& subject,
                                 const std::vector<Migration>& migrations,
-                                SerdeValue& msg) const;
+                                const SerdeValue& msg) const;
     
     // Accessors
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> getClient() const { return client_; }

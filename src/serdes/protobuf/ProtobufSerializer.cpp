@@ -69,7 +69,7 @@ std::unique_ptr<SerdeValue> ProtobufSerializer::messageToSerdeValue(const google
     return makeProtobufValue(const_cast<google::protobuf::Message&>(message));
 }
 
-std::unique_ptr<SerdeValue> ProtobufSerializer::transformValue(SerdeValue& value,
+std::unique_ptr<SerdeValue> ProtobufSerializer::transformValue(const SerdeValue& value,
                                              const Schema& schema,
                                              const std::string& subject) {
     // Apply transformations and return as unique_ptr

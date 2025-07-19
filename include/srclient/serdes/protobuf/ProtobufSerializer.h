@@ -126,7 +126,7 @@ private:
     
     std::unique_ptr<SerdeValue> messageToSerdeValue(const google::protobuf::Message& message);
     
-    std::unique_ptr<SerdeValue> transformValue(SerdeValue& value,
+    std::unique_ptr<SerdeValue> transformValue(const SerdeValue& value,
                               const Schema& schema,
                               const std::string& subject);
 };

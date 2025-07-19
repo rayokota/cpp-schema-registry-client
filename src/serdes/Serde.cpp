@@ -451,7 +451,7 @@ std::unique_ptr<SerdeValue> Serde::executeRules(const SerializationContext& ser_
                                std::optional<Schema> source,
                                std::optional<Schema> target,
                                const std::optional<SerdeSchema*>& parsed_target,
-                               SerdeValue& msg,
+                               const SerdeValue& msg,
                                std::shared_ptr<FieldTransformer> field_transformer) const {
     return executeRulesWithPhase(ser_ctx, subject, Phase::Domain, rule_mode, 
                                 source, target, parsed_target, msg, field_transformer);
@@ -464,7 +464,7 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(const SerializationCont
                                         std::optional<Schema> source,
                                         std::optional<Schema> target,
                                         const std::optional<SerdeSchema*>& parsed_target,
-                                        SerdeValue& msg,
+                                        const SerdeValue& msg,
                                         std::shared_ptr<FieldTransformer> field_transformer) const {
     std::vector<Rule> rules;
     
@@ -656,7 +656,7 @@ std::vector<RegisteredSchema> Serde::getSchemasBetween(const std::string& subjec
 std::unique_ptr<SerdeValue> Serde::executeMigrations(const SerializationContext& ser_ctx,
                                     const std::string& subject,
                                     const std::vector<Migration>& migrations,
-                                    SerdeValue& msg) const {
+                                    const SerdeValue& msg) const {
     auto current_msg = msg.clone();
     for (const auto& migration : migrations) {
         std::optional<Schema> source = migration.source.has_value() ? 
