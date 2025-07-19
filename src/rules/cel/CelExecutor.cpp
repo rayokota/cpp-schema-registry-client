@@ -4,13 +4,12 @@
 #include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
 #include "srclient/serdes/Serde.h"
-// Comment out problematic includes that might not be available
-// #include "parser/parser.h"
-// #include "runtime/activation.h"
 #include "absl/strings/str_split.h"
 #include "eval/public/activation.h"
 #include "eval/public/builtin_func_registrar.h"
 #include "eval/public/cel_expr_builder_factory.h"
+#include "eval/public/containers/container_backed_list_impl.h"
+#include "eval/public/containers/container_backed_map_impl.h"
 #include "eval/public/string_extension_func_registrar.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
@@ -258,14 +257,19 @@ google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(const nlohmann::
         return google::api::expr::runtime::CelValue::CreateString(arena_str);
     }
     if (json.is_array()) {
-        // TODO: Implement proper CelList interface for JSON arrays
-        // For now, return null to avoid compilation errors
-        return google::api::expr::runtime::CelValue::CreateNull();
+        std::vector<google::api::expr::runtime::CelValue> vec;
+        for (const auto& item : json) {
+            vec.push_back(fromJsonValue(item, arena));
+        }
+        auto* list_impl = new google::api::expr::runtime::ContainerBackedListImpl(vec);
+        return google::api::expr::runtime::CelValue::CreateList(list_impl);
     }
     if (json.is_object()) {
-        // TODO: Implement proper CelMap interface for JSON objects
-        // For now, return null to avoid compilation errors
-        return google::api::expr::runtime::CelValue::CreateNull();
+        auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
+        for (const auto& [key, value] : json.items()) {
+            map_impl->Add(fromJsonValue(key, arena), fromJsonValue(value, arena));
+        }
+        return google::api::expr::runtime::CelValue::CreateMap(map_impl);
     }
     return google::api::expr::runtime::CelValue::CreateNull();
 }
