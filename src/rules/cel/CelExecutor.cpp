@@ -324,8 +324,6 @@ nlohmann::json CelExecutor::toJsonValue(const nlohmann::json& original, const go
     return original;
 }
 
-
-
 google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::GenericDatum& avro, google::protobuf::Arena* arena) {
     switch (avro.type()) {
         case ::avro::AVRO_BOOL: return google::api::expr::runtime::CelValue::CreateBool(avro.value<bool>());
@@ -345,34 +343,35 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::Ge
             arena_bytes->assign(bytes_vec.begin(), bytes_vec.end());
             return google::api::expr::runtime::CelValue::CreateBytes(arena_bytes);
         }
-        // TODO
-        /*
         case ::avro::AVRO_ARRAY: {
             const auto& arr = avro.value<::avro::GenericArray>().value();
             std::vector<google::api::expr::runtime::CelValue> vec;
             for (const auto& item : arr) {
-                vec.push_back(fromAvroValue(item, value_manager));
+                vec.push_back(fromAvroValue(item, arena));
             }
-            auto list_value = value_manager.CreateListValue(cel::ListType(), vec);
-            return list_value.value();
+            auto* list_impl = new google::api::expr::runtime::ContainerBackedListImpl(vec);
+            return google::api::expr::runtime::CelValue::CreateList(list_impl);
         }
         case ::avro::AVRO_MAP: {
-             auto map_builder = value_manager.NewMapValueBuilder(cel::MapType());
+            auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
             const auto& map = avro.value<::avro::GenericMap>().value();
             for (const auto& pair : map) {
-                map_builder->Add(value_manager.CreateStringValue(pair.first), fromAvroValue(pair.second, value_manager));
+                // Use arena allocation for string key
+                auto* arena_key = google::protobuf::Arena::Create<std::string>(arena, pair.first);
+                map_impl->Add(google::api::expr::runtime::CelValue::CreateString(arena_key), fromAvroValue(pair.second, arena));
             }
-            return std::move(*map_builder).Build();
+            return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
         case ::avro::AVRO_RECORD: {
-            auto map_builder = value_manager.NewMapValueBuilder(cel::MapType());
+            auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
             const auto& record = avro.value<::avro::GenericRecord>();
             for (size_t i = 0; i < record.schema()->names(); ++i) {
-                map_builder->Add(value_manager.CreateStringValue(record.schema()->nameAt(i)), fromAvroValue(record.fieldAt(i), value_manager));
+                // Use arena allocation for field name
+                auto* arena_name = google::protobuf::Arena::Create<std::string>(arena, record.schema()->nameAt(i));
+                map_impl->Add(google::api::expr::runtime::CelValue::CreateString(arena_name), fromAvroValue(record.fieldAt(i), arena));
             }
-            return std::move(*map_builder).Build();
+            return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
-        */
         case ::avro::AVRO_NULL: return google::api::expr::runtime::CelValue::CreateNull();
         default: return google::api::expr::runtime::CelValue::CreateNull();
     }
