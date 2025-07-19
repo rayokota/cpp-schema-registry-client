@@ -1,4 +1,5 @@
 #include "srclient/serdes/RuleRegistry.h"
+#include "srclient/serdes/Serde.h"
 #include "srclient/rest/ClientConfiguration.h"
 #include <algorithm>
 #include <stdexcept>
@@ -154,9 +155,36 @@ void clearGlobalRegistry() {
 // FieldRuleExecutor implementation
 
 std::unique_ptr<SerdeValue> FieldRuleExecutor::transform(RuleContext& ctx, const SerdeValue& msg) {
-    // Default implementation delegates to transformField
-    // This matches the behavior expected for field-level executors
-    return transformField(ctx, msg);
+    Mode rule_mode = ctx.getRuleMode();
+    
+    // Check if we need to skip transformation based on mode and rule order
+    if (rule_mode == Mode::Write || rule_mode == Mode::Upgrade) {
+        // For Write/Upgrade mode, check earlier rules
+        for (size_t i = 0; i < ctx.getIndex(); ++i) {
+            const Rule& other_rule = ctx.getRules()[i];
+            if (rule_utils::areTransformsWithSameTag(ctx.getRule(), other_rule)) {
+                return msg.clone();
+            }
+        }
+    } else if (rule_mode == Mode::Read || rule_mode == Mode::Downgrade) {
+        // For Read/Downgrade mode, check later rules
+        const auto& rules = ctx.getRules();
+        for (size_t i = ctx.getIndex() + 1; i < rules.size(); ++i) {
+            const Rule& other_rule = rules[i];
+            if (rule_utils::areTransformsWithSameTag(ctx.getRule(), other_rule)) {
+                return msg.clone();
+            }
+        }
+    }
+    
+    // If we have a field transformer, use it
+    auto field_transformer = ctx.getFieldTransformer();
+    if (field_transformer) {
+        return (*field_transformer)(ctx, getType(), msg);
+    }
+    
+    // Default: return a clone of the original message
+    return msg.clone();
 }
 
 // ErrorAction implementation
