@@ -48,16 +48,16 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, c
     args.emplace("typeName", google::api::expr::runtime::CelValue::CreateString(type_name_str));
 
     // Create CEL list for tags like Rust version
-    auto* tags_vec = google::protobuf::Arena::Create<std::vector<google::api::expr::runtime::CelValue>>(&arena);
+    std::vector<google::api::expr::runtime::CelValue> tags_vec;
     
     for (const auto& tag : field_ctx->getTags()) {
         auto* tag_str = google::protobuf::Arena::Create<std::string>(&arena, tag);
-        tags_vec->push_back(google::api::expr::runtime::CelValue::CreateString(tag_str));
+        tags_vec.push_back(google::api::expr::runtime::CelValue::CreateString(tag_str));
     }
     
     // Create the CEL list for tags using proper API
-    // TODO: Use proper CEL list creation when available - for now comment out
-    // args.emplace("tags", google::api::expr::runtime::CelValue::CreateList(tags_vec));
+    auto* list_impl = new google::api::expr::runtime::ContainerBackedListImpl(tags_vec);
+    args.emplace("tags", google::api::expr::runtime::CelValue::CreateList(list_impl));
     
     // Add containing message like Rust version
     args.emplace("message", executor_->fromSerdeValue(field_ctx->getContainingMessage(), &arena));
