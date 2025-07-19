@@ -165,7 +165,7 @@ namespace utils {
     auto message_value = makeAvroValue(field_datum);
     
     // Get inline tags for the field (placeholder implementation)
-    std::unordered_set<std::string> inline_tags = {}; // TODO: Implement getInlineTagsFromSchema
+    std::unordered_set<std::string> inline_tags = {};
     
     // Enter field context
     ctx.enterField(*message_value, full_name, field_name, field_type, inline_tags);
@@ -463,18 +463,6 @@ std::optional<std::string> getSchemaName(const ::avro::ValidSchema& schema) {
     return std::nullopt;
 }
 
-std::unordered_set<std::string> getInlineTags(
-    const ::avro::GenericRecord& record, 
-    const std::string& field_name
-) {
-    // TODO: Implement this by using get_inline_tags() with the schema JSON
-    // Note: Avro C++ doesn't directly support custom attributes like confluent:tags
-    // This would need to be implemented by parsing the schema JSON and extracting
-    // custom attributes. The new get_inline_tags() function provides this functionality
-    // for JSON schemas. For now, return empty set.
-    return {};
-}
-
 std::vector<uint8_t> serializeAvroData(
     const ::avro::GenericDatum& datum,
     const ::avro::ValidSchema& writer_schema,
@@ -567,13 +555,13 @@ std::string _implied_namespace(const std::string& name) {
     return "";
 }
 
-std::unordered_map<std::string, std::unordered_set<std::string>> get_inline_tags(const nlohmann::json& schema) {
+std::unordered_map<std::string, std::unordered_set<std::string>> getInlineTags(const nlohmann::json& schema) {
     std::unordered_map<std::string, std::unordered_set<std::string>> inline_tags;
-    _get_inline_tags_recursively("", "", schema, inline_tags);
+    getInlineTagsRecursively("", "", schema, inline_tags);
     return inline_tags;
 }
 
-void _get_inline_tags_recursively(
+void getInlineTagsRecursively(
     const std::string& ns, 
     const std::string& name, 
     const nlohmann::json& schema,
@@ -585,7 +573,7 @@ void _get_inline_tags_recursively(
     
     if (schema.is_array()) {
         for (const auto& subschema : schema) {
-            _get_inline_tags_recursively(ns, name, subschema, tags);
+            getInlineTagsRecursively(ns, name, subschema, tags);
         }
     } else if (!schema.is_object()) {
         // string schemas; this could be either a named schema or a primitive type
@@ -601,12 +589,12 @@ void _get_inline_tags_recursively(
         if (schema_type == "array") {
             auto items_it = schema.find("items");
             if (items_it != schema.end()) {
-                _get_inline_tags_recursively(ns, name, *items_it, tags);
+                getInlineTagsRecursively(ns, name, *items_it, tags);
             }
         } else if (schema_type == "map") {
             auto values_it = schema.find("values");
             if (values_it != schema.end()) {
-                _get_inline_tags_recursively(ns, name, *values_it, tags);
+                getInlineTagsRecursively(ns, name, *values_it, tags);
             }
         } else if (schema_type == "record") {
             std::string record_ns;
@@ -655,7 +643,7 @@ void _get_inline_tags_recursively(
                     }
                     
                     if (field_type_it != field.end()) {
-                        _get_inline_tags_recursively(record_ns, record_name, *field_type_it, tags);
+                        getInlineTagsRecursively(record_ns, record_name, *field_type_it, tags);
                     }
                 }
             }

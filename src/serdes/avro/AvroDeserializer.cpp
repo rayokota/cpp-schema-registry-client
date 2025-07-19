@@ -223,11 +223,4 @@ FieldType AvroDeserializer::getFieldType(const ::avro::ValidSchema& schema) {
     return utils::avroSchemaToFieldType(schema);
 }
 
-std::unordered_set<std::string> AvroDeserializer::getInlineTags(
-    const ::avro::GenericRecord& record, 
-    const std::string& field_name
-) {
-    return utils::getInlineTags(record, field_name);
-}
-
 } // namespace srclient::serdes::avro

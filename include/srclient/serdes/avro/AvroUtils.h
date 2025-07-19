@@ -103,17 +103,6 @@ namespace utils {
     std::optional<std::string> getSchemaName(const ::avro::ValidSchema& schema);
 
     /**
-     * Extract inline tags from Avro record field attributes
-     * @param record Avro record
-     * @param field_name Field name to extract tags for
-     * @return Set of tags found in field attributes
-     */
-    std::unordered_set<std::string> getInlineTags(
-        const ::avro::GenericRecord& record, 
-        const std::string& field_name
-    );
-
-    /**
      * Serialize Avro datum to byte array
      * @param datum Avro datum to serialize
      * @param writer_schema Schema to use for writing
@@ -176,7 +165,7 @@ namespace utils {
      * @param schema Avro schema as JSON object
      * @return Map of field paths to their tag sets
      */
-    std::unordered_map<std::string, std::unordered_set<std::string>> get_inline_tags(const nlohmann::json& schema);
+    std::unordered_map<std::string, std::unordered_set<std::string>> getInlineTags(const nlohmann::json& schema);
 
     /**
      * Recursively extract inline tags from Avro schema
@@ -185,7 +174,7 @@ namespace utils {
      * @param schema Schema object to process
      * @param tags Output map of field paths to tag sets
      */
-    void _get_inline_tags_recursively(
+    void getInlineTagsRecursively(
         const std::string& ns, 
         const std::string& name, 
         const nlohmann::json& schema,

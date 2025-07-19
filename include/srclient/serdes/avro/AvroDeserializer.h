@@ -115,13 +115,6 @@ private:
      * @return Corresponding FieldType
      */
     FieldType getFieldType(const ::avro::ValidSchema& schema);
-
-    /**
-     * Extract inline tags from Avro field
-     * @param field Avro record field
-     * @return Set of tags from field attributes
-     */
-    std::unordered_set<std::string> getInlineTags(const ::avro::GenericRecord& record, const std::string& field_name);
 };
 
 } // namespace srclient::serdes::avro 
