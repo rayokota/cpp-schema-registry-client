@@ -288,9 +288,39 @@ nlohmann::json CelExecutor::toJsonValue(const nlohmann::json& original, const go
         return nlohmann::json(std::string(cel_value.StringOrDie().value()));
     } else if (cel_value.IsNull()) {
         return nlohmann::json(nullptr);
+    } else if (cel_value.IsList()) {
+        // Handle array/list conversion
+        nlohmann::json json_array = nlohmann::json::array();
+        const auto* cel_list = cel_value.ListOrDie();
+        for (int i = 0; i < cel_list->size(); ++i) {
+            auto item = (*cel_list)[i];
+            json_array.push_back(toJsonValue(nlohmann::json(), item));
+        }
+        return json_array;
+    } else if (cel_value.IsMap()) {
+        // Handle object/map conversion
+        nlohmann::json json_object = nlohmann::json::object();
+        const auto* cel_map = cel_value.MapOrDie();
+        
+        // Iterate through map entries
+        auto map_keys = cel_map->ListKeys();
+        if (map_keys.ok()) {
+            const auto* keys_list = map_keys.value();
+            for (int i = 0; i < keys_list->size(); ++i) {
+                auto key_val = (*keys_list)[i];
+                if (key_val.IsString()) {
+                    std::string key = std::string(key_val.StringOrDie().value());
+                    auto value_lookup = cel_map->Get(nullptr, key_val);
+                    if (value_lookup.has_value()) {
+                        json_object[key] = toJsonValue(nlohmann::json(), value_lookup.value());
+                    }
+                }
+            }
+        }
+        return json_object;
     }
-    // For more complex types (List, Map) or unknown types, return the original
-    // TODO: Implement recursive conversion for lists and maps
+    
+    // For unknown types, return the original value
     return original;
 }
 
