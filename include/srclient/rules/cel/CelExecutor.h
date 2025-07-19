@@ -59,6 +59,19 @@ private:
     nlohmann::json toJsonValue(const nlohmann::json& original, const google::api::expr::runtime::CelValue& cel_value);
     ::avro::GenericDatum toAvroValue(const ::avro::GenericDatum& original, const google::api::expr::runtime::CelValue& cel_value);
     std::unique_ptr<google::protobuf::Message> toProtobufValue(const google::protobuf::Message& original, const google::api::expr::runtime::CelValue& cel_value);
+    
+    // Helper methods for protobuf conversion
+    google::api::expr::runtime::CelValue convertProtobufFieldToCel(
+        const google::protobuf::Message& message,
+        const google::protobuf::FieldDescriptor* field,
+        const google::protobuf::Reflection* reflection,
+        google::protobuf::Arena* arena,
+        int index);
+        
+    google::api::expr::runtime::CelValue convertProtobufMapToCel(
+        const google::protobuf::Message& map_entry,
+        const google::protobuf::FieldDescriptor* map_field,
+        google::protobuf::Arena* arena);
 };
 
 }

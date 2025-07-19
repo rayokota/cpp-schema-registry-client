@@ -792,78 +792,178 @@ google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(const google
     const auto* reflection = protobuf.GetReflection();
     if (!reflection) return google::api::expr::runtime::CelValue::CreateNull();
 
-    // Comment out complex conversion logic for now
-    /*
-    // TODO
-    auto map_builder_status = value_manager.NewMapValueBuilder(cel::MapType());
-    if (!map_builder_status.ok()) {
-        return value_manager.CreateErrorValue(map_builder_status.status());
-    }
-    auto map_builder = std::move(map_builder_status.value());
+    // Create a map to represent the protobuf message
+    auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
 
+    // Get all fields that have values set
     std::vector<const google::protobuf::FieldDescriptor*> fields;
     reflection->ListFields(protobuf, &fields);
 
     for (const auto* field : fields) {
-        auto cel_key = value_manager.CreateStringValue(field->name());
+        // Create key for the field name
+        auto* arena_field_name = google::protobuf::Arena::Create<std::string>(arena, field->name());
+        auto cel_key = google::api::expr::runtime::CelValue::CreateString(arena_field_name);
+        
+        google::api::expr::runtime::CelValue cel_value = google::api::expr::runtime::CelValue::CreateNull();
         
         if (field->is_repeated()) {
+            // Handle repeated fields as lists
             std::vector<google::api::expr::runtime::CelValue> vec;
             int field_size = reflection->FieldSize(protobuf, field);
+            
             for (int i = 0; i < field_size; ++i) {
-                vec.push_back(ConvertProtobufFieldToCel(protobuf, field, value_manager, i));
+                cel_value = convertProtobufFieldToCel(protobuf, field, reflection, arena, i);
+                if (!cel_value.IsError()) {
+                    vec.push_back(cel_value);
+                }
             }
-            auto list_value_status = value_manager.CreateListValue(cel::ListType(), vec);
-            if(list_value_status.ok()) {
-                map_builder->Add(cel_key, list_value_status.value());
-            }
+            
+            auto* list_impl = new google::api::expr::runtime::ContainerBackedListImpl(vec);
+            cel_value = google::api::expr::runtime::CelValue::CreateList(list_impl);
         } else {
-            map_builder->Add(cel_key, ConvertProtobufFieldToCel(protobuf, field, value_manager));
+            // Handle single value fields
+            cel_value = convertProtobufFieldToCel(protobuf, field, reflection, arena, -1);
+        }
+        
+        // Add to map if conversion was successful
+        if (!cel_value.IsError()) {
+            auto status = map_impl->Add(cel_key, cel_value);
+            if (!status.ok()) {
+                // Log error but continue processing other fields
+            }
         }
     }
-    */
-    return google::api::expr::runtime::CelValue::CreateNull();
+
+    return google::api::expr::runtime::CelValue::CreateMap(map_impl);
 }
 
-static google::api::expr::runtime::CelValue ConvertProtobufFieldToCel(const google::protobuf::Message& message,
-                                              const google::protobuf::FieldDescriptor* field,
-                                              google::protobuf::Arena* arena,
-                                              int index = -1) {
-    const auto* reflection = message.GetReflection();
+google::api::expr::runtime::CelValue CelExecutor::convertProtobufFieldToCel(
+    const google::protobuf::Message& message,
+    const google::protobuf::FieldDescriptor* field,
+    const google::protobuf::Reflection* reflection,
+    google::protobuf::Arena* arena,
+    int index) {
+    
+    // For repeated fields, index >= 0; for singular fields, index = -1
+    
     switch (field->cpp_type()) {
-        case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
-            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedInt32(message, field, index) : reflection->GetInt32(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
-            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedInt64(message, field, index) : reflection->GetInt64(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
-            return google::api::expr::runtime::CelValue::CreateUint64(index != -1 ? reflection->GetRepeatedUInt32(message, field, index) : reflection->GetUInt32(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
-            return google::api::expr::runtime::CelValue::CreateUint64(index != -1 ? reflection->GetRepeatedUInt64(message, field, index) : reflection->GetUInt64(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
-            return google::api::expr::runtime::CelValue::CreateDouble(index != -1 ? reflection->GetRepeatedFloat(message, field, index) : reflection->GetFloat(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
-            return google::api::expr::runtime::CelValue::CreateDouble(index != -1 ? reflection->GetRepeatedDouble(message, field, index) : reflection->GetDouble(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
-            return google::api::expr::runtime::CelValue::CreateBool(index != -1 ? reflection->GetRepeatedBool(message, field, index) : reflection->GetBool(message, field));
-        case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
-            // Use arena allocation for string storage
-            auto str_value = index != -1 ? reflection->GetRepeatedString(message, field, index) : reflection->GetString(message, field);
-            auto* arena_str = google::protobuf::Arena::Create<std::string>(arena, str_value);
-            return google::api::expr::runtime::CelValue::CreateString(arena_str);
+        case google::protobuf::FieldDescriptor::CPPTYPE_BOOL: {
+            bool value = (index >= 0) ? reflection->GetRepeatedBool(message, field, index)
+                                       : reflection->GetBool(message, field);
+            return google::api::expr::runtime::CelValue::CreateBool(value);
         }
-        case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
-            return google::api::expr::runtime::CelValue::CreateInt64(index != -1 ? reflection->GetRepeatedEnum(message, field, index)->number() : reflection->GetEnum(message, field)->number());
-        // TODO
-        /*
-        case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
-            {
-                const auto& sub_message = index != -1 ? reflection->GetRepeatedMessage(message, field, index) : reflection->GetMessage(message, field);
-                return CelExecutor::fromProtobufValue(sub_message, value_manager);
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_INT32: {
+            int32_t value = (index >= 0) ? reflection->GetRepeatedInt32(message, field, index)
+                                         : reflection->GetInt32(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(static_cast<int64_t>(value));
+        }
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_INT64: {
+            int64_t value = (index >= 0) ? reflection->GetRepeatedInt64(message, field, index)
+                                         : reflection->GetInt64(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(value);
+        }
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_UINT32: {
+            uint32_t value = (index >= 0) ? reflection->GetRepeatedUInt32(message, field, index)
+                                          : reflection->GetUInt32(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(static_cast<int64_t>(value));
+        }
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_UINT64: {
+            uint64_t value = (index >= 0) ? reflection->GetRepeatedUInt64(message, field, index)
+                                          : reflection->GetUInt64(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(static_cast<int64_t>(value));
+        }
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT: {
+            float value = (index >= 0) ? reflection->GetRepeatedFloat(message, field, index)
+                                       : reflection->GetFloat(message, field);
+            return google::api::expr::runtime::CelValue::CreateDouble(static_cast<double>(value));
+        }
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE: {
+            double value = (index >= 0) ? reflection->GetRepeatedDouble(message, field, index)
+                                        : reflection->GetDouble(message, field);
+            return google::api::expr::runtime::CelValue::CreateDouble(value);
+        }
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
+            std::string value = (index >= 0) ? reflection->GetRepeatedString(message, field, index)
+                                             : reflection->GetString(message, field);
+            // Use arena allocation for string storage
+            auto* arena_str = google::protobuf::Arena::Create<std::string>(arena, value);
+            
+            if (field->type() == google::protobuf::FieldDescriptor::TYPE_BYTES) {
+                return google::api::expr::runtime::CelValue::CreateBytes(arena_str);
+            } else {
+                return google::api::expr::runtime::CelValue::CreateString(arena_str);
             }
-        */
+        }
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_ENUM: {
+            int value = (index >= 0) ? reflection->GetRepeatedEnumValue(message, field, index)
+                                     : reflection->GetEnumValue(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(static_cast<int64_t>(value));
+        }
+        
+        case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: {
+            const google::protobuf::Message& nested_message = 
+                (index >= 0) ? reflection->GetRepeatedMessage(message, field, index)
+                             : reflection->GetMessage(message, field);
+            
+            // Handle map fields specially
+            if (field->is_map()) {
+                return convertProtobufMapToCel(nested_message, field, arena);
+            } else {
+                // Recursively convert nested message
+                return fromProtobufValue(nested_message, arena);
+            }
+        }
+        
         default:
             return google::api::expr::runtime::CelValue::CreateNull();
     }
+}
+
+google::api::expr::runtime::CelValue CelExecutor::convertProtobufMapToCel(
+    const google::protobuf::Message& map_entry,
+    const google::protobuf::FieldDescriptor* map_field,
+    google::protobuf::Arena* arena) {
+    
+    auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
+    
+    const auto* descriptor = map_entry.GetDescriptor();
+    const auto* reflection = map_entry.GetReflection();
+    
+    if (!descriptor || !reflection) {
+        return google::api::expr::runtime::CelValue::CreateMap(map_impl);
+    }
+    
+    // Map entries have exactly 2 fields: key and value
+    const auto* key_field = descriptor->field(0);   // "key"
+    const auto* value_field = descriptor->field(1); // "value"
+    
+    if (!key_field || !value_field) {
+        return google::api::expr::runtime::CelValue::CreateMap(map_impl);
+    }
+    
+    // Convert the key
+    auto cel_key = convertProtobufFieldToCel(map_entry, key_field, reflection, arena, -1);
+    
+    // Convert the value  
+    auto cel_value = convertProtobufFieldToCel(map_entry, value_field, reflection, arena, -1);
+    
+    // Add to map
+    if (!cel_key.IsError() && !cel_value.IsError()) {
+        auto status = map_impl->Add(cel_key, cel_value);
+        if (!status.ok()) {
+            // Log error but continue
+        }
+    }
+    
+    return google::api::expr::runtime::CelValue::CreateMap(map_impl);
 }
 
 void CelExecutor::registerExecutor() {
