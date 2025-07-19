@@ -22,7 +22,7 @@ using namespace srclient::serdes;
 
 CelExecutor::CelExecutor() {
     // Try to initialize the CEL runtime
-    auto runtime_result = newRuleBuilder(nullptr);
+    auto runtime_result = newRuleBuilder(&arena_);
     if (!runtime_result.ok()) {
         throw SerdeError("Failed to create CEL runtime: " + std::string(runtime_result.status().message()));
     }
@@ -140,11 +140,8 @@ std::unique_ptr<google::api::expr::runtime::CelValue> CelExecutor::executeRule(R
         activation.InsertValue(pair.first, pair.second);
     }
     
-    // Create arena for evaluation
-    google::protobuf::Arena arena;
-    
-    // Evaluate the expression
-    auto eval_status = parsed_expr->Evaluate(activation, &arena);
+    // Evaluate the expression using the member arena
+    auto eval_status = parsed_expr->Evaluate(activation, &arena_);
     if (!eval_status.ok()) {
         throw SerdeError("CEL evaluation failed: " + std::string(eval_status.status().message()));
     }

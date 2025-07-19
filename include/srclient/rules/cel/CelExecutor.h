@@ -40,6 +40,8 @@ private:
     
     std::unordered_map<std::string, std::shared_ptr<google::api::expr::runtime::CelExpression>> expression_cache_;
     mutable std::mutex cache_mutex_;
+    
+    google::protobuf::Arena arena_;
 
     absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>> newRuleBuilder(
         google::protobuf::Arena* arena);
