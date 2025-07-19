@@ -267,7 +267,10 @@ google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(const nlohmann::
     if (json.is_object()) {
         auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
         for (const auto& [key, value] : json.items()) {
-            map_impl->Add(fromJsonValue(key, arena), fromJsonValue(value, arena));
+            auto status = map_impl->Add(fromJsonValue(key, arena), fromJsonValue(value, arena));
+            if (!status.ok()) {
+                // Log error or handle as needed, but continue processing
+            }
         }
         return google::api::expr::runtime::CelValue::CreateMap(map_impl);
     }
@@ -293,7 +296,7 @@ nlohmann::json CelExecutor::toJsonValue(const nlohmann::json& original, const go
         nlohmann::json json_array = nlohmann::json::array();
         const auto* cel_list = cel_value.ListOrDie();
         for (int i = 0; i < cel_list->size(); ++i) {
-            auto item = (*cel_list)[i];
+            auto item = cel_list->Get(nullptr, i);
             json_array.push_back(toJsonValue(nlohmann::json(), item));
         }
         return json_array;
@@ -303,11 +306,11 @@ nlohmann::json CelExecutor::toJsonValue(const nlohmann::json& original, const go
         const auto* cel_map = cel_value.MapOrDie();
         
         // Iterate through map entries
-        auto map_keys = cel_map->ListKeys();
+        auto map_keys = cel_map->ListKeys(nullptr);
         if (map_keys.ok()) {
             const auto* keys_list = map_keys.value();
             for (int i = 0; i < keys_list->size(); ++i) {
-                auto key_val = (*keys_list)[i];
+                auto key_val = keys_list->Get(nullptr, i);
                 if (key_val.IsString()) {
                     std::string key = std::string(key_val.StringOrDie().value());
                     auto value_lookup = cel_map->Get(nullptr, key_val);
@@ -358,7 +361,10 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::Ge
             for (const auto& pair : map) {
                 // Use arena allocation for string key
                 auto* arena_key = google::protobuf::Arena::Create<std::string>(arena, pair.first);
-                map_impl->Add(google::api::expr::runtime::CelValue::CreateString(arena_key), fromAvroValue(pair.second, arena));
+                auto status = map_impl->Add(google::api::expr::runtime::CelValue::CreateString(arena_key), fromAvroValue(pair.second, arena));
+                if (!status.ok()) {
+                    // Log error or handle as needed, but continue processing
+                }
             }
             return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
@@ -368,7 +374,10 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::Ge
             for (size_t i = 0; i < record.schema()->names(); ++i) {
                 // Use arena allocation for field name
                 auto* arena_name = google::protobuf::Arena::Create<std::string>(arena, record.schema()->nameAt(i));
-                map_impl->Add(google::api::expr::runtime::CelValue::CreateString(arena_name), fromAvroValue(record.fieldAt(i), arena));
+                auto status = map_impl->Add(google::api::expr::runtime::CelValue::CreateString(arena_name), fromAvroValue(record.fieldAt(i), arena));
+                if (!status.ok()) {
+                    // Log error or handle as needed, but continue processing
+                }
             }
             return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
@@ -392,7 +401,112 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::Ge
         return ::avro::GenericDatum(std::string(cel_value.StringOrDie().value()));
     } else if (cel_value.IsNull()) {
         return ::avro::GenericDatum();  // Creates null datum
+    } else if (cel_value.IsList()) {
+        // Convert CEL list to Avro array
+        const auto* cel_list = cel_value.ListOrDie();
+        
+        if (original.type() == ::avro::AVRO_ARRAY) {
+            // Use existing array schema
+            auto orig_array_schema = original.value<::avro::GenericArray>().schema();
+            ::avro::GenericDatum result_datum{::avro::ValidSchema(orig_array_schema)};
+            auto& result_array = result_datum.value<::avro::GenericArray>();
+            
+            // Get element template from original if available
+            ::avro::GenericDatum element_template;
+            auto& orig_array = original.value<::avro::GenericArray>().value();
+            if (!orig_array.empty()) {
+                element_template = orig_array[0];
+            }
+            
+            // Recursively convert each list element
+            for (int i = 0; i < cel_list->size(); ++i) {
+                auto item = cel_list->Get(nullptr, i);
+                if (!item.IsError()) {
+                    result_array.value().push_back(toAvroValue(element_template, item));
+                }
+            }
+            
+            return result_datum;
+        } else {
+            // For non-array originals, return the original (we can't create a new schema)
+            return original;
+        }
+    } else if (cel_value.IsMap()) {
+        // Convert CEL map to Avro map or record depending on original type
+        const auto* cel_map = cel_value.MapOrDie();
+        
+        if (original.type() == ::avro::AVRO_RECORD) {
+            // Convert to Avro record
+            auto orig_record_schema = original.value<::avro::GenericRecord>().schema();
+            ::avro::GenericDatum result_datum{::avro::ValidSchema(orig_record_schema)};
+            auto& result_record = result_datum.value<::avro::GenericRecord>();
+            
+            // Copy original record first
+            auto& orig_record = original.value<::avro::GenericRecord>();
+            for (size_t i = 0; i < orig_record.fieldCount(); ++i) {
+                result_record.setFieldAt(i, orig_record.fieldAt(i));
+            }
+            
+            // Iterate through map entries and update matching fields
+            auto map_keys = cel_map->ListKeys(nullptr);
+            if (map_keys.ok()) {
+                const auto* keys_list = map_keys.value();
+                for (int i = 0; i < keys_list->size(); ++i) {
+                    auto key_val = keys_list->Get(nullptr, i);
+                    if (!key_val.IsError() && key_val.IsString()) {
+                        std::string key = std::string(key_val.StringOrDie().value());
+                        auto value_lookup = cel_map->Get(nullptr, key_val);
+                        if (value_lookup.has_value()) {
+                            // Find the field index by name
+                            for (size_t field_idx = 0; field_idx < orig_record_schema->leaves(); ++field_idx) {
+                                if (orig_record_schema->nameAt(field_idx) == key) {
+                                    auto field_template = orig_record.fieldAt(field_idx);
+                                    result_record.setFieldAt(field_idx, toAvroValue(field_template, value_lookup.value()));
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return result_datum;
+        } else if (original.type() == ::avro::AVRO_MAP) {
+            // Convert to Avro map
+            auto orig_map_schema = original.value<::avro::GenericMap>().schema();
+            ::avro::GenericDatum result_datum{::avro::ValidSchema(orig_map_schema)};
+            auto& result_map = result_datum.value<::avro::GenericMap>();
+            
+            // Get value template from original if available
+            ::avro::GenericDatum value_template;
+            auto& orig_map = original.value<::avro::GenericMap>().value();
+            if (!orig_map.empty()) {
+                value_template = orig_map.begin()->second;
+            }
+            
+            // Iterate through map entries
+            auto map_keys = cel_map->ListKeys(nullptr);
+            if (map_keys.ok()) {
+                const auto* keys_list = map_keys.value();
+                for (int i = 0; i < keys_list->size(); ++i) {
+                    auto key_val = keys_list->Get(nullptr, i);
+                    if (!key_val.IsError() && key_val.IsString()) {
+                        std::string key = std::string(key_val.StringOrDie().value());
+                        auto value_lookup = cel_map->Get(nullptr, key_val);
+                        if (value_lookup.has_value()) {
+                            result_map.value().emplace_back(key, toAvroValue(value_template, value_lookup.value()));
+                        }
+                    }
+                }
+            }
+            
+            return result_datum;
+        } else {
+            // For non-map/record originals, return the original
+            return original;
+        }
     }
+    
     // For more complex types or unknown types, return the original
     return original;
 }
