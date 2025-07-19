@@ -257,11 +257,11 @@ google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(const nlohmann::
         for (const auto& item : json) {
             vec.push_back(fromJsonValue(item, arena));
         }
-        auto* list_impl = new google::api::expr::runtime::ContainerBackedListImpl(vec);
+        auto* list_impl = google::protobuf::Arena::Create<google::api::expr::runtime::ContainerBackedListImpl>(arena, vec);
         return google::api::expr::runtime::CelValue::CreateList(list_impl);
     }
     if (json.is_object()) {
-        auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
+        auto* map_impl = google::protobuf::Arena::Create<google::api::expr::runtime::CelMapBuilder>(arena);
         for (const auto& [key, value] : json.items()) {
             auto status = map_impl->Add(fromJsonValue(key, arena), fromJsonValue(value, arena));
             if (!status.ok()) {
@@ -348,11 +348,11 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::Ge
             for (const auto& item : arr) {
                 vec.push_back(fromAvroValue(item, arena));
             }
-            auto* list_impl = new google::api::expr::runtime::ContainerBackedListImpl(vec);
+            auto* list_impl = google::protobuf::Arena::Create<google::api::expr::runtime::ContainerBackedListImpl>(arena, vec);
             return google::api::expr::runtime::CelValue::CreateList(list_impl);
         }
         case ::avro::AVRO_MAP: {
-            auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
+            auto* map_impl = google::protobuf::Arena::Create<google::api::expr::runtime::CelMapBuilder>(arena);
             const auto& map = avro.value<::avro::GenericMap>().value();
             for (const auto& pair : map) {
                 // Use arena allocation for string key
@@ -365,7 +365,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(const ::avro::Ge
             return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
         case ::avro::AVRO_RECORD: {
-            auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
+            auto* map_impl = google::protobuf::Arena::Create<google::api::expr::runtime::CelMapBuilder>(arena);
             const auto& record = avro.value<::avro::GenericRecord>();
             for (size_t i = 0; i < record.schema()->names(); ++i) {
                 // Use arena allocation for field name
@@ -789,7 +789,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(const google
     if (!reflection) return google::api::expr::runtime::CelValue::CreateNull();
 
     // Create a map to represent the protobuf message
-    auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
+    auto* map_impl = google::protobuf::Arena::Create<google::api::expr::runtime::CelMapBuilder>(arena);
 
     // Get all fields that have values set
     std::vector<const google::protobuf::FieldDescriptor*> fields;
@@ -814,7 +814,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(const google
                 }
             }
             
-            auto* list_impl = new google::api::expr::runtime::ContainerBackedListImpl(vec);
+            auto* list_impl = google::protobuf::Arena::Create<google::api::expr::runtime::ContainerBackedListImpl>(arena, vec);
             cel_value = google::api::expr::runtime::CelValue::CreateList(list_impl);
         } else {
             // Handle single value fields
@@ -928,7 +928,7 @@ google::api::expr::runtime::CelValue CelExecutor::convertProtobufMapToCel(
     const google::protobuf::FieldDescriptor* map_field,
     google::protobuf::Arena* arena) {
     
-    auto* map_impl = new google::api::expr::runtime::CelMapBuilder();
+    auto* map_impl = google::protobuf::Arena::Create<google::api::expr::runtime::CelMapBuilder>(arena);
     
     const auto* descriptor = map_entry.GetDescriptor();
     const auto* reflection = map_entry.GetReflection();

@@ -56,7 +56,7 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, c
     }
     
     // Create the CEL list for tags using proper API
-    auto* list_impl = new google::api::expr::runtime::ContainerBackedListImpl(tags_vec);
+    auto* list_impl = google::protobuf::Arena::Create<google::api::expr::runtime::ContainerBackedListImpl>(&arena, tags_vec);
     args.emplace("tags", google::api::expr::runtime::CelValue::CreateList(list_impl));
     
     // Add containing message like Rust version
