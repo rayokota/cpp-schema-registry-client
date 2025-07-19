@@ -38,7 +38,7 @@ public:
 private:
     std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime_;
     
-    std::unordered_map<std::string, std::unique_ptr<google::api::expr::runtime::CelExpression>> expression_cache_;
+    std::unordered_map<std::string, std::shared_ptr<google::api::expr::runtime::CelExpression>> expression_cache_;
     mutable std::mutex cache_mutex_;
 
     absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>> newRuleBuilder(
@@ -49,7 +49,7 @@ private:
                                        const std::string& expr,
                                        const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args);
 
-    absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpression>> getOrCompileExpression(const std::string& expr);
+    absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>> getOrCompileExpression(const std::string& expr);
 
     static google::api::expr::runtime::CelValue fromJsonValue(const nlohmann::json& json);
     static google::api::expr::runtime::CelValue fromAvroValue(const ::avro::GenericDatum& avro);

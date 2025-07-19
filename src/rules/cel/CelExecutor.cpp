@@ -75,14 +75,7 @@ std::unique_ptr<SerdeValue> CelExecutor::transform(RuleContext& ctx, const Serde
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
     args.emplace("msg", fromSerdeValue(msg));
 
-    auto result = execute(ctx, msg, args);
-    if (result) {
-        // TODO: Replace the original message with the result once we have proper message replacement
-        // For now, just return a clone of the original - the execute method currently returns nullptr anyway
-        // auto converted_msg = std::move(*result);  // This line causes abstract class error - commented out
-        return msg.clone();
-    }
-    return msg.clone();
+    return execute(ctx, msg, args);
 }
 
 std::unique_ptr<SerdeValue> CelExecutor::execute(RuleContext& ctx, 
@@ -139,7 +132,7 @@ std::unique_ptr<google::api::expr::runtime::CelValue> CelExecutor::executeRule(R
     if (!parsed_expr_status.ok()) {
         throw SerdeError("CEL expression compilation failed: " + std::string(parsed_expr_status.status().message()));
     }
-    auto parsed_expr = std::move(parsed_expr_status.value());
+    auto parsed_expr = parsed_expr_status.value();
 
     // Create activation context and add all arguments
     google::api::expr::runtime::Activation activation;
@@ -159,16 +152,14 @@ std::unique_ptr<google::api::expr::runtime::CelValue> CelExecutor::executeRule(R
     return std::make_unique<google::api::expr::runtime::CelValue>(eval_status.value());
 }
 
-absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpression>> CelExecutor::getOrCompileExpression(const std::string& expr) {
+absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>> CelExecutor::getOrCompileExpression(const std::string& expr) {
     // Thread-safe cache lookup
     {
         std::lock_guard<std::mutex> lock(cache_mutex_);
         auto it = expression_cache_.find(expr);
         if (it != expression_cache_.end()) {
-            // Return a copy since we're returning unique_ptr
-            // Note: We can't actually copy CelExpression, so we'll need to recompile
-            // This is a limitation compared to Rust where Program is Clone
-            // For now, fall through to recompilation
+            // Return shared_ptr from cache
+            return it->second;
         }
     }
     
@@ -197,14 +188,14 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpression>> CelEx
     
     auto compiled_expr = std::move(expression_result.value());
     
-    // Cache the compiled expression (though we can't reuse it due to unique_ptr limitation)
+    // Cache the compiled expression using shared_ptr
+    std::shared_ptr<google::api::expr::runtime::CelExpression> shared_expr(compiled_expr.release());
     {
         std::lock_guard<std::mutex> lock(cache_mutex_);
-        // For now, just return without caching since CelExpression is not copyable
-        // expression_cache_[expr] = std::move(compiled_expr);  // Can't do this with unique_ptr
+        expression_cache_[expr] = shared_expr;
     }
     
-    return std::move(compiled_expr);
+    return shared_expr;
 }
 
 google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValue& value) {
