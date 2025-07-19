@@ -279,10 +279,10 @@ using SchemaIdDeserializer = std::function<size_t(
 )>;
 
 // Function signature for field transformation
-using FieldTransformer = std::function<SerdeValue&(
+using FieldTransformer = std::function<std::unique_ptr<SerdeValue>(
     RuleContext& ctx, 
     const std::string& rule_type,
-    SerdeValue& msg
+    const SerdeValue& msg
 )>;
 
 /**

@@ -150,16 +150,13 @@ std::vector<uint8_t> AvroSerializer::serialize(
         auto parsed_schema = serde_->getParsedSchema(schema, base_->getSerde().getClient());
         
         // Create field transformer lambda
-        auto field_transformer = [this, &parsed_schema](RuleContext& ctx, const std::string& rule_type, SerdeValue& msg) -> SerdeValue& {
+        auto field_transformer = [this, &parsed_schema](RuleContext& ctx, const std::string& rule_type, const SerdeValue& msg) -> std::unique_ptr<SerdeValue> {
             if (msg.isAvro()) {
                 auto avro_datum = std::any_cast<::avro::GenericDatum>(msg.getValue());
                 auto transformed = utils::transformFields(ctx, avro_datum, parsed_schema.first);
-                // Create new SerdeValue and store it in a static thread_local to return reference
-                static thread_local std::unique_ptr<SerdeValue> stored_value;
-                stored_value = makeAvroValue(transformed);
-                return *stored_value;
+                return makeAvroValue(transformed);
             }
-            return msg;
+            return msg.clone();
         };
         
         // Create SerdeValue and SerdeSchema instances

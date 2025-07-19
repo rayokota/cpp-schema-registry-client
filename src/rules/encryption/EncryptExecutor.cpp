@@ -190,7 +190,7 @@ void EncryptionExecutor<T>::close() {
 }
 
 template<typename T>
-std::unique_ptr<SerdeValue> EncryptionExecutor<T>::transform(RuleContext& ctx, SerdeValue& msg) {
+std::unique_ptr<SerdeValue> EncryptionExecutor<T>::transform(RuleContext& ctx, const SerdeValue& msg) {
     auto transform = newTransform(ctx);
     transform->transform(ctx, FieldType::Bytes, msg);
     
@@ -807,7 +807,7 @@ void FieldEncryptionExecutor<T>::close() {
 }
 
 template<typename T>
-std::unique_ptr<SerdeValue> FieldEncryptionExecutor<T>::transformField(RuleContext& ctx, SerdeValue& field_value) {
+std::unique_ptr<SerdeValue> FieldEncryptionExecutor<T>::transformField(RuleContext& ctx, const SerdeValue& field_value) {
     auto transform = executor_.newTransform(ctx);
     auto field_ctx = ctx.currentField();
     if (!field_ctx) {

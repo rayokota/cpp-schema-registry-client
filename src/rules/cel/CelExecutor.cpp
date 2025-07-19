@@ -71,7 +71,7 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>
 }
 
 
-std::unique_ptr<SerdeValue> CelExecutor::transform(RuleContext& ctx, SerdeValue& msg) {
+std::unique_ptr<SerdeValue> CelExecutor::transform(RuleContext& ctx, const SerdeValue& msg) {
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
     args.emplace("msg", fromSerdeValue(msg));
 

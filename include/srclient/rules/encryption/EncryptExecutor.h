@@ -127,7 +127,7 @@ public:
     void close() override;
 
     // RuleExecutor interface
-    std::unique_ptr<SerdeValue> transform(RuleContext& ctx, SerdeValue& msg) override;
+    std::unique_ptr<SerdeValue> transform(RuleContext& ctx, const SerdeValue& msg) override;
 
     // Accessor
     T* getClient() const;
@@ -232,7 +232,7 @@ public:
     void close() override;
 
     // FieldRuleExecutor interface
-    std::unique_ptr<SerdeValue> transformField(RuleContext& ctx, SerdeValue& field_value) override;
+    std::unique_ptr<SerdeValue> transformField(RuleContext& ctx, const SerdeValue& field_value) override;
 
     // Static registration
     static void registerExecutor();

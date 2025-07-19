@@ -17,7 +17,7 @@ std::string CelFieldExecutor::getType() const {
     return "CEL_FIELD";
 }
 
-std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field_value) {
+std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, const SerdeValue& field_value) {
     auto field_ctx = ctx.currentField();
     if (!field_ctx || !field_ctx->isPrimitive()) {
         return field_value.clone();
