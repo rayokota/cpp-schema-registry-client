@@ -2,6 +2,7 @@
 #include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
+#include "srclient/serdes/RuleRegistry.h"
 #include "eval/public/containers/container_backed_list_impl.h"
 
 namespace srclient::rules::cel {
@@ -73,8 +74,9 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, c
 void CelFieldExecutor::registerExecutor() {
     // Register this field executor with the global rule registry
     // This matches the Rust version: crate::serdes::rule_registry::register_rule_executor(CelFieldExecutor::new());
-    // TODO: Implement when rule registry is available
-    // RuleRegistry::instance().registerRuleExecutor(std::make_shared<CelFieldExecutor>());
+    global_registry::registerRuleExecutor(
+        std::make_shared<CelFieldExecutor>()
+    );
 }
 
 } 
