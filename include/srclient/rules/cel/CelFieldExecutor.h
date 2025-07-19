@@ -9,7 +9,7 @@ class CelFieldExecutor : public FieldRuleExecutor {
 public:
     CelFieldExecutor();
     explicit CelFieldExecutor(std::shared_ptr<CelExecutor> executor);
-    SerdeValue& transformField(RuleContext& ctx, SerdeValue& field_value) override;
+    std::unique_ptr<SerdeValue> transformField(RuleContext& ctx, SerdeValue& field_value) override;
     
     std::string getType() const override;
     

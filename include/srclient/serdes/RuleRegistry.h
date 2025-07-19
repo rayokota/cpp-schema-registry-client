@@ -153,12 +153,7 @@ public:
      * Transform a message value according to the rule
      * Synchronous version of the async transform method
      */
-    virtual SerdeValue& transform(RuleContext& ctx, SerdeValue& msg) = 0;
-    
-    /**
-     * Get as field rule executor if this executor supports field-level operations
-     */
-    virtual std::shared_ptr<FieldRuleExecutor> asFieldRuleExecutor() { return nullptr; }
+    virtual std::unique_ptr<SerdeValue> transform(RuleContext& ctx, SerdeValue& msg) = 0;
 };
 
 /**
@@ -173,12 +168,12 @@ public:
      * Transform a field value according to the rule
      * Synchronous version of the async transform_field method
      */
-    virtual SerdeValue& transformField(RuleContext& ctx, SerdeValue& field_value) = 0;
+    virtual std::unique_ptr<SerdeValue> transformField(RuleContext& ctx, SerdeValue& field_value) = 0;
     
     /**
      * Implementation of RuleExecutor::transform for field executors
      */
-    SerdeValue& transform(RuleContext& ctx, SerdeValue& msg) override;
+    std::unique_ptr<SerdeValue> transform(RuleContext& ctx, SerdeValue& msg) override;
 };
 
 /**

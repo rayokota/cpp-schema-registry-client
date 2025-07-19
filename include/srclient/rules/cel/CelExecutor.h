@@ -22,7 +22,7 @@ class CelExecutor : public RuleExecutor {
 public:
     CelExecutor();
     explicit CelExecutor(std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime);
-    SerdeValue& transform(RuleContext& ctx, SerdeValue& msg) override;
+    std::unique_ptr<SerdeValue> transform(RuleContext& ctx, SerdeValue& msg) override;
     
     std::string getType() const override;
 

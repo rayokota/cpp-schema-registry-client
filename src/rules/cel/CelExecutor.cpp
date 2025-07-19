@@ -71,18 +71,18 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>
 }
 
 
-SerdeValue& CelExecutor::transform(RuleContext& ctx, SerdeValue& msg) {
+std::unique_ptr<SerdeValue> CelExecutor::transform(RuleContext& ctx, SerdeValue& msg) {
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
     args.emplace("msg", fromSerdeValue(msg));
 
     auto result = execute(ctx, msg, args);
     if (result) {
         // TODO: Replace the original message with the result once we have proper message replacement
-        // For now, just return the original - the execute method currently returns nullptr anyway
+        // For now, just return a clone of the original - the execute method currently returns nullptr anyway
         // auto converted_msg = std::move(*result);  // This line causes abstract class error - commented out
-        return msg;
+        return msg.clone();
     }
-    return msg;
+    return msg.clone();
 }
 
 std::unique_ptr<SerdeValue> CelExecutor::execute(RuleContext& ctx, 

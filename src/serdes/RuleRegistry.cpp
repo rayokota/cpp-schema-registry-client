@@ -153,7 +153,7 @@ void clearGlobalRegistry() {
 
 // FieldRuleExecutor implementation
 
-SerdeValue& FieldRuleExecutor::transform(RuleContext& ctx, SerdeValue& msg) {
+std::unique_ptr<SerdeValue> FieldRuleExecutor::transform(RuleContext& ctx, SerdeValue& msg) {
     // Default implementation delegates to transformField
     // This matches the behavior expected for field-level executors
     return transformField(ctx, msg);

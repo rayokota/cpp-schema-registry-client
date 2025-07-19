@@ -190,13 +190,13 @@ void EncryptionExecutor<T>::close() {
 }
 
 template<typename T>
-SerdeValue& EncryptionExecutor<T>::transform(RuleContext& ctx, SerdeValue& msg) {
+std::unique_ptr<SerdeValue> EncryptionExecutor<T>::transform(RuleContext& ctx, SerdeValue& msg) {
     auto transform = newTransform(ctx);
     transform->transform(ctx, FieldType::Bytes, msg);
     
-    // For this simplified implementation, we just return the original msg
+    // For this simplified implementation, we just return a clone of the original msg
     // In a real implementation, the transform would modify msg in place
-    return msg;
+    return msg.clone();
 }
 
 template<typename T>
@@ -807,7 +807,7 @@ void FieldEncryptionExecutor<T>::close() {
 }
 
 template<typename T>
-SerdeValue& FieldEncryptionExecutor<T>::transformField(RuleContext& ctx, SerdeValue& field_value) {
+std::unique_ptr<SerdeValue> FieldEncryptionExecutor<T>::transformField(RuleContext& ctx, SerdeValue& field_value) {
     auto transform = executor_.newTransform(ctx);
     auto field_ctx = ctx.currentField();
     if (!field_ctx) {
@@ -815,9 +815,9 @@ SerdeValue& FieldEncryptionExecutor<T>::transformField(RuleContext& ctx, SerdeVa
     }
     
     transform->transform(ctx, field_ctx->getFieldType(), field_value);
-    // For this simplified implementation, we just return the original field_value
+    // For this simplified implementation, we just return a clone of the original field_value
     // In a real implementation, the transform would modify field_value in place
-    return field_value;
+    return field_value.clone();
 }
 
 template<typename T>

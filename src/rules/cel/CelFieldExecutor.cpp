@@ -17,15 +17,15 @@ std::string CelFieldExecutor::getType() const {
     return "CEL_FIELD";
 }
 
-SerdeValue& CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field_value) {
+std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field_value) {
     auto field_ctx = ctx.currentField();
     if (!field_ctx || !field_ctx->isPrimitive()) {
-        return field_value;
+        return field_value.clone();
     }
 
     // Only proceed if we have a valid executor
     if (!executor_) {
-        return field_value;
+        return field_value.clone();
     }
 
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
@@ -69,11 +69,11 @@ SerdeValue& CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field
     auto result = executor_->execute(ctx, field_value, args);
     if (result) {
         // TODO: Replace field_value with result when message replacement is implemented
-        // For now, just return the original field_value
-        return field_value;
+        // For now, just return a clone of the original field_value
+        return field_value.clone();
     }
 
-    return field_value;
+    return field_value.clone();
 }
 
 void CelFieldExecutor::registerExecutor() {
