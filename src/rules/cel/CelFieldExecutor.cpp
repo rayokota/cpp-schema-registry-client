@@ -17,11 +17,6 @@ std::string CelFieldExecutor::getType() const {
     return "CEL_FIELD";
 }
 
-// Implement the required shared_from_this method from FieldRuleExecutor
-std::shared_ptr<FieldRuleExecutor> CelFieldExecutor::shared_from_this() {
-    return std::static_pointer_cast<FieldRuleExecutor>(std::shared_ptr<CelFieldExecutor>(this));
-}
-
 SerdeValue& CelFieldExecutor::transformField(RuleContext& ctx, SerdeValue& field_value) {
     auto field_ctx = ctx.currentField();
     if (!field_ctx || !field_ctx->isPrimitive()) {

@@ -179,19 +179,6 @@ public:
      * Implementation of RuleExecutor::transform for field executors
      */
     SerdeValue& transform(RuleContext& ctx, SerdeValue& msg) override;
-    
-    /**
-     * Return self as field rule executor
-     */
-    std::shared_ptr<FieldRuleExecutor> asFieldRuleExecutor() override {
-        return std::static_pointer_cast<FieldRuleExecutor>(shared_from_this());
-    }
-    
-protected:
-    /**
-     * Enable shared_from_this for field rule executors
-     */
-    virtual std::shared_ptr<FieldRuleExecutor> shared_from_this() = 0;
 };
 
 /**

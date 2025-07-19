@@ -24,7 +24,6 @@ public:
     explicit CelExecutor(std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime);
     SerdeValue& transform(RuleContext& ctx, SerdeValue& msg) override;
     
-    // Implement the required getType method from RuleBase
     std::string getType() const override;
 
     std::unique_ptr<SerdeValue> execute(RuleContext& ctx, 
@@ -39,7 +38,6 @@ public:
 private:
     std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime_;
     
-    // Expression cache like Rust DashMap<String, Program>
     std::unordered_map<std::string, std::unique_ptr<google::api::expr::runtime::CelExpression>> expression_cache_;
     mutable std::mutex cache_mutex_;
 
