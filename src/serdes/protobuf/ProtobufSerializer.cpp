@@ -64,19 +64,18 @@ void ProtobufSerde::resolveNamedSchema(const srclient::rest::model::Schema& sche
     // This would recursively resolve schema references
 }
 
-SerdeValue& ProtobufSerializer::messageToSerdeValue(const google::protobuf::Message& message) {
-    // Create and store the SerdeValue, return reference
-    static thread_local std::unique_ptr<SerdeValue> stored_value;
-    stored_value = makeProtobufValue(const_cast<google::protobuf::Message&>(message));
-    return *stored_value;
+std::unique_ptr<SerdeValue> ProtobufSerializer::messageToSerdeValue(const google::protobuf::Message& message) {
+    // Create and return the SerdeValue as unique_ptr
+    return makeProtobufValue(const_cast<google::protobuf::Message&>(message));
 }
 
-SerdeValue& ProtobufSerializer::transformValue(SerdeValue& value,
+std::unique_ptr<SerdeValue> ProtobufSerializer::transformValue(SerdeValue& value,
                                              const Schema& schema,
                                              const std::string& subject) {
-    // Apply transformations and return reference to the modified value
-    // For now, just return the same value
-    return value;
+    // Apply transformations and return as unique_ptr
+    // For now, create a copy and return it
+    // TODO: Implement actual transformations
+    return value.clone();
 }
 
 ProtobufSerializer::ProtobufSerializer(

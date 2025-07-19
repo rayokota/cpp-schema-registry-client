@@ -29,11 +29,9 @@ void ProtobufDeserializer::transformFields(
     // This would involve comparing field types, applying default values, etc.
 }
 
-SerdeValue& ProtobufDeserializer::messageToSerdeValue(const google::protobuf::Message& message) {
-    // Create and store the SerdeValue, return reference
-    static thread_local std::unique_ptr<SerdeValue> stored_value;
-    stored_value = makeProtobufValue(const_cast<google::protobuf::Message&>(message));
-    return *stored_value;
+std::unique_ptr<SerdeValue> ProtobufDeserializer::messageToSerdeValue(const google::protobuf::Message& message) {
+    // Create and return the SerdeValue as unique_ptr
+    return makeProtobufValue(const_cast<google::protobuf::Message&>(message));
 }
 
 void ProtobufDeserializer::serdeValueToMessage(
@@ -81,14 +79,14 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::evolveMessage(
     const srclient::rest::model::Schema& reader_schema) {
     
     // Convert writer message to JSON for evolution
-    auto& writer_serde_value = messageToSerdeValue(writer_message);
+    auto writer_serde_value = messageToSerdeValue(writer_message);
     
     // Apply schema evolution transformations
     // TODO: Implement actual schema evolution logic based on migration rules
     
     // Create reader message and populate from evolved data
     auto reader_message = createMessageFromDescriptor(reader_descriptor);
-    serdeValueToMessage(writer_serde_value, reader_message.get());
+    serdeValueToMessage(*writer_serde_value, reader_message.get());
     
     return reader_message;
 }

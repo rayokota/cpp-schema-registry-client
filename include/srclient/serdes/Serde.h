@@ -266,7 +266,7 @@ public:
                                                    const std::optional<SchemaSelectorData>& use_schema) const;
     
     // Rule execution (synchronous versions)
-    SerdeValue& executeRules(const SerializationContext& ser_ctx,
+    std::unique_ptr<SerdeValue> executeRules(const SerializationContext& ser_ctx,
                            const std::string& subject,
                            Mode rule_mode,
                            std::optional<Schema> source,
@@ -275,7 +275,7 @@ public:
                            SerdeValue& msg,
                            std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
     
-    SerdeValue& executeRulesWithPhase(const SerializationContext& ser_ctx,
+    std::unique_ptr<SerdeValue> executeRulesWithPhase(const SerializationContext& ser_ctx,
                                    const std::string& subject,
                                    Phase rule_phase,
                                    Mode rule_mode,
@@ -296,7 +296,7 @@ public:
                                                    const RegisteredSchema& last,
                                                    std::optional<std::string> format = std::nullopt) const;
     
-        SerdeValue& executeMigrations(const SerializationContext& ser_ctx,
+        std::unique_ptr<SerdeValue> executeMigrations(const SerializationContext& ser_ctx,
                                 const std::string& subject,
                                 const std::vector<Migration>& migrations,
                                 SerdeValue& msg) const;

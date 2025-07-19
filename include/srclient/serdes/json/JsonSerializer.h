@@ -102,7 +102,7 @@ private:
     
     void validateSchema(const srclient::rest::model::Schema& schema);
     
-    SerdeValue& transformValue(SerdeValue& value,
+    std::unique_ptr<SerdeValue> transformValue(SerdeValue& value,
                               const Schema& schema,
                               const std::string& subject);
     

@@ -445,7 +445,7 @@ std::optional<RegisteredSchema> Serde::getReaderSchema(const std::string& subjec
     }
 }
 
-SerdeValue& Serde::executeRules(const SerializationContext& ser_ctx,
+std::unique_ptr<SerdeValue> Serde::executeRules(const SerializationContext& ser_ctx,
                                const std::string& subject,
                                Mode rule_mode,
                                std::optional<Schema> source,
@@ -457,7 +457,7 @@ SerdeValue& Serde::executeRules(const SerializationContext& ser_ctx,
                                 source, target, parsed_target, msg, field_transformer);
 }
 
-SerdeValue& Serde::executeRulesWithPhase(const SerializationContext& ser_ctx,
+std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(const SerializationContext& ser_ctx,
                                         const std::string& subject,
                                         Phase rule_phase,
                                         Mode rule_mode,
@@ -489,7 +489,7 @@ SerdeValue& Serde::executeRulesWithPhase(const SerializationContext& ser_ctx,
     }
     
     if (rules.empty()) {
-        return msg;
+        return msg.clone();
     }
     
     for (size_t index = 0; index < rules.size(); ++index) {
@@ -526,7 +526,7 @@ SerdeValue& Serde::executeRulesWithPhase(const SerializationContext& ser_ctx,
         if (!rule.getType().has_value()) {
             runAction(ctx, rule_mode, rule, getOnFailure(rule),
                      msg, SerdeError("Rule type not specified"), "ERROR");
-            return msg;
+            return msg.clone();
         }
         
         std::string rule_type = rule.getType().value();  // Store copy to avoid dangling reference
@@ -538,7 +538,7 @@ SerdeValue& Serde::executeRulesWithPhase(const SerializationContext& ser_ctx,
         if (!executor) {
             runAction(ctx, rule_mode, rule, getOnFailure(rule),
                      msg, SerdeError("Rule executor " + rule_type + " not found"), "ERROR");
-            return msg;
+            return msg.clone();
         }
         
         try {
@@ -565,11 +565,11 @@ SerdeValue& Serde::executeRulesWithPhase(const SerializationContext& ser_ctx,
         } catch (const SerdeError& e) {
             runAction(ctx, rule_mode, rule, getOnFailure(rule),
                      msg, e, "ERROR");
-            return msg;
+            return msg.clone();
         }
     }
     
-    return msg;
+    return msg.clone();
 }
 
 std::vector<Migration> Serde::getMigrations(const std::string& subject,
@@ -653,22 +653,23 @@ std::vector<RegisteredSchema> Serde::getSchemasBetween(const std::string& subjec
     return result;
 }
 
-SerdeValue& Serde::executeMigrations(const SerializationContext& ser_ctx,
+std::unique_ptr<SerdeValue> Serde::executeMigrations(const SerializationContext& ser_ctx,
                                     const std::string& subject,
                                     const std::vector<Migration>& migrations,
                                     SerdeValue& msg) const {
+    auto current_msg = msg.clone();
     for (const auto& migration : migrations) {
         std::optional<Schema> source = migration.source.has_value() ? 
             std::make_optional(migration.source->toSchema()) : std::nullopt;
         std::optional<Schema> target = migration.target.has_value() ?
             std::make_optional(migration.target->toSchema()) : std::nullopt;
             
-        msg = executeRulesWithPhase(ser_ctx, subject, Phase::Migration,
+        current_msg = executeRulesWithPhase(ser_ctx, subject, Phase::Migration,
                                    migration.rule_mode, source, target,
-                                   std::nullopt, msg, nullptr);
+                                   std::nullopt, *current_msg, nullptr);
     }
     
-    return msg;
+    return current_msg;
 }
 
 // Helper methods

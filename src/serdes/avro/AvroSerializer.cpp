@@ -164,7 +164,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
         auto avro_schema = makeAvroSchema(parsed_schema);
         
         // Execute rules on the serde value
-        auto& transformed_value = base_->getSerde().executeRules(
+        auto transformed_value = base_->getSerde().executeRules(
             ctx,
             subject,
             Mode::Write,
@@ -176,8 +176,8 @@ std::vector<uint8_t> AvroSerializer::serialize(
         );
         
         // Extract Avro value from result
-        if (transformed_value.isAvro()) {
-            value = std::any_cast<::avro::GenericDatum>(transformed_value.getValue());
+        if (transformed_value->isAvro()) {
+            value = std::any_cast<::avro::GenericDatum>(transformed_value->getValue());
         } else {
             throw AvroError("Unexpected serde value type returned from rule execution");
         }
@@ -230,7 +230,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
                 };
                 
                 auto bytes_value = std::make_unique<BytesValue>(avro_bytes);
-                auto& result = base_->getSerde().executeRulesWithPhase(
+                auto result = base_->getSerde().executeRulesWithPhase(
                     ctx,
                     subject,
                     Phase::Encoding,
@@ -241,7 +241,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
                     *bytes_value,
                     nullptr
                 );
-                avro_bytes = std::any_cast<std::vector<uint8_t>>(result.getValue());
+                avro_bytes = std::any_cast<std::vector<uint8_t>>(result->getValue());
             }
         }
     }

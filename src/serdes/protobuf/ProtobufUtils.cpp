@@ -241,4 +241,13 @@ std::vector<int32_t> createMessageIndexArray(const google::protobuf::Descriptor*
     return indexes;
 }
 
+std::unique_ptr<SerdeValue> extractFieldValue(
+    const google::protobuf::FieldDescriptor* field_desc,
+    const google::protobuf::Message& message) {
+    // TODO: Implement field value extraction
+    // This should extract the value of the specified field from the message
+    // and convert it to a SerdeValue
+    throw std::runtime_error("extractFieldValue not yet implemented");
+}
+
 } // namespace srclient::serdes::protobuf::utils

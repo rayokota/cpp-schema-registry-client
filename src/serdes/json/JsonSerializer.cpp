@@ -233,12 +233,13 @@ void JsonSerializer::validateSchema(const srclient::rest::model::Schema& schema)
     }
 }
 
-SerdeValue& JsonSerializer::transformValue(SerdeValue& value,
+std::unique_ptr<SerdeValue> JsonSerializer::transformValue(SerdeValue& value,
                                         const Schema& schema,
                                         const std::string& subject) {
-    // Apply transformations and return reference to the modified value
-    // For now, just return the same value
-    return value;
+    // Apply transformations and return as unique_ptr
+    // For now, create a copy and return it
+    // TODO: Implement actual transformations
+    return value.clone();
 }
 
 nlohmann::json JsonSerializer::executeFieldTransformations(

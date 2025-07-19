@@ -127,7 +127,7 @@ namespace value_transform {
     /**
      * Extract SerdeValue from protobuf field
      */
-    SerdeValue& extractFieldValue(
+    std::unique_ptr<SerdeValue> extractFieldValue(
         const google::protobuf::FieldDescriptor* field_desc,
         const google::protobuf::Message& message);
 

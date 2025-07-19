@@ -170,10 +170,10 @@ nlohmann::json JsonDeserializer::executeMigrations(
 
     // Convert to SerdeValue for migration execution
     auto serde_value = makeJsonValue(value);
-    auto& migrated_value = base_->getSerde().executeMigrations(ctx, subject, migrations, *serde_value);
+    auto migrated_value = base_->getSerde().executeMigrations(ctx, subject, migrations, *serde_value);
 
     // Convert back to nlohmann::json
-    return std::any_cast<nlohmann::json>(migrated_value.getValue());
+    return std::any_cast<nlohmann::json>(migrated_value->getValue());
 }
 
 bool JsonDeserializer::isEvolutionRequired(

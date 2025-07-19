@@ -176,8 +176,7 @@ absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>> CelEx
         return absl::FailedPreconditionError("Failed to get expression builder");
     }
     
-    // Create a simple expression for testing
-    // TODO: Replace with proper CEL parsing once available
+    // Create the expression
     auto expression_result = runtime_->CreateExpression(&cel_expr, &source_info);
     if (!expression_result.ok()) {
         return expression_result.status();

@@ -97,7 +97,7 @@ NamedValue AvroDeserializer::deserialize(
             };
             
             auto bytes_value = std::make_unique<BytesValue>(payload_data);
-            auto& result = base_->getSerde().executeRulesWithPhase(
+            auto result = base_->getSerde().executeRulesWithPhase(
                 ctx,
                 subject,
                 Phase::Encoding,
@@ -108,7 +108,7 @@ NamedValue AvroDeserializer::deserialize(
                 *bytes_value,
                 nullptr
             );
-            payload_data = std::any_cast<std::vector<uint8_t>>(result.getValue());
+            payload_data = std::any_cast<std::vector<uint8_t>>(result->getValue());
         }
     }
     
@@ -142,8 +142,8 @@ NamedValue AvroDeserializer::deserialize(
         auto json_serde_value = srclient::serdes::json::makeJsonValue(json_value);
         
         // 3. Apply migrations
-        auto& migrated = base_->getSerde().executeMigrations(ctx, subject, migrations, *json_serde_value);
-        auto migrated_json = std::any_cast<nlohmann::json>(migrated.getValue());
+        auto migrated = base_->getSerde().executeMigrations(ctx, subject, migrations, *json_serde_value);
+        auto migrated_json = std::any_cast<nlohmann::json>(migrated->getValue());
         
         // 4. Convert back to Avro with reader schema
         value = utils::jsonToAvro(migrated_json, reader_parsed.first);
@@ -170,7 +170,7 @@ NamedValue AvroDeserializer::deserialize(
         auto serde_value = makeAvroValue(value);
         auto avro_schema = makeAvroSchema(reader_parsed);
         
-        auto& transformed = base_->getSerde().executeRules(
+        auto transformed = base_->getSerde().executeRules(
             ctx, 
             subject, 
             Mode::Read, 
@@ -180,8 +180,8 @@ NamedValue AvroDeserializer::deserialize(
             *serde_value,
             std::make_shared<FieldTransformer>(field_transformer)
         );
-        if (transformed.isAvro()) {
-            value = std::any_cast<::avro::GenericDatum>(transformed.getValue());
+        if (transformed->isAvro()) {
+            value = std::any_cast<::avro::GenericDatum>(transformed->getValue());
         }
     }
     
