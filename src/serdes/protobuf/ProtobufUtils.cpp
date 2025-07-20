@@ -1,6 +1,7 @@
 #include "srclient/serdes/protobuf/ProtobufUtils.h"
 #include "srclient/serdes/RuleRegistry.h" // For global_registry functions
 #include "absl/strings/escaping.h"
+#include "confluent/meta.pb.h"
 #include <google/protobuf/util/json_util.h>
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/io/coded_stream.h>
@@ -201,16 +202,14 @@ std::unordered_set<std::string> getInlineTags(const google::protobuf::FieldDescr
     
     // Try to get the confluent.field_meta extension from the field options
     const google::protobuf::FieldOptions& options = field_desc->options();
-    
-    // Check if there are any unknown fields in the options that might contain our extension
-    const google::protobuf::UnknownFieldSet& unknown_fields = options.unknown_fields();
-    
-    // For now, return empty set as accessing custom extensions requires more setup
-    // In a full implementation, you would need to:
-    // 1. Define the confluent.field_meta extension descriptor
-    // 2. Register it with the descriptor pool  
-    // 3. Use reflection to access the extension data
-    // This is a placeholder implementation
+
+    if (options.HasExtension(confluent::field_meta)) {
+        auto ext = options.GetExtension(confluent::field_meta);
+        const auto& tags = ext.tags();  // Call tags() method to get RepeatedPtrField
+        for (const auto& tag : tags) {
+            tag_set.insert(tag);
+        }
+    }
     
     return tag_set;
 }
