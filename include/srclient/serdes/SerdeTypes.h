@@ -59,6 +59,15 @@ public:
     
     // Clone method for copying
     virtual std::unique_ptr<SerdeValue> clone() const = 0;
+
+    // Static factory methods for creating SerdeValue instances
+    static std::unique_ptr<SerdeValue> newString(SerdeFormat format, const std::string& value);
+    static std::unique_ptr<SerdeValue> newBytes(SerdeFormat format, const std::vector<uint8_t>& value);
+    
+    // Value extraction methods
+    virtual bool asBool() const = 0;
+    virtual std::string asString() const = 0;
+    virtual std::vector<uint8_t> asBytes() const = 0;
 };
 
 /**

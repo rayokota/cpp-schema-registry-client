@@ -1,7 +1,13 @@
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/rest/model/Schema.h"
 #include "srclient/rest/model/RegisteredSchema.h"
+#include "srclient/serdes/avro/AvroTypes.h"
+#include "srclient/serdes/json/JsonTypes.h"
+#include "srclient/serdes/protobuf/ProtobufTypes.h"
 #include <sstream>
+#include <avro/Compiler.hh>
+#include <avro/ValidSchema.hh>
+#include <google/protobuf/message.h>
 
 namespace srclient::serdes {
 
@@ -89,6 +95,142 @@ std::string ParsedSchemaCache<T>::getSchemaKey(const Schema& schema) const {
 // Explicit template instantiations for common types
 template class ParsedSchemaCache<std::string>;
 template class ParsedSchemaCache<int>;
+
+// Base64 encoding/decoding utilities
+namespace {
+    const std::string base64_chars = 
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+
+    bool is_base64(unsigned char c) {
+        return (isalnum(c) || (c == '+') || (c == '/'));
+    }
+
+    std::string base64_encode(const std::vector<uint8_t>& bytes) {
+        std::string ret;
+        int i = 0;
+        int j = 0;
+        unsigned char char_array_3[3];
+        unsigned char char_array_4[4];
+        
+        for (size_t idx = 0; idx < bytes.size(); idx++) {
+            char_array_3[i++] = bytes[idx];
+            if (i == 3) {
+                char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+                char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+                char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+                char_array_4[3] = char_array_3[2] & 0x3f;
+                
+                for (i = 0; (i < 4); i++)
+                    ret += base64_chars[char_array_4[i]];
+                i = 0;
+            }
+        }
+        
+        if (i) {
+            for (j = i; j < 3; j++)
+                char_array_3[j] = '\0';
+                
+            char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+            char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+            char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+            char_array_4[3] = char_array_3[2] & 0x3f;
+            
+            for (j = 0; (j < i + 1); j++)
+                ret += base64_chars[char_array_4[j]];
+                
+            while ((i++ < 3))
+                ret += '=';
+        }
+        
+        return ret;
+    }
+
+    std::vector<uint8_t> base64_decode(const std::string& encoded_string) {
+        size_t in_len = encoded_string.size();
+        int i = 0;
+        int j = 0;
+        int in = 0;
+        unsigned char char_array_4[4], char_array_3[3];
+        std::vector<uint8_t> ret;
+        
+        while (in_len-- && (encoded_string[in] != '=') && is_base64(encoded_string[in])) {
+            char_array_4[i++] = encoded_string[in]; in++;
+            if (i == 4) {
+                for (i = 0; i < 4; i++)
+                    char_array_4[i] = base64_chars.find(char_array_4[i]);
+                    
+                char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+                char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+                char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+                
+                for (i = 0; (i < 3); i++)
+                    ret.push_back(char_array_3[i]);
+                i = 0;
+            }
+        }
+        
+        if (i) {
+            for (j = i; j < 4; j++)
+                char_array_4[j] = 0;
+                
+            for (j = 0; j < 4; j++)
+                char_array_4[j] = base64_chars.find(char_array_4[j]);
+                
+            char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+            char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+            char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+            
+            for (j = 0; (j < i - 1); j++) ret.push_back(char_array_3[j]);
+        }
+        
+        return ret;
+    }
+}
+
+// SerdeValue static factory method implementations
+std::unique_ptr<SerdeValue> SerdeValue::newString(SerdeFormat format, const std::string& value) {
+    switch (format) {
+        case SerdeFormat::Avro: {
+            ::avro::GenericDatum datum(value);
+            return std::make_unique<avro::AvroValue>(datum);
+        }
+        case SerdeFormat::Json: {
+            nlohmann::json json_value = value;
+            return std::make_unique<json::JsonValue>(json_value);
+        }
+        case SerdeFormat::Protobuf: {
+            // For protobuf, we cannot create a message from just a string value
+            // This would need a specific message type context
+            throw SerdeError("Cannot create Protobuf SerdeValue from string without message context");
+        }
+        default:
+            throw SerdeError("Unsupported SerdeFormat");
+    }
+}
+
+std::unique_ptr<SerdeValue> SerdeValue::newBytes(SerdeFormat format, const std::vector<uint8_t>& value) {
+    switch (format) {
+        case SerdeFormat::Avro: {
+            ::avro::GenericDatum datum(value);
+            return std::make_unique<avro::AvroValue>(datum);
+        }
+        case SerdeFormat::Json: {
+            // For JSON, encode bytes as base64 string
+            std::string base64_value = base64_encode(value);
+            nlohmann::json json_value = base64_value;
+            return std::make_unique<json::JsonValue>(json_value);
+        }
+        case SerdeFormat::Protobuf: {
+            // For protobuf, we cannot create a message from just bytes value
+            // This would need a specific message type context
+            throw SerdeError("Cannot create Protobuf SerdeValue from bytes without message context");
+        }
+        default:
+            throw SerdeError("Unsupported SerdeFormat");
+    }
+}
 
 namespace type_utils {
 

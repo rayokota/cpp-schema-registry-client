@@ -72,14 +72,14 @@ absl::StatusOr<std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>
 }
 
 
-std::unique_ptr<SerdeValue> CelExecutor::transform(RuleContext& ctx, const SerdeValue& msg) {
+std::unique_ptr<SerdeValue> CelExecutor::transform(srclient::serdes::RuleContext& ctx, const SerdeValue& msg) {
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
     args.emplace("msg", fromSerdeValue(msg, &arena_));
 
     return execute(ctx, msg, args);
 }
 
-std::unique_ptr<SerdeValue> CelExecutor::execute(RuleContext& ctx, 
+std::unique_ptr<SerdeValue> CelExecutor::execute(srclient::serdes::RuleContext& ctx, 
                                const SerdeValue& msg, 
                                const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args) {
     google::protobuf::Arena arena;

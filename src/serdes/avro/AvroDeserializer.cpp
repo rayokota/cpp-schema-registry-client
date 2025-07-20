@@ -80,23 +80,7 @@ NamedValue AvroDeserializer::deserialize(
     if (writer_schema_raw.getRuleSet().has_value()) {
         auto rule_set = writer_schema_raw.getRuleSet().value();
         if (rule_set.getEncodingRules().has_value()) {
-            // Create a SerdeValue wrapper for the payload bytes
-            class BytesValue : public SerdeValue {
-            private:
-                std::vector<uint8_t> bytes_;
-            public:
-                explicit BytesValue(const std::vector<uint8_t>& bytes) : bytes_(bytes) {}
-                bool isJson() const override { return false; }
-                bool isAvro() const override { return false; }
-                bool isProtobuf() const override { return false; }
-                std::any getValue() const override { return bytes_; }
-                SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
-                std::unique_ptr<SerdeValue> clone() const override {
-                    return std::make_unique<BytesValue>(bytes_);
-                }
-            };
-            
-            auto bytes_value = std::make_unique<BytesValue>(payload_data);
+            auto bytes_value = SerdeValue::newBytes(SerdeFormat::Avro, payload_data);
             auto result = base_->getSerde().executeRulesWithPhase(
                 ctx,
                 subject,

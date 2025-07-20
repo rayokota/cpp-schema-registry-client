@@ -21,11 +21,11 @@ class CelExecutor : public RuleExecutor {
 public:
     CelExecutor();
     explicit CelExecutor(std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder> runtime);
-    std::unique_ptr<SerdeValue> transform(RuleContext& ctx, const SerdeValue& msg) override;
+    std::unique_ptr<SerdeValue> transform(srclient::serdes::RuleContext& ctx, const SerdeValue& msg) override;
     
     std::string getType() const override;
 
-    std::unique_ptr<SerdeValue> execute(RuleContext& ctx, 
+    std::unique_ptr<SerdeValue> execute(srclient::serdes::RuleContext& ctx, 
                                        const SerdeValue& msg, 
                                        const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>& args);
                                        

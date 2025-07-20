@@ -51,6 +51,11 @@ public:
         return std::make_unique<AvroValue>(value_);
     }
 
+    // Value extraction methods
+    bool asBool() const override;
+    std::string asString() const override;
+    std::vector<uint8_t> asBytes() const override;
+
 };
 
 /**
