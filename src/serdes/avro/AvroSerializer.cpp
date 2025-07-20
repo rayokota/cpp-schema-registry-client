@@ -172,7 +172,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
             std::make_optional(schema),
             std::make_optional(avro_schema.get()),
             *avro_value,
-            {},
+            utils::getInlineTags(nlohmann::json::parse(schema.getSchema().value())),
             std::make_shared<FieldTransformer>(field_transformer)
         );
         

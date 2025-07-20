@@ -162,7 +162,7 @@ NamedValue AvroDeserializer::deserialize(
             std::make_optional(reader_schema_raw),
             std::make_optional(avro_schema.get()), 
             *serde_value,
-            {},
+            utils::getInlineTags(nlohmann::json::parse(reader_schema_raw.getSchema().value())),
             std::make_shared<FieldTransformer>(field_transformer)
         );
         if (transformed->isAvro()) {
