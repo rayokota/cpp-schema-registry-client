@@ -17,6 +17,7 @@
 #include "srclient/rest/ClientConfiguration.h"
 #include "srclient/serdes/avro/AvroSerializer.h"
 #include "srclient/serdes/avro/AvroDeserializer.h"
+#include "srclient/serdes/avro/AvroUtils.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/RuleRegistry.h"
@@ -70,9 +71,7 @@ TEST(AvroTest, BasicSerialization) {
     schema.setSchema(std::make_optional<std::string>(schema_str));
     
     // Parse the Avro schema
-    std::istringstream schema_stream(schema_str);
-    ::avro::ValidSchema avro_schema;
-    ::avro::compileJsonSchema(schema_stream, avro_schema);
+    ::avro::ValidSchema avro_schema = srclient::serdes::avro::utils::compileJsonSchema(schema_str);
     
     // Create the Avro record
     ::avro::GenericDatum datum(avro_schema);
@@ -175,9 +174,7 @@ TEST(AvroTest, CelFieldTransformation) {
     auto registered_schema = client->registerSchema("test-value", schema, false);
     
     // Parse the Avro schema
-    std::istringstream schema_stream(schema_str);
-    ::avro::ValidSchema avro_schema;
-    ::avro::compileJsonSchema(schema_stream, avro_schema);
+    ::avro::ValidSchema avro_schema = srclient::serdes::avro::utils::compileJsonSchema(schema_str);
     
     // Create the Avro record with test data
     ::avro::GenericDatum datum(avro_schema);
@@ -305,9 +302,7 @@ TEST(AvroTest, FieldEncryption) {
     auto registered_schema = client->registerSchema("test-value", schema, false);
     
     // Parse the Avro schema
-    std::istringstream schema_stream(schema_str);
-    ::avro::ValidSchema avro_schema;
-    ::avro::compileJsonSchema(schema_stream, avro_schema);
+    ::avro::ValidSchema avro_schema = srclient::serdes::avro::utils::compileJsonSchema(schema_str);
     
     // Create the Avro record with test data
     ::avro::GenericDatum datum(avro_schema);

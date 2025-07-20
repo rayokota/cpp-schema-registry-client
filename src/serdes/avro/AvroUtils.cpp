@@ -520,16 +520,12 @@ parseSchemaWithNamed(
         // Parse named schemas first
         std::vector<::avro::ValidSchema> parsed_named;
         for (const auto& named_schema_str : named_schemas) {
-            std::istringstream iss(named_schema_str);
-            ::avro::ValidSchema named_schema;
-            ::avro::compileJsonSchema(iss, named_schema);
+            ::avro::ValidSchema named_schema = compileJsonSchema(named_schema_str);
             parsed_named.push_back(named_schema);
         }
         
         // Parse main schema
-        std::istringstream main_iss(schema_str);
-        ::avro::ValidSchema main_schema;
-        ::avro::compileJsonSchema(main_iss, main_schema);
+        ::avro::ValidSchema main_schema = compileJsonSchema(schema_str);
         
         return {main_schema, parsed_named};
     } catch (const ::avro::Exception& e) {
@@ -648,6 +644,54 @@ void getInlineTagsRecursively(
                 }
             }
         }
+    }
+}
+
+/**
+ * Recursively remove "confluent:tags" properties from a JSON schema
+ * @param schema JSON schema object to clean
+ */
+void removeConfluentTags(nlohmann::json& schema) {
+    if (schema.is_object()) {
+        // Remove confluent:tags if it exists
+        auto tags_it = schema.find("confluent:tags");
+        if (tags_it != schema.end()) {
+            schema.erase(tags_it);
+        }
+        
+        // Recursively process all values in the object
+        for (auto& [key, value] : schema.items()) {
+            removeConfluentTags(value);
+        }
+    } else if (schema.is_array()) {
+        // Recursively process all elements in the array
+        for (auto& element : schema) {
+            removeConfluentTags(element);
+        }
+    }
+}
+
+::avro::ValidSchema compileJsonSchema(const std::string& schema_str) {
+    try {
+        // Parse the schema string as JSON
+        nlohmann::json schema_json = nlohmann::json::parse(schema_str);
+        
+        // Remove confluent:tags properties recursively
+        removeConfluentTags(schema_json);
+        
+        // Convert back to string
+        std::string cleaned_schema_str = schema_json.dump();
+        
+        // Create istringstream and compile the schema
+        std::istringstream schema_stream(cleaned_schema_str);
+        ::avro::ValidSchema avro_schema;
+        ::avro::compileJsonSchema(schema_stream, avro_schema);
+        
+        return avro_schema;
+    } catch (const nlohmann::json::parse_error& e) {
+        throw AvroError("Failed to parse schema JSON: " + std::string(e.what()));
+    } catch (const ::avro::Exception& e) {
+        throw AvroError("Failed to compile Avro schema: " + std::string(e.what()));
     }
 }
 

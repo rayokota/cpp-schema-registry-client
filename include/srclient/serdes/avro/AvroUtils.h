@@ -181,6 +181,13 @@ namespace utils {
         std::unordered_map<std::string, std::unordered_set<std::string>>& tags
     );
 
+    /**
+     * Compile a JSON schema string to an Avro ValidSchema, removing confluent:tags properties
+     * @param schema_str JSON schema string to compile
+     * @return Compiled Avro ValidSchema
+     */
+    ::avro::ValidSchema compileJsonSchema(const std::string& schema_str);
+
 } // namespace utils
 
 } // namespace srclient::serdes::avro 
