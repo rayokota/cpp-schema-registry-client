@@ -1,4 +1,5 @@
 #include "srclient/rules/encryption/EncryptionExecutor.h"
+#include "srclient/rules/encryption/EncryptionRegistry.h"
 #include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
@@ -807,18 +808,27 @@ std::unique_ptr<crypto::tink::Aead> EncryptionExecutorTransform<T>::getAead(cons
 template<typename T>
 std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform<T>::getKmsClient(const std::unordered_map<std::string, std::string>& config,
                                                                                      const std::string& kek_url) {
-    // This would integrate with the KMS driver registry
-    // For now, return nullptr to indicate KMS is not available
-    return nullptr;
+    try {
+        // Try to get an existing KMS client first
+        return srclient::rules::encryption::getKmsClient(kek_url);
+    } catch (const std::exception&) {
+        // If no existing client, get driver and register a new client
+        auto driver = srclient::rules::encryption::getKmsDriver(kek_url);
+        return registerKmsClient(driver, config, kek_url);
+    }
 }
 
 template<typename T>
 std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform<T>::registerKmsClient(std::shared_ptr<KmsDriver> kms_driver,
                                                                                           const std::unordered_map<std::string, std::string>& config,
                                                                                           const std::string& kek_url) {
-    // This would register a new KMS client with the driver
-    // For now, return nullptr to indicate KMS is not available
-    return nullptr;
+    // Create a new KMS client using the provided driver
+    auto kms_client = kms_driver->newKmsClient(config, kek_url);
+    
+    // Register the client with the encryption registry
+    srclient::rules::encryption::registerKmsClient(kms_client);
+    
+    return kms_client;
 }
 
 // Template instantiations
