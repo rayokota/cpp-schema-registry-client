@@ -108,36 +108,26 @@ void registerKmsDriver(Args&&... args) {
 /**
  * Remove all registered KMS drivers
  */
-inline void clearKmsDrivers() {
-    EncryptionRegistry::getInstance().clearKmsDrivers();
-}
+void clearKmsDrivers();
 
 /**
  * Get a KMS driver by key URI
  */
-inline std::shared_ptr<KmsDriver> getKmsDriver(const std::string& keyUri) {
-    return EncryptionRegistry::getInstance().getKmsDriver(keyUri);
-}
+std::shared_ptr<KmsDriver> getKmsDriver(const std::string& keyUri);
 
 /**
  * Register a new KMS client
  */
-inline void registerKmsClient(std::shared_ptr<crypto::tink::KmsClient> client) {
-    EncryptionRegistry::getInstance().registerKmsClient(client);
-}
+void registerKmsClient(std::shared_ptr<crypto::tink::KmsClient> client);
 
 /**
  * Remove all registered KMS clients
  */
-inline void clearKmsClients() {
-    EncryptionRegistry::getInstance().clearKmsClients();
-}
+void clearKmsClients();
 
 /**
  * Get a KMS client by key URI
  */
-inline std::shared_ptr<crypto::tink::KmsClient> getKmsClient(const std::string& keyUri) {
-    return EncryptionRegistry::getInstance().getKmsClient(keyUri);
-}
+std::shared_ptr<crypto::tink::KmsClient> getKmsClient(const std::string& keyUri);
 
 } // namespace srclient::rules::encryption 

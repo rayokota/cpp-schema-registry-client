@@ -26,4 +26,31 @@ std::vector<uint8_t> ProtobufValue::asBytes() const {
     return std::vector<uint8_t>();
 }
 
+// Additional ProtobufValue method implementations (moved from header)
+bool ProtobufValue::isJson() const {
+    return false;
+}
+
+bool ProtobufValue::isAvro() const {
+    return false;
+}
+
+bool ProtobufValue::isProtobuf() const {
+    return true;
+}
+
+std::any ProtobufValue::getValue() const {
+    return std::ref(value_);
+}
+
+SerdeFormat ProtobufValue::getFormat() const {
+    return SerdeFormat::Protobuf;
+}
+
+std::unique_ptr<SerdeValue> ProtobufValue::clone() const {
+    // Note: Protobuf messages can't be easily cloned without knowing the concrete type
+    // This may need to be handled differently in actual usage
+    return std::make_unique<ProtobufValue>(value_);
+}
+
 } // namespace srclient::serdes::protobuf 

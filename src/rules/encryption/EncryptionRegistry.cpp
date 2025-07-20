@@ -100,4 +100,25 @@ std::shared_ptr<crypto::tink::KmsClient> EncryptionRegistry::getKmsClient(const 
     throw TinkError("KMS client supporting " + keyUri + " not found");
 }
 
+// Convenience functions for easier access (moved from header)
+void clearKmsDrivers() {
+    EncryptionRegistry::getInstance().clearKmsDrivers();
+}
+
+std::shared_ptr<KmsDriver> getKmsDriver(const std::string& keyUri) {
+    return EncryptionRegistry::getInstance().getKmsDriver(keyUri);
+}
+
+void registerKmsClient(std::shared_ptr<crypto::tink::KmsClient> client) {
+    EncryptionRegistry::getInstance().registerKmsClient(client);
+}
+
+void clearKmsClients() {
+    EncryptionRegistry::getInstance().clearKmsClients();
+}
+
+std::shared_ptr<crypto::tink::KmsClient> getKmsClient(const std::string& keyUri) {
+    return EncryptionRegistry::getInstance().getKmsClient(keyUri);
+}
+
 } // namespace srclient::rules::encryption 

@@ -134,19 +134,9 @@ inline nlohmann::json asJson(const SerdeValue& value) {
     return std::any_cast<nlohmann::json>(value.getValue());
 }
 
-inline ::avro::GenericDatum asAvro(const SerdeValue& value) {
-    if (!value.isAvro()) {
-        throw SerdeError("SerdeValue is not Avro");
-    }
-    return std::any_cast<::avro::GenericDatum>(value.getValue());
-}
-
-inline google::protobuf::Message& asProtobuf(const SerdeValue& value) {
-    if (!value.isProtobuf()) {
-        throw SerdeError("SerdeValue is not Protobuf");
-    }
-    return std::any_cast<std::reference_wrapper<google::protobuf::Message>>(value.getValue()).get();
-}
+// Value extraction utility functions
+::avro::GenericDatum asAvro(const SerdeValue& value);
+google::protobuf::Message& asProtobuf(const SerdeValue& value);
 
 // Magic bytes for schema ID encoding (from serde.rs)
 constexpr uint8_t MAGIC_BYTE_V0 = 0;

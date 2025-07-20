@@ -39,19 +39,15 @@ private:
 public:
     explicit ProtobufValue(google::protobuf::Message& value) : value_(value) {}
     
-    bool isJson() const override { return false; }
-    bool isAvro() const override { return false; }
-    bool isProtobuf() const override { return true; }
+    bool isJson() const override;
+    bool isAvro() const override;
+    bool isProtobuf() const override;
     
-    std::any getValue() const override { return std::ref(value_); }
+    std::any getValue() const override;
     
-    SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
+    SerdeFormat getFormat() const override;
     
-    std::unique_ptr<SerdeValue> clone() const override {
-        // Note: Protobuf messages can't be easily cloned without knowing the concrete type
-        // This may need to be handled differently in actual usage
-        return std::make_unique<ProtobufValue>(value_);
-    }
+    std::unique_ptr<SerdeValue> clone() const override;
 
     // Value extraction methods
     bool asBool() const override;

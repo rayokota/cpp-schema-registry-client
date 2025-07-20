@@ -283,4 +283,19 @@ std::string kindToString(Kind kind) {
 
 } // namespace type_utils
 
+// Value extraction utility functions (moved from header)
+::avro::GenericDatum asAvro(const SerdeValue& value) {
+    if (!value.isAvro()) {
+        throw SerdeError("SerdeValue is not Avro");
+    }
+    return std::any_cast<::avro::GenericDatum>(value.getValue());
+}
+
+google::protobuf::Message& asProtobuf(const SerdeValue& value) {
+    if (!value.isProtobuf()) {
+        throw SerdeError("SerdeValue is not Protobuf");
+    }
+    return std::any_cast<std::reference_wrapper<google::protobuf::Message>>(value.getValue()).get();
+}
+
 } // namespace srclient::serdes 
