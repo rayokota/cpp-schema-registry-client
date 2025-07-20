@@ -212,24 +212,89 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
 
     if (latest_schema.has_value()) {
         auto schema = latest_schema->toSchema();
-        auto parsed_schema = serde_->getParsedSchema(schema, base_->getSerde().getClient());
-
-        // Apply rules if rule registry exists
-        if (base_->getSerde().getRuleRegistry()) {
-            // TODO: Implement rule execution for protobuf messages
-            // This would involve field transformations similar to Avro
+        auto [fd, pool] = serde_->getParsedSchema(schema, base_->getSerde().getClient());
+        
+        // Create field transformer function
+        auto field_transformer = std::make_shared<FieldTransformer>(
+            [](RuleContext& ctx, const std::string& field_executor_type, const SerdeValue& value) -> std::unique_ptr<SerdeValue> {
+                // Field transformation logic - for now return a copy of the input value
+                return value.clone();
+            }
+        );
+        
+        // Create DynamicMessage from the message descriptor
+        auto message_factory = google::protobuf::DynamicMessageFactory();
+        auto dynamic_msg = std::unique_ptr<google::protobuf::Message>(
+            message_factory.GetPrototype(descriptor)->New()
+        );
+        
+        // Copy data from input message to dynamic message
+        dynamic_msg->CopyFrom(message);
+        
+        // Create SerdeValue for the protobuf message
+        auto protobuf_value = protobuf::makeProtobufValue(*dynamic_msg);
+        
+        // Create SerdeSchema for the protobuf file descriptor
+        auto protobuf_schema = protobuf::makeProtobufSchema(schema.getSchema().value_or(""));
+        
+        // Execute rules synchronously
+        auto serde_value = base_->getSerde().executeRules(
+            ctx,
+            subject,
+            Mode::Write,
+            std::nullopt,
+            std::make_optional(schema),
+            std::make_optional(protobuf_schema.get()),
+            *protobuf_value,
+            {},
+            field_transformer
+        );
+        
+        // Extract the transformed message
+        if (!serde_value->isProtobuf()) {
+            throw ProtobufError("Unexpected serde value type after rule execution");
         }
-
-        // Serialize message to bytes
-        if (!message.SerializeToString(reinterpret_cast<std::string*>(&encoded_bytes))) {
-            throw ProtobufError("Failed to serialize protobuf message");
+        
+        auto transformed_message = std::any_cast<google::protobuf::Message*>(serde_value->getValue());
+        
+        // Encode the transformed message
+        if (!transformed_message->SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
+            encoded_bytes.resize(transformed_message->ByteSizeLong());
+            if (!transformed_message->SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
+                throw ProtobufError("Failed to serialize protobuf message");
+            }
+        } else {
+            encoded_bytes.resize(transformed_message->ByteSizeLong());
+        }
+        
+        // Apply encoding rules if present
+        if (schema.getRuleSet().has_value()) {
+            auto rule_set = schema.getRuleSet().value();
+            if (rule_set.getEncodingRules().has_value()) {
+                auto bytes_value = SerdeValue::newBytes(SerdeFormat::Protobuf, encoded_bytes);
+                auto result = base_->getSerde().executeRulesWithPhase(
+                    ctx,
+                    subject,
+                    Phase::Encoding,
+                    Mode::Write,
+                    std::nullopt,
+                    std::make_optional(schema),
+                    std::nullopt,
+                    *bytes_value,
+                    {},
+                    nullptr
+                );
+                encoded_bytes = result->asBytes();
+            }
         }
     } else {
-        // Direct serialization without schema evolution
-        if (!message.SerializeToString(reinterpret_cast<std::string*>(&encoded_bytes))) {
+        // No schema available - directly serialize the message
+        encoded_bytes.resize(message.ByteSizeLong());
+        if (!message.SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
             throw ProtobufError("Failed to serialize protobuf message");
         }
     }
+
 
     // Apply encoding rules if present
     if (latest_schema.has_value()) {
