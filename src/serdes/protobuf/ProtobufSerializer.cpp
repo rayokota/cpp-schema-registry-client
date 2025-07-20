@@ -224,16 +224,33 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
         if (!message.SerializeToString(reinterpret_cast<std::string*>(&encoded_bytes))) {
             throw ProtobufError("Failed to serialize protobuf message");
         }
-
-        // Apply encoding rules if present
-        auto rule_set = schema.getRuleSet();
-        if (rule_set.has_value()) {
-            // TODO: Implement encoding rule execution
-        }
     } else {
         // Direct serialization without schema evolution
         if (!message.SerializeToString(reinterpret_cast<std::string*>(&encoded_bytes))) {
             throw ProtobufError("Failed to serialize protobuf message");
+        }
+    }
+
+    // Apply encoding rules if present
+    if (latest_schema.has_value()) {
+        auto schema = latest_schema->toSchema();
+        if (schema.getRuleSet().has_value()) {
+            auto rule_set = schema.getRuleSet().value();
+            if (rule_set.getEncodingRules().has_value()) {
+                auto bytes_value = SerdeValue::newBytes(SerdeFormat::Protobuf, encoded_bytes);
+                auto result = base_->getSerde().executeRulesWithPhase(
+                        ctx,
+                        subject,
+                        Phase::Encoding,
+                        Mode::Write,
+                        std::nullopt,
+                        std::make_optional(schema),
+                        std::nullopt,
+                        *bytes_value,
+                        {}
+                );
+                encoded_bytes = std::any_cast<std::vector<uint8_t>>(result->getValue());
+            }
         }
     }
 
