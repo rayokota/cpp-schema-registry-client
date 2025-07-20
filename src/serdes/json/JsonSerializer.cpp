@@ -83,8 +83,7 @@ JsonSerializer::JsonSerializer(
                 auto rule_registry = base_->getSerde().getRuleRegistry();
                 if (rule_registry) {
                     auto client = base_->getSerde().getClient();
-                    // TODO: Fix ClientConfiguration vs ServerConfig conversion
-                    // executor->configure(client->getConfig("default"), config.rule_config);
+                    executor->configure(client->getConfiguration(), config.rule_config);
                 }
             } catch (const std::exception& e) {
                 throw JsonError("Failed to configure rule executor: " + std::string(e.what()));
