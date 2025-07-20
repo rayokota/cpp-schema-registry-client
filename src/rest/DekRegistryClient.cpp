@@ -72,7 +72,7 @@ std::shared_ptr<IDekRegistryClient> DekRegistryClient::newClient(
         throw srclient::rest::RestException("Base URL is required");
     }
     
-    const std::string& url = config->getBaseUrls()[0];
+    const std::string url = config->getBaseUrls()[0];
     if (url.substr(0, 7) == "mock://") {
         return std::make_shared<MockDekRegistryClient>(config);
     }

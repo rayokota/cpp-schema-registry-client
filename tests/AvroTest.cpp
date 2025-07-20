@@ -29,6 +29,10 @@
 #include "srclient/rules/encryption/localkms/LocalKmsDriver.h"
 #include "srclient/rest/MockDekRegistryClient.h"
 
+// Additional includes needed for proper compilation
+#include "srclient/serdes/SerdeError.h"
+#include "srclient/serdes/Serde.h"
+
 using namespace srclient::serdes;
 using namespace srclient::serdes::avro;
 using namespace srclient::rest;
@@ -42,7 +46,7 @@ TEST(AvroTest, BasicSerialization) {
     std::vector<std::string> urls = {"mock://"};
     auto client_config = std::make_shared<const ClientConfiguration>(urls);
     auto client = SchemaRegistryClient::newClient(client_config);
-    
+
     // Create serializer and deserializer configurations
     auto ser_config = SerializerConfig::createDefault();
     auto deser_config = DeserializerConfig::createDefault();
