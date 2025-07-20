@@ -1,6 +1,7 @@
 #pragma once
 
-#include "srclient/rules/encryption/EncryptExecutor.h"
+#include "srclient/rules/encryption/EncryptionExecutor.h"
+#include "srclient/rules/encryption/FieldEncryptionExecutor.h"
 
 namespace srclient::rules::encryption {
 
@@ -39,4 +40,4 @@ namespace registration {
     
 } // namespace registration
 
-} // namespace srclient::rules::encryption
+} // namespace srclient::rules::encryption 

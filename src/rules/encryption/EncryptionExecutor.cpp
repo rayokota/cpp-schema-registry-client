@@ -1,4 +1,4 @@
-#include "srclient/rules/encryption/EncryptExecutor.h"
+#include "srclient/rules/encryption/EncryptionExecutor.h"
 #include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
@@ -432,9 +432,6 @@ srclient::rest::model::Kek EncryptionExecutorTransform<T>::getOrCreateKek(RuleCo
     }
 }
 
-// Additional template method implementations would continue here...
-// Due to length constraints, I'll provide the key methods and structure
-
 template<typename T>
 std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform<T>::retrieveKekFromRegistry(const KekId& kek_id) {
     try {
@@ -451,8 +448,6 @@ std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform<T>::retrie
         return std::nullopt;
     }
 }
-
-// Additional EncryptionExecutorTransform method implementations
 
 template<typename T>
 std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform<T>::storeKekToRegistry(const KekId& kek_id, 
@@ -775,51 +770,7 @@ std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform<T>::registe
     return nullptr;
 }
 
-// Field encryption executor implementation
-template<typename T>
-FieldEncryptionExecutor<T>::FieldEncryptionExecutor(std::shared_ptr<Clock> clock)
-    : executor_(clock) {
-}
-
-template<typename T>
-void FieldEncryptionExecutor<T>::configure(std::shared_ptr<const ClientConfiguration> client_config,
-                                          const std::unordered_map<std::string, std::string>& rule_config) {
-    executor_.configure(client_config, rule_config);
-}
-
-template<typename T>
-std::string FieldEncryptionExecutor<T>::getType() const {
-    return "ENCRYPT";
-}
-
-template<typename T>
-void FieldEncryptionExecutor<T>::close() {
-    executor_.close();
-}
-
-template<typename T>
-std::unique_ptr<SerdeValue> FieldEncryptionExecutor<T>::transformField(RuleContext& ctx, const SerdeValue& field_value) {
-    auto transform = executor_.newTransform(ctx);
-    auto field_ctx = ctx.currentField();
-    if (!field_ctx) {
-        throw SerdeError("no field context");
-    }
-    
-    transform->transform(ctx, field_ctx->getFieldType(), field_value);
-    // For this simplified implementation, we just return a clone of the original field_value
-    // In a real implementation, the transform would modify field_value in place
-    return field_value.clone();
-}
-
-template<typename T>
-void FieldEncryptionExecutor<T>::registerExecutor() {
-    global_registry::registerRuleExecutor(
-        std::make_shared<FieldEncryptionExecutor<T>>()
-    );
-}
-
 // Template instantiations
 template class EncryptionExecutor<DekRegistryClient>;
-template class FieldEncryptionExecutor<DekRegistryClient>;
 
 } // namespace srclient::rules::encryption 
