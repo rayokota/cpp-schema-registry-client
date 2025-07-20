@@ -4,6 +4,7 @@
  */
 
 #include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/rest/MockSchemaRegistryClient.h"
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <sstream>
@@ -30,6 +31,19 @@ SchemaRegistryClient::SchemaRegistryClient(std::shared_ptr<const srclient::rest:
 
 SchemaRegistryClient::~SchemaRegistryClient() {
     close();
+}
+
+std::shared_ptr<ISchemaRegistryClient> SchemaRegistryClient::newClient(
+    std::shared_ptr<const srclient::rest::ClientConfiguration> config) {
+    if (config->getBaseUrls().empty()) {
+        throw srclient::rest::RestException("Base URL is required");
+    }
+    
+    const std::string& url = config->getBaseUrls()[0];
+    if (url.substr(0, 7) == "mock://") {
+        return std::make_shared<MockSchemaRegistryClient>(config);
+    }
+    return std::make_shared<SchemaRegistryClient>(config);
 }
 
 std::shared_ptr<const srclient::rest::ClientConfiguration> SchemaRegistryClient::getConfiguration() const {

@@ -4,6 +4,7 @@
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/rest/DekRegistryClient.h"
+#include "srclient/rest/IDekRegistryClient.h"
 #include "srclient/rest/DekRegistryTypes.h"
 #include "srclient/rest/ClientConfiguration.h"
 #include "srclient/rest/model/Dek.h"
@@ -99,19 +100,15 @@ public:
 };
 
 // Forward declarations
-template<typename T>
 class EncryptionExecutorTransform;
 
 /**
  * Main encryption executor for message-level encryption
  * Based on EncryptionExecutor from encrypt_executor.rs
  */
-template<typename T>
 class EncryptionExecutor : public RuleExecutor {
-    static_assert(std::is_base_of_v<IDekRegistryClient, T>, "T must inherit from IDekRegistryClient");
-
 private:
-    mutable std::unique_ptr<T> client_;
+    mutable std::shared_ptr<IDekRegistryClient> client_;
     mutable std::mutex client_mutex_;
     std::unordered_map<std::string, std::string> config_;
     mutable std::shared_mutex config_mutex_;
@@ -119,7 +116,7 @@ private:
 
 public:
     explicit EncryptionExecutor(std::shared_ptr<Clock> clock = std::make_shared<SystemClock>());
-
+    
     // RuleBase interface
     void configure(std::shared_ptr<const ClientConfiguration> client_config,
                   const std::unordered_map<std::string, std::string>& rule_config) override;
@@ -130,16 +127,16 @@ public:
     std::unique_ptr<SerdeValue> transform(RuleContext& ctx, const SerdeValue& msg) override;
 
     // Accessor
-    T* getClient() const;
+    IDekRegistryClient* getClient() const;
 
     // Helper methods
-    std::unique_ptr<EncryptionExecutorTransform<T>> newTransform(RuleContext& ctx) const;
+    std::unique_ptr<EncryptionExecutorTransform> newTransform(RuleContext& ctx) const;
 
     // Static registration
     static void registerExecutor();
 
 private:
-    friend class EncryptionExecutorTransform<T>;
+    friend class EncryptionExecutorTransform;
     
     Cryptor getCryptor(RuleContext& ctx) const;
     std::string getKekName(RuleContext& ctx) const;
@@ -150,10 +147,9 @@ private:
  * Transform helper class for encryption operations
  * Based on EncryptionExecutorTransform from encrypt_executor.rs
  */
-template<typename T>
 class EncryptionExecutorTransform {
 private:
-    const EncryptionExecutor<T>* executor_;
+    const EncryptionExecutor* executor_;
     Cryptor cryptor_;
     std::string kek_name_;
     mutable std::optional<srclient::rest::model::Kek> kek_;
@@ -161,7 +157,7 @@ private:
     int64_t dek_expiry_days_;
 
 public:
-    EncryptionExecutorTransform(const EncryptionExecutor<T>* executor,
+    EncryptionExecutorTransform(const EncryptionExecutor* executor,
                                Cryptor cryptor,
                                const std::string& kek_name,
                                int64_t dek_expiry_days);
@@ -210,8 +206,5 @@ private:
                                                               const std::unordered_map<std::string, std::string>& config,
                                                               const std::string& kek_url);
 };
-
-// Template instantiation declarations for common client types
-extern template class EncryptionExecutor<DekRegistryClient>;
 
 } // namespace srclient::rules::encryption 

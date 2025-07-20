@@ -16,26 +16,23 @@ namespace registration {
      * Call this function during application initialization to make encryption
      * rules available for use.
      */
-    template<typename T = DekRegistryClient>
     void registerAllEncryptionExecutors() {
-        EncryptionExecutor<T>::registerExecutor();
-        FieldEncryptionExecutor<T>::registerExecutor();
+        EncryptionExecutor::registerExecutor();
+        FieldEncryptionExecutor::registerExecutor();
     }
     
     /**
      * Register only the main encryption executor (for message-level transformations)
      */
-    template<typename T = DekRegistryClient>
     void registerEncryptionExecutor() {
-        EncryptionExecutor<T>::registerExecutor();
+        EncryptionExecutor::registerExecutor();
     }
     
     /**
      * Register only the encryption field executor (for field-level transformations)
      */
-    template<typename T = DekRegistryClient>
     void registerFieldEncryptionExecutor() {
-        FieldEncryptionExecutor<T>::registerExecutor();
+        FieldEncryptionExecutor::registerExecutor();
     }
     
 } // namespace registration

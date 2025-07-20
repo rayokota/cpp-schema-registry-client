@@ -80,6 +80,13 @@ public:
     ~SchemaRegistryClient() override;
 
     /**
+     * Factory method to create a client instance
+     * Returns MockSchemaRegistryClient for mock:// URLs, otherwise SchemaRegistryClient
+     */
+    static std::shared_ptr<ISchemaRegistryClient> newClient(
+        std::shared_ptr<const srclient::rest::ClientConfiguration> config);
+
+    /**
      * Get client configuration
      */
     std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const override;

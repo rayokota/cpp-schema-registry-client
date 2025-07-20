@@ -53,7 +53,14 @@ public:
     
     virtual ~DekRegistryClient() = default;
 
-    std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const;
+    /**
+     * Factory method to create a DEK client instance
+     * Returns MockDekRegistryClient for mock:// URLs, otherwise DekRegistryClient
+     */
+    static std::shared_ptr<IDekRegistryClient> newClient(
+        std::shared_ptr<const srclient::rest::ClientConfiguration> config);
+
+    std::shared_ptr<const srclient::rest::ClientConfiguration> getConfiguration() const override;
 
     // IDekRegistryClient implementation
     virtual srclient::rest::model::Kek registerKek(

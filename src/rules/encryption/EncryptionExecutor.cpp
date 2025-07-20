@@ -207,14 +207,12 @@ std::vector<uint8_t> Cryptor::decrypt(const std::vector<uint8_t>& dek,
     }
 }
 
-// EncryptionExecutor template implementation
-template<typename T>
-EncryptionExecutor<T>::EncryptionExecutor(std::shared_ptr<Clock> clock) 
+// EncryptionExecutor implementation
+EncryptionExecutor::EncryptionExecutor(std::shared_ptr<Clock> clock) 
     : clock_(clock ? clock : std::make_shared<SystemClock>()) {
 }
 
-template<typename T>
-void EncryptionExecutor<T>::configure(std::shared_ptr<const ClientConfiguration> client_config,
+void EncryptionExecutor::configure(std::shared_ptr<const ClientConfiguration> client_config,
                                      const std::unordered_map<std::string, std::string>& rule_config) {
     std::lock_guard<std::mutex> client_lock(client_mutex_);
     
@@ -222,7 +220,7 @@ void EncryptionExecutor<T>::configure(std::shared_ptr<const ClientConfiguration>
         // TODO: Compare existing config with new config
         // For now, assume it's the same
     } else {
-        client_ = std::make_unique<T>(client_config);
+        client_ = DekRegistryClient::newClient(client_config);
     }
     
     std::unique_lock<std::shared_mutex> config_lock(config_mutex_);
@@ -235,38 +233,32 @@ void EncryptionExecutor<T>::configure(std::shared_ptr<const ClientConfiguration>
     }
 }
 
-template<typename T>
-std::string EncryptionExecutor<T>::getType() const {
+std::string EncryptionExecutor::getType() const {
     return "ENCRYPT_PAYLOAD";
 }
 
-template<typename T>
-void EncryptionExecutor<T>::close() {
+void EncryptionExecutor::close() {
     std::lock_guard<std::mutex> client_lock(client_mutex_);
     client_.reset();
 }
 
-template<typename T>
-std::unique_ptr<SerdeValue> EncryptionExecutor<T>::transform(RuleContext& ctx, const SerdeValue& msg) {
+std::unique_ptr<SerdeValue> EncryptionExecutor::transform(RuleContext& ctx, const SerdeValue& msg) {
     auto transform = newTransform(ctx);
     return transform->transform(ctx, FieldType::Bytes, msg);
 }
 
-template<typename T>
-T* EncryptionExecutor<T>::getClient() const {
+IDekRegistryClient* EncryptionExecutor::getClient() const {
     std::lock_guard<std::mutex> lock(client_mutex_);
     return client_.get();
 }
 
-template<typename T>
-void EncryptionExecutor<T>::registerExecutor() {
+void EncryptionExecutor::registerExecutor() {
     global_registry::registerRuleExecutor(
-        std::make_shared<EncryptionExecutor<T>>(nullptr)
+        std::make_shared<EncryptionExecutor>(nullptr)
     );
 }
 
-template<typename T>
-Cryptor EncryptionExecutor<T>::getCryptor(RuleContext& ctx) const {
+Cryptor EncryptionExecutor::getCryptor(RuleContext& ctx) const {
     srclient::rest::model::Algorithm dek_algorithm = srclient::rest::model::Algorithm::Aes256Gcm;
     
     auto param = ctx.getParameter(ENCRYPT_DEK_ALGORITHM);
@@ -287,8 +279,7 @@ Cryptor EncryptionExecutor<T>::getCryptor(RuleContext& ctx) const {
     return Cryptor(dek_algorithm);
 }
 
-template<typename T>
-std::string EncryptionExecutor<T>::getKekName(RuleContext& ctx) const {
+std::string EncryptionExecutor::getKekName(RuleContext& ctx) const {
     auto param = ctx.getParameter(ENCRYPT_KEK_NAME);
     if (!param || param->empty()) {
         throw SerdeError("no kek name found");
@@ -296,8 +287,7 @@ std::string EncryptionExecutor<T>::getKekName(RuleContext& ctx) const {
     return *param;
 }
 
-template<typename T>
-int64_t EncryptionExecutor<T>::getDekExpiryDays(RuleContext& ctx) const {
+int64_t EncryptionExecutor::getDekExpiryDays(RuleContext& ctx) const {
     auto param = ctx.getParameter(ENCRYPT_DEK_EXPIRY_DAYS);
     if (!param) {
         return 0;
@@ -314,28 +304,25 @@ int64_t EncryptionExecutor<T>::getDekExpiryDays(RuleContext& ctx) const {
     }
 }
 
-template<typename T>
-std::unique_ptr<EncryptionExecutorTransform<T>> EncryptionExecutor<T>::newTransform(RuleContext& ctx) const {
+std::unique_ptr<EncryptionExecutorTransform> EncryptionExecutor::newTransform(RuleContext& ctx) const {
     auto cryptor = getCryptor(ctx);
     auto kek_name = getKekName(ctx);
     auto dek_expiry_days = getDekExpiryDays(ctx);
     
-    return std::make_unique<EncryptionExecutorTransform<T>>(
+    return std::make_unique<EncryptionExecutorTransform>(
         this, std::move(cryptor), kek_name, dek_expiry_days
     );
 }
 
-// EncryptionExecutorTransform template implementation
-template<typename T>
-EncryptionExecutorTransform<T>::EncryptionExecutorTransform(const EncryptionExecutor<T>* executor,
+// EncryptionExecutorTransform implementation
+EncryptionExecutorTransform::EncryptionExecutorTransform(const EncryptionExecutor* executor,
                                                            Cryptor cryptor,
                                                            const std::string& kek_name,
                                                            int64_t dek_expiry_days)
     : executor_(executor), cryptor_(std::move(cryptor)), kek_name_(kek_name), dek_expiry_days_(dek_expiry_days) {
 }
 
-template<typename T>
-std::unique_ptr<SerdeValue> EncryptionExecutorTransform<T>::transform(RuleContext& ctx, FieldType field_type, const SerdeValue& field_value) {
+std::unique_ptr<SerdeValue> EncryptionExecutorTransform::transform(RuleContext& ctx, FieldType field_type, const SerdeValue& field_value) {
     Mode rule_mode = ctx.getRuleMode();
     
     switch (rule_mode) {
@@ -416,13 +403,11 @@ std::unique_ptr<SerdeValue> EncryptionExecutorTransform<T>::transform(RuleContex
     }
 }
 
-template<typename T>
-bool EncryptionExecutorTransform<T>::isDekRotated() const {
+bool EncryptionExecutorTransform::isDekRotated() const {
     return dek_expiry_days_ > 0;
 }
 
-template<typename T>
-srclient::rest::model::Kek EncryptionExecutorTransform<T>::getKek(RuleContext& ctx) {
+srclient::rest::model::Kek EncryptionExecutorTransform::getKek(RuleContext& ctx) {
     std::lock_guard<std::mutex> lock(kek_mutex_);
     
     if (kek_) {
@@ -434,8 +419,7 @@ srclient::rest::model::Kek EncryptionExecutorTransform<T>::getKek(RuleContext& c
     return kek;
 }
 
-template<typename T>
-srclient::rest::model::Kek EncryptionExecutorTransform<T>::getOrCreateKek(RuleContext& ctx) {
+srclient::rest::model::Kek EncryptionExecutorTransform::getOrCreateKek(RuleContext& ctx) {
     bool is_read = ctx.getRuleMode() == Mode::Read;
     auto kms_type = ctx.getParameter(ENCRYPT_KMS_TYPE);
     auto kms_key_id = ctx.getParameter(ENCRYPT_KMS_KEY_ID);
@@ -484,8 +468,7 @@ srclient::rest::model::Kek EncryptionExecutorTransform<T>::getOrCreateKek(RuleCo
     }
 }
 
-template<typename T>
-std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform<T>::retrieveKekFromRegistry(const KekId& kek_id) {
+std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform::retrieveKekFromRegistry(const KekId& kek_id) {
     try {
         auto client = executor_->getClient();
         if (!client) {
@@ -501,8 +484,7 @@ std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform<T>::retrie
     }
 }
 
-template<typename T>
-std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform<T>::storeKekToRegistry(const KekId& kek_id, 
+std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform::storeKekToRegistry(const KekId& kek_id, 
                                                                             const std::string& kms_type,
                                                                             const std::string& kms_key_id, 
                                                                             bool shared) {
@@ -526,8 +508,7 @@ std::optional<srclient::rest::model::Kek> EncryptionExecutorTransform<T>::storeK
     }
 }
 
-template<typename T>
-srclient::rest::model::Dek EncryptionExecutorTransform<T>::getOrCreateDek(RuleContext& ctx, std::optional<int32_t> version) {
+srclient::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(RuleContext& ctx, std::optional<int32_t> version) {
     auto kek = getKek(ctx);
     bool is_read = ctx.getRuleMode() == Mode::Read;
     
@@ -592,8 +573,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform<T>::getOrCreateDek(RuleCo
     return *dek;
 }
 
-template<typename T>
-srclient::rest::model::Dek EncryptionExecutorTransform<T>::createDek(const DekId& dek_id, int32_t new_version, 
+srclient::rest::model::Dek EncryptionExecutorTransform::createDek(const DekId& dek_id, int32_t new_version, 
                                                     const std::optional<std::vector<uint8_t>>& encrypted_dek) {
     DekId new_dek_id = dek_id;
     new_dek_id.version = new_version;
@@ -611,8 +591,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform<T>::createDek(const DekId
     return *dek;
 }
 
-template<typename T>
-std::optional<std::vector<uint8_t>> EncryptionExecutorTransform<T>::encryptDek(const srclient::rest::model::Kek& kek, 
+std::optional<std::vector<uint8_t>> EncryptionExecutorTransform::encryptDek(const srclient::rest::model::Kek& kek, 
                                                                               const std::vector<uint8_t>& raw_dek) {
     std::shared_lock<std::shared_mutex> config_lock(executor_->config_mutex_);
     auto aead = getAead(executor_->config_, kek);
@@ -631,8 +610,7 @@ std::optional<std::vector<uint8_t>> EncryptionExecutorTransform<T>::encryptDek(c
     return std::vector<uint8_t>(result.begin(), result.end());
 }
 
-template<typename T>
-std::vector<uint8_t> EncryptionExecutorTransform<T>::decryptDek(const srclient::rest::model::Kek& kek, 
+std::vector<uint8_t> EncryptionExecutorTransform::decryptDek(const srclient::rest::model::Kek& kek, 
                                                                const std::vector<uint8_t>& encrypted_dek) {
     std::shared_lock<std::shared_mutex> config_lock(executor_->config_mutex_);
     auto aead = getAead(executor_->config_, kek);
@@ -651,8 +629,7 @@ std::vector<uint8_t> EncryptionExecutorTransform<T>::decryptDek(const srclient::
     return std::vector<uint8_t>(result.begin(), result.end());
 }
 
-template<typename T>
-srclient::rest::model::Dek EncryptionExecutorTransform<T>::updateCachedDek(const std::string& kek_name,
+srclient::rest::model::Dek EncryptionExecutorTransform::updateCachedDek(const std::string& kek_name,
                                                           const std::string& subject,
                                                           std::optional<srclient::rest::model::Algorithm> algorithm,
                                                           std::optional<int32_t> version,
@@ -667,8 +644,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform<T>::updateCachedDek(const
     return dek;
 }
 
-template<typename T>
-std::optional<srclient::rest::model::Dek> EncryptionExecutorTransform<T>::retrieveDekFromRegistry(const DekId& dek_id) {
+std::optional<srclient::rest::model::Dek> EncryptionExecutorTransform::retrieveDekFromRegistry(const DekId& dek_id) {
     try {
         auto client = executor_->getClient();
         if (!client) {
@@ -689,8 +665,7 @@ std::optional<srclient::rest::model::Dek> EncryptionExecutorTransform<T>::retrie
     }
 }
 
-template<typename T>
-std::optional<srclient::rest::model::Dek> EncryptionExecutorTransform<T>::storeDekToRegistry(const DekId& dek_id,
+std::optional<srclient::rest::model::Dek> EncryptionExecutorTransform::storeDekToRegistry(const DekId& dek_id,
                                                                             const std::optional<std::vector<uint8_t>>& encrypted_dek) {
     try {
         auto client = executor_->getClient();
@@ -718,8 +693,7 @@ std::optional<srclient::rest::model::Dek> EncryptionExecutorTransform<T>::storeD
     }
 }
 
-template<typename T>
-bool EncryptionExecutorTransform<T>::isExpired(RuleContext& ctx, const std::optional<srclient::rest::model::Dek>& dek) const {
+bool EncryptionExecutorTransform::isExpired(RuleContext& ctx, const std::optional<srclient::rest::model::Dek>& dek) const {
     int64_t now = executor_->clock_->now();
     return ctx.getRuleMode() != Mode::Read
            && dek_expiry_days_ > 0
@@ -727,8 +701,7 @@ bool EncryptionExecutorTransform<T>::isExpired(RuleContext& ctx, const std::opti
            && ((now - dek->getTs()) / MILLIS_IN_DAY) > dek_expiry_days_;
 }
 
-template<typename T>
-std::vector<uint8_t> EncryptionExecutorTransform<T>::prefixVersion(int32_t version, const std::vector<uint8_t>& ciphertext) const {
+std::vector<uint8_t> EncryptionExecutorTransform::prefixVersion(int32_t version, const std::vector<uint8_t>& ciphertext) const {
     std::vector<uint8_t> payload;
     payload.push_back(0);  // Magic byte
     
@@ -741,8 +714,7 @@ std::vector<uint8_t> EncryptionExecutorTransform<T>::prefixVersion(int32_t versi
     return payload;
 }
 
-template<typename T>
-std::pair<std::optional<int32_t>, std::vector<uint8_t>> EncryptionExecutorTransform<T>::extractVersion(const std::vector<uint8_t>& ciphertext) const {
+std::pair<std::optional<int32_t>, std::vector<uint8_t>> EncryptionExecutorTransform::extractVersion(const std::vector<uint8_t>& ciphertext) const {
     if (ciphertext.size() < 5) {
         return {std::nullopt, ciphertext};
     }
@@ -756,8 +728,7 @@ std::pair<std::optional<int32_t>, std::vector<uint8_t>> EncryptionExecutorTransf
     return {version, remaining_ciphertext};
 }
 
-template<typename T>
-std::optional<std::vector<uint8_t>> EncryptionExecutorTransform<T>::toBytes(FieldType field_type, const SerdeValue& value) const {
+std::optional<std::vector<uint8_t>> EncryptionExecutorTransform::toBytes(FieldType field_type, const SerdeValue& value) const {
     switch (field_type) {
         case FieldType::String: {
             auto str_value = value.asString();
@@ -770,8 +741,7 @@ std::optional<std::vector<uint8_t>> EncryptionExecutorTransform<T>::toBytes(Fiel
     }
 }
 
-template<typename T>
-std::unique_ptr<SerdeValue> EncryptionExecutorTransform<T>::toObject(RuleContext& ctx, FieldType field_type, 
+std::unique_ptr<SerdeValue> EncryptionExecutorTransform::toObject(RuleContext& ctx, FieldType field_type, 
                                                                     const std::vector<uint8_t>& value) const {
     switch (field_type) {
         case FieldType::String: {
@@ -787,8 +757,7 @@ std::unique_ptr<SerdeValue> EncryptionExecutorTransform<T>::toObject(RuleContext
     }
 }
 
-template<typename T>
-std::unique_ptr<crypto::tink::Aead> EncryptionExecutorTransform<T>::getAead(const std::unordered_map<std::string, std::string>& config,
+std::unique_ptr<crypto::tink::Aead> EncryptionExecutorTransform::getAead(const std::unordered_map<std::string, std::string>& config,
                                                                            const srclient::rest::model::Kek& kek) {
     std::string kek_url = kek.getKmsType() + "://" + kek.getKmsKeyId();
     auto kms_client = getKmsClient(config, kek_url);
@@ -805,8 +774,7 @@ std::unique_ptr<crypto::tink::Aead> EncryptionExecutorTransform<T>::getAead(cons
     return std::move(aead_result.value());
 }
 
-template<typename T>
-std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform<T>::getKmsClient(const std::unordered_map<std::string, std::string>& config,
+std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform::getKmsClient(const std::unordered_map<std::string, std::string>& config,
                                                                                      const std::string& kek_url) {
     try {
         // Try to get an existing KMS client first
@@ -818,8 +786,7 @@ std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform<T>::getKmsC
     }
 }
 
-template<typename T>
-std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform<T>::registerKmsClient(std::shared_ptr<KmsDriver> kms_driver,
+std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform::registerKmsClient(std::shared_ptr<KmsDriver> kms_driver,
                                                                                           const std::unordered_map<std::string, std::string>& config,
                                                                                           const std::string& kek_url) {
     // Create a new KMS client using the provided driver
@@ -830,8 +797,5 @@ std::shared_ptr<crypto::tink::KmsClient> EncryptionExecutorTransform<T>::registe
     
     return kms_client;
 }
-
-// Template instantiations
-template class EncryptionExecutor<DekRegistryClient>;
 
 } // namespace srclient::rules::encryption 

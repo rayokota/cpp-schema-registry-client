@@ -41,9 +41,7 @@ TEST(AvroTest, BasicSerialization) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
     auto client_config = std::make_shared<const ClientConfiguration>(urls);
-    
-    // Create mock schema registry client
-    auto client = std::make_shared<MockSchemaRegistryClient>(client_config);
+    auto client = SchemaRegistryClient::newClient(client_config);
     
     // Create serializer and deserializer configurations
     auto ser_config = SerializerConfig::createDefault();
@@ -125,9 +123,7 @@ TEST(AvroTest, CelFieldTransformation) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
     auto client_config = std::make_shared<const ClientConfiguration>(urls);
-    
-    // Create mock schema registry client
-    auto client = std::make_shared<MockSchemaRegistryClient>(client_config);
+    auto client = SchemaRegistryClient::newClient(client_config);
     
     // Create serializer configuration
     auto ser_config = SerializerConfig(
@@ -237,9 +233,7 @@ TEST(AvroTest, FieldEncryption) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
     auto client_config = std::make_shared<const ClientConfiguration>(urls);
-    
-    // Create mock schema registry client
-    auto client = std::make_shared<MockSchemaRegistryClient>(client_config);
+    auto client = SchemaRegistryClient::newClient(client_config);
     
     // Create mock DEK registry client for encryption
     auto dek_client = std::make_shared<MockDekRegistryClient>(client_config);

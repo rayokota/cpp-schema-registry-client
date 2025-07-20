@@ -4,6 +4,7 @@
  */
 
 #include "srclient/rest/DekRegistryClient.h"
+#include "srclient/rest/MockDekRegistryClient.h"
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <iomanip>
@@ -63,6 +64,19 @@ DekRegistryClient::DekRegistryClient(std::shared_ptr<const srclient::rest::Clien
     if (config->getBaseUrls().empty()) {
         throw srclient::rest::RestException("Base URL is required");
     }
+}
+
+std::shared_ptr<IDekRegistryClient> DekRegistryClient::newClient(
+    std::shared_ptr<const srclient::rest::ClientConfiguration> config) {
+    if (config->getBaseUrls().empty()) {
+        throw srclient::rest::RestException("Base URL is required");
+    }
+    
+    const std::string& url = config->getBaseUrls()[0];
+    if (url.substr(0, 7) == "mock://") {
+        return std::make_shared<MockDekRegistryClient>(config);
+    }
+    return std::make_shared<DekRegistryClient>(config);
 }
 
 std::shared_ptr<const srclient::rest::ClientConfiguration> DekRegistryClient::getConfiguration() const {
