@@ -64,15 +64,13 @@ public:
     void setEncryptedKeyMaterial(const std::optional<std::string>& encryptedKeyMaterial);
     void setEncryptedKeyMaterialBytes(const std::optional<std::vector<uint8_t>>& encryptedKeyMaterialBytes);
     void setKeyMaterial(const std::optional<std::string>& keyMaterial);
+    void setKeyMaterial(const std::optional<std::vector<uint8_t>>& keyMaterial);
     void setKeyMaterialBytes(const std::optional<std::vector<uint8_t>>& keyMaterialBytes);
     void setTs(int64_t ts);
     void setDeleted(const std::optional<bool>& deleted);
 
     // Utility methods
     void populateKeyMaterialBytes();
-    std::optional<std::vector<uint8_t>> getEncryptedKeyMaterialBytesComputed();
-    std::optional<std::vector<uint8_t>> getKeyMaterialBytesComputed();
-    void setKeyMaterialFromBytes(const std::vector<uint8_t>& keyMaterialBytes);
 
     friend void to_json(nlohmann::json& j, const Dek& o);
     friend void from_json(const nlohmann::json& j, Dek& o);

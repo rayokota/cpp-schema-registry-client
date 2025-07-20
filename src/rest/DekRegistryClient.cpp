@@ -338,7 +338,7 @@ srclient::rest::model::Dek DekRegistryClient::setDekKeyMaterial(
     
     if (dek.has_value()) {
         auto mutDek = dek.value();
-        mutDek.setKeyMaterialFromBytes(keyMaterialBytes);
+        mutDek.setKeyMaterial(keyMaterialBytes);
         mutDek.populateKeyMaterialBytes();
         
         // Update cache

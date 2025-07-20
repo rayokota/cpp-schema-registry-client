@@ -206,7 +206,7 @@ srclient::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
     
     auto* dek = store->getMutDek(dekId);
     if (dek != nullptr) {
-        dek->setKeyMaterialFromBytes(keyMaterialBytes);
+        dek->setKeyMaterial(keyMaterialBytes);
         return *dek;
     }
     

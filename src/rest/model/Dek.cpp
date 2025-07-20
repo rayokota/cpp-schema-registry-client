@@ -75,9 +75,29 @@ std::string Dek::getSubject() const { return subject_; }
 int32_t Dek::getVersion() const { return version_; }
 Algorithm Dek::getAlgorithm() const { return algorithm_; }
 std::optional<std::string> Dek::getEncryptedKeyMaterial() const { return encryptedKeyMaterial_; }
-std::optional<std::vector<uint8_t>> Dek::getEncryptedKeyMaterialBytes() const { return encryptedKeyMaterialBytes_; }
+std::optional<std::vector<uint8_t>> Dek::getEncryptedKeyMaterialBytes() const { 
+    if (!encryptedKeyMaterial_.has_value()) {
+        return std::nullopt;
+    }
+    
+    if (!encryptedKeyMaterialBytes_.has_value()) {
+        encryptedKeyMaterialBytes_ = base64_decode(encryptedKeyMaterial_.value());
+    }
+    
+    return encryptedKeyMaterialBytes_;
+}
 std::optional<std::string> Dek::getKeyMaterial() const { return keyMaterial_; }
-std::optional<std::vector<uint8_t>> Dek::getKeyMaterialBytes() const { return keyMaterialBytes_; }
+std::optional<std::vector<uint8_t>> Dek::getKeyMaterialBytes() const { 
+    if (!keyMaterial_.has_value()) {
+        return std::nullopt;
+    }
+    
+    if (!keyMaterialBytes_.has_value()) {
+        keyMaterialBytes_ = base64_decode(keyMaterial_.value());
+    }
+    
+    return keyMaterialBytes_;
+}
 int64_t Dek::getTs() const { return ts_; }
 std::optional<bool> Dek::getDeleted() const { return deleted_; }
 
@@ -89,42 +109,15 @@ void Dek::setAlgorithm(Algorithm algorithm) { algorithm_ = algorithm; }
 void Dek::setEncryptedKeyMaterial(const std::optional<std::string>& encryptedKeyMaterial) { encryptedKeyMaterial_ = encryptedKeyMaterial; }
 void Dek::setEncryptedKeyMaterialBytes(const std::optional<std::vector<uint8_t>>& encryptedKeyMaterialBytes) { encryptedKeyMaterialBytes_ = encryptedKeyMaterialBytes; }
 void Dek::setKeyMaterial(const std::optional<std::string>& keyMaterial) { keyMaterial_ = keyMaterial; }
+void Dek::setKeyMaterial(const std::optional<std::vector<uint8_t>>& keyMaterial) { keyMaterial_ = base64_encode(keyMaterial.value()); }
 void Dek::setKeyMaterialBytes(const std::optional<std::vector<uint8_t>>& keyMaterialBytes) { keyMaterialBytes_ = keyMaterialBytes; }
 void Dek::setTs(int64_t ts) { ts_ = ts; }
 void Dek::setDeleted(const std::optional<bool>& deleted) { deleted_ = deleted; }
 
 // Utility methods
 void Dek::populateKeyMaterialBytes() {
-    getEncryptedKeyMaterialBytesComputed();
-    getKeyMaterialBytesComputed();
-}
-
-std::optional<std::vector<uint8_t>> Dek::getEncryptedKeyMaterialBytesComputed() {
-    if (!encryptedKeyMaterial_.has_value()) {
-        return std::nullopt;
-    }
-    
-    if (!encryptedKeyMaterialBytes_.has_value()) {
-        encryptedKeyMaterialBytes_ = base64_decode(encryptedKeyMaterial_.value());
-    }
-    
-    return encryptedKeyMaterialBytes_;
-}
-
-std::optional<std::vector<uint8_t>> Dek::getKeyMaterialBytesComputed() {
-    if (!keyMaterial_.has_value()) {
-        return std::nullopt;
-    }
-    
-    if (!keyMaterialBytes_.has_value()) {
-        keyMaterialBytes_ = base64_decode(keyMaterial_.value());
-    }
-    
-    return keyMaterialBytes_;
-}
-
-void Dek::setKeyMaterialFromBytes(const std::vector<uint8_t>& keyMaterialBytes) {
-    keyMaterial_ = base64_encode(keyMaterialBytes);
+    getEncryptedKeyMaterialBytes();
+    getKeyMaterialBytes();
 }
 
 // JSON serialization
