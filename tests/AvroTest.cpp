@@ -319,7 +319,7 @@ TEST(AvroTest, FieldEncryption) {
     // Create rule registry and register field encryption executor
     auto rule_registry = std::make_shared<RuleRegistry>();
     auto clock = std::make_shared<SystemClock>();
-    auto encryption_executor = std::make_shared<FieldEncryptionExecutor<MockDekRegistryClient>>(clock);
+    auto encryption_executor = std::make_shared<FieldEncryptionExecutor>(clock);
     rule_registry->registerExecutor(encryption_executor);
     
     // Create serializer and deserializer
