@@ -35,10 +35,7 @@ std::unique_ptr<SerdeValue> FieldEncryptionExecutor<T>::transformField(RuleConte
         throw SerdeError("no field context");
     }
     
-    transform->transform(ctx, field_ctx->getFieldType(), field_value);
-    // For this simplified implementation, we just return a clone of the original field_value
-    // In a real implementation, the transform would modify field_value in place
-    return field_value.clone();
+    return transform->transform(ctx, field_ctx->getFieldType(), field_value);
 }
 
 template<typename T>
