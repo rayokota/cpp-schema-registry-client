@@ -17,6 +17,8 @@ RestException::RestException(const std::string_view message
     , int errorCode
     , std::shared_ptr<std::istream> content /*= nullptr*/ )
     : content_(content)
+    , message_(message)
+    , errorCode_(errorCode)
 {
 }
 
@@ -27,6 +29,16 @@ RestException::~RestException()
 std::shared_ptr<std::istream> RestException::getContent() const
 {
     return content_;
+}
+
+int RestException::getErrorCode() const
+{
+    return errorCode_;
+}
+
+const char* RestException::what() const noexcept
+{
+    return message_.c_str();
 }
 
 }

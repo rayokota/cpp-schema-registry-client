@@ -429,7 +429,7 @@ srclient::rest::model::Kek EncryptionExecutorTransform::getOrCreateKek(RuleConte
     kek_id.deleted = false;
     
     auto kek = retrieveKekFromRegistry(kek_id);
-    if (kek) {
+    if (kek.has_value()) {
         if (kms_type && kek->getKmsType() != *kms_type) {
             throw SerdeError(absl::StrFormat(
                 "found %s with kms type %s which differs from rule kms type %s",
@@ -455,12 +455,12 @@ srclient::rest::model::Kek EncryptionExecutorTransform::getOrCreateKek(RuleConte
         }
         
         kek = storeKekToRegistry(kek_id, *kms_type, *kms_key_id, false);
-        if (!kek) {
+        if (!kek.has_value()) {
             // Handle conflicts (409)
             kek = retrieveKekFromRegistry(kek_id);
         }
         
-        if (!kek) {
+        if (!kek.has_value()) {
             throw SerdeError("no kek found for " + kek_id.name + " during produce");
         }
         
