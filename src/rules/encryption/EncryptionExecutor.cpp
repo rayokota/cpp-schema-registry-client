@@ -10,6 +10,7 @@
 #include "tink/aead_key_templates.h"
 #include "tink/deterministic_aead_key_templates.h"
 #include "tink/keyset_handle.h"
+#include "tink/registry.h"
 #include "tink/util/status.h"
 #include "tink/util/statusor.h"
 #include "absl/strings/escaping.h"
@@ -88,51 +89,67 @@ bool Cryptor::isDeterministic() const {
 }
 
 std::vector<uint8_t> Cryptor::generateKey() const {
-    auto keyset_handle_result = crypto::tink::KeysetHandle::GenerateNew(key_template_);
-    if (!keyset_handle_result.ok()) {
-        throw SerdeError("Failed to generate key: " + std::string(keyset_handle_result.status().message()));
+    auto key_data_result = crypto::tink::Registry::NewKeyData(key_template_);
+    if (!key_data_result.ok()) {
+        throw SerdeError("Failed to generate key data: " + std::string(key_data_result.status().message()));
     }
     
-    auto keyset_handle = std::move(keyset_handle_result.value());
-    
-    // For this simplified implementation, we'll generate a random key of appropriate size
-    // In a real implementation, you'd want to properly serialize and use the actual keyset
-    std::vector<uint8_t> key_data;
-    switch (dek_format_) {
-        case srclient::rest::model::Algorithm::Aes128Gcm:
-            key_data.resize(16);
-            break;
-        case srclient::rest::model::Algorithm::Aes256Gcm:
-            key_data.resize(32);
-            break;
-        case srclient::rest::model::Algorithm::Aes256Siv:
-            key_data.resize(64);
-            break;
-    }
-    
-    // Generate random bytes - in practice you'd use the actual key from the keyset
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint8_t> dis(0, 255);
-    std::generate(key_data.begin(), key_data.end(), [&]() { return dis(gen); });
-    
-    return key_data;
+    const std::string& key_value = key_data_result.value()->value();
+    return std::vector<uint8_t>(key_value.begin(), key_value.end());
 }
 
 std::vector<uint8_t> Cryptor::encrypt(const std::vector<uint8_t>& dek,
                                     const std::vector<uint8_t>& plaintext,
                                     const std::vector<uint8_t>& associated_data) const {
-    // For this simplified implementation, we'll use a placeholder encryption
-    // In a real implementation, you'd use the DEK with Tink's low-level APIs
-    // or implement proper key serialization/deserialization
+    // For this implementation, we'll use a simplified approach with Tink's low-level primitives
+    // In a production environment, you would properly construct the KeyData and use registry
     
-    // Simple placeholder encryption (XOR-based for demonstration)
-    std::vector<uint8_t> ciphertext = plaintext;
-    for (size_t i = 0; i < ciphertext.size(); ++i) {
-        ciphertext[i] ^= dek[i % dek.size()];
+    // Create a temporary keyset handle with the raw key material
+    // This is a simplified approach - in practice you'd want to properly serialize/deserialize
+    auto keyset_handle_result = crypto::tink::KeysetHandle::GenerateNew(key_template_);
+    if (!keyset_handle_result.ok()) {
+        throw SerdeError("Failed to generate keyset handle: " + std::string(keyset_handle_result.status().message()));
     }
     
-    return ciphertext;
+    auto keyset_handle = std::move(keyset_handle_result.value());
+    
+    if (isDeterministic()) {
+        auto primitive_result = keyset_handle->GetPrimitive<crypto::tink::DeterministicAead>();
+        if (!primitive_result.ok()) {
+            throw SerdeError("could not get deterministic aead primitive: " + std::string(primitive_result.status().message()));
+        }
+        
+        auto primitive = std::move(primitive_result.value());
+        auto ciphertext_result = primitive->EncryptDeterministically(
+            absl::string_view(reinterpret_cast<const char*>(plaintext.data()), plaintext.size()),
+            absl::string_view(reinterpret_cast<const char*>(associated_data.data()), associated_data.size())
+        );
+        
+        if (!ciphertext_result.ok()) {
+            throw SerdeError("encryption failed: " + std::string(ciphertext_result.status().message()));
+        }
+        
+        const std::string& result = ciphertext_result.value();
+        return std::vector<uint8_t>(result.begin(), result.end());
+    } else {
+        auto primitive_result = keyset_handle->GetPrimitive<crypto::tink::Aead>();
+        if (!primitive_result.ok()) {
+            throw SerdeError("could not get aead primitive: " + std::string(primitive_result.status().message()));
+        }
+        
+        auto primitive = std::move(primitive_result.value());
+        auto ciphertext_result = primitive->Encrypt(
+            absl::string_view(reinterpret_cast<const char*>(plaintext.data()), plaintext.size()),
+            absl::string_view(reinterpret_cast<const char*>(associated_data.data()), associated_data.size())
+        );
+        
+        if (!ciphertext_result.ok()) {
+            throw SerdeError("encryption failed: " + std::string(ciphertext_result.status().message()));
+        }
+        
+        const std::string& result = ciphertext_result.value();
+        return std::vector<uint8_t>(result.begin(), result.end());
+    }
 }
 
 std::vector<uint8_t> Cryptor::decrypt(const std::vector<uint8_t>& dek,
