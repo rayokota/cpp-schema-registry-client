@@ -188,4 +188,4 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
 
 # Enable testing
 enable_testing()
-add_subdirectory(tests)
+add_subdirectory(test)
