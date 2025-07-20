@@ -510,6 +510,9 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(const SerializationCont
         return msg.clone();
     }
     
+    // Create a local variable to track the current message state
+    auto current_msg = msg.clone();
+    
     for (size_t index = 0; index < rules.size(); ++index) {
         const auto& rule = rules[index];
         
@@ -543,8 +546,8 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(const SerializationCont
         // Fix: Check if rule type is available before using it
         if (!rule.getType().has_value()) {
             runAction(ctx, rule_mode, rule, getOnFailure(rule),
-                     msg, SerdeError("Rule type not specified"), "ERROR");
-            return msg.clone();
+                     *current_msg, SerdeError("Rule type not specified"), "ERROR");
+            return std::move(current_msg);
         }
         
         std::string rule_type = rule.getType().value();  // Store copy to avoid dangling reference
@@ -555,12 +558,12 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(const SerializationCont
             
         if (!executor) {
             runAction(ctx, rule_mode, rule, getOnFailure(rule),
-                     msg, SerdeError("Rule executor " + rule_type + " not found"), "ERROR");
-            return msg.clone();
+                     *current_msg, SerdeError("Rule executor " + rule_type + " not found"), "ERROR");
+            return std::move(current_msg);
         }
         
         try {
-            auto result = executor->transform(ctx, msg);  // Now returns unique_ptr<SerdeValue>
+            auto result = executor->transform(ctx, *current_msg);  // Now returns unique_ptr<SerdeValue>
             
             Kind kind = rule.getKind().value_or(Kind::Transform);
             if (kind == Kind::Condition) {
@@ -568,26 +571,23 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(const SerializationCont
                 // Implementation depends on SerdeValue interface
                 // if (!result->asBool()) {
                 //     runAction(ctx, rule_mode, rule, getOnFailure(rule),
-                //              msg, SerdeError("Rule condition failed"), "ERROR");
+                //              *current_msg, SerdeError("Rule condition failed"), "ERROR");
                 // }
             } else {
-                // For transform rules, we would need to replace msg with result
-                // Since msg is a reference parameter and we can't reassign references,
-                // we need to copy the result back into msg if possible
-                // TODO: Implement proper message replacement when SerdeValue supports it
-                // For now, we just continue with the original msg
+                // replace current_msg with result
+                current_msg = std::move(result);
             }
             
             runAction(ctx, rule_mode, rule, getOnSuccess(rule),
-                     msg, std::nullopt, "NONE");
+                     *current_msg, std::nullopt, "NONE");
         } catch (const SerdeError& e) {
             runAction(ctx, rule_mode, rule, getOnFailure(rule),
-                     msg, e, "ERROR");
-            return msg.clone();
+                     *current_msg, e, "ERROR");
+            return std::move(current_msg);
         }
     }
     
-    return msg.clone();
+    return std::move(current_msg);
 }
 
 std::vector<Migration> Serde::getMigrations(const std::string& subject,
