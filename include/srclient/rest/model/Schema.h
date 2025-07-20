@@ -31,7 +31,7 @@ namespace srclient::rest::model
 /// <summary>
 /// Schema
 /// </summary>
-class  Schema
+class Schema
 {
 public:
     Schema();

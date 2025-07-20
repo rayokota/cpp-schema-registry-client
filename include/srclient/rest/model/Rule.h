@@ -49,7 +49,7 @@ enum class Mode {
 /// <summary>
 /// Rule
 /// </summary>
-class  Rule
+class Rule
 {
 public:
     Rule();

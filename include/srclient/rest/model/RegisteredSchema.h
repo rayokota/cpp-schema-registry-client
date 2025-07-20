@@ -32,7 +32,7 @@ namespace srclient::rest::model
 /// <summary>
 /// Schema register response
 /// </summary>
-class  RegisteredSchema
+class RegisteredSchema
 {
 public:
     RegisteredSchema();

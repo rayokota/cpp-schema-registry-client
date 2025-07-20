@@ -21,7 +21,7 @@
 
 namespace srclient::rest {
 
-class  ClientConfiguration
+class ClientConfiguration
 {
 public:
     ClientConfiguration(const std::vector<std::string>& baseUrls);

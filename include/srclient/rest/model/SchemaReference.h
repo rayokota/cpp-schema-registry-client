@@ -27,7 +27,7 @@ namespace srclient::rest::model
 /// <summary>
 /// Schema reference
 /// </summary>
-class  SchemaReference
+class SchemaReference
 {
 public:
     SchemaReference();

@@ -31,7 +31,7 @@
 
 namespace srclient::rest {
 
-class  RestClient
+class RestClient
 {
 public:
     RestClient( std::shared_ptr<const ClientConfiguration> configuration = nullptr );

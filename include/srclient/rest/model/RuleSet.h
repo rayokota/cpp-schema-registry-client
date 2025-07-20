@@ -28,7 +28,7 @@ namespace srclient::rest::model
 /// <summary>
 /// Schema rule set
 /// </summary>
-class  RuleSet
+class RuleSet
 {
 public:
     RuleSet();

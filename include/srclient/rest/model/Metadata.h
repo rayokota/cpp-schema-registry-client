@@ -29,7 +29,7 @@ namespace srclient::rest::model
 /// <summary>
 /// User-defined metadata
 /// </summary>
-class  Metadata
+class Metadata
 {
 public:
     Metadata();

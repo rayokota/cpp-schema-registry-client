@@ -22,7 +22,7 @@ enum class CompatibilityLevel {
 /// <summary>
 /// Config
 /// </summary>
-class  ServerConfig
+class ServerConfig
 {
 public:
     ServerConfig();
