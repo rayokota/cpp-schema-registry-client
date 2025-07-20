@@ -261,7 +261,7 @@ T* EncryptionExecutor<T>::getClient() const {
 template<typename T>
 void EncryptionExecutor<T>::registerExecutor() {
     global_registry::registerRuleExecutor(
-        std::make_shared<EncryptionExecutor<T>>()
+        std::make_shared<EncryptionExecutor<T>>(nullptr)
     );
 }
 

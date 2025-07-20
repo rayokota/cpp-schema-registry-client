@@ -85,6 +85,7 @@ target_link_libraries(srclient-test
         absl::absl_log
         absl::log_internal_message
         absl::hash
+        tink::static
 )
 
 include(GoogleTest)

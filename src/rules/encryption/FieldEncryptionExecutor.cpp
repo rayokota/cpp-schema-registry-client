@@ -41,7 +41,7 @@ std::unique_ptr<SerdeValue> FieldEncryptionExecutor<T>::transformField(RuleConte
 template<typename T>
 void FieldEncryptionExecutor<T>::registerExecutor() {
     global_registry::registerRuleExecutor(
-        std::make_shared<FieldEncryptionExecutor<T>>()
+        std::make_shared<FieldEncryptionExecutor<T>>(nullptr)
     );
 }
 
