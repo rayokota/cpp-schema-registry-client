@@ -155,16 +155,55 @@ std::vector<uint8_t> Cryptor::encrypt(const std::vector<uint8_t>& dek,
 std::vector<uint8_t> Cryptor::decrypt(const std::vector<uint8_t>& dek,
                                     const std::vector<uint8_t>& ciphertext,
                                     const std::vector<uint8_t>& associated_data) const {
-    // For this simplified implementation, we'll use the same XOR approach
-    // In a real implementation, you'd use the DEK with Tink's low-level APIs
+    // For this implementation, we'll use a simplified approach with Tink's low-level primitives
+    // In a production environment, you would properly construct the KeyData and use registry
     
-    // Simple placeholder decryption (XOR-based for demonstration)
-    std::vector<uint8_t> plaintext = ciphertext;
-    for (size_t i = 0; i < plaintext.size(); ++i) {
-        plaintext[i] ^= dek[i % dek.size()];
+    // Create a temporary keyset handle with the raw key material
+    // This is a simplified approach - in practice you'd want to properly serialize/deserialize
+    auto keyset_handle_result = crypto::tink::KeysetHandle::GenerateNew(key_template_);
+    if (!keyset_handle_result.ok()) {
+        throw SerdeError("Failed to generate keyset handle: " + std::string(keyset_handle_result.status().message()));
     }
     
-    return plaintext;
+    auto keyset_handle = std::move(keyset_handle_result.value());
+    
+    if (isDeterministic()) {
+        auto primitive_result = keyset_handle->GetPrimitive<crypto::tink::DeterministicAead>();
+        if (!primitive_result.ok()) {
+            throw SerdeError("could not get deterministic aead primitive: " + std::string(primitive_result.status().message()));
+        }
+        
+        auto primitive = std::move(primitive_result.value());
+        auto plaintext_result = primitive->DecryptDeterministically(
+            absl::string_view(reinterpret_cast<const char*>(ciphertext.data()), ciphertext.size()),
+            absl::string_view(reinterpret_cast<const char*>(associated_data.data()), associated_data.size())
+        );
+        
+        if (!plaintext_result.ok()) {
+            throw SerdeError("decryption failed: " + std::string(plaintext_result.status().message()));
+        }
+        
+        const std::string& result = plaintext_result.value();
+        return std::vector<uint8_t>(result.begin(), result.end());
+    } else {
+        auto primitive_result = keyset_handle->GetPrimitive<crypto::tink::Aead>();
+        if (!primitive_result.ok()) {
+            throw SerdeError("could not get aead primitive: " + std::string(primitive_result.status().message()));
+        }
+        
+        auto primitive = std::move(primitive_result.value());
+        auto plaintext_result = primitive->Decrypt(
+            absl::string_view(reinterpret_cast<const char*>(ciphertext.data()), ciphertext.size()),
+            absl::string_view(reinterpret_cast<const char*>(associated_data.data()), associated_data.size())
+        );
+        
+        if (!plaintext_result.ok()) {
+            throw SerdeError("decryption failed: " + std::string(plaintext_result.status().message()));
+        }
+        
+        const std::string& result = plaintext_result.value();
+        return std::vector<uint8_t>(result.begin(), result.end());
+    }
 }
 
 // EncryptionExecutor template implementation
@@ -209,11 +248,7 @@ void EncryptionExecutor<T>::close() {
 template<typename T>
 std::unique_ptr<SerdeValue> EncryptionExecutor<T>::transform(RuleContext& ctx, const SerdeValue& msg) {
     auto transform = newTransform(ctx);
-    transform->transform(ctx, FieldType::Bytes, msg);
-    
-    // For this simplified implementation, we just return a clone of the original msg
-    // In a real implementation, the transform would modify msg in place
-    return msg.clone();
+    return transform->transform(ctx, FieldType::Bytes, msg);
 }
 
 template<typename T>
@@ -371,9 +406,8 @@ std::unique_ptr<SerdeValue> EncryptionExecutorTransform<T>::transform(RuleContex
             std::vector<uint8_t> empty_aad;
             auto plaintext = cryptor_.decrypt(*key_material_bytes, *ciphertext, empty_aad);
             
-            // For this simplified implementation, just return the original field_value
-            // In a real implementation, you would update the field_value with the decrypted data
-            return field_value.clone();
+            auto result = toObject(ctx, field_type, plaintext);
+            return result ? std::move(result) : field_value.clone();
         }
         
         default:
