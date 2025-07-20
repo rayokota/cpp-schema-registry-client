@@ -282,7 +282,7 @@ EncryptionExecutorTransform<T>::EncryptionExecutorTransform(const EncryptionExec
 }
 
 template<typename T>
-const SerdeValue& EncryptionExecutorTransform<T>::transform(RuleContext& ctx, FieldType field_type, const SerdeValue& field_value) {
+std::unique_ptr<SerdeValue> EncryptionExecutorTransform<T>::transform(RuleContext& ctx, FieldType field_type, const SerdeValue& field_value) {
     Mode rule_mode = ctx.getRuleMode();
     
     switch (rule_mode) {
@@ -309,18 +309,22 @@ const SerdeValue& EncryptionExecutorTransform<T>::transform(RuleContext& ctx, Fi
             if (isDekRotated()) {
                 ciphertext = prefixVersion(dek.getVersion(), ciphertext);
             }
-            
-            // For this simplified implementation, just return the original field_value
-            // In a real implementation, you would update the field_value in place
-            // or use a different approach to modify the message
-            return field_value;
+
+            if (field_type == FieldType::String) {
+                std::string encrypted_value_str = absl::Base64Escape(
+                    absl::string_view(reinterpret_cast<const char*>(ciphertext.data()), ciphertext.size())
+                );
+                return SerdeValue::newString(ctx.getSerializationContext().serde_format, encrypted_value_str);
+            } else {
+                return SerdeValue::newBytes(ctx.getSerializationContext().serde_format, ciphertext);
+            }
         }
         
         case Mode::Read: {
             std::optional<std::vector<uint8_t>> ciphertext;
             
             if (field_type == FieldType::String) {
-                auto str_value = asJson(field_value).get<std::string>();
+                auto str_value = field_value.asString();
                 std::string decoded;
                 if (!absl::Base64Unescape(str_value, &decoded)) {
                     throw SerdeError("could not decode base64 ciphertext");
@@ -331,7 +335,7 @@ const SerdeValue& EncryptionExecutorTransform<T>::transform(RuleContext& ctx, Fi
             }
             
             if (!ciphertext) {
-                return field_value;
+                return field_value.clone();
             }
             
             std::optional<int32_t> version;
@@ -352,7 +356,7 @@ const SerdeValue& EncryptionExecutorTransform<T>::transform(RuleContext& ctx, Fi
             
             // For this simplified implementation, just return the original field_value
             // In a real implementation, you would update the field_value with the decrypted data
-            return field_value;
+            return field_value.clone();
         }
         
         default:
@@ -709,25 +713,11 @@ template<typename T>
 std::optional<std::vector<uint8_t>> EncryptionExecutorTransform<T>::toBytes(FieldType field_type, const SerdeValue& value) const {
     switch (field_type) {
         case FieldType::String: {
-            if (value.isJson()) {
-                auto json_val = asJson(value);
-                if (json_val.is_string()) {
-                    std::string str_val = json_val.get<std::string>();
-                    return std::vector<uint8_t>(str_val.begin(), str_val.end());
-                }
-            }
-            return std::nullopt;
+            auto str_value = value.asString();
+            return std::vector<uint8_t>(str_value.begin(), str_value.end());
         }
-        case FieldType::Bytes: {
-            if (value.isJson()) {
-                auto json_val = asJson(value);
-                if (json_val.is_binary()) {
-                    auto binary_val = json_val.get_binary();
-                    return std::vector<uint8_t>(binary_val.begin(), binary_val.end());
-                }
-            }
-            return std::nullopt;
-        }
+        case FieldType::Bytes:
+            return value.asBytes();
         default:
             return std::nullopt;
     }
@@ -738,11 +728,12 @@ std::unique_ptr<SerdeValue> EncryptionExecutorTransform<T>::toObject(RuleContext
                                                                     const std::vector<uint8_t>& value) const {
     switch (field_type) {
         case FieldType::String: {
+            // Convert bytes to string
             std::string str_value(value.begin(), value.end());
-            return json::makeJsonValue(nlohmann::json(str_value));
+            return SerdeValue::newString(ctx.getSerializationContext().serde_format, str_value);
         }
         case FieldType::Bytes: {
-            return json::makeJsonValue(nlohmann::json::binary_t(value));
+            return SerdeValue::newBytes(ctx.getSerializationContext().serde_format, value);
         }
         default:
             return nullptr;

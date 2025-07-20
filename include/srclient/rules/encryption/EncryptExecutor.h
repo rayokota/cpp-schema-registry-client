@@ -166,7 +166,7 @@ public:
                                const std::string& kek_name,
                                int64_t dek_expiry_days);
 
-    const SerdeValue& transform(RuleContext& ctx, FieldType field_type, const SerdeValue& field_value);
+    std::unique_ptr<SerdeValue> transform(RuleContext& ctx, FieldType field_type, const SerdeValue& field_value);
 
 private:
     bool isDekRotated() const;
