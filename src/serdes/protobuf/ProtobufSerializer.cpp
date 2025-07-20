@@ -60,8 +60,31 @@ void ProtobufSerde::resolveNamedSchema(const srclient::rest::model::Schema& sche
                                       std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
                                       google::protobuf::DescriptorPool* pool,
                                       std::unordered_set<std::string>& visited) {
-    // TODO: Implement dependency resolution
-    // This would recursively resolve schema references
+    // Implement dependency resolution
+    // This recursively resolves schema references
+    auto references = schema.getReferences();
+    if (references.has_value()) {
+        for (const auto& ref : references.value()) {
+            auto name = ref.getName().value_or("");
+            if (isBuiltin(name) || visited.find(name) != visited.end()) {
+                continue;
+            }
+            visited.insert(name);
+            
+            auto subject = ref.getSubject().value_or("");
+            auto version = ref.getVersion().value_or(-1);
+            
+            try {
+                auto ref_schema = client->getVersion(subject, version, true, "serialized");
+                auto schema_obj = ref_schema.toSchema();
+                resolveNamedSchema(schema_obj, client, pool, visited);
+                auto schema_content = ref_schema.getSchema().value_or("");
+                stringToSchema(pool, name, schema_content);
+            } catch (const std::exception& e) {
+                throw ProtobufError("Failed to resolve schema reference: " + name + " - " + e.what());
+            }
+        }
+    }
 }
 
 std::unique_ptr<SerdeValue> ProtobufSerializer::messageToSerdeValue(const google::protobuf::Message& message) {
