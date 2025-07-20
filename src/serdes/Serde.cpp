@@ -387,7 +387,7 @@ void RuleContext::enterField(const SerdeValue& containing_message,
                              const std::unordered_set<std::string>& tags) {
     std::unordered_set<std::string> all_tags = tags;
     if (all_tags.empty()) {
-        auto inline_tags = getInlineTags(name);
+        auto inline_tags = getInlineTags(full_name);
         if (inline_tags.has_value()) {
             all_tags = inline_tags.value();
         }
