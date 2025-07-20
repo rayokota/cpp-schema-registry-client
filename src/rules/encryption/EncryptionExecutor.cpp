@@ -102,20 +102,13 @@ std::vector<uint8_t> Cryptor::generateKey() const {
 std::vector<uint8_t> Cryptor::encrypt(const std::vector<uint8_t>& dek,
                                     const std::vector<uint8_t>& plaintext,
                                     const std::vector<uint8_t>& associated_data) const {
-    // For this implementation, we'll use a simplified approach with Tink's low-level primitives
-    // In a production environment, you would properly construct the KeyData and use registry
-    
-    // Create a temporary keyset handle with the raw key material
-    // This is a simplified approach - in practice you'd want to properly serialize/deserialize
-    auto keyset_handle_result = crypto::tink::KeysetHandle::GenerateNew(key_template_);
-    if (!keyset_handle_result.ok()) {
-        throw SerdeError("Failed to generate keyset handle: " + std::string(keyset_handle_result.status().message()));
-    }
-    
-    auto keyset_handle = std::move(keyset_handle_result.value());
-    
+    google::crypto::tink::KeyData key_data;
+    key_data.set_type_url(key_template_.type_url());
+    key_data.set_key_material_type(google::crypto::tink::KeyData_KeyMaterialType_SYMMETRIC);
+    key_data.set_value(std::string(dek.begin(), dek.end()));
+
     if (isDeterministic()) {
-        auto primitive_result = keyset_handle->GetPrimitive<crypto::tink::DeterministicAead>();
+        auto primitive_result = crypto::tink::Registry::GetPrimitive<crypto::tink::DeterministicAead>(key_data);
         if (!primitive_result.ok()) {
             throw SerdeError("could not get deterministic aead primitive: " + std::string(primitive_result.status().message()));
         }
@@ -133,7 +126,7 @@ std::vector<uint8_t> Cryptor::encrypt(const std::vector<uint8_t>& dek,
         const std::string& result = ciphertext_result.value();
         return std::vector<uint8_t>(result.begin(), result.end());
     } else {
-        auto primitive_result = keyset_handle->GetPrimitive<crypto::tink::Aead>();
+        auto primitive_result = crypto::tink::Registry::GetPrimitive<crypto::tink::Aead>(key_data);
         if (!primitive_result.ok()) {
             throw SerdeError("could not get aead primitive: " + std::string(primitive_result.status().message()));
         }
@@ -156,20 +149,13 @@ std::vector<uint8_t> Cryptor::encrypt(const std::vector<uint8_t>& dek,
 std::vector<uint8_t> Cryptor::decrypt(const std::vector<uint8_t>& dek,
                                     const std::vector<uint8_t>& ciphertext,
                                     const std::vector<uint8_t>& associated_data) const {
-    // For this implementation, we'll use a simplified approach with Tink's low-level primitives
-    // In a production environment, you would properly construct the KeyData and use registry
-    
-    // Create a temporary keyset handle with the raw key material
-    // This is a simplified approach - in practice you'd want to properly serialize/deserialize
-    auto keyset_handle_result = crypto::tink::KeysetHandle::GenerateNew(key_template_);
-    if (!keyset_handle_result.ok()) {
-        throw SerdeError("Failed to generate keyset handle: " + std::string(keyset_handle_result.status().message()));
-    }
-    
-    auto keyset_handle = std::move(keyset_handle_result.value());
-    
+    google::crypto::tink::KeyData key_data;
+    key_data.set_type_url(key_template_.type_url());
+    key_data.set_key_material_type(google::crypto::tink::KeyData_KeyMaterialType_SYMMETRIC);
+    key_data.set_value(std::string(dek.begin(), dek.end()));
+
     if (isDeterministic()) {
-        auto primitive_result = keyset_handle->GetPrimitive<crypto::tink::DeterministicAead>();
+        auto primitive_result = crypto::tink::Registry::GetPrimitive<crypto::tink::DeterministicAead>(key_data);
         if (!primitive_result.ok()) {
             throw SerdeError("could not get deterministic aead primitive: " + std::string(primitive_result.status().message()));
         }
@@ -187,7 +173,7 @@ std::vector<uint8_t> Cryptor::decrypt(const std::vector<uint8_t>& dek,
         const std::string& result = plaintext_result.value();
         return std::vector<uint8_t>(result.begin(), result.end());
     } else {
-        auto primitive_result = keyset_handle->GetPrimitive<crypto::tink::Aead>();
+        auto primitive_result = crypto::tink::Registry::GetPrimitive<crypto::tink::Aead>(key_data);
         if (!primitive_result.ok()) {
             throw SerdeError("could not get aead primitive: " + std::string(primitive_result.status().message()));
         }
