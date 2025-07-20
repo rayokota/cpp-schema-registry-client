@@ -19,12 +19,12 @@
 
 #include <memory>
 #include <map>
-#include <exception>
+#include <stdexcept>
 #include <string>
 
 namespace srclient::rest {
 
-class RestException : public std::exception
+class RestException : public std::runtime_error
 {
 public:
     RestException(const std::string_view message
@@ -34,7 +34,6 @@ public:
 
     std::shared_ptr<std::istream> getContent() const;
     int getErrorCode() const;
-    const char* what() const noexcept override;
 
 protected:
     std::shared_ptr<std::istream> content_;
