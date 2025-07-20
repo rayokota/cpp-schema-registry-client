@@ -533,16 +533,6 @@ parseSchemaWithNamed(
     }
 }
 
-// TODO: remove?
-bool isSchemaCompatible(
-    const ::avro::ValidSchema& writer_schema,
-    const ::avro::ValidSchema& reader_schema
-) {
-    // Basic compatibility check - in practice, this would need more sophisticated logic
-    // For now, just check if they're the same type
-    return writer_schema.root()->type() == reader_schema.root()->type();
-}
-
 std::string impliedNamespace(const std::string& name) {
     size_t last_dot = name.find_last_of('.');
     if (last_dot != std::string::npos && last_dot > 0) {
