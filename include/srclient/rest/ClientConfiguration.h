@@ -18,6 +18,10 @@
 #pragma once
 
 #include <map>
+#include <optional>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace srclient::rest {
 
@@ -28,9 +32,46 @@ public:
     virtual ~ClientConfiguration();
 
     std::vector<std::string> getBaseUrls() const;
+    
+    // Authentication getters and setters
+    std::optional<std::string> getBasicAuth() const;
+    void setBasicAuth(const std::optional<std::string>& basicAuth);
+    
+    std::optional<std::string> getBearerAccessToken() const;
+    void setBearerAccessToken(const std::optional<std::string>& bearerAccessToken);
+    
+    // Cache configuration getters and setters
+    std::uint64_t getCacheCapacity() const;
+    void setCacheCapacity(std::uint64_t cacheCapacity);
+    
+    std::uint64_t getCacheLatestTtlSec() const;
+    void setCacheLatestTtlSec(std::uint64_t cacheLatestTtlSec);
+    
+    // Retry configuration getters and setters
+    std::uint32_t getMaxRetries() const;
+    void setMaxRetries(std::uint32_t maxRetries);
+    
+    std::uint32_t getRetriesWaitMs() const;
+    void setRetriesWaitMs(std::uint32_t retriesWaitMs);
+    
+    std::uint32_t getRetriesMaxWaitMs() const;
+    void setRetriesMaxWaitMs(std::uint32_t retriesMaxWaitMs);
+    
+    bool operator==(const ClientConfiguration& other) const;
+    bool operator!=(const ClientConfiguration& other) const;
 
 protected:
     std::vector<std::string> baseUrls_;
+
+    std::optional<std::string> basic_auth_;
+    std::optional<std::string> bearer_access_token_;
+
+    std::uint64_t cache_capacity_;
+    std::uint64_t cache_latest_ttl_sec_;
+
+    std::uint32_t max_retries_;
+    std::uint32_t retries_wait_ms_;
+    std::uint32_t retries_max_wait_ms_;
 };
 
 }

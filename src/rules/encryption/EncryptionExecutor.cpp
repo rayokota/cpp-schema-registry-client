@@ -203,8 +203,9 @@ void EncryptionExecutor::configure(std::shared_ptr<const ClientConfiguration> cl
     std::lock_guard<std::mutex> client_lock(client_mutex_);
     
     if (client_) {
-        // TODO: Compare existing config with new config
-        // For now, assume it's the same
+        if (*client_->getConfiguration() != *client_config) {
+            throw SerdeError("client config already set");
+        }
     } else {
         client_ = DekRegistryClient::newClient(client_config);
     }

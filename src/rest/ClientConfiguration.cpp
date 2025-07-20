@@ -14,7 +14,14 @@
 namespace srclient::rest {
 
 ClientConfiguration::ClientConfiguration(const std::vector<std::string>& baseUrls)
-    : baseUrls_(baseUrls)
+    : baseUrls_(baseUrls),
+      basic_auth_(std::nullopt),
+      bearer_access_token_(std::nullopt),
+      cache_capacity_(1000),
+      cache_latest_ttl_sec_(3600),
+      max_retries_(3),
+      retries_wait_ms_(1000),
+      retries_max_wait_ms_(5000)
 {
 }
 
@@ -25,6 +32,96 @@ ClientConfiguration::~ClientConfiguration()
 std::vector<std::string> ClientConfiguration::getBaseUrls() const
 {
     return baseUrls_;
+}
+
+// Authentication getters and setters
+std::optional<std::string> ClientConfiguration::getBasicAuth() const
+{
+    return basic_auth_;
+}
+
+void ClientConfiguration::setBasicAuth(const std::optional<std::string>& basicAuth)
+{
+    basic_auth_ = basicAuth;
+}
+
+std::optional<std::string> ClientConfiguration::getBearerAccessToken() const
+{
+    return bearer_access_token_;
+}
+
+void ClientConfiguration::setBearerAccessToken(const std::optional<std::string>& bearerAccessToken)
+{
+    bearer_access_token_ = bearerAccessToken;
+}
+
+// Cache configuration getters and setters
+std::uint64_t ClientConfiguration::getCacheCapacity() const
+{
+    return cache_capacity_;
+}
+
+void ClientConfiguration::setCacheCapacity(std::uint64_t cacheCapacity)
+{
+    cache_capacity_ = cacheCapacity;
+}
+
+std::uint64_t ClientConfiguration::getCacheLatestTtlSec() const
+{
+    return cache_latest_ttl_sec_;
+}
+
+void ClientConfiguration::setCacheLatestTtlSec(std::uint64_t cacheLatestTtlSec)
+{
+    cache_latest_ttl_sec_ = cacheLatestTtlSec;
+}
+
+// Retry configuration getters and setters
+std::uint32_t ClientConfiguration::getMaxRetries() const
+{
+    return max_retries_;
+}
+
+void ClientConfiguration::setMaxRetries(std::uint32_t maxRetries)
+{
+    max_retries_ = maxRetries;
+}
+
+std::uint32_t ClientConfiguration::getRetriesWaitMs() const
+{
+    return retries_wait_ms_;
+}
+
+void ClientConfiguration::setRetriesWaitMs(std::uint32_t retriesWaitMs)
+{
+    retries_wait_ms_ = retriesWaitMs;
+}
+
+std::uint32_t ClientConfiguration::getRetriesMaxWaitMs() const
+{
+    return retries_max_wait_ms_;
+}
+
+void ClientConfiguration::setRetriesMaxWaitMs(std::uint32_t retriesMaxWaitMs)
+{
+    retries_max_wait_ms_ = retriesMaxWaitMs;
+}
+
+bool ClientConfiguration::operator==(const ClientConfiguration& other) const
+{
+    return baseUrls_ == other.baseUrls_ &&
+           basic_auth_ == other.basic_auth_ &&
+           bearer_access_token_ == other.bearer_access_token_ &&
+           cache_capacity_ == other.cache_capacity_ &&
+           cache_latest_ttl_sec_ == other.cache_latest_ttl_sec_ &&
+           max_retries_ == other.max_retries_ &&
+           retries_wait_ms_ == other.retries_wait_ms_ &&
+           retries_max_wait_ms_ == other.retries_max_wait_ms_;
+}
+
+bool ClientConfiguration::operator!=(const ClientConfiguration& other) const
+{
+    return !(*this == other);
 }
 
 }
