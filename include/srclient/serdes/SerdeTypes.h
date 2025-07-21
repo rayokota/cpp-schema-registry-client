@@ -112,19 +112,6 @@ public:
         return std::move(*static_cast<T*>(getMutableRawValue()));
     }
     
-    // Factory method to create a SerdeValue from any type
-    // Implementation moved to .cpp file to avoid forward declaration issues
-    template<typename T>
-    static std::unique_ptr<SerdeValue> create(T&& value);
-    
-    // Explicit specializations - declared here, implemented in .cpp
-    static std::unique_ptr<SerdeValue> create(::avro::GenericDatum&& value);
-    static std::unique_ptr<SerdeValue> create(const ::avro::GenericDatum& value);
-    static std::unique_ptr<SerdeValue> create(nlohmann::json&& value);
-    static std::unique_ptr<SerdeValue> create(const nlohmann::json& value);
-    static std::unique_ptr<SerdeValue> create(std::unique_ptr<google::protobuf::Message>&& value);
-    static std::unique_ptr<SerdeValue> create(google::protobuf::Message& value);
-
     // Static factory methods for creating SerdeValue instances
     static std::unique_ptr<SerdeValue> newString(SerdeFormat format, const std::string& value);
     static std::unique_ptr<SerdeValue> newBytes(SerdeFormat format, const std::vector<uint8_t>& value);
