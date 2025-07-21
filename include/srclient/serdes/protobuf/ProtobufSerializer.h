@@ -122,6 +122,11 @@ private:
     // Helper methods
     std::vector<int32_t> toIndexArray(const google::protobuf::Descriptor* descriptor);
     
+    std::vector<srclient::rest::model::SchemaReference> resolveDependencies(
+        const SerializationContext& ctx,
+        const google::protobuf::FileDescriptor* file_desc
+    );
+    
     void validateSchema(const srclient::rest::model::Schema& schema);
 };
 

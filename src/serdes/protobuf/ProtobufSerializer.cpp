@@ -206,6 +206,9 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
     }
 
     if (latest_schema.has_value()) {
+        // Use latest schema from registry
+        schema_id = SchemaId(SerdeFormat::Avro, latest_schema->getId(), latest_schema->getGuid(), std::nullopt);
+
         auto schema = latest_schema->toSchema();
         auto [fd, pool] = serde_->getParsedSchema(schema, base_->getSerde().getClient());
         
@@ -258,35 +261,44 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
         } else {
             encoded_bytes.resize(transformed_message->ByteSizeLong());
         }
-        
-        // Apply encoding rules if present
-        if (schema.getRuleSet().has_value()) {
-            auto rule_set = schema.getRuleSet().value();
-            if (rule_set.getEncodingRules().has_value()) {
-                auto bytes_value = SerdeValue::newBytes(SerdeFormat::Protobuf, encoded_bytes);
-                auto result = base_->getSerde().executeRulesWithPhase(
-                    ctx,
-                    subject,
-                    Phase::Encoding,
-                    Mode::Write,
-                    std::nullopt,
-                    std::make_optional(schema),
-                    std::nullopt,
-                    *bytes_value,
-                    {},
-                    nullptr
-                );
-                encoded_bytes = result->asBytes();
-            }
-        }
     } else {
-        // No schema available - directly serialize the message
+        // Resolve dependencies for the descriptor's file
+        std::vector<srclient::rest::model::SchemaReference> references = resolveDependencies(ctx, descriptor->file());
+        
+        // Create schema object
+        srclient::rest::model::Schema schema;
+        schema.setSchemaType("PROTOBUF");
+        schema.setReferences(references);
+        // Convert file descriptor to protobuf schema string
+        // TODO: Implement schemaToStr method to convert file descriptor to string
+        std::string schema_str = descriptor->file()->DebugString();
+        schema.setSchema(schema_str);
+        
+        if (base_->getConfig().auto_register_schemas) {
+            auto registered_schema = base_->getSerde().getClient()->registerSchema(
+                subject, 
+                schema, 
+                base_->getConfig().normalize_schemas
+            );
+            schema_id = SchemaId(SerdeFormat::Protobuf, registered_schema.getId(), 
+                               registered_schema.getGuid(), std::nullopt);
+        } else {
+            auto registered_schema = base_->getSerde().getClient()->getBySchema(
+                subject, 
+                schema, 
+                base_->getConfig().normalize_schemas, 
+                false
+            );
+            schema_id = SchemaId(SerdeFormat::Protobuf, registered_schema.getId(), 
+                               registered_schema.getGuid(), std::nullopt);
+        }
+
+        // Serialize the message directly
         encoded_bytes.resize(message.ByteSizeLong());
         if (!message.SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
             throw ProtobufError("Failed to serialize protobuf message");
         }
     }
-
 
     // Apply encoding rules if present
     if (latest_schema.has_value()) {
@@ -318,6 +330,53 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
     auto id_serializer = base_->getConfig().schema_id_serializer;
     return id_serializer(encoded_bytes, ctx, schema_id);
 }
+
+std::vector<srclient::rest::model::SchemaReference> ProtobufSerializer::resolveDependencies(
+        const SerializationContext& ctx,
+        const google::protobuf::FileDescriptor* file_desc
+) {
+    std::vector<srclient::rest::model::SchemaReference> references;
+    
+    for (int i = 0; i < file_desc->dependency_count(); ++i) {
+        const google::protobuf::FileDescriptor* dep = file_desc->dependency(i);
+        if (isBuiltin(dep->name())) {
+            continue;
+        }
+        
+        auto dep_refs = resolveDependencies(ctx, dep);
+        auto subject = reference_subject_name_strategy_(dep->name(), ctx.serde_type);
+        
+        srclient::rest::model::Schema schema;
+        schema.setSchemaType("PROTOBUF");
+        schema.setReferences(dep_refs);
+        schema.setSchema(dep->DebugString());
+        
+        if (base_->getConfig().auto_register_schemas) {
+            base_->getSerde().getClient()->registerSchema(
+                subject, 
+                schema, 
+                base_->getConfig().normalize_schemas
+            );
+        }
+        
+        auto reference = base_->getSerde().getClient()->getBySchema(
+            subject, 
+            schema, 
+            base_->getConfig().normalize_schemas, 
+            false
+        );
+        
+        srclient::rest::model::SchemaReference schema_ref;
+        schema_ref.setName(dep->name());
+        schema_ref.setSubject(subject);
+        schema_ref.setVersion(reference.getVersion());
+        
+        references.push_back(schema_ref);
+    }
+    
+    return references;
+}
+
 
 std::vector<int32_t> ProtobufSerializer::toIndexArray(const google::protobuf::Descriptor* descriptor) {
     std::vector<int32_t> indexes;
