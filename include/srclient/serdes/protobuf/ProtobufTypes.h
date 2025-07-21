@@ -61,10 +61,10 @@ public:
  */
 class ProtobufSchema : public SerdeSchema {
 private:
-    std::string schema_data_;
-    
+    const google::protobuf::FileDescriptor* file_descriptor_;
+
 public:
-    explicit ProtobufSchema(const std::string& schema_data) : schema_data_(schema_data) {}
+    explicit ProtobufSchema(const google::protobuf::FileDescriptor* file_descriptor) : file_descriptor_(file_descriptor) {}
     
     bool isAvro() const override { return false; }
     bool isJson() const override { return false; }
@@ -72,14 +72,14 @@ public:
     
     SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
     
-    std::any getSchema() const override { return schema_data_; }
+    std::any getSchema() const override { return file_descriptor_; }
     
     std::unique_ptr<SerdeSchema> clone() const override {
-        return std::make_unique<ProtobufSchema>(schema_data_);
+        return std::make_unique<ProtobufSchema>(file_descriptor_);
     }
     
     // Direct access to Protobuf schema
-    const std::string& getProtobufSchema() const { return schema_data_; }
+    const google::protobuf::FileDescriptor* getProtobufSchema() const { return file_descriptor_; }
 };
 
 // Helper functions for creating Protobuf SerdeValue instances
@@ -88,8 +88,8 @@ inline std::unique_ptr<SerdeValue> makeProtobufValue(google::protobuf::Message& 
 }
 
 // Helper function for creating Protobuf SerdeSchema instances
-inline std::unique_ptr<SerdeSchema> makeProtobufSchema(const std::string& schema_data) {
-    return std::make_unique<ProtobufSchema>(schema_data);
+inline std::unique_ptr<SerdeSchema> makeProtobufSchema(const google::protobuf::FileDescriptor* file_descriptor) {
+    return std::make_unique<ProtobufSchema>(file_descriptor);
 }
 
 

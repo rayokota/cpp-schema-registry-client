@@ -200,7 +200,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
     std::vector<uint8_t> encoded_bytes;
 
     try {
-        latest_schema = base_->getSerde().getReaderSchema(subject, std::nullopt, base_->getConfig().use_schema);
+        latest_schema = base_->getSerde().getReaderSchema(subject, "serialized", base_->getConfig().use_schema);
     } catch (const std::exception& e) {
         // Schema not found - will use provided schema
     }
@@ -230,7 +230,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
         auto protobuf_value = protobuf::makeProtobufValue(*dynamic_msg);
         
         // Create SerdeSchema for the protobuf file descriptor
-        auto protobuf_schema = protobuf::makeProtobufSchema(schema.getSchema().value_or(""));
+        auto protobuf_schema = protobuf::makeProtobufSchema(fd);
         
         // Execute rules synchronously
         auto serde_value = base_->getSerde().executeRules(
@@ -270,9 +270,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
         schema.setSchemaType("PROTOBUF");
         schema.setReferences(references);
         // Convert file descriptor to protobuf schema string
-        // TODO: Implement schemaToStr method to convert file descriptor to string
-        std::string schema_str = descriptor->file()->DebugString();
-        schema.setSchema(schema_str);
+        schema.setSchema(utils::schemaToString(descriptor->file()));
         
         if (base_->getConfig().auto_register_schemas) {
             auto registered_schema = base_->getSerde().getClient()->registerSchema(
@@ -349,7 +347,7 @@ std::vector<srclient::rest::model::SchemaReference> ProtobufSerializer::resolveD
         srclient::rest::model::Schema schema;
         schema.setSchemaType("PROTOBUF");
         schema.setReferences(dep_refs);
-        schema.setSchema(dep->DebugString());
+        schema.setSchema(utils::schemaToString(dep));
         
         if (base_->getConfig().auto_register_schemas) {
             base_->getSerde().getClient()->registerSchema(

@@ -69,7 +69,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
     if (has_subject) {
         latest_schema = base_->getSerde().getReaderSchema(
             subject.value(),
-            std::nullopt,
+            "serialized",
             base_->getConfig().use_schema
         );
     }
@@ -81,7 +81,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
 
     std::vector<uint8_t> remaining_data(data.begin() + bytes_read, data.end());
 
-    auto writer_schema_raw = base_->getWriterSchema(schema_id, subject, std::nullopt);
+    auto writer_schema_raw = base_->getWriterSchema(schema_id, subject, "serialized");
 
     // Get parsed schema using ProtobufSerde
     auto [writer_schema, pool_ptr] = serde_->getParsedSchema(writer_schema_raw, base_->getSerde().getClient());
@@ -107,7 +107,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
         if (subject.has_value()) {
             latest_schema = base_->getSerde().getReaderSchema(
                 subject.value(),
-                std::nullopt,
+                "serialized",
                 base_->getConfig().use_schema
             );
         }
@@ -238,7 +238,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
     };
 
     auto protobuf_value = makeProtobufValue(*msg);
-    auto protobuf_schema = std::make_shared<ProtobufSchema>(reader_schema->DebugString());
+    auto protobuf_schema = std::make_shared<ProtobufSchema>(reader_schema);
 
     auto result_value = base_->getSerde().executeRules(
         ctx,
