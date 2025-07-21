@@ -63,11 +63,11 @@ public:
  */
 class AvroSchema : public SerdeSchema {
 private:
-    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> avro_schema_;
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> schema_;
     
 public:
-    explicit AvroSchema(const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& avro_schema)
-        : avro_schema_(avro_schema) {}
+    explicit AvroSchema(const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& schema)
+        : schema_(schema) {}
     
     bool isAvro() const override { return true; }
     bool isJson() const override { return false; }
@@ -76,16 +76,16 @@ public:
     SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
     
     std::any getSchema() const override {
-        return avro_schema_;
+        return schema_;
     }
     
     std::unique_ptr<SerdeSchema> clone() const override {
-        return std::make_unique<AvroSchema>(avro_schema_);
+        return std::make_unique<AvroSchema>(schema_);
     }
     
     // Direct access to Avro schema
     const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& getAvroSchemaPair() const {
-        return avro_schema_;
+        return schema_;
     }
 };
 
