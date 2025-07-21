@@ -36,8 +36,10 @@ std::unique_ptr<SerdeValue> transformFields(
     const auto& parsed_target = ctx.getParsedTarget();
     if (parsed_target.has_value() && parsed_target->get() && parsed_target->get()->getFormat() == SerdeFormat::Protobuf) {
         if (value.getFormat() == SerdeFormat::Protobuf) {
-            // Extract the protobuf message from the SerdeValue
-            auto& message = value.getValue<google::protobuf::Message>();
+            // TODO slicing
+            //auto& message = value.getValue<google::protobuf::Message>();
+            // Extract the protobuf message from the SerdeValue without slicing
+            auto& message = srclient::serdes::asProtobuf(value);
     auto message_ptr = const_cast<google::protobuf::Message*>(&message);
             if (message_ptr) {
                 const google::protobuf::Descriptor* descriptor = message_ptr->GetDescriptor();

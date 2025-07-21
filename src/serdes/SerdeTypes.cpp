@@ -220,7 +220,12 @@ google::protobuf::Message& asProtobuf(const SerdeValue& value) {
     if (value.getFormat() != SerdeFormat::Protobuf) {
         throw SerdeError("SerdeValue is not Protobuf");
     }
-    return const_cast<google::protobuf::Message&>(value.getValue<google::protobuf::Message>());
+    // TODO slicing
+    //return const_cast<google::protobuf::Message&>(value.getValue<google::protobuf::Message>());
+
+    // Directly access the raw value to avoid slicing that occurs with getValue<google::protobuf::Message>()
+    // The stored value is actually a concrete protobuf message type, not the base class
+    return *static_cast<google::protobuf::Message*>(const_cast<void*>(value.getRawValue()));
 }
 
 
