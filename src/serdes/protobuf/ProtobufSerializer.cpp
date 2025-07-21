@@ -1,6 +1,13 @@
 #include "srclient/serdes/protobuf/ProtobufSerializer.h"
 #include "srclient/serdes/protobuf/ProtobufUtils.h"
 
+// Forward declaration for transformFields function from ProtobufUtils.cpp
+std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
+    srclient::serdes::RuleContext& ctx,
+    const std::string& field_executor_type,
+    const srclient::serdes::SerdeValue& value
+);
+
 namespace srclient::serdes::protobuf {
 
 using namespace utils;
@@ -215,13 +222,10 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
         auto [fd, pool] = serde_->getParsedSchema(schema, base_->getSerde().getClient());
         
         // Create field transformer function
-        auto field_transformer = std::make_shared<FieldTransformer>(
-            [](RuleContext& ctx, const std::string& field_executor_type, const SerdeValue& value) -> std::unique_ptr<SerdeValue> {
-                // Field transformation logic - for now return a copy of the input value
-                return value.clone();
-            }
-        );
-        
+        auto field_transformer = [&](RuleContext& ctx, const std::string& rule_type, const SerdeValue& value) -> std::unique_ptr<SerdeValue> {
+            return transformFields(ctx, rule_type, value);
+        };
+
         // Create DynamicMessage from the message descriptor
         auto message_factory = google::protobuf::DynamicMessageFactory();
         auto dynamic_msg = std::unique_ptr<google::protobuf::Message>(
@@ -247,7 +251,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
             std::make_optional(protobuf_schema.get()),
             *protobuf_value,
             {},
-            field_transformer
+            std::make_shared<FieldTransformer>(field_transformer)
         );
         
         // Extract the transformed message
