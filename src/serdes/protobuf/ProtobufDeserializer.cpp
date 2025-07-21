@@ -205,7 +205,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
             *serde_value
         );
 
-        if (!migrated_value->isJson()) {
+                    if (migrated_value->getFormat() != SerdeFormat::Json) {
             throw ProtobufError("Expected JSON value after migration");
         }
 
@@ -252,7 +252,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
         std::make_shared<FieldTransformer>(field_transformer)
     );
 
-    if (!result_value->isProtobuf()) {
+            if (result_value->getFormat() != SerdeFormat::Protobuf) {
         throw ProtobufError("Expected protobuf value after rule execution");
     }
 

@@ -210,17 +210,45 @@ std::string kindToString(Kind kind) {
 
 // Value extraction utility functions (moved from header)
 ::avro::GenericDatum asAvro(const SerdeValue& value) {
-    if (!value.isAvro()) {
+    if (value.getFormat() != SerdeFormat::Avro) {
         throw SerdeError("SerdeValue is not Avro");
     }
-    return std::any_cast<::avro::GenericDatum>(value.getValue());
+    return value.getValue<::avro::GenericDatum>();
 }
 
 google::protobuf::Message& asProtobuf(const SerdeValue& value) {
-    if (!value.isProtobuf()) {
+    if (value.getFormat() != SerdeFormat::Protobuf) {
         throw SerdeError("SerdeValue is not Protobuf");
     }
-    return std::any_cast<std::reference_wrapper<google::protobuf::Message>>(value.getValue()).get();
+    return const_cast<google::protobuf::Message&>(value.getValue<google::protobuf::Message>());
+}
+
+// Factory method implementations
+std::unique_ptr<SerdeValue> SerdeValue::create(::avro::GenericDatum&& value) {
+    return std::make_unique<avro::AvroValue>(std::move(value));
+}
+
+std::unique_ptr<SerdeValue> SerdeValue::create(const ::avro::GenericDatum& value) {
+    return std::make_unique<avro::AvroValue>(value);
+}
+
+std::unique_ptr<SerdeValue> SerdeValue::create(nlohmann::json&& value) {
+    return std::make_unique<json::JsonValue>(std::move(value));
+}
+
+std::unique_ptr<SerdeValue> SerdeValue::create(const nlohmann::json& value) {
+    return std::make_unique<json::JsonValue>(value);
+}
+
+std::unique_ptr<SerdeValue> SerdeValue::create(std::unique_ptr<google::protobuf::Message>&& value) {
+    return std::make_unique<protobuf::ProtobufValue>(std::move(value));
+}
+
+std::unique_ptr<SerdeValue> SerdeValue::create(google::protobuf::Message& value) {
+    // Create a copy of the protobuf message for ownership
+    std::unique_ptr<google::protobuf::Message> owned_value(value.New());
+    owned_value->CopyFrom(value);
+    return std::make_unique<protobuf::ProtobufValue>(std::move(owned_value));
 }
 
 } // namespace srclient::serdes 

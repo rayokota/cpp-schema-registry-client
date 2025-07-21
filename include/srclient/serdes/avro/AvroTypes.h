@@ -39,16 +39,20 @@ public:
     explicit AvroValue(const ::avro::GenericDatum& value) : value_(value) {}
     explicit AvroValue(::avro::GenericDatum&& value) : value_(std::move(value)) {}
     
-    bool isJson() const override { return false; }
-    bool isAvro() const override { return true; }
-    bool isProtobuf() const override { return false; }
-    
-    std::any getValue() const override { return value_; }
-    
+    // SerdeValue interface implementation
+    const void* getRawValue() const override { return &value_; }
+    void* getMutableRawValue() override { return &value_; }
     SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
+    const std::type_info& getType() const override { return typeid(::avro::GenericDatum); }
     
     std::unique_ptr<SerdeValue> clone() const override {
         return std::make_unique<AvroValue>(value_);
+    }
+    
+    void moveFrom(SerdeValue&& other) override {
+        if (other.getFormat() == SerdeFormat::Avro) {
+            value_ = std::move(*static_cast<::avro::GenericDatum*>(other.getMutableRawValue()));
+        }
     }
 
     // Value extraction methods
@@ -68,10 +72,6 @@ private:
 public:
     explicit AvroSchema(const std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>& schema)
         : schema_(schema) {}
-    
-    bool isAvro() const override { return true; }
-    bool isJson() const override { return false; }
-    bool isProtobuf() const override { return false; }
     
     SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
     

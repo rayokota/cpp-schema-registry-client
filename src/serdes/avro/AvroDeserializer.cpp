@@ -92,7 +92,7 @@ NamedValue AvroDeserializer::deserialize(
                 *bytes_value,
                 {}
             );
-            payload_data = std::any_cast<std::vector<uint8_t>>(result->getValue());
+            payload_data = result->getValue<std::vector<uint8_t>>();
         }
     }
     
@@ -127,7 +127,7 @@ NamedValue AvroDeserializer::deserialize(
         
         // 3. Apply migrations
         auto migrated = base_->getSerde().executeMigrations(ctx, subject, migrations, *json_serde_value);
-        auto migrated_json = std::any_cast<nlohmann::json>(migrated->getValue());
+                    auto migrated_json = migrated->getValue<nlohmann::json>();
         
         // 4. Convert back to Avro with reader schema
         value = utils::jsonToAvro(migrated_json, reader_parsed.first);
@@ -143,8 +143,8 @@ NamedValue AvroDeserializer::deserialize(
 
         // Create field transformer lambda
         auto field_transformer = [this, &parsed_schema](RuleContext& ctx, const std::string& rule_type, const SerdeValue& msg) -> std::unique_ptr<SerdeValue> {
-            if (msg.isAvro()) {
-                auto avro_datum = std::any_cast<::avro::GenericDatum>(msg.getValue());
+            if (msg.getFormat() == SerdeFormat::Avro) {
+                auto avro_datum = msg.getValue<::avro::GenericDatum>();
                 auto transformed = utils::transformFields(ctx, avro_datum, parsed_schema.first);
                 return makeAvroValue(transformed);
             }
@@ -165,8 +165,8 @@ NamedValue AvroDeserializer::deserialize(
             utils::getInlineTags(nlohmann::json::parse(reader_schema_raw.getSchema().value())),
             std::make_shared<FieldTransformer>(field_transformer)
         );
-        if (transformed->isAvro()) {
-            value = std::any_cast<::avro::GenericDatum>(transformed->getValue());
+        if (transformed->getFormat() == SerdeFormat::Avro) {
+            value = transformed->getValue<::avro::GenericDatum>();
         }
     }
     

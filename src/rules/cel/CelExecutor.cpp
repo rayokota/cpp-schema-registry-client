@@ -196,16 +196,16 @@ absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>> CelEx
 google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValue& value, google::protobuf::Arena* arena) {
     switch (value.getFormat()) {
         case SerdeFormat::Json: {
-            auto json_value = std::any_cast<nlohmann::json>(value.getValue());
+            auto json_value = value.getValue<nlohmann::json>();
             return fromJsonValue(json_value, arena);
         }
         case SerdeFormat::Avro: {
-            auto avro_value = std::any_cast<::avro::GenericDatum>(value.getValue());
+            auto avro_value = value.getValue<::avro::GenericDatum>();
             return fromAvroValue(avro_value, arena);
         }
         case SerdeFormat::Protobuf: {
-            auto proto_ref = std::any_cast<std::reference_wrapper<google::protobuf::Message>>(value.getValue());
-            return fromProtobufValue(proto_ref.get(), arena);
+            auto& proto_message = value.getValue<google::protobuf::Message>();
+            return fromProtobufValue(proto_message, arena);
         }
         default:
             return google::api::expr::runtime::CelValue::CreateNull();
@@ -215,19 +215,19 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValu
 std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(const SerdeValue& original, const google::api::expr::runtime::CelValue& cel_value) {
     switch (original.getFormat()) {
         case SerdeFormat::Json: {
-            auto original_json = std::any_cast<nlohmann::json>(original.getValue());
+            auto original_json = original.getValue<nlohmann::json>();
             auto converted_json = toJsonValue(original_json, cel_value);
             return srclient::serdes::json::makeJsonValue(converted_json);
         }
         case SerdeFormat::Avro: {
-            auto original_avro = std::any_cast<::avro::GenericDatum>(original.getValue());
+            auto original_avro = original.getValue<::avro::GenericDatum>();
             auto converted_avro = toAvroValue(original_avro, cel_value);
             return srclient::serdes::avro::makeAvroValue(converted_avro);
         }
         case SerdeFormat::Protobuf: {
-            auto proto_ref = std::any_cast<std::reference_wrapper<google::protobuf::Message>>(original.getValue());
-            auto converted_proto = toProtobufValue(proto_ref.get(), cel_value);
-            return srclient::serdes::protobuf::makeProtobufValue(*converted_proto);
+            auto& proto_message = original.getValue<google::protobuf::Message>();
+            auto converted_proto = toProtobufValue(proto_message, cel_value);
+            return srclient::serdes::protobuf::makeProtobufValue(std::move(converted_proto));
         }
         default:
             // For unknown formats, return a copy of the original

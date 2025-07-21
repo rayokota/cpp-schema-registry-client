@@ -134,8 +134,8 @@ namespace utils {
                         }
                         
                         auto new_value = field_executor->transformField(ctx, *message_value);
-                        if (new_value && new_value->isAvro()) {
-                            return std::any_cast<::avro::GenericDatum>(new_value->getValue());
+                        if (new_value && new_value->getFormat() == SerdeFormat::Avro) {
+                            return new_value->getValue<::avro::GenericDatum>();
                         }
                     }
                 }

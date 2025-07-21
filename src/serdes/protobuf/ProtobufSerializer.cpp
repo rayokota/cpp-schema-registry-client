@@ -295,20 +295,20 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
         );
         
         // Extract the transformed message
-        if (!serde_value->isProtobuf()) {
+        if (serde_value->getFormat() != SerdeFormat::Protobuf) {
             throw ProtobufError("Unexpected serde value type after rule execution");
         }
         
-        auto transformed_message = std::any_cast<google::protobuf::Message*>(serde_value->getValue());
+        auto& transformed_message = serde_value->getMutableValue<google::protobuf::Message>();
         
         // Encode the transformed message
-        if (!transformed_message->SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
-            encoded_bytes.resize(transformed_message->ByteSizeLong());
-            if (!transformed_message->SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
+        if (!transformed_message.SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
+            encoded_bytes.resize(transformed_message.ByteSizeLong());
+            if (!transformed_message.SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
                 throw ProtobufError("Failed to serialize protobuf message");
             }
         } else {
-            encoded_bytes.resize(transformed_message->ByteSizeLong());
+            encoded_bytes.resize(transformed_message.ByteSizeLong());
         }
     } else {
         // Resolve dependencies for the descriptor's file
@@ -365,7 +365,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
                         *bytes_value,
                         {}
                 );
-                encoded_bytes = std::any_cast<std::vector<uint8_t>>(result->getValue());
+                encoded_bytes = result->getValue<std::vector<uint8_t>>();
             }
         }
     }

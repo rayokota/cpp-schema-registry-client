@@ -34,10 +34,11 @@ std::unique_ptr<SerdeValue> transformFields(
 ) {
     // Check if we have a protobuf schema and value
     const auto& parsed_target = ctx.getParsedTarget();
-    if (parsed_target.has_value() && parsed_target->get() && parsed_target->get()->isProtobuf()) {
-        if (value.isProtobuf()) {
+    if (parsed_target.has_value() && parsed_target->get() && parsed_target->get()->getFormat() == SerdeFormat::Protobuf) {
+        if (value.getFormat() == SerdeFormat::Protobuf) {
             // Extract the protobuf message from the SerdeValue
-            auto message_ptr = std::any_cast<google::protobuf::Message*>(value.getValue());
+            auto& message = value.getValue<google::protobuf::Message>();
+    auto message_ptr = const_cast<google::protobuf::Message*>(&message);
             if (message_ptr) {
                 const google::protobuf::Descriptor* descriptor = message_ptr->GetDescriptor();
                 if (!descriptor) {
@@ -288,7 +289,7 @@ bool transformFieldValue(
     // Apply the transformed value back to the field based on field type
     switch (field_desc->type()) {
         case google::protobuf::FieldDescriptor::TYPE_STRING: {
-            if (transformed_value.isProtobuf() || transformed_value.isJson()) {
+            if (transformed_value.getFormat() == SerdeFormat::Protobuf || transformed_value.getFormat() == SerdeFormat::Json) {
                 std::string value = transformed_value.asString();
                 reflection->SetString(message, field_desc, value);
                 return true;
@@ -296,7 +297,7 @@ bool transformFieldValue(
             break;
         }
         case google::protobuf::FieldDescriptor::TYPE_BYTES: {
-            if (transformed_value.isProtobuf() || transformed_value.isJson()) {
+            if (transformed_value.getFormat() == SerdeFormat::Protobuf || transformed_value.getFormat() == SerdeFormat::Json) {
                 auto bytes = transformed_value.asBytes();
                 std::string value(bytes.begin(), bytes.end());
                 reflection->SetString(message, field_desc, value);
@@ -305,7 +306,7 @@ bool transformFieldValue(
             break;
         }
         case google::protobuf::FieldDescriptor::TYPE_MESSAGE: {
-            if (transformed_value.isProtobuf()) {
+            if (transformed_value.getFormat() == SerdeFormat::Protobuf) {
                 // TODO: Handle message field transformation
                 // This would require copying the transformed message to the target field
                 return false;

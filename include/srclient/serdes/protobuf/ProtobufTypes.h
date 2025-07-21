@@ -34,20 +34,25 @@ public:
  */
 class ProtobufValue : public SerdeValue {
 private:
-    google::protobuf::Message& value_;
+    std::unique_ptr<google::protobuf::Message> value_;
     
 public:
-    explicit ProtobufValue(google::protobuf::Message& value) : value_(value) {}
+    explicit ProtobufValue(std::unique_ptr<google::protobuf::Message> value) : value_(std::move(value)) {}
     
-    bool isJson() const override;
-    bool isAvro() const override;
-    bool isProtobuf() const override;
-    
-    std::any getValue() const override;
-    
-    SerdeFormat getFormat() const override;
+    // SerdeValue interface implementation
+    const void* getRawValue() const override { return value_.get(); }
+    void* getMutableRawValue() override { return value_.get(); }
+    SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
+    const std::type_info& getType() const override { return typeid(google::protobuf::Message); }
     
     std::unique_ptr<SerdeValue> clone() const override;
+    
+    void moveFrom(SerdeValue&& other) override {
+        if (other.getFormat() == SerdeFormat::Protobuf) {
+            auto* other_msg = static_cast<google::protobuf::Message*>(other.getMutableRawValue());
+            value_->CopyFrom(*other_msg);
+        }
+    }
 
     // Value extraction methods
     bool asBool() const override;
@@ -66,10 +71,6 @@ private:
 public:
     explicit ProtobufSchema(const google::protobuf::FileDescriptor* schema) : schema_(schema) {}
     
-    bool isAvro() const override { return false; }
-    bool isJson() const override { return false; }
-    bool isProtobuf() const override { return true; }
-    
     SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
     
     std::any getSchema() const override { return schema_; }
@@ -83,8 +84,17 @@ public:
 };
 
 // Helper functions for creating Protobuf SerdeValue instances
+inline std::unique_ptr<SerdeValue> makeProtobufValue(std::unique_ptr<google::protobuf::Message> value) {
+    auto protobuf_value = std::make_unique<ProtobufValue>(std::move(value));
+    return std::unique_ptr<SerdeValue>(static_cast<SerdeValue*>(protobuf_value.release()));
+}
+
+// Overload for backward compatibility - creates a copy
 inline std::unique_ptr<SerdeValue> makeProtobufValue(google::protobuf::Message& value) {
-    return std::make_unique<ProtobufValue>(value);
+    std::unique_ptr<google::protobuf::Message> owned_value(value.New());
+    owned_value->CopyFrom(value);
+    auto protobuf_value = std::make_unique<ProtobufValue>(std::move(owned_value));
+    return std::unique_ptr<SerdeValue>(static_cast<SerdeValue*>(protobuf_value.release()));
 }
 
 // Helper function for creating Protobuf SerdeSchema instances

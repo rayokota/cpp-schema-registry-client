@@ -11,6 +11,8 @@
 #include <variant>
 #include <mutex>
 #include <functional>
+#include <typeinfo>
+#include <type_traits>
 #include <nlohmann/json.hpp>
 #include <avro/ValidSchema.hh>
 #include <avro/GenericDatum.hh>
@@ -30,6 +32,17 @@ namespace srclient::rest {
 
 namespace srclient::serdes {
 
+// Forward declarations for specific value classes
+namespace avro {
+    class AvroValue;
+}
+namespace json {
+    class JsonValue; 
+}
+namespace protobuf {
+    class ProtobufValue;
+}
+
 /**
  * Serialization format types
  */
@@ -46,19 +59,71 @@ class SerdeValue {
 public:
     virtual ~SerdeValue() = default;
     
-    // Type checking methods
-    virtual bool isJson() const = 0;
-    virtual bool isAvro() const = 0;
-    virtual bool isProtobuf() const = 0;
+    // Pure virtual method to get type-erased access to the raw value
+    // Returns const void* to the underlying value
+    virtual const void* getRawValue() const = 0;
     
-    // Value access method - returns std::any, use std::any_cast to get the actual type
-    virtual std::any getValue() const = 0;
+    // Pure virtual method to get mutable access to the raw value
+    virtual void* getMutableRawValue() = 0;
     
     // Get the format type
     virtual SerdeFormat getFormat() const = 0;
     
-    // Clone method for copying
+    // Get the type info for the contained value
+    virtual const std::type_info& getType() const = 0;
+
+    // Pure virtual methods for moving values in and out
     virtual std::unique_ptr<SerdeValue> clone() const = 0;
+    virtual void moveFrom(SerdeValue&& other) = 0;
+    
+    // Template method to safely cast and access the value
+    template<typename T>
+    const T& getValue() const {
+        if (typeid(T) != getType()) {
+            throw std::bad_cast();
+        }
+        return *static_cast<const T*>(getRawValue());
+    }
+    
+    // Template method to safely cast and get mutable access
+    template<typename T>
+    T& getMutableValue() {
+        if (typeid(T) != getType()) {
+            throw std::bad_cast();
+        }
+        return *static_cast<T*>(getMutableRawValue());
+    }
+    
+    // Template method to move a value into this GenericValue
+    template<typename T>
+    void setValue(T&& value) {
+        if (typeid(std::decay_t<T>) != getType()) {
+            throw std::bad_cast();
+        }
+        *static_cast<T*>(getMutableRawValue()) = std::forward<T>(value);
+    }
+    
+    // Template method to move a value out of this GenericValue
+    template<typename T>
+    T moveValue() {
+        if (typeid(T) != getType()) {
+            throw std::bad_cast();
+        }
+        return std::move(*static_cast<T*>(getMutableRawValue()));
+    }
+    
+    // Factory method to create a SerdeValue from any type
+    // Implementation moved to .cpp file to avoid forward declaration issues
+    template<typename T>
+    static std::unique_ptr<SerdeValue> create(T&& value);
+    
+    // Explicit specializations - declared here, implemented in .cpp
+    static std::unique_ptr<SerdeValue> create(::avro::GenericDatum&& value);
+    static std::unique_ptr<SerdeValue> create(const ::avro::GenericDatum& value);
+    static std::unique_ptr<SerdeValue> create(nlohmann::json&& value);
+    static std::unique_ptr<SerdeValue> create(const nlohmann::json& value);
+    static std::unique_ptr<SerdeValue> create(std::unique_ptr<google::protobuf::Message>&& value);
+    static std::unique_ptr<SerdeValue> create(google::protobuf::Message& value);
 
     // Static factory methods for creating SerdeValue instances
     static std::unique_ptr<SerdeValue> newString(SerdeFormat format, const std::string& value);
@@ -70,6 +135,8 @@ public:
     virtual std::vector<uint8_t> asBytes() const = 0;
 };
 
+
+
 /**
  * Base interface for schema wrappers
  * Based on SerdeSchema from serde.rs
@@ -77,11 +144,6 @@ public:
 class SerdeSchema {
 public:
     virtual ~SerdeSchema() = default;
-    
-    // Type checking methods
-    virtual bool isAvro() const = 0;
-    virtual bool isJson() const = 0;
-    virtual bool isProtobuf() const = 0;
     
     // Format accessor
     virtual SerdeFormat getFormat() const = 0;
@@ -97,7 +159,7 @@ public:
  * Helper functions for extracting schema data from SerdeSchema::getSchema()
  */
 inline std::string getSchemaData(const SerdeSchema& schema) {
-    if (schema.isAvro()) {
+    if (schema.getFormat() == SerdeFormat::Avro) {
         // For Avro schemas, convert the ValidSchema to JSON string
         auto avro_schema = std::any_cast<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>>(schema.getSchema());
         return avro_schema.first.toJson(false);
@@ -108,7 +170,7 @@ inline std::string getSchemaData(const SerdeSchema& schema) {
 }
 
 inline std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> getAvroSchema(const SerdeSchema& schema) {
-    if (!schema.isAvro()) {
+    if (schema.getFormat() != SerdeFormat::Avro) {
         return std::nullopt;
     }
     return std::any_cast<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>>(schema.getSchema());
@@ -116,22 +178,22 @@ inline std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSch
 
 // Backward compatibility helper functions (for easier migration)
 inline bool isJson(const SerdeValue& value) {
-    return value.isJson();
+    return value.getFormat() == SerdeFormat::Json;
 }
 
 inline bool isAvro(const SerdeValue& value) {
-    return value.isAvro();
+    return value.getFormat() == SerdeFormat::Avro;
 }
 
 inline bool isProtobuf(const SerdeValue& value) {
-    return value.isProtobuf();
+    return value.getFormat() == SerdeFormat::Protobuf;
 }
 
 inline nlohmann::json asJson(const SerdeValue& value) {
-    if (!value.isJson()) {
+    if (value.getFormat() != SerdeFormat::Json) {
         throw SerdeError("SerdeValue is not JSON");
     }
-    return std::any_cast<nlohmann::json>(value.getValue());
+    return value.getValue<nlohmann::json>();
 }
 
 // Value extraction utility functions
@@ -337,4 +399,4 @@ namespace type_utils {
     std::string kindToString(Kind kind);
 }
 
-} // namespace srclient::serdes 
+} // namespace srclient::serdes
