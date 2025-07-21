@@ -123,12 +123,6 @@ private:
     std::vector<int32_t> toIndexArray(const google::protobuf::Descriptor* descriptor);
     
     void validateSchema(const srclient::rest::model::Schema& schema);
-    
-    std::unique_ptr<SerdeValue> messageToSerdeValue(const google::protobuf::Message& message);
-    
-    std::unique_ptr<SerdeValue> transformValue(const SerdeValue& value,
-                              const Schema& schema,
-                              const std::string& subject);
 };
 
 } // namespace srclient::serdes::protobuf

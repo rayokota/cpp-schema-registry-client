@@ -94,20 +94,6 @@ void ProtobufSerde::resolveNamedSchema(const srclient::rest::model::Schema& sche
     }
 }
 
-std::unique_ptr<SerdeValue> ProtobufSerializer::messageToSerdeValue(const google::protobuf::Message& message) {
-    // Create and return the SerdeValue as unique_ptr
-    return makeProtobufValue(const_cast<google::protobuf::Message&>(message));
-}
-
-std::unique_ptr<SerdeValue> ProtobufSerializer::transformValue(const SerdeValue& value,
-                                             const Schema& schema,
-                                             const std::string& subject) {
-    // Apply transformations and return as unique_ptr
-    // For now, create a copy and return it
-    // TODO: Implement actual transformations
-    return value.clone();
-}
-
 ProtobufSerializer::ProtobufSerializer(
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::optional<srclient::rest::model::Schema> schema,
