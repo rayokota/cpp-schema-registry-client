@@ -174,11 +174,11 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
         reader_desc = found_desc;
     }
 
+    google::protobuf::DynamicMessageFactory factory(pool_ptr);
     std::unique_ptr<google::protobuf::Message> msg;
 
     if (!migrations.empty()) {
         // Handle migrations case
-        google::protobuf::DynamicMessageFactory factory;
         const google::protobuf::Message* prototype = factory.GetPrototype(writer_desc);
         msg = std::unique_ptr<google::protobuf::Message>(prototype->New());
 
@@ -223,7 +223,6 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
         }
     } else {
         // No migrations - direct parsing
-        google::protobuf::DynamicMessageFactory factory;
         const google::protobuf::Message* prototype = factory.GetPrototype(reader_desc);
         msg = std::unique_ptr<google::protobuf::Message>(prototype->New());
 
@@ -260,7 +259,6 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
     google::protobuf::Message& final_message_ref = asProtobuf(*result_value);
 
     // Create a copy of the message to return
-    google::protobuf::DynamicMessageFactory factory;
     const google::protobuf::Message* prototype = factory.GetPrototype(final_message_ref.GetDescriptor());
     auto result = std::unique_ptr<google::protobuf::Message>(prototype->New());
     result->CopyFrom(final_message_ref);
