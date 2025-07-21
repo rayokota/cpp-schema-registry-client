@@ -9,6 +9,16 @@
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/descriptor.pb.h>
 #include <google/protobuf/dynamic_message.h>
+#include <google/protobuf/any.pb.h>
+#include <google/protobuf/api.pb.h>
+#include <google/protobuf/duration.pb.h>
+#include <google/protobuf/empty.pb.h>
+#include <google/protobuf/field_mask.pb.h>
+#include <google/protobuf/source_context.pb.h>
+#include <google/protobuf/struct.pb.h>
+#include <google/protobuf/timestamp.pb.h>
+#include <google/protobuf/type.pb.h>
+#include <google/protobuf/wrappers.pb.h>
 
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeTypes.h"
@@ -67,6 +77,12 @@ private:
                            std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
                            google::protobuf::DescriptorPool* pool,
                            std::unordered_set<std::string>& visited);
+    
+    // Initialize descriptor pool with well-known types
+    void initPool(google::protobuf::DescriptorPool* pool);
+    
+    // Add file descriptor to pool
+    void addFileToPool(google::protobuf::DescriptorPool* pool, const google::protobuf::FileDescriptor* file_descriptor);
 };
 
 /**

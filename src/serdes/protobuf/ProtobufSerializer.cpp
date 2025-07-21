@@ -1,5 +1,17 @@
 #include "srclient/serdes/protobuf/ProtobufSerializer.h"
 #include "srclient/serdes/protobuf/ProtobufUtils.h"
+#include "confluent/type/decimal.pb.h"
+#include "confluent/meta.pb.h"
+#include <google/protobuf/any.pb.h>
+#include <google/protobuf/api.pb.h>
+#include <google/protobuf/duration.pb.h>
+#include <google/protobuf/empty.pb.h>
+#include <google/protobuf/field_mask.pb.h>
+#include <google/protobuf/source_context.pb.h>
+#include <google/protobuf/struct.pb.h>
+#include <google/protobuf/timestamp.pb.h>
+#include <google/protobuf/type.pb.h>
+#include <google/protobuf/wrappers.pb.h>
 
 // Forward declaration for transformFields function from ProtobufUtils.cpp
 namespace srclient::serdes::protobuf::utils {
@@ -38,6 +50,7 @@ ProtobufSerde::getParsedSchema(const srclient::rest::model::Schema& schema,
     
     // Parse new schema
     auto pool = std::make_unique<google::protobuf::DescriptorPool>();
+    initPool(pool.get());
     std::unordered_set<std::string> visited;
     
     // Resolve dependencies first
@@ -58,6 +71,42 @@ ProtobufSerde::getParsedSchema(const srclient::rest::model::Schema& schema,
     );
     
     return {file_desc, parsed_schemas_cache_[cache_key].second.get()};
+}
+
+void ProtobufSerde::addFileToPool(google::protobuf::DescriptorPool* pool, const google::protobuf::FileDescriptor* file_descriptor) {
+    google::protobuf::FileDescriptorProto file_descriptor_proto;
+    file_descriptor->CopyTo(&file_descriptor_proto);
+    pool->BuildFile(file_descriptor_proto);
+}
+
+void ProtobufSerde::initPool(google::protobuf::DescriptorPool* pool) {
+    // Add Google's well-known types to the descriptor pool using BuildFile
+    addFileToPool(pool, google::protobuf::Any::descriptor()->file());
+    // Source_context needed by api
+    addFileToPool(pool, google::protobuf::SourceContext::descriptor()->file());
+    // Type needed by api
+    addFileToPool(pool, google::protobuf::Type::descriptor()->file());
+    addFileToPool(pool, google::protobuf::Api::descriptor()->file());
+    addFileToPool(pool, google::protobuf::DescriptorProto::descriptor()->file());
+    addFileToPool(pool, google::protobuf::Duration::descriptor()->file());
+    addFileToPool(pool, google::protobuf::Empty::descriptor()->file());
+    addFileToPool(pool, google::protobuf::FieldMask::descriptor()->file());
+    addFileToPool(pool, google::protobuf::Struct::descriptor()->file());
+    addFileToPool(pool, google::protobuf::Timestamp::descriptor()->file());
+    
+    // Add wrapper types
+    addFileToPool(pool, google::protobuf::DoubleValue::descriptor()->file());
+    addFileToPool(pool, google::protobuf::FloatValue::descriptor()->file());
+    addFileToPool(pool, google::protobuf::Int64Value::descriptor()->file());
+    addFileToPool(pool, google::protobuf::UInt64Value::descriptor()->file());
+    addFileToPool(pool, google::protobuf::Int32Value::descriptor()->file());
+    addFileToPool(pool, google::protobuf::UInt32Value::descriptor()->file());
+    addFileToPool(pool, google::protobuf::BoolValue::descriptor()->file());
+    addFileToPool(pool, google::protobuf::StringValue::descriptor()->file());
+    addFileToPool(pool, google::protobuf::BytesValue::descriptor()->file());
+
+    addFileToPool(pool, confluent::Meta::descriptor()->file());
+    addFileToPool(pool, confluent::type::Decimal::descriptor()->file());
 }
 
 void ProtobufSerde::clear() {
