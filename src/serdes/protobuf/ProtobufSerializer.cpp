@@ -2,11 +2,13 @@
 #include "srclient/serdes/protobuf/ProtobufUtils.h"
 
 // Forward declaration for transformFields function from ProtobufUtils.cpp
-std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
-    srclient::serdes::RuleContext& ctx,
-    const std::string& field_executor_type,
-    const srclient::serdes::SerdeValue& value
-);
+namespace srclient::serdes::protobuf::utils {
+    std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
+        srclient::serdes::RuleContext& ctx,
+        const std::string& field_executor_type,
+        const srclient::serdes::SerdeValue& value
+    );
+}
 
 namespace srclient::serdes::protobuf {
 
@@ -209,7 +211,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
         
         // Create field transformer function
         auto field_transformer = [&](RuleContext& ctx, const std::string& rule_type, const SerdeValue& value) -> std::unique_ptr<SerdeValue> {
-            return transformFields(ctx, rule_type, value);
+            return utils::transformFields(ctx, rule_type, value);
         };
 
         // Create DynamicMessage from the message descriptor
