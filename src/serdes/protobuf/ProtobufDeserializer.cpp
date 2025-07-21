@@ -103,14 +103,6 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
     return deserializeWithMessageDescriptor(payload, descriptor, writer_schema, subject);
 }
 
-std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserializeTo(
-        const std::vector<uint8_t>& bytes,
-        std::optional<std::string> subject,
-        std::optional<std::string> format
-) {
-    return deserialize(bytes, subject, format);
-}
-
 std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserializeWithMessageDescriptor(
         const std::vector<uint8_t>& bytes,
         const google::protobuf::Descriptor* descriptor,

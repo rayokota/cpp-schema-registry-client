@@ -45,13 +45,6 @@ public:
                                                           std::optional<std::string> format = std::nullopt);
 
     /**
-     * Deserialize bytes to specific message type
-     */
-    std::unique_ptr<google::protobuf::Message> deserializeTo(const std::vector<uint8_t>& bytes,
-                             std::optional<std::string> subject = std::nullopt,
-                             std::optional<std::string> format = std::nullopt);
-
-    /**
      * Deserialize with message descriptor
      */
     std::unique_ptr<google::protobuf::Message> deserializeWithMessageDescriptor(
