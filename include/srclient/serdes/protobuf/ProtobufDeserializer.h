@@ -38,20 +38,11 @@ public:
                         const DeserializerConfig& config);
 
     /**
-     * Deserialize bytes to protobuf message using dynamic message
+     * Deserialize bytes to protobuf message with full context support
+     * Based on the Rust deserialize method, ported to synchronous C++
      */
-    std::unique_ptr<google::protobuf::Message> deserialize(const std::vector<uint8_t>& bytes,
-                                                          std::optional<std::string> subject = std::nullopt,
-                                                          std::optional<std::string> format = std::nullopt);
-
-    /**
-     * Deserialize with message descriptor
-     */
-    std::unique_ptr<google::protobuf::Message> deserializeWithMessageDescriptor(
-        const std::vector<uint8_t>& bytes,
-        const google::protobuf::Descriptor* descriptor,
-        const srclient::rest::model::Schema& writer_schema,
-        std::optional<std::string> subject = std::nullopt);
+    std::unique_ptr<google::protobuf::Message> deserialize(const SerializationContext& ctx,
+                                                          const std::vector<uint8_t>& data);
 
     /**
      * Close the deserializer and cleanup resources
@@ -65,6 +56,20 @@ private:
     // Helper methods
     std::unique_ptr<google::protobuf::Message> createMessageFromDescriptor(
         const google::protobuf::Descriptor* descriptor);
+    
+    /**
+     * Get the message name from a protobuf message
+     */
+    std::optional<std::string> getName(const google::protobuf::Message& message);
+    
+    /**
+     * Deserialize with message descriptor and apply rules
+     */
+    std::unique_ptr<google::protobuf::Message> deserializeWithMessageDescriptor(
+        const std::vector<uint8_t>& payload,
+        const google::protobuf::Descriptor* descriptor,
+        const Schema& writer_schema,
+        std::optional<std::string> subject);
 };
 
 } // namespace srclient::serdes::protobuf
