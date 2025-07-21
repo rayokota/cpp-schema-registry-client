@@ -72,25 +72,6 @@ private:
     // Helper methods
     std::unique_ptr<google::protobuf::Message> createMessageFromDescriptor(
         const google::protobuf::Descriptor* descriptor);
-    
-    void transformFields(google::protobuf::Message* message,
-                        const google::protobuf::Descriptor* descriptor,
-                        const srclient::rest::model::Schema& writer_schema,
-                        const srclient::rest::model::Schema& reader_schema);
-    
-    std::unique_ptr<SerdeValue> messageToSerdeValue(const google::protobuf::Message& message);
-    
-    void serdeValueToMessage(const SerdeValue& value, 
-                           google::protobuf::Message* message);
-    
-    bool isEvolutionRequired(const srclient::rest::model::Schema& writer_schema,
-                           const srclient::rest::model::Schema& reader_schema);
-    
-    std::unique_ptr<google::protobuf::Message> evolveMessage(
-        const google::protobuf::Message& writer_message,
-        const google::protobuf::Descriptor* reader_descriptor,
-        const srclient::rest::model::Schema& writer_schema,
-        const srclient::rest::model::Schema& reader_schema);
 };
 
 } // namespace srclient::serdes::protobuf
