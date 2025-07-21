@@ -152,7 +152,7 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
         );
         reader_schema_raw = latest_schema->toSchema();
 
-        auto [reader_fd, reader_pool_ptr] = serde_->getParsedSchema(reader_schema_raw, base_->getSerde().getClient());
+        auto [reader_fd, pool_ptr] = serde_->getParsedSchema(reader_schema_raw, base_->getSerde().getClient());
         reader_schema = reader_fd;
     } else {
         reader_schema_raw = writer_schema_raw;
@@ -161,16 +161,15 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
 
     // Initialize reader desc to first message in file
     std::vector<int32_t> first_msg_index = {0};
-    const google::protobuf::DescriptorPool* reader_pool = (latest_schema.has_value()) ? reader_pool_ptr : pool_ptr;
     const google::protobuf::Descriptor* reader_desc =
         srclient::serdes::protobuf::utils::getMessageDescriptorByIndex(
-            reader_pool,
+            pool_ptr,
             reader_schema,
             first_msg_index
         );
 
     // Attempt to find a reader desc with the same name as the writer
-    const google::protobuf::Descriptor* found_desc = reader_pool->FindMessageTypeByName(writer_desc->full_name());
+    const google::protobuf::Descriptor* found_desc = pool_ptr->FindMessageTypeByName(writer_desc->full_name());
     if (found_desc) {
         reader_desc = found_desc;
     }
