@@ -1,8 +1,12 @@
 #include "srclient/serdes/protobuf/ProtobufDeserializer.h"
 #include "srclient/serdes/protobuf/ProtobufUtils.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
+#include "srclient/serdes/json/JsonTypes.h"
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/util/json_util.h>
+#include <nlohmann/json.hpp>
+#include <optional>
+#include <functional>
 
 // Forward declaration for transformFields function from ProtobufUtils.cpp
 namespace srclient::serdes::protobuf::utils {
@@ -54,177 +58,217 @@ ProtobufDeserializer::ProtobufDeserializer(
 }
 
 std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
-        const SerializationContext& ctx,
-        const std::vector<uint8_t>& data
+    const SerializationContext& ctx,
+    const std::vector<uint8_t>& data
 ) {
-    // Determine subject using strategy
     auto strategy = base_->getConfig().subject_name_strategy;
-    auto subject_opt = strategy(ctx.topic, ctx.serde_type, std::nullopt);
+    std::optional<std::string> subject = strategy(ctx.topic, ctx.serde_type, std::nullopt);
     std::optional<srclient::rest::model::RegisteredSchema> latest_schema;
-    bool has_subject = subject_opt.has_value();
+    bool has_subject = subject.has_value();
 
     if (has_subject) {
-        try {
-            latest_schema = base_->getSerde().getReaderSchema(
-                subject_opt.value(), std::nullopt, base_->getConfig().use_schema);
-        } catch (const std::exception& e) {
-            // Schema not found - will be determined from writer schema
-        }
+        latest_schema = base_->getSerde().getReaderSchema(
+            subject.value(),
+            std::nullopt,
+            base_->getConfig().use_schema
+        );
     }
 
-    // Parse schema ID from data
     SchemaId schema_id(SerdeFormat::Protobuf);
-    auto id_deserializer = base_->getConfig().schema_id_deserializer;
-    size_t bytes_read = id_deserializer(data, ctx, schema_id);
-    std::vector<uint8_t> payload_data(data.begin() + bytes_read, data.end());
+    auto id_deser = base_->getConfig().schema_id_deserializer;
+    size_t bytes_read = id_deser(data, ctx, schema_id);
+    std::vector<int32_t> msg_index = schema_id.getMessageIndexes().value_or(std::vector<int32_t>{});
 
-    // Get writer schema
-    auto writer_schema_raw = base_->getWriterSchema(schema_id, subject_opt, std::nullopt);
-    auto [writer_file_descriptor, writer_pool] = serde_->getParsedSchema(writer_schema_raw, base_->getSerde().getClient());
+    std::vector<uint8_t> remaining_data(data.begin() + bytes_read, data.end());
 
-    // Re-determine subject if not initially determined
+    auto writer_schema_raw = base_->getWriterSchema(schema_id, subject, std::nullopt);
+
+    // Get parsed schema using ProtobufSerde
+    auto [writer_schema, pool_ptr] = serde_->getParsedSchema(writer_schema_raw, base_->getSerde().getClient());
+
+    if (!writer_schema) {
+        throw ProtobufError("Failed to parse writer schema");
+    }
+
+    // Get writer message descriptor using getMessageDescriptorByIndex from ProtobufUtils
+    const google::protobuf::Descriptor* writer_desc =
+        srclient::serdes::protobuf::utils::getMessageDescriptorByIndex(
+            pool_ptr,
+            writer_schema,
+            msg_index
+        );
+
+    if (!writer_desc) {
+        throw ProtobufError("Failed to get writer message descriptor");
+    }
+
     if (!has_subject) {
-        subject_opt = strategy(ctx.topic, ctx.serde_type, std::make_optional(writer_schema_raw));
-        if (subject_opt.has_value()) {
-            try {
-                latest_schema = base_->getSerde().getReaderSchema(
-                    subject_opt.value(), std::nullopt, base_->getConfig().use_schema);
-            } catch (const std::exception& e) {
-                // Schema not found
-            }
+        subject = strategy(ctx.topic, ctx.serde_type, std::make_optional(writer_schema_raw));
+        if (subject.has_value()) {
+            latest_schema = base_->getSerde().getReaderSchema(
+                subject.value(),
+                std::nullopt,
+                base_->getConfig().use_schema
+            );
         }
     }
 
-    if (!subject_opt.has_value()) {
-        throw ProtobufError("Could not determine subject for deserialization");
+    if (!subject.has_value()) {
+        throw ProtobufError("Subject name could not be determined");
     }
-    std::string subject = subject_opt.value();
 
-    // Handle encoding rules if present (pre-decode)
-    std::vector<uint8_t> decoded_data = payload_data;
+    std::string subject_str = subject.value();
+    std::vector<uint8_t> processed_data = remaining_data;
+
+    // Handle encoding rules if present
     auto rule_set = writer_schema_raw.getRuleSet();
     if (rule_set.has_value() && rule_set->getEncodingRules().has_value()) {
-        auto bytes_value = SerdeValue::newBytes(SerdeFormat::Protobuf, payload_data);
-        auto result = base_->getSerde().executeRulesWithPhase(
+
+        auto serde_value = SerdeValue::newBytes(SerdeFormat::Protobuf, processed_data);
+        auto result_value = base_->getSerde().executeRulesWithPhase(
             ctx,
-            subject,
+            subject_str,
             Phase::Encoding,
             Mode::Read,
             std::nullopt,
             std::make_optional(writer_schema_raw),
             std::nullopt,
-            *bytes_value,
-            {},
-            nullptr
+            *serde_value,
+            std::unordered_map<std::string, std::unordered_set<std::string>>{}
         );
-        decoded_data = result->asBytes();
+        processed_data = result_value->asBytes();
     }
 
-    // Determine reader schema and migrations
     std::vector<Migration> migrations;
-    Schema reader_schema_raw;
-    const google::protobuf::FileDescriptor* reader_file_descriptor;
-    const google::protobuf::DescriptorPool* reader_pool;
+    srclient::rest::model::Schema reader_schema_raw;
+    const google::protobuf::FileDescriptor* reader_schema;
 
     if (latest_schema.has_value()) {
-        migrations = base_->getSerde().getMigrations(subject, writer_schema_raw, latest_schema.value(), std::nullopt);
+        migrations = base_->getSerde().getMigrations(
+            subject_str,
+            writer_schema_raw,
+            latest_schema.value(),
+            std::nullopt
+        );
         reader_schema_raw = latest_schema->toSchema();
-        auto reader_parsed = serde_->getParsedSchema(reader_schema_raw, base_->getSerde().getClient());
-        reader_file_descriptor = reader_parsed.first;
-        reader_pool = reader_parsed.second;
+
+        auto [reader_fd, reader_pool_ptr] = serde_->getParsedSchema(reader_schema_raw, base_->getSerde().getClient());
+        reader_schema = reader_fd;
     } else {
-        // No migrations needed
         reader_schema_raw = writer_schema_raw;
-        reader_file_descriptor = writer_file_descriptor;
-        reader_pool = writer_pool;
+        reader_schema = writer_schema;
     }
 
-    // Find message descriptor using message indexes
-    const google::protobuf::Descriptor* descriptor = nullptr;
-    if (schema_id.getMessageIndexes().has_value()) {
-        auto indexes = schema_id.getMessageIndexes().value();
-        // Navigate through nested message types using indexes
-        for (size_t i = 0; i < writer_file_descriptor->message_type_count() && !indexes.empty(); ++i) {
-            if (indexes[0] == static_cast<int32_t>(i)) {
-                descriptor = writer_file_descriptor->message_type(i);
-                indexes.erase(indexes.begin());
+    // Initialize reader desc to first message in file
+    std::vector<int32_t> first_msg_index = {0};
+    const google::protobuf::DescriptorPool* reader_pool = (latest_schema.has_value()) ? reader_pool_ptr : pool_ptr;
+    const google::protobuf::Descriptor* reader_desc =
+        srclient::serdes::protobuf::utils::getMessageDescriptorByIndex(
+            reader_pool,
+            reader_schema,
+            first_msg_index
+        );
 
-                // Navigate nested types
-                while (!indexes.empty() && descriptor) {
-                    if (indexes[0] < descriptor->nested_type_count()) {
-                        descriptor = descriptor->nested_type(indexes[0]);
-                        indexes.erase(indexes.begin());
-                    } else {
-                        break;
-                    }
-                }
-                break;
-            }
+    // Attempt to find a reader desc with the same name as the writer
+    const google::protobuf::Descriptor* found_desc = reader_pool->FindMessageTypeByName(writer_desc->full_name());
+    if (found_desc) {
+        reader_desc = found_desc;
+    }
+
+    std::unique_ptr<google::protobuf::Message> msg;
+
+    if (!migrations.empty()) {
+        // Handle migrations case
+        google::protobuf::DynamicMessageFactory factory;
+        const google::protobuf::Message* prototype = factory.GetPrototype(writer_desc);
+        msg = std::unique_ptr<google::protobuf::Message>(prototype->New());
+
+        // Parse from binary data
+        if (!msg->ParseFromArray(processed_data.data(), processed_data.size())) {
+            throw ProtobufError("Failed to parse protobuf message from binary data");
+        }
+
+        // Convert to JSON
+        std::string json_str;
+        auto status = google::protobuf::util::MessageToJsonString(*msg, &json_str);
+        if (!status.ok()) {
+            throw ProtobufError("Failed to convert message to JSON: " + std::string(status.message()));
+        }
+
+        auto json_value = nlohmann::json::parse(json_str);
+        auto serde_value = srclient::serdes::json::makeJsonValue(json_value);
+
+        // Execute migrations
+        auto migrated_value = base_->getSerde().executeMigrations(
+            ctx,
+            subject_str,
+            migrations,
+            *serde_value
+        );
+
+        if (!migrated_value->isJson()) {
+            throw ProtobufError("Expected JSON value after migration");
+        }
+
+        auto migrated_json = asJson(*migrated_value);
+        std::string migrated_json_str = migrated_json.dump();
+
+        // Parse back to protobuf message
+        google::protobuf::util::JsonParseOptions options;
+        const google::protobuf::Message* reader_prototype = factory.GetPrototype(reader_desc);
+        msg = std::unique_ptr<google::protobuf::Message>(reader_prototype->New());
+
+        auto json_status = google::protobuf::util::JsonStringToMessage(migrated_json_str, msg.get(), options);
+        if (!json_status.ok()) {
+            throw ProtobufError("Failed to convert JSON back to protobuf: " + std::string(json_status.message()));
         }
     } else {
-        // Use first message type as default
-        if (writer_file_descriptor->message_type_count() > 0) {
-            descriptor = writer_file_descriptor->message_type(0);
+        // No migrations - direct parsing
+        google::protobuf::DynamicMessageFactory factory;
+        const google::protobuf::Message* prototype = factory.GetPrototype(reader_desc);
+        msg = std::unique_ptr<google::protobuf::Message>(prototype->New());
+
+        if (!msg->ParseFromArray(processed_data.data(), processed_data.size())) {
+            throw ProtobufError("Failed to parse protobuf message from binary data");
         }
     }
 
-    if (!descriptor) {
-        throw ProtobufError("Could not find message descriptor in schema");
-    }
-
-    // Create message from descriptor
-    auto message = createMessageFromDescriptor(descriptor);
-    
-    // Parse the protobuf message from bytes
-    if (!message->ParseFromArray(decoded_data.data(), decoded_data.size())) {
-        throw ProtobufError("Failed to parse protobuf message from bytes");
-    }
-
-    // Apply migrations if we have them and a different reader schema
-    if (!migrations.empty()) {
-        // For protobuf, migrations would need to be applied by transforming the message
-        // This is a complex operation that would require message-to-JSON conversion,
-        // migration application, and back to protobuf
-        // For now, we'll proceed without migration support
-    }
-
-    // Create field transformer for rule execution
-    auto field_transformer = [&](RuleContext& ctx, const std::string& rule_type, const SerdeValue& value) -> std::unique_ptr<SerdeValue> {
-        return utils::transformFields(ctx, rule_type, value);
+    // Execute transformation rules
+    auto field_transformer = [](RuleContext& ctx, const std::string& field_executor_type, const SerdeValue& value) -> std::unique_ptr<SerdeValue> {
+        return srclient::serdes::protobuf::utils::transformFields(ctx, field_executor_type, value);
     };
 
-         // Apply rules if present
-    if (reader_schema_raw.getRuleSet().has_value()) {
-        auto protobuf_value = protobuf::makeProtobufValue(*message);
-        auto protobuf_schema = protobuf::makeProtobufSchema(reader_schema_raw.getSchema().value_or(""));
-         
-        auto serde_value = base_->getSerde().executeRules(
-            ctx,
-            subject,
-            Mode::Read,
-            std::nullopt,
-            std::make_optional(reader_schema_raw),
-            std::make_optional(protobuf_schema.get()),
-            *protobuf_value,
-            {},
-            std::make_shared<FieldTransformer>(field_transformer)
-        );
-         
-        if (!serde_value->isProtobuf()) {
-            throw ProtobufError("Unexpected serde value type after rule execution");
-        }
-         
-        // Extract the transformed message
-        auto transformed_message_ref = std::any_cast<std::reference_wrapper<google::protobuf::Message>>(serde_value->getValue());
-         
-        // Create a new message from the same descriptor and copy the data
-        auto new_message = createMessageFromDescriptor(descriptor);
-        new_message->CopyFrom(transformed_message_ref.get());
-        message = std::move(new_message);
+    auto protobuf_value = makeProtobufValue(*msg);
+    auto protobuf_schema = std::make_shared<ProtobufSchema>(reader_schema->DebugString());
+
+    auto result_value = base_->getSerde().executeRules(
+        ctx,
+        subject_str,
+        Mode::Read,
+        std::nullopt,
+        std::make_optional(reader_schema_raw),
+        std::make_optional<SerdeSchema*>(protobuf_schema.get()),
+        *protobuf_value,
+        std::unordered_map<std::string, std::unordered_set<std::string>>{},
+        std::make_shared<FieldTransformer>(field_transformer)
+    );
+
+    if (!result_value->isProtobuf()) {
+        throw ProtobufError("Expected protobuf value after rule execution");
     }
 
-    return message;
+    // Extract the final message
+    google::protobuf::Message& final_message_ref = asProtobuf(*result_value);
+
+    // Create a copy of the message to return
+    google::protobuf::DynamicMessageFactory factory;
+    const google::protobuf::Message* prototype = factory.GetPrototype(final_message_ref.GetDescriptor());
+    auto result = std::unique_ptr<google::protobuf::Message>(prototype->New());
+    result->CopyFrom(final_message_ref);
+
+    return result;
 }
+
 
 std::optional<std::string> ProtobufDeserializer::getName(const google::protobuf::Message& message) {
     const google::protobuf::Descriptor* descriptor = message.GetDescriptor();
@@ -234,22 +278,6 @@ std::optional<std::string> ProtobufDeserializer::getName(const google::protobuf:
     return std::nullopt;
 }
 
-std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserializeWithMessageDescriptor(
-        const std::vector<uint8_t>& payload,
-        const google::protobuf::Descriptor* descriptor,
-        const Schema& writer_schema,
-        std::optional<std::string> subject) {
-    
-    // Create message from descriptor
-    auto message = createMessageFromDescriptor(descriptor);
-    
-    // Parse the protobuf message from bytes
-    if (!message->ParseFromArray(payload.data(), payload.size())) {
-        throw ProtobufError("Failed to parse protobuf message from bytes");
-    }
-
-    return message;
-}
 
 void ProtobufDeserializer::close() {
     // Cleanup resources

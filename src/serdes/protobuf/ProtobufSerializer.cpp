@@ -33,7 +33,7 @@ ProtobufSerde::getParsedSchema(const srclient::rest::model::Schema& schema,
     
     auto it = parsed_schemas_cache_.find(cache_key);
     if (it != parsed_schemas_cache_.end()) {
-        return {it->second.first.get(), it->second.second.get()};
+        return {it->second.first, it->second.second.get()};
     }
     
     // Parse new schema
@@ -51,9 +51,9 @@ ProtobufSerde::getParsedSchema(const srclient::rest::model::Schema& schema,
     // Parse main schema
     auto file_desc = stringToSchema(pool.get(), "main.proto", cache_key);
     
-    // Store in cache
+    // Store in cache with raw FileDescriptor pointer (owned by pool)
     parsed_schemas_cache_[cache_key] = std::make_pair(
-        std::unique_ptr<google::protobuf::FileDescriptor>(const_cast<google::protobuf::FileDescriptor*>(file_desc)),
+        file_desc,
         std::move(pool)
     );
     

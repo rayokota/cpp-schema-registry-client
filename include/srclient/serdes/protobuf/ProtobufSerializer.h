@@ -54,9 +54,9 @@ public:
     void clear();
 
 private:
-    // Cache for parsed schemas: Schema -> (FileDescriptor, DescriptorPool)
+    // Cache for parsed schemas: Schema -> (FileDescriptor*, DescriptorPool)
     std::unordered_map<std::string, std::pair<
-        std::unique_ptr<google::protobuf::FileDescriptor>, 
+        const google::protobuf::FileDescriptor*,
         std::unique_ptr<google::protobuf::DescriptorPool>
     >> parsed_schemas_cache_;
     
