@@ -1,18 +1,18 @@
 # CMake generated build files
-build/
-CMakeLists.txt.user
+build
 CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
+CMakeUserPresets.json
+CTestTestfile.cmake
+CPackConfig.cmake
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
-CTestTestfile.cmake
+CMakeFiles
+CMakeScripts
+Makefile
+Testing
 _deps
-CMakeUserPresets.json
-*.cmake
+.cmake
 
 # Executables and libraries
 srclient-test
