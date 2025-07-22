@@ -275,7 +275,7 @@ inline std::vector<uint8_t> ProtobufSerializer<T>::serializeWithMessageDescripto
 
     if (latest_schema) {
         // Path when writer schema is known already to the registry.
-        schema_id = SchemaId(SerdeFormat::Avro, latest_schema->getId(), latest_schema->getGuid(), std::nullopt);
+        schema_id = SchemaId(SerdeFormat::Protobuf, latest_schema->getId(), latest_schema->getGuid(), std::nullopt);
 
         auto schema       = latest_schema->toSchema();
         auto [fd, pool]   = serde_->getParsedSchema(schema, base_->getSerde().getClient());
