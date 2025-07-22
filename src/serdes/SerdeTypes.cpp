@@ -235,6 +235,6 @@ google::protobuf::Message& asProtobuf(const SerdeValue& value) {
     return *static_cast<google::protobuf::Message*>(const_cast<void*>(value.getRawValue()));
 }
 
+// Schema extraction utility functions are now inline in the header
 
-
-} // namespace srclient::serdes 
+} // namespace srclient::serdes

@@ -95,9 +95,21 @@ private:
 public:
     explicit ProtobufSchema(const google::protobuf::FileDescriptor* schema) : schema_(schema) {}
     
+    // SerdeObject interface methods
+    const void* getRawObject() const override { return &schema_; }
+    void* getMutableRawObject() override { return const_cast<void*>(static_cast<const void*>(&schema_)); }
     SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
+    const std::type_info& getType() const override { 
+        return typeid(const google::protobuf::FileDescriptor*); 
+    }
     
-    std::any getSchema() const override { return schema_; }
+    void moveFrom(SerdeObject&& other) override {
+        if (auto* protobuf_other = dynamic_cast<ProtobufSchema*>(&other)) {
+            schema_ = std::move(protobuf_other->schema_);
+        } else {
+            throw std::bad_cast();
+        }
+    }
     
     std::unique_ptr<SerdeSchema> clone() const override {
         return std::make_unique<ProtobufSchema>(schema_);

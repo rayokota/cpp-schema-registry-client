@@ -83,9 +83,21 @@ private:
 public:
     explicit JsonSchema(const jsoncons::jsonschema::json_schema<Json>& schema) : schema_(schema) {}
     
+    // SerdeObject interface methods
+    const void* getRawObject() const override { return &schema_; }
+    void* getMutableRawObject() override { return &schema_; }
     SerdeFormat getFormat() const override { return SerdeFormat::Json; }
+    const std::type_info& getType() const override { 
+        return typeid(jsoncons::jsonschema::json_schema<Json>); 
+    }
     
-    std::any getSchema() const override { return schema_; }
+    void moveFrom(SerdeObject&& other) override {
+        if (auto* json_other = dynamic_cast<JsonSchema*>(&other)) {
+            schema_ = std::move(json_other->schema_);
+        } else {
+            throw std::bad_cast();
+        }
+    }
     
     std::unique_ptr<SerdeSchema> clone() const override {
         return std::make_unique<JsonSchema>(schema_);
