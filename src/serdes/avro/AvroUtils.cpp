@@ -135,7 +135,7 @@ namespace utils {
                         
                         auto new_value = field_executor->transformField(ctx, *message_value);
                         if (new_value && new_value->getFormat() == SerdeFormat::Avro) {
-                            return new_value->getValue<::avro::GenericDatum>();
+                            return asAvro(*new_value);
                         }
                     }
                 }

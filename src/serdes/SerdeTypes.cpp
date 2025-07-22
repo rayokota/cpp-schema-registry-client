@@ -216,6 +216,13 @@ std::string kindToString(Kind kind) {
     return value.getValue<::avro::GenericDatum>();
 }
 
+nlohmann::json asJson(const SerdeValue& value) {
+    if (value.getFormat() != SerdeFormat::Json) {
+        throw SerdeError("SerdeValue is not JSON");
+    }
+    return value.getValue<nlohmann::json>();
+}
+
 google::protobuf::Message& asProtobuf(const SerdeValue& value) {
     if (value.getFormat() != SerdeFormat::Protobuf) {
         throw SerdeError("SerdeValue is not Protobuf");

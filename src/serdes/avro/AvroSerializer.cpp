@@ -152,7 +152,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
         // Create field transformer lambda
         auto field_transformer = [this, &parsed_schema](RuleContext& ctx, const std::string& rule_type, const SerdeValue& msg) -> std::unique_ptr<SerdeValue> {
             if (msg.getFormat() == SerdeFormat::Avro) {
-                auto avro_datum = msg.getValue<::avro::GenericDatum>();
+                auto avro_datum = asAvro(msg);
                 auto transformed = utils::transformFields(ctx, avro_datum, parsed_schema.first);
                 return makeAvroValue(transformed);
             }
@@ -178,7 +178,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
         
         // Extract Avro value from result
         if (transformed_value->getFormat() == SerdeFormat::Avro) {
-            value = transformed_value->getValue<::avro::GenericDatum>();
+            value = asAvro(*transformed_value);
         } else {
             throw AvroError("Unexpected serde value type returned from rule execution");
         }

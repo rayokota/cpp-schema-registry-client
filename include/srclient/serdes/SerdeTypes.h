@@ -163,28 +163,9 @@ inline std::optional<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSch
     return std::any_cast<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>>(schema.getSchema());
 }
 
-// Backward compatibility helper functions (for easier migration)
-inline bool isJson(const SerdeValue& value) {
-    return value.getFormat() == SerdeFormat::Json;
-}
-
-inline bool isAvro(const SerdeValue& value) {
-    return value.getFormat() == SerdeFormat::Avro;
-}
-
-inline bool isProtobuf(const SerdeValue& value) {
-    return value.getFormat() == SerdeFormat::Protobuf;
-}
-
-inline nlohmann::json asJson(const SerdeValue& value) {
-    if (value.getFormat() != SerdeFormat::Json) {
-        throw SerdeError("SerdeValue is not JSON");
-    }
-    return value.getValue<nlohmann::json>();
-}
-
 // Value extraction utility functions
 ::avro::GenericDatum asAvro(const SerdeValue& value);
+nlohmann::json asJson(const SerdeValue& value);
 google::protobuf::Message& asProtobuf(const SerdeValue& value);
 
 // Magic bytes for schema ID encoding (from serde.rs)

@@ -1,6 +1,7 @@
 #include "srclient/serdes/avro/AvroDeserializer.h"
 #include "srclient/serdes/avro/AvroUtils.h"
 #include "srclient/serdes/json/JsonTypes.h"
+#include "srclient/serdes/SerdeTypes.h"
 #include <algorithm>
 #include <sstream>
 
@@ -127,7 +128,7 @@ NamedValue AvroDeserializer::deserialize(
         
         // 3. Apply migrations
         auto migrated = base_->getSerde().executeMigrations(ctx, subject, migrations, *json_serde_value);
-                    auto migrated_json = migrated->getValue<nlohmann::json>();
+                    auto migrated_json = asJson(*migrated);
         
         // 4. Convert back to Avro with reader schema
         value = utils::jsonToAvro(migrated_json, reader_parsed.first);
@@ -144,7 +145,7 @@ NamedValue AvroDeserializer::deserialize(
         // Create field transformer lambda
         auto field_transformer = [this, &parsed_schema](RuleContext& ctx, const std::string& rule_type, const SerdeValue& msg) -> std::unique_ptr<SerdeValue> {
             if (msg.getFormat() == SerdeFormat::Avro) {
-                auto avro_datum = msg.getValue<::avro::GenericDatum>();
+                auto avro_datum = asAvro(msg);
                 auto transformed = utils::transformFields(ctx, avro_datum, parsed_schema.first);
                 return makeAvroValue(transformed);
             }
@@ -166,7 +167,7 @@ NamedValue AvroDeserializer::deserialize(
             std::make_shared<FieldTransformer>(field_transformer)
         );
         if (transformed->getFormat() == SerdeFormat::Avro) {
-            value = transformed->getValue<::avro::GenericDatum>();
+            value = asAvro(*transformed);
         }
     }
     

@@ -196,11 +196,11 @@ absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>> CelEx
 google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValue& value, google::protobuf::Arena* arena) {
     switch (value.getFormat()) {
         case SerdeFormat::Json: {
-            auto json_value = value.getValue<nlohmann::json>();
+            auto json_value = asJson(value);
             return fromJsonValue(json_value, arena);
         }
         case SerdeFormat::Avro: {
-            auto avro_value = value.getValue<::avro::GenericDatum>();
+            auto avro_value = asAvro(value);
             return fromAvroValue(avro_value, arena);
         }
         case SerdeFormat::Protobuf: {
@@ -217,12 +217,12 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValu
 std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(const SerdeValue& original, const google::api::expr::runtime::CelValue& cel_value) {
     switch (original.getFormat()) {
         case SerdeFormat::Json: {
-            auto original_json = original.getValue<nlohmann::json>();
+            auto original_json = asJson(original);
             auto converted_json = toJsonValue(original_json, cel_value);
             return srclient::serdes::json::makeJsonValue(converted_json);
         }
         case SerdeFormat::Avro: {
-            auto original_avro = original.getValue<::avro::GenericDatum>();
+            auto original_avro = asAvro(original);
             auto converted_avro = toAvroValue(original_avro, cel_value);
             return srclient::serdes::avro::makeAvroValue(converted_avro);
         }
