@@ -67,7 +67,7 @@ public:
         const srclient::rest::model::CreateKekRequest& request) override;
 
     virtual srclient::rest::model::Dek registerDek(
-        const std::string& kekName,
+        const std::string& kek_name,
         const srclient::rest::model::CreateDekRequest& request) override;
 
     virtual srclient::rest::model::Kek getKek(
@@ -75,19 +75,19 @@ public:
         bool deleted = false) override;
 
     virtual srclient::rest::model::Dek getDek(
-        const std::string& kekName,
+        const std::string& kek_name,
         const std::string& subject,
         const std::optional<srclient::rest::model::Algorithm>& algorithm = std::nullopt,
         const std::optional<int32_t>& version = std::nullopt,
         bool deleted = false) override;
 
     virtual srclient::rest::model::Dek setDekKeyMaterial(
-        const std::string& kekName,
+        const std::string& kek_name,
         const std::string& subject,
         const std::optional<srclient::rest::model::Algorithm>& algorithm = std::nullopt,
         const std::optional<int32_t>& version = std::nullopt,
         bool deleted = false,
-        const std::vector<uint8_t>& keyMaterialBytes = {}) override;
+        const std::vector<uint8_t>& key_material_bytes = {}) override;
 
     virtual void clearCaches() override;
 

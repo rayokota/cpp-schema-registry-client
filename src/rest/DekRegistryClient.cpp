@@ -199,11 +199,11 @@ srclient::rest::model::Kek DekRegistryClient::registerKek(
 }
 
 srclient::rest::model::Dek DekRegistryClient::registerDek(
-    const std::string& kekName,
+    const std::string& kek_name,
     const srclient::rest::model::CreateDekRequest& request) {
     
     DekId cacheKey{
-        kekName,
+        kek_name,
         request.getSubject(),
         request.getVersion().value_or(1),
         request.getAlgorithm().value_or(srclient::rest::model::Algorithm::Aes256Gcm),
@@ -220,7 +220,7 @@ srclient::rest::model::Dek DekRegistryClient::registerDek(
     }
     
     // Prepare request
-    std::string path = "/dek-registry/v1/keks/" + urlEncode(kekName) + "/deks";
+    std::string path = "/dek-registry/v1/keks/" + urlEncode(kek_name) + "/deks";
     json j;
     to_json(j, request);
     std::string body = j.dump();
@@ -273,7 +273,7 @@ srclient::rest::model::Kek DekRegistryClient::getKek(const std::string& name, bo
 }
 
 srclient::rest::model::Dek DekRegistryClient::getDek(
-    const std::string& kekName,
+    const std::string& kek_name,
     const std::string& subject,
     const std::optional<srclient::rest::model::Algorithm>& algorithm,
     const std::optional<int32_t>& version,
@@ -282,7 +282,7 @@ srclient::rest::model::Dek DekRegistryClient::getDek(
     auto alg = algorithm.value_or(srclient::rest::model::Algorithm::Aes256Gcm);
     auto ver = version.value_or(1);
     
-    DekId dekId{kekName, subject, ver, alg, deleted};
+    DekId dekId{kek_name, subject, ver, alg, deleted};
     
     // Check cache first
     {
@@ -294,7 +294,7 @@ srclient::rest::model::Dek DekRegistryClient::getDek(
     }
     
     // Prepare request
-    std::string path = "/dek-registry/v1/keks/" + urlEncode(kekName) + 
+    std::string path = "/dek-registry/v1/keks/" + urlEncode(kek_name) + 
                        "/deks/" + urlEncode(subject) + 
                        "/versions/" + std::to_string(ver);
     
@@ -321,24 +321,24 @@ srclient::rest::model::Dek DekRegistryClient::getDek(
 }
 
 srclient::rest::model::Dek DekRegistryClient::setDekKeyMaterial(
-    const std::string& kekName,
+    const std::string& kek_name,
     const std::string& subject,
     const std::optional<srclient::rest::model::Algorithm>& algorithm,
     const std::optional<int32_t>& version,
     bool deleted,
-    const std::vector<uint8_t>& keyMaterialBytes) {
+    const std::vector<uint8_t>& key_material_bytes) {
     
     auto alg = algorithm.value_or(srclient::rest::model::Algorithm::Aes256Gcm);
     auto ver = version.value_or(1);
     
-    DekId dekId{kekName, subject, ver, alg, deleted};
+    DekId dekId{kek_name, subject, ver, alg, deleted};
     
     std::lock_guard<std::mutex> lock(*storeMutex);
     auto dek = store->getMutDek(dekId);
     
     if (dek.has_value()) {
         auto mutDek = dek.value();
-        mutDek.setKeyMaterial(keyMaterialBytes);
+        mutDek.setKeyMaterial(key_material_bytes);
         mutDek.populateKeyMaterialBytes();
         
         // Update cache

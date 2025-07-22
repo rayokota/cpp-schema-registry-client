@@ -101,13 +101,13 @@ srclient::rest::model::Kek MockDekRegistryClient::registerKek(
 }
 
 srclient::rest::model::Dek MockDekRegistryClient::registerDek(
-    const std::string& kekName,
+    const std::string& kek_name,
     const srclient::rest::model::CreateDekRequest& request) {
     
     std::lock_guard<std::mutex> lock(*storeMutex);
     
     DekId cacheKey = {
-        kekName,
+        kek_name,
         request.getSubject(),
         request.getVersion().value_or(1),
         request.getAlgorithm().value_or(srclient::rest::model::Algorithm::Aes256Gcm),
@@ -122,7 +122,7 @@ srclient::rest::model::Dek MockDekRegistryClient::registerDek(
     
     // Create new DEK
     srclient::rest::model::Dek dek(
-        kekName,
+        kek_name,
         request.getSubject(),
         request.getVersion().value_or(1),
         request.getAlgorithm().value_or(srclient::rest::model::Algorithm::Aes256Gcm),
@@ -156,7 +156,7 @@ srclient::rest::model::Kek MockDekRegistryClient::getKek(
 }
 
 srclient::rest::model::Dek MockDekRegistryClient::getDek(
-    const std::string& kekName,
+    const std::string& kek_name,
     const std::string& subject,
     const std::optional<srclient::rest::model::Algorithm>& algorithm,
     const std::optional<int32_t>& version,
@@ -168,7 +168,7 @@ srclient::rest::model::Dek MockDekRegistryClient::getDek(
     auto ver = version.value_or(1);
     
     DekId dekId = {
-        kekName,
+        kek_name,
         subject,
         ver,
         alg,
@@ -180,16 +180,16 @@ srclient::rest::model::Dek MockDekRegistryClient::getDek(
         return dek.value();
     }
     
-    throw srclient::rest::RestException("DEK not found: " + kekName + "/" + subject);
+    throw srclient::rest::RestException("DEK not found: " + kek_name + "/" + subject);
 }
 
 srclient::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
-    const std::string& kekName,
+    const std::string& kek_name,
     const std::string& subject,
     const std::optional<srclient::rest::model::Algorithm>& algorithm,
     const std::optional<int32_t>& version,
     bool deleted,
-    const std::vector<uint8_t>& keyMaterialBytes) {
+    const std::vector<uint8_t>& key_material_bytes) {
     
     std::lock_guard<std::mutex> lock(*storeMutex);
     
@@ -197,7 +197,7 @@ srclient::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
     auto ver = version.value_or(1);
     
     DekId dekId = {
-        kekName,
+        kek_name,
         subject,
         ver,
         alg,
@@ -206,11 +206,11 @@ srclient::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
     
     auto* dek = store->getMutDek(dekId);
     if (dek != nullptr) {
-        dek->setKeyMaterial(keyMaterialBytes);
+        dek->setKeyMaterial(key_material_bytes);
         return *dek;
     }
     
-    throw srclient::rest::RestException("DEK not found for key material update: " + kekName + "/" + subject);
+    throw srclient::rest::RestException("DEK not found for key material update: " + kek_name + "/" + subject);
 }
 
 void MockDekRegistryClient::clearCaches() {

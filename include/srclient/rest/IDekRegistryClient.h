@@ -39,7 +39,7 @@ public:
      * Register a new Data Encryption Key (DEK)
      */
     virtual srclient::rest::model::Dek registerDek(
-        const std::string& kekName,
+        const std::string& kek_name,
         const srclient::rest::model::CreateDekRequest& request) = 0;
 
     /**
@@ -53,7 +53,7 @@ public:
      * Get a DEK by KEK name, subject, algorithm, and version
      */
     virtual srclient::rest::model::Dek getDek(
-        const std::string& kekName,
+        const std::string& kek_name,
         const std::string& subject,
         const std::optional<srclient::rest::model::Algorithm>& algorithm = std::nullopt,
         const std::optional<int32_t>& version = std::nullopt,
@@ -63,12 +63,12 @@ public:
      * Set the key material for a DEK
      */
     virtual srclient::rest::model::Dek setDekKeyMaterial(
-        const std::string& kekName,
+        const std::string& kek_name,
         const std::string& subject,
         const std::optional<srclient::rest::model::Algorithm>& algorithm = std::nullopt,
         const std::optional<int32_t>& version = std::nullopt,
         bool deleted = false,
-        const std::vector<uint8_t>& keyMaterialBytes = {}) = 0;
+        const std::vector<uint8_t>& key_material_bytes = {}) = 0;
 
     /**
      * Clear all caches

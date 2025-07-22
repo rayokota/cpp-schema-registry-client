@@ -28,34 +28,34 @@ namespace srclient::rest {
 class ClientConfiguration
 {
 public:
-    ClientConfiguration(const std::vector<std::string>& baseUrls);
+    ClientConfiguration(const std::vector<std::string>& base_urls);
     virtual ~ClientConfiguration();
 
     std::vector<std::string> getBaseUrls() const;
     
     // Authentication getters and setters
     std::optional<std::string> getBasicAuth() const;
-    void setBasicAuth(const std::optional<std::string>& basicAuth);
+    void setBasicAuth(const std::optional<std::string>& basic_auth);
     
     std::optional<std::string> getBearerAccessToken() const;
-    void setBearerAccessToken(const std::optional<std::string>& bearerAccessToken);
+    void setBearerAccessToken(const std::optional<std::string>& bearer_access_token);
     
     // Cache configuration getters and setters
     std::uint64_t getCacheCapacity() const;
-    void setCacheCapacity(std::uint64_t cacheCapacity);
+    void setCacheCapacity(std::uint64_t cache_capacity);
     
     std::uint64_t getCacheLatestTtlSec() const;
-    void setCacheLatestTtlSec(std::uint64_t cacheLatestTtlSec);
+    void setCacheLatestTtlSec(std::uint64_t cache_latest_ttl_sec);
     
     // Retry configuration getters and setters
     std::uint32_t getMaxRetries() const;
-    void setMaxRetries(std::uint32_t maxRetries);
+    void setMaxRetries(std::uint32_t max_retries);
     
     std::uint32_t getRetriesWaitMs() const;
-    void setRetriesWaitMs(std::uint32_t retriesWaitMs);
+    void setRetriesWaitMs(std::uint32_t retries_wait_ms);
     
     std::uint32_t getRetriesMaxWaitMs() const;
-    void setRetriesMaxWaitMs(std::uint32_t retriesMaxWaitMs);
+    void setRetriesMaxWaitMs(std::uint32_t retries_max_wait_ms);
     
     bool operator==(const ClientConfiguration& other) const;
     bool operator!=(const ClientConfiguration& other) const;

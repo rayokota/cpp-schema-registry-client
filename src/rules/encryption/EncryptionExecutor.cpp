@@ -505,7 +505,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(RuleConte
     }
     
     DekId dek_id;
-    dek_id.kekName = kek.getName();
+    dek_id.kek_name = kek.getName();
     dek_id.subject = ctx.getSubject();
     dek_id.version = actual_version;
     dek_id.algorithm = cryptor_.isDeterministic() ? srclient::rest::model::Algorithm::Aes256Siv : srclient::rest::model::Algorithm::Aes256Gcm;
@@ -516,7 +516,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(RuleConte
     
     if (!dek || is_expired) {
         if (is_read) {
-            throw SerdeError("no dek found for " + dek_id.kekName + " during consume");
+            throw SerdeError("no dek found for " + dek_id.kek_name + " during consume");
         }
         
         std::optional<std::vector<uint8_t>> encrypted_dek;
@@ -547,7 +547,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(RuleConte
         
         auto raw_dek = decryptDek(kek, *encrypted_dek_bytes);
         auto updated_dek = updateCachedDek(
-            dek_id.kekName,
+            dek_id.kek_name,
             dek_id.subject,
             dek_id.algorithm,
             dek_id.version,
@@ -572,7 +572,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform::createDek(const DekId& d
     }
     
     if (!dek) {
-        throw SerdeError("no dek found for " + dek_id.kekName + " during produce");
+        throw SerdeError("no dek found for " + dek_id.kek_name + " during produce");
     }
     
     return *dek;
@@ -639,7 +639,7 @@ std::optional<srclient::rest::model::Dek> EncryptionExecutorTransform::retrieveD
         }
         
         auto dek = client->getDek(
-            dek_id.kekName,
+            dek_id.kek_name,
             dek_id.subject,
             dek_id.algorithm,
             dek_id.version,
@@ -672,7 +672,7 @@ std::optional<srclient::rest::model::Dek> EncryptionExecutorTransform::storeDekT
             request.setEncryptedKeyMaterial(encrypted_dek_str);
         }
         
-        auto dek = client->registerDek(dek_id.kekName, request);
+        auto dek = client->registerDek(dek_id.kek_name, request);
         return dek;
     } catch (const std::exception& e) {
         // Handle 409 conflicts by returning nullopt

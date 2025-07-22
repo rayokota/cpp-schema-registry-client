@@ -28,14 +28,14 @@ struct KekId {
  * Key ID for DEK caching
  */
 struct DekId {
-    std::string kekName;
+    std::string kek_name;
     std::string subject;
     int32_t version;
     srclient::rest::model::Algorithm algorithm;
     bool deleted;
 
     bool operator==(const DekId& other) const {
-        return kekName == other.kekName &&
+        return kek_name == other.kek_name &&
                subject == other.subject &&
                version == other.version &&
                algorithm == other.algorithm &&

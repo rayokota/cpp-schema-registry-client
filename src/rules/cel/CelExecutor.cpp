@@ -204,8 +204,6 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValu
             return fromAvroValue(avro_value, arena);
         }
         case SerdeFormat::Protobuf: {
-            // TODO slicing
-            //auto& proto_message = value.getValue<google::protobuf::Message>();
             auto& proto_message = srclient::serdes::protobuf::asProtobuf(value);
             return fromProtobufValue(proto_message, arena);
         }
@@ -227,8 +225,6 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(const SerdeValue& original
             return srclient::serdes::avro::makeAvroValue(converted_avro);
         }
         case SerdeFormat::Protobuf: {
-            // TODO slicing
-            //auto& proto_message = value.getValue<google::protobuf::Message>();
             auto& proto_message = srclient::serdes::protobuf::asProtobuf(original);
             auto converted_proto = toProtobufValue(proto_message, cel_value);
             return srclient::serdes::protobuf::makeProtobufValue(std::move(converted_proto));
