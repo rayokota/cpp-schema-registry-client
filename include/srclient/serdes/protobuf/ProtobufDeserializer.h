@@ -247,12 +247,18 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
 
     // Copy final message into a newly created T instance
     google::protobuf::Message &final_msg = asProtobuf(*result_val);
-    const auto *proto_proto             = factory.GetPrototype(final_msg.GetDescriptor());
-    auto out_msg                        = std::unique_ptr<google::protobuf::Message>(proto_proto->New());
-    out_msg->CopyFrom(final_msg);
+    auto out_msg = std::make_unique<T>();
 
-    // Downcast to the concrete type requested by the caller, if possible.
-    return std::unique_ptr<T>(dynamic_cast<T *>(out_msg.release()));
+    std::string serialized_data;
+    if (final_msg.SerializeToString(&serialized_data)) {
+        // Deserialize into the specific message type
+        if (!out_msg->ParseFromString(serialized_data)) {
+            // Handle error
+            std::cerr << "Failed to parse message" << std::endl;
+        }
+    }
+
+    return out_msg;
 }
 
 template<typename T>
