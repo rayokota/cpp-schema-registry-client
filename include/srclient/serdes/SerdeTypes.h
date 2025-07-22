@@ -40,7 +40,7 @@ namespace json {
     class JsonValue; 
 }
 namespace protobuf {
-    class ProtobufValue;
+    template<typename T> class ProtobufValue;
 }
 
 /**

@@ -3,10 +3,12 @@
 #include <memory>
 #include <string>
 #include <any>
+#include <type_traits>
 #include <functional>
 #include <google/protobuf/message.h>
 #include <google/protobuf/descriptor.h>
 #include <nlohmann/json.hpp>
+#include <google/protobuf/util/json_util.h>
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
 
@@ -32,21 +34,31 @@ public:
 /**
  * Protobuf implementation of SerdeValue
  */
+template<typename T>
 class ProtobufValue : public SerdeValue {
+    static_assert(std::is_base_of_v<google::protobuf::Message, T>,
+                  "T must derive from google::protobuf::Message");
+
 private:
-    std::unique_ptr<google::protobuf::Message> value_;
-    
+    std::unique_ptr<T> value_;
+
 public:
-    explicit ProtobufValue(std::unique_ptr<google::protobuf::Message> value) : value_(std::move(value)) {}
-    
+    explicit ProtobufValue(std::unique_ptr<T> value)
+        : value_(std::move(value)) {}
+
     // SerdeValue interface implementation
     const void* getRawValue() const override { return value_.get(); }
     void* getMutableRawValue() override { return value_.get(); }
     SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
-    const std::type_info& getType() const override { return typeid(google::protobuf::Message); }
-    
-    std::unique_ptr<SerdeValue> clone() const override;
-    
+    const std::type_info& getType() const override { return typeid(T); }
+
+    std::unique_ptr<SerdeValue> clone() const override {
+        std::unique_ptr<T> cloned_msg(static_cast<T*>(value_->New()));
+        cloned_msg->CopyFrom(*value_);
+        return std::unique_ptr<SerdeValue>(
+            static_cast<SerdeValue*>(new ProtobufValue<T>(std::move(cloned_msg))));
+    }
+
     void moveFrom(SerdeValue&& other) override {
         if (other.getFormat() == SerdeFormat::Protobuf) {
             auto* other_msg = static_cast<google::protobuf::Message*>(other.getMutableRawValue());
@@ -55,10 +67,23 @@ public:
     }
 
     // Value extraction methods
-    bool asBool() const override;
-    std::string asString() const override;
-    std::vector<uint8_t> asBytes() const override;
+    bool asBool() const override {
+        throw ProtobufError("Protobuf SerdeValue cannot be converted to bool");
+    }
 
+    std::string asString() const override {
+        std::string output;
+        google::protobuf::util::MessageToJsonString(*value_, &output).IgnoreError();
+        return output;
+    }
+
+    std::vector<uint8_t> asBytes() const override {
+        std::string binary;
+        if (!value_->SerializeToString(&binary)) {
+            throw ProtobufError("Failed to serialize Protobuf message to bytes");
+        }
+        return std::vector<uint8_t>(binary.begin(), binary.end());
+    }
 };
 
 /**
@@ -84,16 +109,22 @@ public:
 };
 
 // Helper functions for creating Protobuf SerdeValue instances
-inline std::unique_ptr<SerdeValue> makeProtobufValue(std::unique_ptr<google::protobuf::Message> value) {
-    auto protobuf_value = std::make_unique<ProtobufValue>(std::move(value));
+template<typename T>
+inline std::unique_ptr<SerdeValue> makeProtobufValue(std::unique_ptr<T> value) {
+    static_assert(std::is_base_of_v<google::protobuf::Message, T>,
+                  "T must derive from google::protobuf::Message");
+    auto protobuf_value = std::make_unique<ProtobufValue<T>>(std::move(value));
     return std::unique_ptr<SerdeValue>(static_cast<SerdeValue*>(protobuf_value.release()));
 }
 
-// Overload for backward compatibility - creates a copy
-inline std::unique_ptr<SerdeValue> makeProtobufValue(google::protobuf::Message& value) {
-    std::unique_ptr<google::protobuf::Message> owned_value(value.New());
+// Overload for convenience – takes a reference and makes a copy
+template<typename T>
+inline std::unique_ptr<SerdeValue> makeProtobufValue(T& value) {
+    static_assert(std::is_base_of_v<google::protobuf::Message, T>,
+                  "T must derive from google::protobuf::Message");
+    std::unique_ptr<T> owned_value(static_cast<T*>(value.New()));
     owned_value->CopyFrom(value);
-    auto protobuf_value = std::make_unique<ProtobufValue>(std::move(owned_value));
+    auto protobuf_value = std::make_unique<ProtobufValue<T>>(std::move(owned_value));
     return std::unique_ptr<SerdeValue>(static_cast<SerdeValue*>(protobuf_value.release()));
 }
 

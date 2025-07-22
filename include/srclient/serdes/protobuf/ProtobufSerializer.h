@@ -30,9 +30,6 @@
 
 namespace srclient::serdes::protobuf {
 
-// Forward declarations
-class ProtobufSerializer;
-
 class ProtobufSerde;
 
 /**
@@ -89,6 +86,7 @@ private:
  * Protobuf serializer class template
  * Based on ProtobufSerializer from protobuf.rs (converted to synchronous)
  */
+template<typename T = google::protobuf::Message>
 class ProtobufSerializer {
 public:
     /**
@@ -112,13 +110,13 @@ public:
      * Serialize a protobuf message
      */
     std::vector<uint8_t> serialize(const SerializationContext& ctx,
-                                  const google::protobuf::Message& message);
+                                  const T& message);
 
     /**
      * Serialize with file descriptor set
      */
     std::vector<uint8_t> serializeWithFileDescriptorSet(const SerializationContext& ctx,
-                                                        const google::protobuf::Message& message,
+                                                        const T& message,
                                                         const std::string& message_type_name,
                                                         const google::protobuf::FileDescriptorSet& fds);
 
@@ -126,7 +124,7 @@ public:
      * Serialize with message descriptor
      */
     std::vector<uint8_t> serializeWithMessageDescriptor(const SerializationContext& ctx,
-                                                        const google::protobuf::Message& message,
+                                                        const T& message,
                                                         const google::protobuf::Descriptor* descriptor);
 
 private:

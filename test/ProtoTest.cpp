@@ -68,7 +68,7 @@ TEST(ProtobufTest, BasicSerialization) {
     auto rule_registry = std::make_shared<RuleRegistry>();
     
     // Create protobuf serializer with default reference subject name strategy
-    ProtobufSerializer ser(
+    ProtobufSerializer<> ser(
         client,
         std::nullopt, // schema
         rule_registry,
@@ -87,7 +87,7 @@ TEST(ProtobufTest, BasicSerialization) {
     auto bytes = ser.serialize(ser_ctx, obj);
     
     // Create protobuf deserializer
-    ProtobufDeserializer deser(
+    ProtobufDeserializer<> deser(
         client,
         rule_registry,
         DeserializerConfig::createDefault()

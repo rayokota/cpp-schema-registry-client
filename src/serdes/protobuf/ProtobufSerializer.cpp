@@ -145,7 +145,8 @@ void ProtobufSerde::resolveNamedSchema(const srclient::rest::model::Schema& sche
     }
 }
 
-ProtobufSerializer::ProtobufSerializer(
+template<typename T>
+ProtobufSerializer<T>::ProtobufSerializer(
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::optional<srclient::rest::model::Schema> schema,
         std::shared_ptr<RuleRegistry> rule_registry,
@@ -172,7 +173,8 @@ ProtobufSerializer::ProtobufSerializer(
     }
 }
 
-ProtobufSerializer::ProtobufSerializer(
+template<typename T>
+ProtobufSerializer<T>::ProtobufSerializer(
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::optional<srclient::rest::model::Schema> schema,
         std::shared_ptr<RuleRegistry> rule_registry,
@@ -200,16 +202,18 @@ ProtobufSerializer::ProtobufSerializer(
     }
 }
 
-std::vector<uint8_t> ProtobufSerializer::serialize(
+template<typename T>
+std::vector<uint8_t> ProtobufSerializer<T>::serialize(
         const SerializationContext& ctx,
-        const google::protobuf::Message& message
+        const T& message
 ) {
     return serializeWithMessageDescriptor(ctx, message, message.GetDescriptor());
 }
 
-std::vector<uint8_t> ProtobufSerializer::serializeWithFileDescriptorSet(
+template<typename T>
+std::vector<uint8_t> ProtobufSerializer<T>::serializeWithFileDescriptorSet(
         const SerializationContext& ctx,
-        const google::protobuf::Message& message,
+        const T& message,
         const std::string& message_type_name,
         const google::protobuf::FileDescriptorSet& fds
 ) {
@@ -230,9 +234,10 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithFileDescriptorSet(
     return serializeWithMessageDescriptor(ctx, message, descriptor);
 }
 
-std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
+template<typename T>
+std::vector<uint8_t> ProtobufSerializer<T>::serializeWithMessageDescriptor(
         const SerializationContext& ctx,
-        const google::protobuf::Message& message,
+        const T& message,
         const google::protobuf::Descriptor* descriptor
 ) {
     // Get subject using strategy
@@ -299,7 +304,7 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
             throw ProtobufError("Unexpected serde value type after rule execution");
         }
         
-        auto& transformed_message = serde_value->getMutableValue<google::protobuf::Message>();
+        auto& transformed_message = serde_value->template getMutableValue<google::protobuf::Message>();
         
         // Encode the transformed message
         if (!transformed_message.SerializeToArray(encoded_bytes.data(), encoded_bytes.size())) {
@@ -378,7 +383,8 @@ std::vector<uint8_t> ProtobufSerializer::serializeWithMessageDescriptor(
     return id_serializer(encoded_bytes, ctx, schema_id);
 }
 
-std::vector<srclient::rest::model::SchemaReference> ProtobufSerializer::resolveDependencies(
+template<typename T>
+std::vector<srclient::rest::model::SchemaReference> ProtobufSerializer<T>::resolveDependencies(
         const SerializationContext& ctx,
         const google::protobuf::FileDescriptor* file_desc
 ) {
@@ -425,7 +431,8 @@ std::vector<srclient::rest::model::SchemaReference> ProtobufSerializer::resolveD
 }
 
 
-std::vector<int32_t> ProtobufSerializer::toIndexArray(const google::protobuf::Descriptor* descriptor) {
+template<typename T>
+std::vector<int32_t> ProtobufSerializer<T>::toIndexArray(const google::protobuf::Descriptor* descriptor) {
     std::vector<int32_t> indexes;
 
     // Build index path from file descriptor to this message type
@@ -442,7 +449,8 @@ std::vector<int32_t> ProtobufSerializer::toIndexArray(const google::protobuf::De
     return indexes;
 }
 
-void ProtobufSerializer::validateSchema(const srclient::rest::model::Schema& schema) {
+template<typename T>
+void ProtobufSerializer<T>::validateSchema(const srclient::rest::model::Schema& schema) {
     auto schema_str = schema.getSchema();
     if (!schema_str.has_value() || schema_str->empty()) {
         throw ProtobufError("Schema content is empty");
@@ -455,3 +463,6 @@ void ProtobufSerializer::validateSchema(const srclient::rest::model::Schema& sch
 }
 
 } // namespace srclient::serdes::protobuf
+
+// Explicit instantiation for the default message type
+template class srclient::serdes::protobuf::ProtobufSerializer<google::protobuf::Message>;

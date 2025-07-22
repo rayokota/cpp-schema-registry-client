@@ -21,7 +21,8 @@ namespace srclient::serdes::protobuf {
 
 // Helper method implementations for ProtobufDeserializer
 
-std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::createMessageFromDescriptor(
+template<typename T>
+std::unique_ptr<google::protobuf::Message> ProtobufDeserializer<T>::createMessageFromDescriptor(
     const google::protobuf::Descriptor* descriptor) {
     
     google::protobuf::DynamicMessageFactory factory;
@@ -33,7 +34,8 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::createMessageFr
     return std::unique_ptr<google::protobuf::Message>(prototype->New());
 }
 
-ProtobufDeserializer::ProtobufDeserializer(
+template<typename T>
+ProtobufDeserializer<T>::ProtobufDeserializer(
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::shared_ptr<RuleRegistry> rule_registry,
         const DeserializerConfig& config
@@ -57,7 +59,8 @@ ProtobufDeserializer::ProtobufDeserializer(
     }
 }
 
-std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
+template<typename T>
+std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
     const SerializationContext& ctx,
     const std::vector<uint8_t>& data
 ) {
@@ -267,7 +270,8 @@ std::unique_ptr<google::protobuf::Message> ProtobufDeserializer::deserialize(
 }
 
 
-std::optional<std::string> ProtobufDeserializer::getName(const google::protobuf::Message& message) {
+template<typename T>
+std::optional<std::string> ProtobufDeserializer<T>::getName(const google::protobuf::Message& message) {
     const google::protobuf::Descriptor* descriptor = message.GetDescriptor();
     if (descriptor) {
         return descriptor->full_name();
@@ -276,9 +280,13 @@ std::optional<std::string> ProtobufDeserializer::getName(const google::protobuf:
 }
 
 
-void ProtobufDeserializer::close() {
+template<typename T>
+void ProtobufDeserializer<T>::close() {
     // Cleanup resources
     serde_->clear();
 }
 
 } // namespace srclient::serdes::protobuf
+
+// Explicit instantiation for default type
+template class srclient::serdes::protobuf::ProtobufDeserializer<google::protobuf::Message>;
