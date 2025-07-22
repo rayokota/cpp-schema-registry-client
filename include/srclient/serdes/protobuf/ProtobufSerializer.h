@@ -145,3 +145,288 @@ private:
 };
 
 } // namespace srclient::serdes::protobuf
+
+// Begin template method implementations moved from ProtobufSerializer.cpp so that
+// users can instantiate the serializer for custom protobuf message types from
+// translation units that do not directly compile `ProtobufSerializer.cpp`.
+// Keeping the implementations in the header avoids undefined symbol errors
+// during linking when the serializer/deserializer are used with types other
+// than `google::protobuf::Message` (e.g. the unit-test messages in
+// `test/example.proto`).
+
+#ifndef SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL
+
+namespace srclient::serdes::protobuf {
+// ---------------------- ProtobufSerializer -------------------------------
+
+template<typename T>
+inline ProtobufSerializer<T>::ProtobufSerializer(
+        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+        std::optional<srclient::rest::model::Schema> schema,
+        std::shared_ptr<RuleRegistry> rule_registry,
+        const SerializerConfig &config)
+        : schema_(std::move(schema)),
+          base_(std::make_shared<BaseSerializer>(Serde(std::move(client), rule_registry), config)),
+          serde_(std::make_unique<ProtobufSerde>()),
+          reference_subject_name_strategy_(defaultReferenceSubjectNameStrategy) {
+    // Configure rule executors, if any
+    if (rule_registry) {
+        for (const auto &executor: rule_registry->getExecutors()) {
+            try {
+                auto rr = base_->getSerde().getRuleRegistry();
+                if (rr) {
+                    executor->configure(base_->getSerde().getClient()->getConfiguration(), config.rule_config);
+                }
+            } catch (const std::exception &e) {
+                throw ProtobufError("Failed to configure rule executor: " + std::string(e.what()));
+            }
+        }
+    }
+}
+
+template<typename T>
+inline ProtobufSerializer<T>::ProtobufSerializer(
+        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+        std::optional<srclient::rest::model::Schema> schema,
+        std::shared_ptr<RuleRegistry> rule_registry,
+        const SerializerConfig &config,
+        ReferenceSubjectNameStrategy strategy)
+        : schema_(std::move(schema)),
+          base_(std::make_shared<BaseSerializer>(Serde(std::move(client), rule_registry), config)),
+          serde_(std::make_unique<ProtobufSerde>()),
+          reference_subject_name_strategy_(std::move(strategy)) {
+    if (rule_registry) {
+        for (const auto &executor: rule_registry->getExecutors()) {
+            try {
+                auto rr = base_->getSerde().getRuleRegistry();
+                if (rr) {
+                    executor->configure(base_->getSerde().getClient()->getConfiguration(), config.rule_config);
+                }
+            } catch (const std::exception &e) {
+                throw ProtobufError("Failed to configure rule executor: " + std::string(e.what()));
+            }
+        }
+    }
+}
+
+template<typename T>
+inline std::vector<uint8_t> ProtobufSerializer<T>::serialize(
+        const SerializationContext &ctx,
+        const T &message) {
+    return serializeWithMessageDescriptor(ctx, message, message.GetDescriptor());
+}
+
+template<typename T>
+inline std::vector<uint8_t> ProtobufSerializer<T>::serializeWithFileDescriptorSet(
+        const SerializationContext &ctx,
+        const T &message,
+        const std::string &message_type_name,
+        const google::protobuf::FileDescriptorSet &fds) {
+    google::protobuf::DescriptorPool pool;
+    for (const auto &file_desc: fds.file()) {
+        const auto *file = pool.BuildFile(file_desc);
+        if (!file) {
+            throw ProtobufError("Failed to build file descriptor from set");
+        }
+    }
+
+    const auto *descriptor = pool.FindMessageTypeByName(message_type_name);
+    if (!descriptor) {
+        throw ProtobufError("Message descriptor " + message_type_name + " not found");
+    }
+    return serializeWithMessageDescriptor(ctx, message, descriptor);
+}
+
+// Forward declaration for transformFields helper that lives in ProtobufUtils.cpp
+namespace utils {
+std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
+        srclient::serdes::RuleContext &ctx,
+        const std::string &field_executor_type,
+        const srclient::serdes::SerdeValue &value);
+}
+
+template<typename T>
+inline std::vector<uint8_t> ProtobufSerializer<T>::serializeWithMessageDescriptor(
+        const SerializationContext &ctx,
+        const T &message,
+        const google::protobuf::Descriptor *descriptor) {
+    using namespace srclient::serdes;
+    using namespace srclient::serdes::protobuf;
+    using srclient::rest::model::RegisteredSchema;
+
+    // Resolve the subject name.
+    auto strategy       = base_->getConfig().subject_name_strategy;
+    auto subject_opt    = strategy(ctx.topic, ctx.serde_type, schema_);
+    if (!subject_opt.has_value()) {
+        throw ProtobufError("Subject name strategy returned no subject");
+    }
+    std::string subject = *subject_opt;
+
+    // Retrieve (or register) the schema in the registry.
+    SchemaId                        schema_id(SerdeFormat::Protobuf);
+    std::optional<RegisteredSchema> latest_schema;
+    std::vector<uint8_t>            encoded_bytes;
+
+    try {
+        latest_schema = base_->getSerde().getReaderSchema(subject, "serialized", base_->getConfig().use_schema);
+    } catch (const std::exception &) {
+        // Not found – handled below.
+    }
+
+    if (latest_schema) {
+        // Path when writer schema is known already to the registry.
+        schema_id = SchemaId(SerdeFormat::Avro, latest_schema->getId(), latest_schema->getGuid(), std::nullopt);
+
+        auto schema       = latest_schema->toSchema();
+        auto [fd, pool]   = serde_->getParsedSchema(schema, base_->getSerde().getClient());
+
+        auto field_tf = [](RuleContext &rctx, const std::string &rule_type, const SerdeValue &val) {
+            return utils::transformFields(rctx, rule_type, val);
+        };
+
+        google::protobuf::DynamicMessageFactory msg_factory;
+        auto *dynamic_proto = msg_factory.GetPrototype(descriptor);
+        auto  dynamic_msg   = std::unique_ptr<google::protobuf::Message>(dynamic_proto->New());
+        dynamic_msg->CopyFrom(message);
+
+        auto protobuf_value  = protobuf::makeProtobufValue(*dynamic_msg);
+        auto protobuf_schema = protobuf::makeProtobufSchema(fd);
+
+        auto serde_value = base_->getSerde().executeRules(
+                ctx,
+                subject,
+                Mode::Write,
+                std::nullopt,
+                std::make_optional(schema),
+                std::make_optional(protobuf_schema.get()),
+                *protobuf_value,
+                {},
+                std::make_shared<FieldTransformer>(field_tf));
+
+        if (serde_value->getFormat() != SerdeFormat::Protobuf) {
+            throw ProtobufError("Unexpected serde value type after rule execution");
+        }
+
+        auto &transformed_msg = serde_value->template getMutableValue<google::protobuf::Message>();
+        encoded_bytes.resize(static_cast<size_t>(transformed_msg.ByteSizeLong()));
+        if (!transformed_msg.SerializeToArray(encoded_bytes.data(), static_cast<int>(encoded_bytes.size()))) {
+            throw ProtobufError("Failed to serialize protobuf message");
+        }
+    } else {
+        // Schema not present in registry – create & register or look it up.
+        auto refs = resolveDependencies(ctx, descriptor->file());
+
+        srclient::rest::model::Schema schema;
+        schema.setSchemaType("PROTOBUF");
+        schema.setReferences(refs);
+        schema.setSchema(utils::schemaToString(descriptor->file()));
+
+        if (base_->getConfig().auto_register_schemas) {
+            auto reg = base_->getSerde().getClient()->registerSchema(subject, schema, base_->getConfig().normalize_schemas);
+            schema_id = SchemaId(SerdeFormat::Protobuf, reg.getId(), reg.getGuid(), std::nullopt);
+        } else {
+            auto reg = base_->getSerde().getClient()->getBySchema(subject, schema, base_->getConfig().normalize_schemas, false);
+            schema_id = SchemaId(SerdeFormat::Protobuf, reg.getId(), reg.getGuid(), std::nullopt);
+        }
+
+        encoded_bytes.resize(static_cast<size_t>(message.ByteSizeLong()));
+        if (!message.SerializeToArray(encoded_bytes.data(), static_cast<int>(encoded_bytes.size()))) {
+            throw ProtobufError("Failed to serialize protobuf message");
+        }
+    }
+
+    // Apply encoding-phase rules if they exist.
+    if (latest_schema) {
+        auto schema = latest_schema->toSchema();
+        if (schema.getRuleSet().has_value()) {
+            auto rule_set = schema.getRuleSet().value();
+            if (rule_set.getEncodingRules().has_value()) {
+                auto bytes_value = SerdeValue::newBytes(SerdeFormat::Protobuf, encoded_bytes);
+                auto result      = base_->getSerde().executeRulesWithPhase(
+                        ctx,
+                        subject,
+                        Phase::Encoding,
+                        Mode::Write,
+                        std::nullopt,
+                        std::make_optional(schema),
+                        std::nullopt,
+                        *bytes_value,
+                        {});
+                encoded_bytes = result->getValue<std::vector<uint8_t>>();
+            }
+        }
+    }
+
+    // Store message index information (for nested msgs).
+    schema_id.setMessageIndexes(toIndexArray(descriptor));
+
+    // Final framing (schema id serialization).
+    auto id_serializer = base_->getConfig().schema_id_serializer;
+    return id_serializer(encoded_bytes, ctx, schema_id);
+}
+
+template<typename T>
+inline std::vector<srclient::rest::model::SchemaReference> ProtobufSerializer<T>::resolveDependencies(
+        const SerializationContext &ctx,
+        const google::protobuf::FileDescriptor *file_desc) {
+    std::vector<srclient::rest::model::SchemaReference> refs;
+
+    for (int i = 0; i < file_desc->dependency_count(); ++i) {
+        const auto *dep = file_desc->dependency(i);
+        if (utils::isBuiltin(dep->name())) {
+            continue;
+        }
+
+        auto dep_refs = resolveDependencies(ctx, dep);
+        auto subject  = reference_subject_name_strategy_(dep->name(), ctx.serde_type);
+
+        srclient::rest::model::Schema schema;
+        schema.setSchemaType("PROTOBUF");
+        schema.setReferences(dep_refs);
+        schema.setSchema(utils::schemaToString(dep));
+
+        if (base_->getConfig().auto_register_schemas) {
+            base_->getSerde().getClient()->registerSchema(subject, schema, base_->getConfig().normalize_schemas);
+        }
+
+        auto reference = base_->getSerde().getClient()->getBySchema(subject, schema, base_->getConfig().normalize_schemas, false);
+
+        srclient::rest::model::SchemaReference sr;
+        sr.setName(dep->name());
+        sr.setSubject(subject);
+        sr.setVersion(reference.getVersion());
+
+        refs.push_back(sr);
+    }
+    return refs;
+}
+
+template<typename T>
+inline std::vector<int32_t> ProtobufSerializer<T>::toIndexArray(const google::protobuf::Descriptor *descriptor) {
+    std::vector<int32_t> indices;
+    const auto *file = descriptor->file();
+    for (int i = 0; i < file->message_type_count(); ++i) {
+        if (file->message_type(i) == descriptor) {
+            indices.push_back(i);
+            break;
+        }
+    }
+    return indices;
+}
+
+template<typename T>
+inline void ProtobufSerializer<T>::validateSchema(const srclient::rest::model::Schema &schema) {
+    auto schema_str = schema.getSchema();
+    if (!schema_str || schema_str->empty()) {
+        throw ProtobufError("Schema content is empty");
+    }
+    auto schema_type = schema.getSchemaType();
+    if (schema_type && schema_type.value() != "PROTOBUF") {
+        throw ProtobufError("Schema type must be PROTOBUF");
+    }
+}
+
+} // namespace srclient::serdes::protobuf
+
+// End of template method implementations
+#endif // SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL

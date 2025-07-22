@@ -1,3 +1,4 @@
+#define SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL
 #include "srclient/serdes/protobuf/ProtobufSerializer.h"
 #include "srclient/serdes/protobuf/ProtobufUtils.h"
 #include "confluent/type/decimal.pb.h"
