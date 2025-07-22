@@ -144,6 +144,15 @@ inline std::unique_ptr<SerdeSchema> makeProtobufSchema(const google::protobuf::F
     return std::make_unique<ProtobufSchema>(file_descriptor);
 }
 
+// Utility functions for Protobuf value and schema extraction
+google::protobuf::Message& asProtobuf(const SerdeValue& value);
+
+inline const google::protobuf::FileDescriptor* asProtobufSchema(const SerdeSchema& schema) {
+    if (schema.getFormat() != SerdeFormat::Protobuf) {
+        throw std::invalid_argument("Schema is not a Protobuf schema");
+    }
+    return schema.getSchema<const google::protobuf::FileDescriptor*>();
+}
 
 
 } // namespace srclient::serdes::protobuf 

@@ -48,4 +48,12 @@ std::vector<uint8_t> JsonValue::asBytes() const {
     return std::vector<uint8_t>();
 }
 
+// Utility function implementation
+nlohmann::json asJson(const SerdeValue& value) {
+    if (value.getFormat() != SerdeFormat::Json) {
+        throw std::invalid_argument("SerdeValue is not JSON");
+    }
+    return value.getValue<nlohmann::json>();
+}
+
 } // namespace srclient::serdes::json 

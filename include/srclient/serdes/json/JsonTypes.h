@@ -122,6 +122,18 @@ inline std::unique_ptr<SerdeSchema> makeJsonSchema(const jsoncons::jsonschema::j
     return std::make_unique<JsonSchema>(schema);
 }
 
+// Utility functions for JSON value and schema extraction
+nlohmann::json asJson(const SerdeValue& value);
+
+template<typename Json>
+inline jsoncons::jsonschema::json_schema<Json>& asJsonSchema(const SerdeSchema& schema) {
+    if (schema.getFormat() != SerdeFormat::Json) {
+        throw std::invalid_argument("Schema is not a JSON schema");
+    }
+    return const_cast<jsoncons::jsonschema::json_schema<Json>&>(
+        schema.getSchema<jsoncons::jsonschema::json_schema<Json>>()
+    );
+}
 
 
 } // namespace srclient::serdes::json 

@@ -132,7 +132,7 @@ NamedValue AvroDeserializer::deserialize(
         if (migrated->getFormat() != SerdeFormat::Json) {
             throw AvroError("Expected JSON value after migrations");
         }
-        auto migrated_json = asJson(*migrated);
+        auto migrated_json = srclient::serdes::json::asJson(*migrated);
         
         // 4. Convert back to Avro with reader schema
         value = utils::jsonToAvro(migrated_json, reader_parsed.first);

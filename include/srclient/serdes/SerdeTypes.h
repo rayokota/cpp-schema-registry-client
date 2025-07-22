@@ -13,11 +13,6 @@
 #include <functional>
 #include <typeinfo>
 #include <type_traits>
-#include <jsoncons_ext/jsonschema/jsonschema.hpp>
-#include <nlohmann/json.hpp>
-#include <avro/ValidSchema.hh>
-#include <avro/GenericDatum.hh>
-#include <google/protobuf/message.h>
 
 // Include actual schema model types
 #include "srclient/rest/model/Schema.h"
@@ -197,35 +192,7 @@ public:
     virtual std::unique_ptr<SerdeSchema> clone() const = 0;
 };
 
-// Value extraction utility functions
-::avro::GenericDatum asAvro(const SerdeValue& value);
-nlohmann::json asJson(const SerdeValue& value);
-google::protobuf::Message& asProtobuf(const SerdeValue& value);
 
-// Schema extraction utility functions
-inline std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> asAvroSchema(const SerdeSchema& schema) {
-    if (schema.getFormat() != SerdeFormat::Avro) {
-        throw std::invalid_argument("Schema is not an Avro schema");
-    }
-    return schema.getSchema<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>>();
-}
-
-template<typename Json>
-inline jsoncons::jsonschema::json_schema<Json>& asJsonSchema(const SerdeSchema& schema) {
-    if (schema.getFormat() != SerdeFormat::Json) {
-        throw std::invalid_argument("Schema is not a JSON schema");
-    }
-    return const_cast<jsoncons::jsonschema::json_schema<Json>&>(
-        schema.getSchema<jsoncons::jsonschema::json_schema<Json>>()
-    );
-}
-
-inline const google::protobuf::FileDescriptor* asProtobufSchema(const SerdeSchema& schema) {
-    if (schema.getFormat() != SerdeFormat::Protobuf) {
-        throw std::invalid_argument("Schema is not a Protobuf schema");
-    }
-    return schema.getSchema<const google::protobuf::FileDescriptor*>();
-}
 
 
 // Magic bytes for schema ID encoding (from serde.rs)

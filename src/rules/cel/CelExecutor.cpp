@@ -196,17 +196,17 @@ absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>> CelEx
 google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValue& value, google::protobuf::Arena* arena) {
     switch (value.getFormat()) {
         case SerdeFormat::Json: {
-            auto json_value = asJson(value);
+            auto json_value = srclient::serdes::json::asJson(value);
             return fromJsonValue(json_value, arena);
         }
         case SerdeFormat::Avro: {
-            auto avro_value = asAvro(value);
+            auto avro_value = srclient::serdes::avro::asAvro(value);
             return fromAvroValue(avro_value, arena);
         }
         case SerdeFormat::Protobuf: {
             // TODO slicing
             //auto& proto_message = value.getValue<google::protobuf::Message>();
-            auto& proto_message = asProtobuf(value);
+            auto& proto_message = srclient::serdes::protobuf::asProtobuf(value);
             return fromProtobufValue(proto_message, arena);
         }
         default:
@@ -217,19 +217,19 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(const SerdeValu
 std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(const SerdeValue& original, const google::api::expr::runtime::CelValue& cel_value) {
     switch (original.getFormat()) {
         case SerdeFormat::Json: {
-            auto original_json = asJson(original);
+            auto original_json = srclient::serdes::json::asJson(original);
             auto converted_json = toJsonValue(original_json, cel_value);
             return srclient::serdes::json::makeJsonValue(converted_json);
         }
         case SerdeFormat::Avro: {
-            auto original_avro = asAvro(original);
+            auto original_avro = srclient::serdes::avro::asAvro(original);
             auto converted_avro = toAvroValue(original_avro, cel_value);
             return srclient::serdes::avro::makeAvroValue(converted_avro);
         }
         case SerdeFormat::Protobuf: {
             // TODO slicing
             //auto& proto_message = value.getValue<google::protobuf::Message>();
-            auto& proto_message = asProtobuf(original);
+            auto& proto_message = srclient::serdes::protobuf::asProtobuf(original);
             auto converted_proto = toProtobufValue(proto_message, cel_value);
             return srclient::serdes::protobuf::makeProtobufValue(std::move(converted_proto));
         }

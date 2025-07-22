@@ -27,4 +27,12 @@ std::vector<uint8_t> AvroValue::asBytes() const {
     return std::vector<uint8_t>();
 }
 
+// Utility function implementation
+::avro::GenericDatum asAvro(const SerdeValue& value) {
+    if (value.getFormat() != SerdeFormat::Avro) {
+        throw std::invalid_argument("SerdeValue is not Avro");
+    }
+    return value.getValue<::avro::GenericDatum>();
+}
+
 } // namespace srclient::serdes::avro 

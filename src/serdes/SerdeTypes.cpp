@@ -208,33 +208,6 @@ std::string kindToString(Kind kind) {
 
 } // namespace type_utils
 
-// Value extraction utility functions (moved from header)
-::avro::GenericDatum asAvro(const SerdeValue& value) {
-    if (value.getFormat() != SerdeFormat::Avro) {
-        throw SerdeError("SerdeValue is not Avro");
-    }
-    return value.getValue<::avro::GenericDatum>();
-}
 
-nlohmann::json asJson(const SerdeValue& value) {
-    if (value.getFormat() != SerdeFormat::Json) {
-        throw SerdeError("SerdeValue is not JSON");
-    }
-    return value.getValue<nlohmann::json>();
-}
-
-google::protobuf::Message& asProtobuf(const SerdeValue& value) {
-    if (value.getFormat() != SerdeFormat::Protobuf) {
-        throw SerdeError("SerdeValue is not Protobuf");
-    }
-    // TODO slicing
-    //return const_cast<google::protobuf::Message&>(value.getValue<google::protobuf::Message>());
-
-    // Directly access the raw value to avoid slicing that occurs with getValue<google::protobuf::Message>()
-    // The stored value is actually a concrete protobuf message type, not the base class
-    return *static_cast<google::protobuf::Message*>(const_cast<void*>(value.getRawValue()));
-}
-
-// Schema extraction utility functions are now inline in the header
 
 } // namespace srclient::serdes

@@ -113,6 +113,15 @@ inline std::unique_ptr<SerdeSchema> makeAvroSchema(const std::pair<::avro::Valid
     return std::make_unique<AvroSchema>(avro_schema);
 }
 
+// Utility functions for Avro value and schema extraction
+::avro::GenericDatum asAvro(const SerdeValue& value);
+
+inline std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> asAvroSchema(const SerdeSchema& schema) {
+    if (schema.getFormat() != SerdeFormat::Avro) {
+        throw std::invalid_argument("Schema is not an Avro schema");
+    }
+    return schema.getSchema<std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>>();
+}
 
 
 } // namespace srclient::serdes::avro 
