@@ -249,12 +249,12 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
     google::protobuf::Message &final_msg = asProtobuf(*result_val);
     auto out_msg = std::make_unique<T>();
 
+    // Don't use CopyFrom, as the descriptors are from different pools
     std::string serialized_data;
     if (final_msg.SerializeToString(&serialized_data)) {
         // Deserialize into the specific message type
         if (!out_msg->ParseFromString(serialized_data)) {
-            // Handle error
-            std::cerr << "Failed to parse message" << std::endl;
+            throw ProtobufError("Failed to parse protobuf message");
         }
     }
 
