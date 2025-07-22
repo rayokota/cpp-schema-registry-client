@@ -49,9 +49,9 @@ public:
     explicit JsonValue(const nlohmann::json& value) : value_(value) {}
     explicit JsonValue(nlohmann::json&& value) : value_(std::move(value)) {}
     
-    // SerdeValue interface implementation
-    const void* getRawValue() const override { return &value_; }
-    void* getMutableRawValue() override { return &value_; }
+    // SerdeObject interface implementation
+    const void* getRawObject() const override { return &value_; }
+    void* getMutableRawObject() override { return &value_; }
     SerdeFormat getFormat() const override { return SerdeFormat::Json; }
     const std::type_info& getType() const override { return typeid(nlohmann::json); }
     
@@ -59,9 +59,9 @@ public:
         return std::make_unique<JsonValue>(value_);
     }
     
-    void moveFrom(SerdeValue&& other) override {
+    void moveFrom(SerdeObject&& other) override {
         if (other.getFormat() == SerdeFormat::Json) {
-            value_ = std::move(*static_cast<nlohmann::json*>(other.getMutableRawValue()));
+            value_ = std::move(*static_cast<nlohmann::json*>(other.getMutableRawObject()));
         }
     }
 

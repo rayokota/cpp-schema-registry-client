@@ -47,21 +47,20 @@ public:
         : value_(std::move(value)) {}
 
     // SerdeValue interface implementation
-    const void* getRawValue() const override { return value_.get(); }
-    void* getMutableRawValue() override { return value_.get(); }
+    const void* getRawObject() const override { return value_.get(); }
+    void* getMutableRawObject() override { return value_.get(); }
     SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
     const std::type_info& getType() const override { return typeid(T); }
 
     std::unique_ptr<SerdeValue> clone() const override {
         std::unique_ptr<T> cloned_msg(static_cast<T*>(value_->New()));
         cloned_msg->CopyFrom(*value_);
-        return std::unique_ptr<SerdeValue>(
-            static_cast<SerdeValue*>(new ProtobufValue<T>(std::move(cloned_msg))));
+        return std::make_unique<ProtobufValue<T>>(std::move(cloned_msg));
     }
 
-    void moveFrom(SerdeValue&& other) override {
+    void moveFrom(SerdeObject&& other) override {
         if (other.getFormat() == SerdeFormat::Protobuf) {
-            auto* other_msg = static_cast<google::protobuf::Message*>(other.getMutableRawValue());
+            auto* other_msg = static_cast<google::protobuf::Message*>(other.getMutableRawObject());
             value_->CopyFrom(*other_msg);
         }
     }

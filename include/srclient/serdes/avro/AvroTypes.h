@@ -39,9 +39,9 @@ public:
     explicit AvroValue(const ::avro::GenericDatum& value) : value_(value) {}
     explicit AvroValue(::avro::GenericDatum&& value) : value_(std::move(value)) {}
     
-    // SerdeValue interface implementation
-    const void* getRawValue() const override { return &value_; }
-    void* getMutableRawValue() override { return &value_; }
+    // SerdeObject interface implementation
+    const void* getRawObject() const override { return &value_; }
+    void* getMutableRawObject() override { return &value_; }
     SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
     const std::type_info& getType() const override { return typeid(::avro::GenericDatum); }
     
@@ -49,9 +49,9 @@ public:
         return std::make_unique<AvroValue>(value_);
     }
     
-    void moveFrom(SerdeValue&& other) override {
+    void moveFrom(SerdeObject&& other) override {
         if (other.getFormat() == SerdeFormat::Avro) {
-            value_ = std::move(*static_cast<::avro::GenericDatum*>(other.getMutableRawValue()));
+            value_ = std::move(*static_cast<::avro::GenericDatum*>(other.getMutableRawObject()));
         }
     }
 
