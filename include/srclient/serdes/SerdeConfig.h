@@ -1,10 +1,11 @@
 #pragma once
 
-#include "srclient/serdes/SerdeTypes.h"
 #include <functional>
 #include <optional>
 #include <string>
 #include <unordered_map>
+
+#include "srclient/serdes/SerdeTypes.h"
 
 namespace srclient::serdes {
 
@@ -79,27 +80,25 @@ struct DeserializerConfig {
  * Topic name strategy function
  * Maps to topic_name_strategy from serde.rs
  */
-std::optional<std::string>
-topicNameStrategy(const std::string &topic, SerdeType serde_type,
-                  const std::optional<Schema> &schema);
+std::optional<std::string> topicNameStrategy(
+    const std::string &topic, SerdeType serde_type,
+    const std::optional<Schema> &schema);
 
 /**
  * Prefix schema ID serializer
  * Maps to prefix_schema_id_serializer from serde.rs
  */
-std::vector<uint8_t>
-prefixSchemaIdSerializer(const std::vector<uint8_t> &payload,
-                         const SerializationContext &ser_ctx,
-                         const SchemaId &schema_id);
+std::vector<uint8_t> prefixSchemaIdSerializer(
+    const std::vector<uint8_t> &payload, const SerializationContext &ser_ctx,
+    const SchemaId &schema_id);
 
 /**
  * Header schema ID serializer
  * Maps to header_schema_id_serializer from serde.rs
  */
-std::vector<uint8_t>
-headerSchemaIdSerializer(const std::vector<uint8_t> &payload,
-                         const SerializationContext &ser_ctx,
-                         const SchemaId &schema_id);
+std::vector<uint8_t> headerSchemaIdSerializer(
+    const std::vector<uint8_t> &payload, const SerializationContext &ser_ctx,
+    const SchemaId &schema_id);
 
 /**
  * Dual schema ID deserializer
@@ -117,4 +116,4 @@ size_t prefixSchemaIdDeserializer(const std::vector<uint8_t> &payload,
                                   const SerializationContext &ser_ctx,
                                   SchemaId &schema_id);
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

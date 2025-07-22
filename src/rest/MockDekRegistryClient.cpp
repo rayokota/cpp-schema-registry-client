@@ -4,6 +4,7 @@
  */
 
 #include "srclient/rest/MockDekRegistryClient.h"
+
 #include <chrono>
 #include <mutex>
 
@@ -24,23 +25,29 @@ void MockDekStore::setDek(const DekId &dekId,
     deks[dekId] = dek;
 }
 
-std::optional<srclient::rest::model::Kek>
-MockDekStore::getKek(const KekId &kekId) const {
+std::optional<srclient::rest::model::Kek> MockDekStore::getKek(
+    const KekId &kekId) const {
     auto it = keks.find(kekId);
-    if (it != keks.end()) { return it->second; }
+    if (it != keks.end()) {
+        return it->second;
+    }
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::Dek>
-MockDekStore::getDek(const DekId &dekId) const {
+std::optional<srclient::rest::model::Dek> MockDekStore::getDek(
+    const DekId &dekId) const {
     auto it = deks.find(dekId);
-    if (it != deks.end()) { return it->second; }
+    if (it != deks.end()) {
+        return it->second;
+    }
     return std::nullopt;
 }
 
 srclient::rest::model::Dek *MockDekStore::getMutDek(const DekId &dekId) {
     auto it = deks.find(dekId);
-    if (it != deks.end()) { return &it->second; }
+    if (it != deks.end()) {
+        return &it->second;
+    }
     return nullptr;
 }
 
@@ -52,7 +59,8 @@ void MockDekStore::clear() {
 // MockDekRegistryClient implementation
 MockDekRegistryClient::MockDekRegistryClient(
     std::shared_ptr<const srclient::rest::ClientConfiguration> config)
-    : config(config), store(std::make_shared<MockDekStore>()),
+    : config(config),
+      store(std::make_shared<MockDekStore>()),
       storeMutex(std::make_shared<std::mutex>()) {}
 
 std::shared_ptr<const srclient::rest::ClientConfiguration>
@@ -69,14 +77,15 @@ int64_t MockDekRegistryClient::getCurrentTimestamp() const {
 
 srclient::rest::model::Kek MockDekRegistryClient::registerKek(
     const srclient::rest::model::CreateKekRequest &request) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     KekId cacheKey = {request.getName(), false};
 
     // Check if KEK already exists
     auto existingKek = store->getKek(cacheKey);
-    if (existingKek.has_value()) { return existingKek.value(); }
+    if (existingKek.has_value()) {
+        return existingKek.value();
+    }
 
     // Create new KEK
     srclient::rest::model::Kek kek(request.getName(), request.getKmsType(),
@@ -91,7 +100,6 @@ srclient::rest::model::Kek MockDekRegistryClient::registerKek(
 srclient::rest::model::Dek MockDekRegistryClient::registerDek(
     const std::string &kek_name,
     const srclient::rest::model::CreateDekRequest &request) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     DekId cacheKey = {kek_name, request.getSubject(),
@@ -102,7 +110,9 @@ srclient::rest::model::Dek MockDekRegistryClient::registerDek(
 
     // Check if DEK already exists
     auto existingDek = store->getDek(cacheKey);
-    if (existingDek.has_value()) { return existingDek.value(); }
+    if (existingDek.has_value()) {
+        return existingDek.value();
+    }
 
     // Create new DEK
     srclient::rest::model::Dek dek(
@@ -110,22 +120,23 @@ srclient::rest::model::Dek MockDekRegistryClient::registerDek(
         request.getAlgorithm().value_or(
             srclient::rest::model::Algorithm::Aes256Gcm),
         request.getEncryptedKeyMaterial(),
-        std::nullopt, // keyMaterial
+        std::nullopt,  // keyMaterial
         getCurrentTimestamp(), false);
 
     store->setDek(cacheKey, dek);
     return dek;
 }
 
-srclient::rest::model::Kek
-MockDekRegistryClient::getKek(const std::string &name, bool deleted) {
-
+srclient::rest::model::Kek MockDekRegistryClient::getKek(
+    const std::string &name, bool deleted) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     KekId kekId = {name, deleted};
 
     auto kek = store->getKek(kekId);
-    if (kek.has_value()) { return kek.value(); }
+    if (kek.has_value()) {
+        return kek.value();
+    }
 
     throw srclient::rest::RestException("KEK not found: " + name);
 }
@@ -134,7 +145,6 @@ srclient::rest::model::Dek MockDekRegistryClient::getDek(
     const std::string &kek_name, const std::string &subject,
     const std::optional<srclient::rest::model::Algorithm> &algorithm,
     const std::optional<int32_t> &version, bool deleted) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto alg = algorithm.value_or(srclient::rest::model::Algorithm::Aes256Gcm);
@@ -142,11 +152,13 @@ srclient::rest::model::Dek MockDekRegistryClient::getDek(
 
     DekId dekId = {
         kek_name, subject, ver, alg,
-        false // Use the stored DEK version, not the deleted parameter
+        false  // Use the stored DEK version, not the deleted parameter
     };
 
     auto dek = store->getDek(dekId);
-    if (dek.has_value()) { return dek.value(); }
+    if (dek.has_value()) {
+        return dek.value();
+    }
 
     throw srclient::rest::RestException("DEK not found: " + kek_name + "/" +
                                         subject);
@@ -157,7 +169,6 @@ srclient::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
     const std::optional<srclient::rest::model::Algorithm> &algorithm,
     const std::optional<int32_t> &version, bool deleted,
     const std::vector<uint8_t> &key_material_bytes) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto alg = algorithm.value_or(srclient::rest::model::Algorithm::Aes256Gcm);

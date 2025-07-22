@@ -28,6 +28,6 @@ void registerCelExecutor();
  */
 void registerCelFieldExecutor();
 
-} // namespace registration
+}  // namespace registration
 
-} // namespace srclient::rules::cel
+}  // namespace srclient::rules::cel

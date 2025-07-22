@@ -64,8 +64,8 @@ void Metadata::setTags(
     tags_ = value;
 }
 
-std::optional<std::map<std::string, std::string>>
-Metadata::getProperties() const {
+std::optional<std::map<std::string, std::string>> Metadata::getProperties()
+    const {
     return properties_;
 }
 
@@ -83,4 +83,4 @@ void Metadata::setSensitive(
     sensitive_ = value;
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

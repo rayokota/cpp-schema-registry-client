@@ -1,12 +1,15 @@
 #include "srclient/serdes/protobuf/ProtobufUtils.h"
-#include "absl/strings/escaping.h"
-#include "confluent/meta.pb.h"
-#include "srclient/serdes/RuleRegistry.h" // For global_registry functions
+
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/util/json_util.h>
-#include <memory> // For std::dynamic_pointer_cast
+
+#include <memory>  // For std::dynamic_pointer_cast
+
+#include "absl/strings/escaping.h"
+#include "confluent/meta.pb.h"
+#include "srclient/serdes/RuleRegistry.h"  // For global_registry functions
 
 namespace srclient::serdes::protobuf::utils {
 
@@ -26,11 +29,11 @@ std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
     }
     return std::vector<uint8_t>(decoded.begin(), decoded.end());
 }
-} // namespace
+}  // namespace
 
-std::unique_ptr<SerdeValue>
-transformFields(RuleContext &ctx, const std::string &field_executor_type,
-                const SerdeValue &value) {
+std::unique_ptr<SerdeValue> transformFields(
+    RuleContext &ctx, const std::string &field_executor_type,
+    const SerdeValue &value) {
     // Check if we have a protobuf schema and value
     const auto &parsed_target = ctx.getParsedTarget();
     if (parsed_target.has_value() && parsed_target->get() &&
@@ -57,16 +60,19 @@ transformFields(RuleContext &ctx, const std::string &field_executor_type,
     return value.clone();
 }
 
-google::protobuf::Message *
-transformMessage(RuleContext &ctx,
-                 const google::protobuf::Descriptor *descriptor,
-                 google::protobuf::Message *message,
-                 const std::string &field_executor_type) {
-    if (!message || !descriptor) { return message; }
+google::protobuf::Message *transformMessage(
+    RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
+    google::protobuf::Message *message,
+    const std::string &field_executor_type) {
+    if (!message || !descriptor) {
+        return message;
+    }
 
     // For message types, process each field
     const google::protobuf::Reflection *reflection = message->GetReflection();
-    if (!reflection) { return message; }
+    if (!reflection) {
+        return message;
+    }
 
     // Iterate through all fields in the message
     for (int i = 0; i < descriptor->field_count(); ++i) {
@@ -89,10 +95,14 @@ bool transformFieldWithContext(
     const google::protobuf::Descriptor *msg_desc,
     google::protobuf::Message *message,
     const std::string &field_executor_type) {
-    if (!field_desc || !msg_desc || !message) { return false; }
+    if (!field_desc || !msg_desc || !message) {
+        return false;
+    }
 
     const google::protobuf::Reflection *reflection = message->GetReflection();
-    if (!reflection) { return false; }
+    if (!reflection) {
+        return false;
+    }
 
     // Create message value for field context
     auto message_value = protobuf::makeProtobufValue(*message);
@@ -113,7 +123,7 @@ bool transformFieldWithContext(
         if (field_desc->containing_oneof() &&
             !reflection->HasField(*message, field_desc)) {
             ctx.exitField();
-            return false; // Skip oneof fields that are not set
+            return false;  // Skip oneof fields that are not set
         }
 
         // Check if field has a value to transform
@@ -194,15 +204,17 @@ bool transformFieldWithContext(
 
     } catch (const std::exception &e) {
         ctx.exitField();
-        throw; // Re-throw the exception
+        throw;  // Re-throw the exception
     }
 }
 
-std::unordered_set<std::string>
-getInlineTags(const google::protobuf::FieldDescriptor *field_desc) {
+std::unordered_set<std::string> getInlineTags(
+    const google::protobuf::FieldDescriptor *field_desc) {
     std::unordered_set<std::string> tag_set;
 
-    if (!field_desc) { return tag_set; }
+    if (!field_desc) {
+        return tag_set;
+    }
 
     // Try to get the confluent.field_meta extension from the field options
     const google::protobuf::FieldOptions &options = field_desc->options();
@@ -210,7 +222,7 @@ getInlineTags(const google::protobuf::FieldDescriptor *field_desc) {
     if (options.HasExtension(confluent::field_meta)) {
         auto ext = options.GetExtension(confluent::field_meta);
         const auto &tags =
-            ext.tags(); // Call tags() method to get RepeatedPtrField
+            ext.tags();  // Call tags() method to get RepeatedPtrField
         for (const auto &tag : tags) {
             tag_set.insert(tag);
         }
@@ -222,14 +234,17 @@ getInlineTags(const google::protobuf::FieldDescriptor *field_desc) {
 // Value transformation implementations
 namespace value_transform {
 
-std::unique_ptr<SerdeValue>
-extractFieldValue(const google::protobuf::FieldDescriptor *field_desc,
-                  const google::protobuf::Message &message) {
-
-    if (!field_desc) { throw ProtobufError("Field descriptor is null"); }
+std::unique_ptr<SerdeValue> extractFieldValue(
+    const google::protobuf::FieldDescriptor *field_desc,
+    const google::protobuf::Message &message) {
+    if (!field_desc) {
+        throw ProtobufError("Field descriptor is null");
+    }
 
     const google::protobuf::Reflection *reflection = message.GetReflection();
-    if (!reflection) { throw ProtobufError("Message reflection is null"); }
+    if (!reflection) {
+        throw ProtobufError("Message reflection is null");
+    }
 
     // For repeated fields, we'd need to handle them differently
     if (field_desc->is_repeated()) {
@@ -241,92 +256,97 @@ extractFieldValue(const google::protobuf::FieldDescriptor *field_desc,
     if (!reflection->HasField(message, field_desc)) {
         // Return default value or null based on field type
         switch (field_desc->type()) {
-        case google::protobuf::FieldDescriptor::TYPE_STRING:
-            return SerdeValue::newString(SerdeFormat::Protobuf, "");
-        case google::protobuf::FieldDescriptor::TYPE_BYTES:
-            return SerdeValue::newBytes(SerdeFormat::Protobuf, {});
-        default:
-            // For other types, would need more complex default value handling
-            throw ProtobufError("Field not set and default value handling not "
-                                "implemented for type: " +
-                                std::to_string(field_desc->type()));
+            case google::protobuf::FieldDescriptor::TYPE_STRING:
+                return SerdeValue::newString(SerdeFormat::Protobuf, "");
+            case google::protobuf::FieldDescriptor::TYPE_BYTES:
+                return SerdeValue::newBytes(SerdeFormat::Protobuf, {});
+            default:
+                // For other types, would need more complex default value
+                // handling
+                throw ProtobufError(
+                    "Field not set and default value handling not "
+                    "implemented for type: " +
+                    std::to_string(field_desc->type()));
         }
     }
 
     // Extract the actual field value based on type
     switch (field_desc->type()) {
-    case google::protobuf::FieldDescriptor::TYPE_STRING: {
-        std::string value = reflection->GetString(message, field_desc);
-        return SerdeValue::newString(SerdeFormat::Protobuf, value);
-    }
-    case google::protobuf::FieldDescriptor::TYPE_BYTES: {
-        std::string value = reflection->GetString(message, field_desc);
-        std::vector<uint8_t> bytes(value.begin(), value.end());
-        return SerdeValue::newBytes(SerdeFormat::Protobuf, bytes);
-    }
-    case google::protobuf::FieldDescriptor::TYPE_MESSAGE: {
-        const google::protobuf::Message &sub_message =
-            reflection->GetMessage(message, field_desc);
-        return protobuf::makeProtobufValue(
-            const_cast<google::protobuf::Message &>(sub_message));
-    }
-    default:
-        // TODO: Handle other field types (int32, int64, float, double, bool,
-        // enum)
-        throw ProtobufError(
-            "Field type extraction not yet implemented for type: " +
-            std::to_string(field_desc->type()));
+        case google::protobuf::FieldDescriptor::TYPE_STRING: {
+            std::string value = reflection->GetString(message, field_desc);
+            return SerdeValue::newString(SerdeFormat::Protobuf, value);
+        }
+        case google::protobuf::FieldDescriptor::TYPE_BYTES: {
+            std::string value = reflection->GetString(message, field_desc);
+            std::vector<uint8_t> bytes(value.begin(), value.end());
+            return SerdeValue::newBytes(SerdeFormat::Protobuf, bytes);
+        }
+        case google::protobuf::FieldDescriptor::TYPE_MESSAGE: {
+            const google::protobuf::Message &sub_message =
+                reflection->GetMessage(message, field_desc);
+            return protobuf::makeProtobufValue(
+                const_cast<google::protobuf::Message &>(sub_message));
+        }
+        default:
+            // TODO: Handle other field types (int32, int64, float, double,
+            // bool, enum)
+            throw ProtobufError(
+                "Field type extraction not yet implemented for type: " +
+                std::to_string(field_desc->type()));
     }
 }
 
 bool transformFieldValue(const google::protobuf::FieldDescriptor *field_desc,
                          google::protobuf::Message *message,
                          const SerdeValue &transformed_value) {
-
-    if (!field_desc || !message) { return false; }
+    if (!field_desc || !message) {
+        return false;
+    }
 
     const google::protobuf::Reflection *reflection = message->GetReflection();
-    if (!reflection) { return false; }
+    if (!reflection) {
+        return false;
+    }
 
     // Apply the transformed value back to the field based on field type
     switch (field_desc->type()) {
-    case google::protobuf::FieldDescriptor::TYPE_STRING: {
-        if (transformed_value.getFormat() == SerdeFormat::Protobuf ||
-            transformed_value.getFormat() == SerdeFormat::Json) {
-            std::string value = transformed_value.asString();
-            reflection->SetString(message, field_desc, value);
-            return true;
+        case google::protobuf::FieldDescriptor::TYPE_STRING: {
+            if (transformed_value.getFormat() == SerdeFormat::Protobuf ||
+                transformed_value.getFormat() == SerdeFormat::Json) {
+                std::string value = transformed_value.asString();
+                reflection->SetString(message, field_desc, value);
+                return true;
+            }
+            break;
         }
-        break;
-    }
-    case google::protobuf::FieldDescriptor::TYPE_BYTES: {
-        if (transformed_value.getFormat() == SerdeFormat::Protobuf ||
-            transformed_value.getFormat() == SerdeFormat::Json) {
-            auto bytes = transformed_value.asBytes();
-            std::string value(bytes.begin(), bytes.end());
-            reflection->SetString(message, field_desc, value);
-            return true;
+        case google::protobuf::FieldDescriptor::TYPE_BYTES: {
+            if (transformed_value.getFormat() == SerdeFormat::Protobuf ||
+                transformed_value.getFormat() == SerdeFormat::Json) {
+                auto bytes = transformed_value.asBytes();
+                std::string value(bytes.begin(), bytes.end());
+                reflection->SetString(message, field_desc, value);
+                return true;
+            }
+            break;
         }
-        break;
-    }
-    case google::protobuf::FieldDescriptor::TYPE_MESSAGE: {
-        if (transformed_value.getFormat() == SerdeFormat::Protobuf) {
-            // TODO: Handle message field transformation
-            // This would require copying the transformed message to the target
-            // field
+        case google::protobuf::FieldDescriptor::TYPE_MESSAGE: {
+            if (transformed_value.getFormat() == SerdeFormat::Protobuf) {
+                // TODO: Handle message field transformation
+                // This would require copying the transformed message to the
+                // target field
+                return false;
+            }
+            break;
+        }
+        default:
+            // TODO: Handle other field types
             return false;
-        }
-        break;
-    }
-    default:
-        // TODO: Handle other field types
-        return false;
     }
 
     return false;
 }
 
-} // namespace value_transform
+}  // namespace value_transform
 
 std::string schemaToString(const google::protobuf::FileDescriptor *file_desc) {
     std::string serialized;
@@ -341,10 +361,9 @@ std::string schemaToString(const google::protobuf::FileDescriptor *file_desc) {
     return base64_encode(bytes);
 }
 
-const google::protobuf::FileDescriptor *
-stringToSchema(google::protobuf::DescriptorPool *pool, const std::string &name,
-               const std::string &schema_string) {
-
+const google::protobuf::FileDescriptor *stringToSchema(
+    google::protobuf::DescriptorPool *pool, const std::string &name,
+    const std::string &schema_string) {
     // Base64 decode
     std::vector<uint8_t> bytes = base64_decode(schema_string);
 
@@ -363,7 +382,6 @@ stringToSchema(google::protobuf::DescriptorPool *pool, const std::string &name,
 void decodeFileDescriptorProtoWithName(google::protobuf::DescriptorPool *pool,
                                        const std::string &name,
                                        const std::vector<uint8_t> &data) {
-
     google::protobuf::FileDescriptorProto proto;
     if (!proto.ParseFromArray(data.data(), data.size())) {
         throw ProtobufError("Failed to parse FileDescriptorProto from data");
@@ -407,41 +425,46 @@ void jsonToMessage(const nlohmann::json &json_value,
 
 FieldType getFieldType(const google::protobuf::FieldDescriptor *field_desc) {
     // Check for map fields first (like the Rust version did)
-    if (field_desc->is_map()) { return FieldType::Map; }
+    if (field_desc->is_map()) {
+        return FieldType::Map;
+    }
 
     switch (field_desc->type()) {
-    case google::protobuf::FieldDescriptor::TYPE_STRING:
-        return FieldType::String;
-    case google::protobuf::FieldDescriptor::TYPE_BYTES: return FieldType::Bytes;
-    case google::protobuf::FieldDescriptor::TYPE_INT32:
-    case google::protobuf::FieldDescriptor::TYPE_SINT32:
-    case google::protobuf::FieldDescriptor::TYPE_UINT32:
-    case google::protobuf::FieldDescriptor::TYPE_FIXED32:
-    case google::protobuf::FieldDescriptor::TYPE_SFIXED32:
-        return FieldType::Int;
-    case google::protobuf::FieldDescriptor::TYPE_INT64:
-    case google::protobuf::FieldDescriptor::TYPE_SINT64:
-    case google::protobuf::FieldDescriptor::TYPE_UINT64:
-    case google::protobuf::FieldDescriptor::TYPE_FIXED64:
-    case google::protobuf::FieldDescriptor::TYPE_SFIXED64:
-        return FieldType::Long;
-    case google::protobuf::FieldDescriptor::TYPE_FLOAT: return FieldType::Float;
-    case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
-        return FieldType::Double;
-    case google::protobuf::FieldDescriptor::TYPE_BOOL:
-        return FieldType::Boolean;
-    case google::protobuf::FieldDescriptor::TYPE_ENUM: return FieldType::Enum;
-    case google::protobuf::FieldDescriptor::TYPE_MESSAGE:
-        return FieldType::Record;
-    default: return FieldType::String; // Default fallback
+        case google::protobuf::FieldDescriptor::TYPE_STRING:
+            return FieldType::String;
+        case google::protobuf::FieldDescriptor::TYPE_BYTES:
+            return FieldType::Bytes;
+        case google::protobuf::FieldDescriptor::TYPE_INT32:
+        case google::protobuf::FieldDescriptor::TYPE_SINT32:
+        case google::protobuf::FieldDescriptor::TYPE_UINT32:
+        case google::protobuf::FieldDescriptor::TYPE_FIXED32:
+        case google::protobuf::FieldDescriptor::TYPE_SFIXED32:
+            return FieldType::Int;
+        case google::protobuf::FieldDescriptor::TYPE_INT64:
+        case google::protobuf::FieldDescriptor::TYPE_SINT64:
+        case google::protobuf::FieldDescriptor::TYPE_UINT64:
+        case google::protobuf::FieldDescriptor::TYPE_FIXED64:
+        case google::protobuf::FieldDescriptor::TYPE_SFIXED64:
+            return FieldType::Long;
+        case google::protobuf::FieldDescriptor::TYPE_FLOAT:
+            return FieldType::Float;
+        case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
+            return FieldType::Double;
+        case google::protobuf::FieldDescriptor::TYPE_BOOL:
+            return FieldType::Boolean;
+        case google::protobuf::FieldDescriptor::TYPE_ENUM:
+            return FieldType::Enum;
+        case google::protobuf::FieldDescriptor::TYPE_MESSAGE:
+            return FieldType::Record;
+        default:
+            return FieldType::String;  // Default fallback
     }
 }
 
-const google::protobuf::Descriptor *
-getMessageDescriptorByIndex(const google::protobuf::DescriptorPool *pool,
-                            const google::protobuf::FileDescriptor *file_desc,
-                            const std::vector<int32_t> &msg_index) {
-
+const google::protobuf::Descriptor *getMessageDescriptorByIndex(
+    const google::protobuf::DescriptorPool *pool,
+    const google::protobuf::FileDescriptor *file_desc,
+    const std::vector<int32_t> &msg_index) {
     if (msg_index.empty() || msg_index[0] >= file_desc->message_type_count()) {
         return nullptr;
     }
@@ -461,8 +484,8 @@ getMessageDescriptorByIndex(const google::protobuf::DescriptorPool *pool,
     return descriptor;
 }
 
-std::vector<int32_t>
-createMessageIndexArray(const google::protobuf::Descriptor *descriptor) {
+std::vector<int32_t> createMessageIndexArray(
+    const google::protobuf::Descriptor *descriptor) {
     std::vector<int32_t> indexes;
 
     // Build index path from file descriptor to this message type
@@ -481,4 +504,4 @@ createMessageIndexArray(const google::protobuf::Descriptor *descriptor) {
 
 // extractFieldValue implementation moved to value_transform namespace above
 
-} // namespace srclient::serdes::protobuf::utils
+}  // namespace srclient::serdes::protobuf::utils

@@ -1,13 +1,14 @@
 #pragma once
 
-#include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/SerdeTypes.h"
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "srclient/serdes/SerdeError.h"
+#include "srclient/serdes/SerdeTypes.h"
 
 namespace srclient::serdes {
 
@@ -115,7 +116,7 @@ std::vector<RuleOverride> getRuleOverrides();
  * Clear the global registry
  */
 void clearGlobalRegistry();
-} // namespace global_registry
+}  // namespace global_registry
 
 /**
  * Base interface for all rule-related components
@@ -128,10 +129,9 @@ class RuleBase {
     /**
      * Configure the rule with client and rule-specific configuration
      */
-    virtual void
-    configure(std::shared_ptr<const ClientConfiguration> client_config,
-              const std::unordered_map<std::string, std::string> &rule_config) {
-    }
+    virtual void configure(
+        std::shared_ptr<const ClientConfiguration> client_config,
+        const std::unordered_map<std::string, std::string> &rule_config) {}
 
     /**
      * Get the type identifier for this rule
@@ -172,8 +172,8 @@ class FieldRuleExecutor : public RuleExecutor {
      * Transform a field value according to the rule
      * Synchronous version of the async transform_field method
      */
-    virtual std::unique_ptr<SerdeValue>
-    transformField(RuleContext &ctx, const SerdeValue &field_value) = 0;
+    virtual std::unique_ptr<SerdeValue> transformField(
+        RuleContext &ctx, const SerdeValue &field_value) = 0;
 
     /**
      * Implementation of RuleExecutor::transform for field executors
@@ -236,9 +236,8 @@ bool areTransformsWithSameTag(const Rule &rule1, const Rule &rule2);
  * Get rule action name based on rule mode
  * Based on logic from serde.rs
  */
-std::optional<std::string>
-getRuleActionName(const Rule &rule, Mode mode,
-                  std::optional<std::string> action_name);
-} // namespace rule_utils
+std::optional<std::string> getRuleActionName(
+    const Rule &rule, Mode mode, std::optional<std::string> action_name);
+}  // namespace rule_utils
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

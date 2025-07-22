@@ -25,8 +25,9 @@
 #undef U
 #endif
 
-#include <functional>
 #include <httplib.h>
+
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -51,4 +52,4 @@ class RestClient {
     std::vector<std::unique_ptr<httplib::Client>> clients_;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

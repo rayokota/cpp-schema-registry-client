@@ -1,14 +1,16 @@
 #include "srclient/serdes/Serde.h"
-#include "srclient/rest/ClientConfiguration.h"
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/SerdeConfig.h"
-#include "srclient/serdes/WildcardMatcher.h"
+
 #include <algorithm>
 #include <cstring>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+
+#include "srclient/rest/ClientConfiguration.h"
+#include "srclient/serdes/RuleRegistry.h"
+#include "srclient/serdes/SerdeConfig.h"
+#include "srclient/serdes/WildcardMatcher.h"
 
 namespace srclient::serdes {
 
@@ -18,11 +20,15 @@ SchemaId::SchemaId(SerdeFormat serde_format, std::optional<int32_t> id,
                    std::optional<std::string> guid,
                    std::optional<std::vector<int32_t>> message_indexes)
     : serde_format_(serde_format), id_(id), message_indexes_(message_indexes) {
-    if (guid.has_value()) { guid_ = guid.value(); }
+    if (guid.has_value()) {
+        guid_ = guid.value();
+    }
 }
 
 size_t SchemaId::readFromBytes(const std::vector<uint8_t> &bytes) {
-    if (bytes.empty()) { throw SerdeError("Empty byte array"); }
+    if (bytes.empty()) {
+        throw SerdeError("Empty byte array");
+    }
 
     size_t total_bytes_read = 0;
     uint8_t magic = bytes[0];
@@ -49,7 +55,9 @@ size_t SchemaId::readFromBytes(const std::vector<uint8_t> &bytes) {
         // Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         for (int i = 1; i <= 16; ++i) {
             uuid_stream << std::setw(2) << static_cast<unsigned>(bytes[i]);
-            if (i == 5 || i == 7 || i == 9 || i == 11) { uuid_stream << "-"; }
+            if (i == 5 || i == 7 || i == 9 || i == 11) {
+                uuid_stream << "-";
+            }
         }
 
         guid_ = uuid_stream.str();
@@ -70,9 +78,11 @@ size_t SchemaId::readFromBytes(const std::vector<uint8_t> &bytes) {
     return total_bytes_read;
 }
 
-std::pair<std::vector<int32_t>, size_t>
-SchemaId::readIndexArrayAndData(const std::vector<uint8_t> &buf) const {
-    if (buf.empty() || buf[0] == 0) { return {std::vector<int32_t>{0}, 1}; }
+std::pair<std::vector<int32_t>, size_t> SchemaId::readIndexArrayAndData(
+    const std::vector<uint8_t> &buf) const {
+    if (buf.empty() || buf[0] == 0) {
+        return {std::vector<int32_t>{0}, 1};
+    }
 
     std::vector<int32_t> msg_idx;
     size_t pos = 0;
@@ -104,7 +114,9 @@ SchemaId::readIndexArrayAndData(const std::vector<uint8_t> &buf) const {
 }
 
 std::vector<uint8_t> SchemaId::idToBytes() const {
-    if (!id_.has_value()) { throw SerdeError("Schema ID is not set"); }
+    if (!id_.has_value()) {
+        throw SerdeError("Schema ID is not set");
+    }
 
     std::vector<uint8_t> bytes;
     bytes.push_back(MAGIC_BYTE_V0);
@@ -124,7 +136,9 @@ std::vector<uint8_t> SchemaId::idToBytes() const {
 }
 
 std::vector<uint8_t> SchemaId::guidToBytes() const {
-    if (!guid_.has_value()) { throw SerdeError("Schema GUID is not set"); }
+    if (!guid_.has_value()) {
+        throw SerdeError("Schema GUID is not set");
+    }
 
     std::vector<uint8_t> bytes;
     bytes.push_back(MAGIC_BYTE_V1);
@@ -133,10 +147,14 @@ std::vector<uint8_t> SchemaId::guidToBytes() const {
     std::string guid_str = guid_.value();
     std::string hex_str;
     for (char c : guid_str) {
-        if (c != '-') { hex_str += c; }
+        if (c != '-') {
+            hex_str += c;
+        }
     }
 
-    if (hex_str.length() != 32) { throw SerdeError("Invalid UUID format"); }
+    if (hex_str.length() != 32) {
+        throw SerdeError("Invalid UUID format");
+    }
 
     for (size_t i = 0; i < hex_str.length(); i += 2) {
         std::string byte_str = hex_str.substr(i, 2);
@@ -152,7 +170,9 @@ std::vector<uint8_t> SchemaId::guidToBytes() const {
 }
 
 std::optional<std::vector<uint8_t>> SchemaId::toEncodedIndexArray() const {
-    if (!message_indexes_.has_value()) { return std::nullopt; }
+    if (!message_indexes_.has_value()) {
+        return std::nullopt;
+    }
 
     const auto &msg_idx = message_indexes_.value();
 
@@ -209,7 +229,9 @@ SerdeHeader SerdeHeaders::get(size_t idx) const {
 
 std::optional<SerdeHeader> SerdeHeaders::tryGet(size_t idx) const {
     std::lock_guard<std::mutex> lock(*mutex_);
-    if (idx < headers_->size()) { return (*headers_)[idx]; }
+    if (idx < headers_->size()) {
+        return (*headers_)[idx];
+    }
     return std::nullopt;
 }
 
@@ -218,19 +240,23 @@ void SerdeHeaders::insert(const SerdeHeader &header) {
     headers_->push_back(header);
 }
 
-std::optional<SerdeHeader>
-SerdeHeaders::lastHeader(const std::string &key) const {
+std::optional<SerdeHeader> SerdeHeaders::lastHeader(
+    const std::string &key) const {
     std::lock_guard<std::mutex> lock(*mutex_);
     for (auto it = headers_->rbegin(); it != headers_->rend(); ++it) {
-        if (it->key == key) { return *it; }
+        if (it->key == key) {
+            return *it;
+        }
     }
     return std::nullopt;
 }
 
-std::optional<std::vector<uint8_t>>
-SerdeHeaders::getLastHeaderValue(const std::string &key) const {
+std::optional<std::vector<uint8_t>> SerdeHeaders::getLastHeaderValue(
+    const std::string &key) const {
     auto header = lastHeader(key);
-    if (header.has_value()) { return header->value; }
+    if (header.has_value()) {
+        return header->value;
+    }
     return std::nullopt;
 }
 
@@ -248,8 +274,11 @@ FieldContext::FieldContext(const SerdeValue &containing_message,
                            const std::string &full_name,
                            const std::string &name, FieldType field_type,
                            const std::unordered_set<std::string> &tags)
-    : containing_message_(containing_message), full_name_(full_name),
-      name_(name), field_type_(field_type), tags_(tags) {}
+    : containing_message_(containing_message),
+      full_name_(full_name),
+      name_(name),
+      field_type_(field_type),
+      tags_(tags) {}
 
 FieldType FieldContext::getFieldType() const {
     std::lock_guard<std::mutex> lock(field_type_mutex_);
@@ -272,21 +301,36 @@ bool FieldContext::isPrimitive() const {
 std::string FieldContext::typeName() const {
     FieldType type = getFieldType();
     switch (type) {
-    case FieldType::Record: return "RECORD";
-    case FieldType::Enum: return "ENUM";
-    case FieldType::Array: return "ARRAY";
-    case FieldType::Map: return "MAP";
-    case FieldType::Combined: return "COMBINED";
-    case FieldType::Fixed: return "FIXED";
-    case FieldType::String: return "STRING";
-    case FieldType::Bytes: return "BYTES";
-    case FieldType::Int: return "INT";
-    case FieldType::Long: return "LONG";
-    case FieldType::Float: return "FLOAT";
-    case FieldType::Double: return "DOUBLE";
-    case FieldType::Boolean: return "BOOLEAN";
-    case FieldType::Null: return "NULL";
-    default: return "UNKNOWN";
+        case FieldType::Record:
+            return "RECORD";
+        case FieldType::Enum:
+            return "ENUM";
+        case FieldType::Array:
+            return "ARRAY";
+        case FieldType::Map:
+            return "MAP";
+        case FieldType::Combined:
+            return "COMBINED";
+        case FieldType::Fixed:
+            return "FIXED";
+        case FieldType::String:
+            return "STRING";
+        case FieldType::Bytes:
+            return "BYTES";
+        case FieldType::Int:
+            return "INT";
+        case FieldType::Long:
+            return "LONG";
+        case FieldType::Float:
+            return "FLOAT";
+        case FieldType::Double:
+            return "DOUBLE";
+        case FieldType::Boolean:
+            return "BOOLEAN";
+        case FieldType::Null:
+            return "NULL";
+        default:
+            return "UNKNOWN";
     }
 }
 
@@ -302,47 +346,62 @@ RuleContext::RuleContext(
         inline_tags,
     std::shared_ptr<FieldTransformer> field_transformer,
     std::shared_ptr<RuleRegistry> rule_registry)
-    : ser_ctx_(ser_ctx), source_(source), target_(target),
-      parsed_target_(std::move(parsed_target)), subject_(subject),
-      rule_mode_(rule_mode), rule_(rule), index_(index), rules_(rules),
-      inline_tags_(inline_tags), field_transformer_(field_transformer),
+    : ser_ctx_(ser_ctx),
+      source_(source),
+      target_(target),
+      parsed_target_(std::move(parsed_target)),
+      subject_(subject),
+      rule_mode_(rule_mode),
+      rule_(rule),
+      index_(index),
+      rules_(rules),
+      inline_tags_(inline_tags),
+      field_transformer_(field_transformer),
       rule_registry_(rule_registry) {}
 
-std::optional<std::string>
-RuleContext::getParameter(const std::string &name) const {
+std::optional<std::string> RuleContext::getParameter(
+    const std::string &name) const {
     // First check rule parameters
     if (rule_.getParams().has_value()) {
-        auto params =
-            rule_.getParams().value(); // Store copy to avoid dangling reference
+        auto params = rule_.getParams()
+                          .value();  // Store copy to avoid dangling reference
         auto it = params.find(name);
-        if (it != params.end()) { return it->second; }
+        if (it != params.end()) {
+            return it->second;
+        }
     }
 
     // Then check target schema metadata properties
     if (target_.has_value() && target_->getMetadata().has_value()) {
         auto metadata = target_->getMetadata()
-                            .value(); // Store copy to avoid dangling reference
+                            .value();  // Store copy to avoid dangling reference
         if (metadata.getProperties().has_value()) {
             auto properties =
                 metadata.getProperties()
-                    .value(); // Store copy to avoid dangling reference
+                    .value();  // Store copy to avoid dangling reference
             auto it = properties.find(name);
-            if (it != properties.end()) { return it->second; }
+            if (it != properties.end()) {
+                return it->second;
+            }
         }
     }
 
     return std::nullopt;
 }
 
-std::optional<std::unordered_set<std::string>>
-RuleContext::getInlineTags(const std::string &name) const {
+std::optional<std::unordered_set<std::string>> RuleContext::getInlineTags(
+    const std::string &name) const {
     auto it = inline_tags_.find(name);
-    if (it != inline_tags_.end()) { return it->second; }
+    if (it != inline_tags_.end()) {
+        return it->second;
+    }
     return std::nullopt;
 }
 
 std::optional<FieldContext> RuleContext::currentField() const {
-    if (field_contexts_.empty()) { return std::nullopt; }
+    if (field_contexts_.empty()) {
+        return std::nullopt;
+    }
     // Since FieldContext can't be copied/moved, return a copy constructed from
     // the back element
     const auto &back = *field_contexts_.back();
@@ -358,7 +417,9 @@ void RuleContext::enterField(const SerdeValue &containing_message,
     std::unordered_set<std::string> all_tags = tags;
     if (all_tags.empty()) {
         auto inline_tags = getInlineTags(full_name);
-        if (inline_tags.has_value()) { all_tags = inline_tags.value(); }
+        if (inline_tags.has_value()) {
+            all_tags = inline_tags.value();
+        }
     }
     auto schema_tags = getTags(full_name);
     all_tags.insert(schema_tags.begin(), schema_tags.end());
@@ -369,22 +430,24 @@ void RuleContext::enterField(const SerdeValue &containing_message,
 }
 
 void RuleContext::exitField() {
-    if (!field_contexts_.empty()) { field_contexts_.pop_back(); }
+    if (!field_contexts_.empty()) {
+        field_contexts_.pop_back();
+    }
 }
 
-std::unordered_set<std::string>
-RuleContext::getTags(const std::string &full_name) const {
+std::unordered_set<std::string> RuleContext::getTags(
+    const std::string &full_name) const {
     std::unordered_set<std::string> result;
 
     if (target_.has_value() && target_->getMetadata().has_value()) {
         auto metadata = target_->getMetadata()
-                            .value(); // Store copy to avoid dangling reference
+                            .value();  // Store copy to avoid dangling reference
         if (metadata.getTags().has_value()) {
             auto tags_map =
                 metadata.getTags()
-                    .value(); // Store copy to avoid dangling reference
+                    .value();  // Store copy to avoid dangling reference
             for (const auto &[pattern, tag] : tags_map) {
-                if (wildcardMatch(full_name, pattern)) { // Fixed function name
+                if (wildcardMatch(full_name, pattern)) {  // Fixed function name
                     result.insert(pattern);
                 }
             }
@@ -403,30 +466,34 @@ Serde::Serde(std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
 std::optional<RegisteredSchema> Serde::getReaderSchema(
     const std::string &subject, std::optional<std::string> format,
     const std::optional<SchemaSelectorData> &use_schema) const {
-    if (!use_schema.has_value()) { return std::nullopt; }
+    if (!use_schema.has_value()) {
+        return std::nullopt;
+    }
 
     const auto &selector = use_schema.value();
 
     switch (selector.type) {
-    case SchemaSelector::SchemaId: {
-        if (!selector.schema_id.has_value()) {
-            throw SerdeError("Schema ID not provided for SchemaId selector");
+        case SchemaSelector::SchemaId: {
+            if (!selector.schema_id.has_value()) {
+                throw SerdeError(
+                    "Schema ID not provided for SchemaId selector");
+            }
+            auto schema = client_->getBySubjectAndId(
+                subject, selector.schema_id.value(), format);
+            return client_->getBySchema(subject, schema, false, true);
         }
-        auto schema = client_->getBySubjectAndId(
-            subject, selector.schema_id.value(), format);
-        return client_->getBySchema(subject, schema, false, true);
-    }
 
-    case SchemaSelector::LatestVersion: {
-        return client_->getLatestVersion(subject, format);
-    }
+        case SchemaSelector::LatestVersion: {
+            return client_->getLatestVersion(subject, format);
+        }
 
-    case SchemaSelector::LatestWithMetadata: {
-        return client_->getLatestWithMetadata(subject, selector.metadata, true,
-                                              format);
-    }
+        case SchemaSelector::LatestWithMetadata: {
+            return client_->getLatestWithMetadata(subject, selector.metadata,
+                                                  true, format);
+        }
 
-    default: throw SerdeError("Unknown schema selector type");
+        default:
+            throw SerdeError("Unknown schema selector type");
     }
 }
 
@@ -453,24 +520,28 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
     std::vector<Rule> rules;
 
     switch (rule_mode) {
-    case Mode::Upgrade: rules = getMigrationRules(target); break;
-    case Mode::Downgrade:
-        rules = getMigrationRules(source);
-        std::reverse(rules.begin(), rules.end());
-        break;
-    default:
-        if (rule_phase == Phase::Encoding) {
-            rules = getEncodingRules(target);
-        } else {
-            rules = getDomainRules(target);
-        }
-        if (rule_mode == Mode::Read) {
+        case Mode::Upgrade:
+            rules = getMigrationRules(target);
+            break;
+        case Mode::Downgrade:
+            rules = getMigrationRules(source);
             std::reverse(rules.begin(), rules.end());
-        }
-        break;
+            break;
+        default:
+            if (rule_phase == Phase::Encoding) {
+                rules = getEncodingRules(target);
+            } else {
+                rules = getDomainRules(target);
+            }
+            if (rule_mode == Mode::Read) {
+                std::reverse(rules.begin(), rules.end());
+            }
+            break;
     }
 
-    if (rules.empty()) { return msg.clone(); }
+    if (rules.empty()) {
+        return msg.clone();
+    }
 
     // Create a local variable to track the current message state
     auto current_msg = msg.clone();
@@ -478,23 +549,28 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
     for (size_t index = 0; index < rules.size(); ++index) {
         const auto &rule = rules[index];
 
-        if (isDisabled(rule)) { continue; }
+        if (isDisabled(rule)) {
+            continue;
+        }
 
         Mode mode = rule.getMode().value_or(Mode::Write);
         switch (mode) {
-        case Mode::WriteRead:
-            if (rule_mode != Mode::Read && rule_mode != Mode::Write) {
-                continue;
-            }
-            break;
-        case Mode::UpDown:
-            if (rule_mode != Mode::Upgrade && rule_mode != Mode::Downgrade) {
-                continue;
-            }
-            break;
-        default:
-            if (mode != rule_mode) { continue; }
-            break;
+            case Mode::WriteRead:
+                if (rule_mode != Mode::Read && rule_mode != Mode::Write) {
+                    continue;
+                }
+                break;
+            case Mode::UpDown:
+                if (rule_mode != Mode::Upgrade &&
+                    rule_mode != Mode::Downgrade) {
+                    continue;
+                }
+                break;
+            default:
+                if (mode != rule_mode) {
+                    continue;
+                }
+                break;
         }
 
         RuleContext ctx(ser_ctx, source, target,
@@ -512,7 +588,7 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
         }
 
         std::string rule_type =
-            rule.getType().value(); // Store copy to avoid dangling reference
+            rule.getType().value();  // Store copy to avoid dangling reference
 
         auto executor = rule_registry_
                             ? rule_registry_->getExecutor(rule_type)
@@ -527,7 +603,7 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
 
         try {
             auto result = executor->transform(
-                ctx, *current_msg); // Now returns unique_ptr<SerdeValue>
+                ctx, *current_msg);  // Now returns unique_ptr<SerdeValue>
 
             Kind kind = rule.getKind().value_or(Kind::Transform);
             if (kind == Kind::Condition) {
@@ -555,10 +631,9 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
     return std::move(current_msg);
 }
 
-std::vector<Migration>
-Serde::getMigrations(const std::string &subject, const Schema &source_info,
-                     const RegisteredSchema &target,
-                     std::optional<std::string> format) const {
+std::vector<Migration> Serde::getMigrations(
+    const std::string &subject, const Schema &source_info,
+    const RegisteredSchema &target, std::optional<std::string> format) const {
     auto source = client_->getBySchema(subject, source_info, false, true);
     std::vector<Migration> migrations;
 
@@ -578,7 +653,7 @@ Serde::getMigrations(const std::string &subject, const Schema &source_info,
         first = &target;
         last = &source;
     } else {
-        return migrations; // No migration needed
+        return migrations;  // No migration needed
     }
 
     auto versions = getSchemasBetween(subject, *first, *last, format);
@@ -620,7 +695,9 @@ std::vector<RegisteredSchema> Serde::getSchemasBetween(
     int first_version = first.getVersion().value_or(0);
     int last_version = last.getVersion().value_or(0);
 
-    if (last_version - first_version < 2) { return {first, last}; }
+    if (last_version - first_version < 2) {
+        return {first, last};
+    }
 
     std::vector<RegisteredSchema> result = {first};
 
@@ -658,37 +735,51 @@ std::unique_ptr<SerdeValue> Serde::executeMigrations(
 // Helper methods
 
 std::vector<Rule> Serde::getMigrationRules(std::optional<Schema> schema) const {
-    if (!schema.has_value() || !schema->getRuleSet().has_value()) { return {}; }
+    if (!schema.has_value() || !schema->getRuleSet().has_value()) {
+        return {};
+    }
 
     auto rule_set = schema->getRuleSet().value();
-    if (!rule_set.getMigrationRules().has_value()) { return {}; }
+    if (!rule_set.getMigrationRules().has_value()) {
+        return {};
+    }
 
     return rule_set.getMigrationRules().value();
 }
 
 std::vector<Rule> Serde::getDomainRules(std::optional<Schema> schema) const {
-    if (!schema.has_value() || !schema->getRuleSet().has_value()) { return {}; }
+    if (!schema.has_value() || !schema->getRuleSet().has_value()) {
+        return {};
+    }
 
     auto rule_set = schema->getRuleSet().value();
-    if (!rule_set.getDomainRules().has_value()) { return {}; }
+    if (!rule_set.getDomainRules().has_value()) {
+        return {};
+    }
 
     return rule_set.getDomainRules().value();
 }
 
 std::vector<Rule> Serde::getEncodingRules(std::optional<Schema> schema) const {
-    if (!schema.has_value() || !schema->getRuleSet().has_value()) { return {}; }
+    if (!schema.has_value() || !schema->getRuleSet().has_value()) {
+        return {};
+    }
 
     auto rule_set = schema->getRuleSet().value();
-    if (!rule_set.getEncodingRules().has_value()) { return {}; }
+    if (!rule_set.getEncodingRules().has_value()) {
+        return {};
+    }
 
     return rule_set.getEncodingRules().value();
 }
 
 std::optional<std::string> Serde::getOnSuccess(const Rule &rule) const {
-    if (!rule.getType().has_value()) { return rule.getOnSuccess(); }
+    if (!rule.getType().has_value()) {
+        return rule.getOnSuccess();
+    }
 
     std::string rule_type =
-        rule.getType().value(); // Store copy to avoid dangling reference
+        rule.getType().value();  // Store copy to avoid dangling reference
 
     if (rule_registry_) {
         auto override_opt = rule_registry_->getOverride(rule_type);
@@ -706,10 +797,12 @@ std::optional<std::string> Serde::getOnSuccess(const Rule &rule) const {
 }
 
 std::optional<std::string> Serde::getOnFailure(const Rule &rule) const {
-    if (!rule.getType().has_value()) { return rule.getOnFailure(); }
+    if (!rule.getType().has_value()) {
+        return rule.getOnFailure();
+    }
 
     std::string rule_type =
-        rule.getType().value(); // Store copy to avoid dangling reference
+        rule.getType().value();  // Store copy to avoid dangling reference
 
     if (rule_registry_) {
         auto override_opt = rule_registry_->getOverride(rule_type);
@@ -727,10 +820,12 @@ std::optional<std::string> Serde::getOnFailure(const Rule &rule) const {
 }
 
 bool Serde::isDisabled(const Rule &rule) const {
-    if (!rule.getType().has_value()) { return false; }
+    if (!rule.getType().has_value()) {
+        return false;
+    }
 
     std::string rule_type =
-        rule.getType().value(); // Store copy to avoid dangling reference
+        rule.getType().value();  // Store copy to avoid dangling reference
 
     if (rule_registry_) {
         auto override_opt = rule_registry_->getOverride(rule_type);
@@ -752,7 +847,9 @@ void Serde::runAction(const RuleContext &ctx, Mode rule_mode, const Rule &rule,
                       std::optional<SerdeError> ex,
                       const std::string &default_action) const {
     auto action_name = getRuleActionName(rule, rule_mode, action);
-    if (!action_name.has_value()) { action_name = default_action; }
+    if (!action_name.has_value()) {
+        action_name = default_action;
+    }
 
     auto rule_action = getRuleAction(ctx, action_name.value());
     if (!rule_action) {
@@ -762,19 +859,21 @@ void Serde::runAction(const RuleContext &ctx, Mode rule_mode, const Rule &rule,
     rule_action->run(ctx, msg, ex);
 }
 
-std::optional<std::string>
-Serde::getRuleActionName(const Rule &rule, Mode mode,
-                         std::optional<std::string> action_name) const {
-    if (!action_name.has_value()) { return std::nullopt; }
+std::optional<std::string> Serde::getRuleActionName(
+    const Rule &rule, Mode mode, std::optional<std::string> action_name) const {
+    if (!action_name.has_value()) {
+        return std::nullopt;
+    }
 
-    if (!rule.getMode().has_value()) { return action_name; }
+    if (!rule.getMode().has_value()) {
+        return action_name;
+    }
 
     Mode rule_mode = rule.getMode().value();
     std::string action_str = action_name.value();
 
     if ((rule_mode == Mode::WriteRead || rule_mode == Mode::UpDown) &&
         action_str.find(",") != std::string::npos) {
-
         size_t comma_pos = action_str.find(",");
 
         if (mode == Mode::Write || mode == Mode::Upgrade) {
@@ -787,9 +886,8 @@ Serde::getRuleActionName(const Rule &rule, Mode mode,
     return action_str;
 }
 
-std::shared_ptr<RuleAction>
-Serde::getRuleAction(const RuleContext &ctx,
-                     const std::string &action_name) const {
+std::shared_ptr<RuleAction> Serde::getRuleAction(
+    const RuleContext &ctx, const std::string &action_name) const {
     if (action_name == "ERROR") {
         return std::make_shared<ErrorAction>();
     } else if (action_name == "NONE") {
@@ -805,36 +903,52 @@ Serde::getRuleAction(const RuleContext &ctx,
 
 bool Serde::hasRules(std::optional<RuleSet> rule_set, Phase phase,
                      Mode mode) const {
-    if (!rule_set.has_value()) { return false; }
+    if (!rule_set.has_value()) {
+        return false;
+    }
 
     std::optional<std::vector<Rule>> rules;
     switch (phase) {
-    case Phase::Migration: rules = rule_set->getMigrationRules(); break;
-    case Phase::Domain: rules = rule_set->getDomainRules(); break;
-    case Phase::Encoding: rules = rule_set->getEncodingRules(); break;
+        case Phase::Migration:
+            rules = rule_set->getMigrationRules();
+            break;
+        case Phase::Domain:
+            rules = rule_set->getDomainRules();
+            break;
+        case Phase::Encoding:
+            rules = rule_set->getEncodingRules();
+            break;
     }
 
-    if (!rules.has_value()) { return false; }
+    if (!rules.has_value()) {
+        return false;
+    }
 
     for (const auto &rule : rules.value()) {
-        if (!rule.getMode().has_value()) { continue; }
+        if (!rule.getMode().has_value()) {
+            continue;
+        }
 
         Mode rule_mode = rule.getMode().value();
 
         switch (mode) {
-        case Mode::Upgrade:
-        case Mode::Downgrade:
-            if (rule_mode == mode || rule_mode == Mode::UpDown) { return true; }
-            break;
-        case Mode::Write:
-        case Mode::Read:
-            if (rule_mode == mode || rule_mode == Mode::WriteRead) {
-                return true;
-            }
-            break;
-        default:
-            if (rule_mode == mode) { return true; }
-            break;
+            case Mode::Upgrade:
+            case Mode::Downgrade:
+                if (rule_mode == mode || rule_mode == Mode::UpDown) {
+                    return true;
+                }
+                break;
+            case Mode::Write:
+            case Mode::Read:
+                if (rule_mode == mode || rule_mode == Mode::WriteRead) {
+                    return true;
+                }
+                break;
+            default:
+                if (rule_mode == mode) {
+                    return true;
+                }
+                break;
         }
     }
 
@@ -852,10 +966,9 @@ BaseDeserializer::BaseDeserializer(Serde serde,
                                    const DeserializerConfig &config)
     : serde_(std::move(serde)), config_(config) {}
 
-Schema
-BaseDeserializer::getWriterSchema(const SchemaId &schema_id,
-                                  std::optional<std::string> subject,
-                                  std::optional<std::string> format) const {
+Schema BaseDeserializer::getWriterSchema(
+    const SchemaId &schema_id, std::optional<std::string> subject,
+    std::optional<std::string> format) const {
     if (schema_id.getId().has_value()) {
         return serde_.getClient()->getBySubjectAndId(
             subject.value_or(""), schema_id.getId().value(), format);
@@ -869,4 +982,4 @@ BaseDeserializer::getWriterSchema(const SchemaId &schema_id,
 
 // Note: ErrorAction and NoneAction implementations are in RuleRegistry.cpp
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

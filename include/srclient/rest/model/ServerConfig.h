@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Metadata.h"
-#include "RuleSet.h"
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
+
+#include "Metadata.h"
+#include "RuleSet.h"
 
 namespace srclient::rest::model {
 
@@ -109,4 +110,4 @@ class ServerConfig {
     std::optional<srclient::rest::model::RuleSet> overrideRuleSet_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

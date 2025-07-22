@@ -75,4 +75,4 @@ void SchemaReference::setVersion(const std::optional<int32_t> &value) {
     version_ = value;
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

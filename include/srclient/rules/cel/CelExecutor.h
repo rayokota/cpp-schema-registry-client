@@ -1,5 +1,9 @@
 #pragma once
 
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/statusor.h"
 #include "absl/synchronization/mutex.h"
@@ -9,9 +13,6 @@
 #include "nlohmann/json.hpp"
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeError.h"
-#include <memory>
-#include <mutex>
-#include <unordered_map>
 
 namespace srclient::rules::cel {
 
@@ -33,11 +34,11 @@ class CelExecutor : public RuleExecutor {
         const absl::flat_hash_map<std::string,
                                   google::api::expr::runtime::CelValue> &args);
 
-    google::api::expr::runtime::CelValue
-    fromSerdeValue(const SerdeValue &value, google::protobuf::Arena *arena);
-    std::unique_ptr<SerdeValue>
-    toSerdeValue(const SerdeValue &original,
-                 const google::api::expr::runtime::CelValue &cel_value);
+    google::api::expr::runtime::CelValue fromSerdeValue(
+        const SerdeValue &value, google::protobuf::Arena *arena);
+    std::unique_ptr<SerdeValue> toSerdeValue(
+        const SerdeValue &original,
+        const google::api::expr::runtime::CelValue &cel_value);
 
     static void registerExecutor();
 
@@ -64,36 +65,34 @@ class CelExecutor : public RuleExecutor {
     absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>>
     getOrCompileExpression(const std::string &expr);
 
-    google::api::expr::runtime::CelValue
-    fromJsonValue(const nlohmann::json &json, google::protobuf::Arena *arena);
-    google::api::expr::runtime::CelValue
-    fromAvroValue(const ::avro::GenericDatum &avro,
-                  google::protobuf::Arena *arena);
-    google::api::expr::runtime::CelValue
-    fromProtobufValue(const google::protobuf::Message &msg,
-                      google::protobuf::Arena *arena);
+    google::api::expr::runtime::CelValue fromJsonValue(
+        const nlohmann::json &json, google::protobuf::Arena *arena);
+    google::api::expr::runtime::CelValue fromAvroValue(
+        const ::avro::GenericDatum &avro, google::protobuf::Arena *arena);
+    google::api::expr::runtime::CelValue fromProtobufValue(
+        const google::protobuf::Message &msg, google::protobuf::Arena *arena);
 
-    nlohmann::json
-    toJsonValue(const nlohmann::json &original,
-                const google::api::expr::runtime::CelValue &cel_value);
-    ::avro::GenericDatum
-    toAvroValue(const ::avro::GenericDatum &original,
-                const google::api::expr::runtime::CelValue &cel_value);
-    std::unique_ptr<google::protobuf::Message>
-    toProtobufValue(const google::protobuf::Message &original,
-                    const google::api::expr::runtime::CelValue &cel_value);
+    nlohmann::json toJsonValue(
+        const nlohmann::json &original,
+        const google::api::expr::runtime::CelValue &cel_value);
+    ::avro::GenericDatum toAvroValue(
+        const ::avro::GenericDatum &original,
+        const google::api::expr::runtime::CelValue &cel_value);
+    std::unique_ptr<google::protobuf::Message> toProtobufValue(
+        const google::protobuf::Message &original,
+        const google::api::expr::runtime::CelValue &cel_value);
 
     // Helper methods for protobuf conversion
-    google::api::expr::runtime::CelValue
-    convertProtobufFieldToCel(const google::protobuf::Message &message,
-                              const google::protobuf::FieldDescriptor *field,
-                              const google::protobuf::Reflection *reflection,
-                              google::protobuf::Arena *arena, int index);
+    google::api::expr::runtime::CelValue convertProtobufFieldToCel(
+        const google::protobuf::Message &message,
+        const google::protobuf::FieldDescriptor *field,
+        const google::protobuf::Reflection *reflection,
+        google::protobuf::Arena *arena, int index);
 
-    google::api::expr::runtime::CelValue
-    convertProtobufMapToCel(const google::protobuf::Message &map_entry,
-                            const google::protobuf::FieldDescriptor *map_field,
-                            google::protobuf::Arena *arena);
+    google::api::expr::runtime::CelValue convertProtobufMapToCel(
+        const google::protobuf::Message &map_entry,
+        const google::protobuf::FieldDescriptor *map_field,
+        google::protobuf::Arena *arena);
 };
 
-} // namespace srclient::rules::cel
+}  // namespace srclient::rules::cel

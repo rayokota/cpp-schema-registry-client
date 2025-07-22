@@ -5,13 +5,14 @@
 
 #pragma once
 
-#include "srclient/rules/encryption/KmsDriver.h"
-#include "tink/kms_client.h"
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "srclient/rules/encryption/KmsDriver.h"
+#include "tink/kms_client.h"
 
 namespace srclient::rules::encryption {
 
@@ -79,8 +80,8 @@ class EncryptionRegistry {
      * @return Shared pointer to the client that supports the key URI
      * @throws TinkError if no supporting client is found
      */
-    std::shared_ptr<crypto::tink::KmsClient>
-    getKmsClient(const std::string &keyUri);
+    std::shared_ptr<crypto::tink::KmsClient> getKmsClient(
+        const std::string &keyUri);
 
   private:
     EncryptionRegistry() = default;
@@ -100,7 +101,8 @@ class EncryptionRegistry {
 /**
  * Register a new KMS driver
  */
-template <typename T, typename... Args> void registerKmsDriver(Args &&...args) {
+template <typename T, typename... Args>
+void registerKmsDriver(Args &&...args) {
     static_assert(std::is_base_of_v<KmsDriver, T>,
                   "T must derive from KmsDriver");
     auto driver = std::make_shared<T>(std::forward<Args>(args)...);
@@ -130,7 +132,7 @@ void clearKmsClients();
 /**
  * Get a KMS client by key URI
  */
-std::shared_ptr<crypto::tink::KmsClient>
-getKmsClient(const std::string &keyUri);
+std::shared_ptr<crypto::tink::KmsClient> getKmsClient(
+    const std::string &keyUri);
 
-} // namespace srclient::rules::encryption
+}  // namespace srclient::rules::encryption

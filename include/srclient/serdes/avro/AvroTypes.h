@@ -1,7 +1,5 @@
 #pragma once
 
-#include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/SerdeTypes.h"
 #include <any>
 #include <avro/Compiler.hh>
 #include <avro/Decoder.hh>
@@ -13,6 +11,9 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
+
+#include "srclient/serdes/SerdeError.h"
+#include "srclient/serdes/SerdeTypes.h"
 
 namespace srclient::serdes::avro {
 
@@ -107,8 +108,8 @@ class AvroSchema : public SerdeSchema {
 };
 
 // Helper functions for creating Avro SerdeValue instances
-inline std::unique_ptr<SerdeValue>
-makeAvroValue(const ::avro::GenericDatum &value) {
+inline std::unique_ptr<SerdeValue> makeAvroValue(
+    const ::avro::GenericDatum &value) {
     return std::make_unique<AvroValue>(value);
 }
 
@@ -135,4 +136,4 @@ asAvroSchema(const SerdeSchema &schema) {
         std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>>();
 }
 
-} // namespace srclient::serdes::avro
+}  // namespace srclient::serdes::avro

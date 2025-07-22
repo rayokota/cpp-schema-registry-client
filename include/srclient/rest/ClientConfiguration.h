@@ -38,8 +38,8 @@ class ClientConfiguration {
     void setBasicAuth(const std::optional<std::string> &basic_auth);
 
     std::optional<std::string> getBearerAccessToken() const;
-    void
-    setBearerAccessToken(const std::optional<std::string> &bearer_access_token);
+    void setBearerAccessToken(
+        const std::optional<std::string> &bearer_access_token);
 
     // Cache configuration getters and setters
     std::uint64_t getCacheCapacity() const;
@@ -75,4 +75,4 @@ class ClientConfiguration {
     std::uint32_t retries_max_wait_ms_;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

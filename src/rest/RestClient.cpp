@@ -13,6 +13,7 @@
 #include "srclient/rest/RestClient.h"
 
 #include <httplib.h>
+
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -30,8 +31,8 @@ RestClient::RestClient(std::shared_ptr<const ClientConfiguration> configuration)
 }
 RestClient::~RestClient() {}
 
-std::shared_ptr<const ClientConfiguration>
-RestClient::getConfiguration() const {
+std::shared_ptr<const ClientConfiguration> RestClient::getConfiguration()
+    const {
     return configuration_;
 }
 
@@ -50,4 +51,4 @@ httplib::Result RestClient::sendRequest(const std::string &path,
     return clients_.front()->send(req);
 }
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

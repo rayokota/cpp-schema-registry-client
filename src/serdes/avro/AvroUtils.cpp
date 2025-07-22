@@ -1,11 +1,13 @@
 #include "srclient/serdes/avro/AvroUtils.h"
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/Serde.h"
-#include "srclient/serdes/avro/AvroTypes.h"
+
 #include <avro/Exception.hh>
 #include <avro/Stream.hh>
 #include <iostream>
 #include <sstream>
+
+#include "srclient/serdes/RuleRegistry.h"
+#include "srclient/serdes/Serde.h"
+#include "srclient/serdes/avro/AvroTypes.h"
 
 namespace srclient::serdes::avro {
 
@@ -19,134 +21,139 @@ namespace utils {
     // applying field-level rules as configured
 
     switch (schema.root()->type()) {
-    case ::avro::AVRO_RECORD: {
-        auto record = datum.value<::avro::GenericRecord>();
-        ::avro::GenericRecord result(schema.root());
+        case ::avro::AVRO_RECORD: {
+            auto record = datum.value<::avro::GenericRecord>();
+            ::avro::GenericRecord result(schema.root());
 
-        for (size_t i = 0; i < record.fieldCount(); ++i) {
-            auto field_datum = record.fieldAt(i);
-            auto field_schema_node = schema.root()->leafAt(i);
-            ::avro::ValidSchema field_schema(field_schema_node);
-            const std::string &field_name = schema.root()->nameAt(i);
+            for (size_t i = 0; i < record.fieldCount(); ++i) {
+                auto field_datum = record.fieldAt(i);
+                auto field_schema_node = schema.root()->leafAt(i);
+                ::avro::ValidSchema field_schema(field_schema_node);
+                const std::string &field_name = schema.root()->nameAt(i);
 
-            auto transformed_field = transformFieldWithCtx(
-                ctx, schema, field_name, field_datum, field_schema);
-            result.setFieldAt(i, transformed_field);
+                auto transformed_field = transformFieldWithCtx(
+                    ctx, schema, field_name, field_datum, field_schema);
+                result.setFieldAt(i, transformed_field);
+            }
+
+            // Create a new GenericDatum with the schema and set the record
+            // value
+            ::avro::GenericDatum result_datum(schema);
+            result_datum.value<::avro::GenericRecord>() = result;
+            return result_datum;
         }
 
-        // Create a new GenericDatum with the schema and set the record value
-        ::avro::GenericDatum result_datum(schema);
-        result_datum.value<::avro::GenericRecord>() = result;
-        return result_datum;
-    }
+        case ::avro::AVRO_ARRAY: {
+            auto array = datum.value<::avro::GenericArray>();
+            ::avro::GenericDatum result_datum(schema);
+            auto &result = result_datum.value<::avro::GenericArray>();
+            auto item_schema_node = schema.root()->leafAt(0);
+            ::avro::ValidSchema item_schema(item_schema_node);
 
-    case ::avro::AVRO_ARRAY: {
-        auto array = datum.value<::avro::GenericArray>();
-        ::avro::GenericDatum result_datum(schema);
-        auto &result = result_datum.value<::avro::GenericArray>();
-        auto item_schema_node = schema.root()->leafAt(0);
-        ::avro::ValidSchema item_schema(item_schema_node);
+            for (size_t i = 0; i < array.value().size(); ++i) {
+                auto transformed =
+                    transformFields(ctx, array.value()[i], item_schema);
+                result.value().push_back(transformed);
+            }
 
-        for (size_t i = 0; i < array.value().size(); ++i) {
+            return result_datum;
+        }
+
+        case ::avro::AVRO_MAP: {
+            auto map = datum.value<::avro::GenericMap>();
+            ::avro::GenericDatum result_datum(schema);
+            auto &result = result_datum.value<::avro::GenericMap>();
+            for (const auto &[key, value] : map.value()) {
+                auto value_schema_node = schema.root()->leafAt(0);
+                ::avro::ValidSchema value_schema(value_schema_node);
+                auto transformed = transformFields(ctx, value, value_schema);
+                result.value().emplace_back(key, transformed);
+            }
+            return result_datum;
+        }
+
+        case ::avro::AVRO_UNION: {
+            auto union_val = datum.value<::avro::GenericUnion>();
+            auto [branch_idx, branch_schema] = resolveUnion(schema, datum);
             auto transformed =
-                transformFields(ctx, array.value()[i], item_schema);
-            result.value().push_back(transformed);
+                transformFields(ctx, union_val.datum(), branch_schema);
+
+            ::avro::GenericDatum result_datum(schema);
+            auto &result = result_datum.value<::avro::GenericUnion>();
+            result.selectBranch(branch_idx);
+            result.datum() = transformed;
+
+            return result_datum;
         }
 
-        return result_datum;
-    }
+        default: {
+            // Field-level transformation logic
+            auto field_ctx = ctx.currentField();
+            if (field_ctx.has_value()) {
+                field_ctx->setFieldType(avroSchemaToFieldType(schema));
 
-    case ::avro::AVRO_MAP: {
-        auto map = datum.value<::avro::GenericMap>();
-        ::avro::GenericDatum result_datum(schema);
-        auto &result = result_datum.value<::avro::GenericMap>();
-        for (const auto &[key, value] : map.value()) {
-            auto value_schema_node = schema.root()->leafAt(0);
-            ::avro::ValidSchema value_schema(value_schema_node);
-            auto transformed = transformFields(ctx, value, value_schema);
-            result.value().emplace_back(key, transformed);
-        }
-        return result_datum;
-    }
+                auto rule_tags = ctx.getRule().getTags();
+                std::unordered_set<std::string> rule_tags_set;
+                if (rule_tags.has_value()) {
+                    rule_tags_set = std::unordered_set<std::string>(
+                        rule_tags->begin(), rule_tags->end());
+                }
 
-    case ::avro::AVRO_UNION: {
-        auto union_val = datum.value<::avro::GenericUnion>();
-        auto [branch_idx, branch_schema] = resolveUnion(schema, datum);
-        auto transformed =
-            transformFields(ctx, union_val.datum(), branch_schema);
+                // Check if rule tags overlap with field context tags (empty
+                // rule_tags means apply to all)
+                bool should_apply =
+                    !rule_tags.has_value() || rule_tags_set.empty();
+                if (!should_apply) {
+                    const auto &field_tags = field_ctx->getTags();
+                    for (const auto &field_tag : field_tags) {
+                        if (rule_tags_set.find(field_tag) !=
+                            rule_tags_set.end()) {
+                            should_apply = true;
+                            break;
+                        }
+                    }
+                }
 
-        ::avro::GenericDatum result_datum(schema);
-        auto &result = result_datum.value<::avro::GenericUnion>();
-        result.selectBranch(branch_idx);
-        result.datum() = transformed;
+                if (should_apply) {
+                    auto message_value = makeAvroValue(datum);
 
-        return result_datum;
-    }
+                    // Get field executor type from the rule
+                    auto field_executor_type =
+                        ctx.getRule().getType().value_or("");
 
-    default: {
-        // Field-level transformation logic
-        auto field_ctx = ctx.currentField();
-        if (field_ctx.has_value()) {
-            field_ctx->setFieldType(avroSchemaToFieldType(schema));
+                    // Try to get executor from context's rule registry first,
+                    // then global
+                    std::shared_ptr<RuleExecutor> executor;
+                    if (ctx.getRuleRegistry()) {
+                        executor = ctx.getRuleRegistry()->getExecutor(
+                            field_executor_type);
+                    }
+                    if (!executor) {
+                        executor = global_registry::getRuleExecutor(
+                            field_executor_type);
+                    }
 
-            auto rule_tags = ctx.getRule().getTags();
-            std::unordered_set<std::string> rule_tags_set;
-            if (rule_tags.has_value()) {
-                rule_tags_set = std::unordered_set<std::string>(
-                    rule_tags->begin(), rule_tags->end());
-            }
+                    if (executor) {
+                        auto field_executor =
+                            std::dynamic_pointer_cast<FieldRuleExecutor>(
+                                executor);
+                        if (!field_executor) {
+                            throw AvroError("executor " + field_executor_type +
+                                            " is not a field rule executor");
+                        }
 
-            // Check if rule tags overlap with field context tags (empty
-            // rule_tags means apply to all)
-            bool should_apply = !rule_tags.has_value() || rule_tags_set.empty();
-            if (!should_apply) {
-                const auto &field_tags = field_ctx->getTags();
-                for (const auto &field_tag : field_tags) {
-                    if (rule_tags_set.find(field_tag) != rule_tags_set.end()) {
-                        should_apply = true;
-                        break;
+                        auto new_value =
+                            field_executor->transformField(ctx, *message_value);
+                        if (new_value &&
+                            new_value->getFormat() == SerdeFormat::Avro) {
+                            return asAvro(*new_value);
+                        }
                     }
                 }
             }
 
-            if (should_apply) {
-                auto message_value = makeAvroValue(datum);
-
-                // Get field executor type from the rule
-                auto field_executor_type = ctx.getRule().getType().value_or("");
-
-                // Try to get executor from context's rule registry first, then
-                // global
-                std::shared_ptr<RuleExecutor> executor;
-                if (ctx.getRuleRegistry()) {
-                    executor =
-                        ctx.getRuleRegistry()->getExecutor(field_executor_type);
-                }
-                if (!executor) {
-                    executor =
-                        global_registry::getRuleExecutor(field_executor_type);
-                }
-
-                if (executor) {
-                    auto field_executor =
-                        std::dynamic_pointer_cast<FieldRuleExecutor>(executor);
-                    if (!field_executor) {
-                        throw AvroError("executor " + field_executor_type +
-                                        " is not a field rule executor");
-                    }
-
-                    auto new_value =
-                        field_executor->transformField(ctx, *message_value);
-                    if (new_value &&
-                        new_value->getFormat() == SerdeFormat::Avro) {
-                        return asAvro(*new_value);
-                    }
-                }
-            }
+            return datum;
         }
-
-        return datum;
-    }
     }
 }
 
@@ -201,222 +208,252 @@ namespace utils {
 
 FieldType avroSchemaToFieldType(const ::avro::ValidSchema &schema) {
     switch (schema.root()->type()) {
-    case ::avro::AVRO_NULL: return FieldType::Null;
-    case ::avro::AVRO_BOOL: return FieldType::Boolean;
-    case ::avro::AVRO_INT: return FieldType::Int;
-    case ::avro::AVRO_LONG: return FieldType::Long;
-    case ::avro::AVRO_FLOAT: return FieldType::Float;
-    case ::avro::AVRO_DOUBLE: return FieldType::Double;
-    case ::avro::AVRO_BYTES: return FieldType::Bytes;
-    case ::avro::AVRO_STRING: return FieldType::String;
-    case ::avro::AVRO_RECORD: return FieldType::Record;
-    case ::avro::AVRO_ENUM: return FieldType::Enum;
-    case ::avro::AVRO_ARRAY: return FieldType::Array;
-    case ::avro::AVRO_MAP: return FieldType::Map;
-    case ::avro::AVRO_UNION: return FieldType::Combined;
-    case ::avro::AVRO_FIXED: return FieldType::Fixed;
-    case ::avro::AVRO_SYMBOLIC:
-        return FieldType::Record;      // Assume symbolic references are records
-    default: return FieldType::String; // Default fallback
+        case ::avro::AVRO_NULL:
+            return FieldType::Null;
+        case ::avro::AVRO_BOOL:
+            return FieldType::Boolean;
+        case ::avro::AVRO_INT:
+            return FieldType::Int;
+        case ::avro::AVRO_LONG:
+            return FieldType::Long;
+        case ::avro::AVRO_FLOAT:
+            return FieldType::Float;
+        case ::avro::AVRO_DOUBLE:
+            return FieldType::Double;
+        case ::avro::AVRO_BYTES:
+            return FieldType::Bytes;
+        case ::avro::AVRO_STRING:
+            return FieldType::String;
+        case ::avro::AVRO_RECORD:
+            return FieldType::Record;
+        case ::avro::AVRO_ENUM:
+            return FieldType::Enum;
+        case ::avro::AVRO_ARRAY:
+            return FieldType::Array;
+        case ::avro::AVRO_MAP:
+            return FieldType::Map;
+        case ::avro::AVRO_UNION:
+            return FieldType::Combined;
+        case ::avro::AVRO_FIXED:
+            return FieldType::Fixed;
+        case ::avro::AVRO_SYMBOLIC:
+            return FieldType::Record;  // Assume symbolic references are records
+        default:
+            return FieldType::String;  // Default fallback
     }
 }
 
 nlohmann::json avroToJson(const ::avro::GenericDatum &datum) {
     switch (datum.type()) {
-    case ::avro::AVRO_NULL: return nlohmann::json(nullptr);
+        case ::avro::AVRO_NULL:
+            return nlohmann::json(nullptr);
 
-    case ::avro::AVRO_BOOL: return nlohmann::json(datum.value<bool>());
+        case ::avro::AVRO_BOOL:
+            return nlohmann::json(datum.value<bool>());
 
-    case ::avro::AVRO_INT: return nlohmann::json(datum.value<int32_t>());
+        case ::avro::AVRO_INT:
+            return nlohmann::json(datum.value<int32_t>());
 
-    case ::avro::AVRO_LONG: return nlohmann::json(datum.value<int64_t>());
+        case ::avro::AVRO_LONG:
+            return nlohmann::json(datum.value<int64_t>());
 
-    case ::avro::AVRO_FLOAT: return nlohmann::json(datum.value<float>());
+        case ::avro::AVRO_FLOAT:
+            return nlohmann::json(datum.value<float>());
 
-    case ::avro::AVRO_DOUBLE: return nlohmann::json(datum.value<double>());
+        case ::avro::AVRO_DOUBLE:
+            return nlohmann::json(datum.value<double>());
 
-    case ::avro::AVRO_STRING: return nlohmann::json(datum.value<std::string>());
+        case ::avro::AVRO_STRING:
+            return nlohmann::json(datum.value<std::string>());
 
-    case ::avro::AVRO_BYTES: {
-        const auto &bytes = datum.value<std::vector<uint8_t>>();
-        nlohmann::json array = nlohmann::json::array();
-        for (uint8_t byte : bytes) {
-            array.push_back(static_cast<unsigned int>(byte));
+        case ::avro::AVRO_BYTES: {
+            const auto &bytes = datum.value<std::vector<uint8_t>>();
+            nlohmann::json array = nlohmann::json::array();
+            for (uint8_t byte : bytes) {
+                array.push_back(static_cast<unsigned int>(byte));
+            }
+            return array;
         }
-        return array;
-    }
 
-    case ::avro::AVRO_FIXED: {
-        const auto &fixed = datum.value<::avro::GenericFixed>();
-        nlohmann::json array = nlohmann::json::array();
-        for (size_t i = 0; i < fixed.value().size(); ++i) {
-            array.push_back(static_cast<unsigned int>(fixed.value()[i]));
+        case ::avro::AVRO_FIXED: {
+            const auto &fixed = datum.value<::avro::GenericFixed>();
+            nlohmann::json array = nlohmann::json::array();
+            for (size_t i = 0; i < fixed.value().size(); ++i) {
+                array.push_back(static_cast<unsigned int>(fixed.value()[i]));
+            }
+            return array;
         }
-        return array;
-    }
 
-    case ::avro::AVRO_ENUM: {
-        const auto &enum_val = datum.value<::avro::GenericEnum>();
-        return nlohmann::json(enum_val.symbol());
-    }
-
-    case ::avro::AVRO_ARRAY: {
-        const auto &array = datum.value<::avro::GenericArray>();
-        nlohmann::json json_array = nlohmann::json::array();
-        for (size_t i = 0; i < array.value().size(); ++i) {
-            json_array.push_back(avroToJson(array.value()[i]));
+        case ::avro::AVRO_ENUM: {
+            const auto &enum_val = datum.value<::avro::GenericEnum>();
+            return nlohmann::json(enum_val.symbol());
         }
-        return json_array;
-    }
 
-    case ::avro::AVRO_MAP: {
-        const auto &map = datum.value<::avro::GenericMap>();
-        nlohmann::json json_obj = nlohmann::json::object();
-        for (const auto &pair : map.value()) {
-            json_obj[pair.first] = avroToJson(pair.second);
+        case ::avro::AVRO_ARRAY: {
+            const auto &array = datum.value<::avro::GenericArray>();
+            nlohmann::json json_array = nlohmann::json::array();
+            for (size_t i = 0; i < array.value().size(); ++i) {
+                json_array.push_back(avroToJson(array.value()[i]));
+            }
+            return json_array;
         }
-        return json_obj;
-    }
 
-    case ::avro::AVRO_RECORD: {
-        const auto &record = datum.value<::avro::GenericRecord>();
-        nlohmann::json json_obj = nlohmann::json::object();
-        for (size_t i = 0; i < record.fieldCount(); ++i) {
-            json_obj[record.schema()->nameAt(i)] =
-                avroToJson(record.fieldAt(i));
+        case ::avro::AVRO_MAP: {
+            const auto &map = datum.value<::avro::GenericMap>();
+            nlohmann::json json_obj = nlohmann::json::object();
+            for (const auto &pair : map.value()) {
+                json_obj[pair.first] = avroToJson(pair.second);
+            }
+            return json_obj;
         }
-        return json_obj;
-    }
 
-    case ::avro::AVRO_UNION: {
-        const auto &union_val = datum.value<::avro::GenericUnion>();
-        return avroToJson(union_val.datum());
-    }
+        case ::avro::AVRO_RECORD: {
+            const auto &record = datum.value<::avro::GenericRecord>();
+            nlohmann::json json_obj = nlohmann::json::object();
+            for (size_t i = 0; i < record.fieldCount(); ++i) {
+                json_obj[record.schema()->nameAt(i)] =
+                    avroToJson(record.fieldAt(i));
+            }
+            return json_obj;
+        }
 
-    default: throw AvroError("Unsupported Avro type for JSON conversion");
+        case ::avro::AVRO_UNION: {
+            const auto &union_val = datum.value<::avro::GenericUnion>();
+            return avroToJson(union_val.datum());
+        }
+
+        default:
+            throw AvroError("Unsupported Avro type for JSON conversion");
     }
 }
 
 ::avro::GenericDatum jsonToAvro(const nlohmann::json &json_value,
                                 const ::avro::ValidSchema &schema) {
     switch (schema.root()->type()) {
-    case ::avro::AVRO_NULL: return ::avro::GenericDatum();
+        case ::avro::AVRO_NULL:
+            return ::avro::GenericDatum();
 
-    case ::avro::AVRO_BOOL:
-        if (!json_value.is_boolean()) {
-            throw AvroError("Expected boolean value");
-        }
-        return ::avro::GenericDatum(json_value.get<bool>());
-
-    case ::avro::AVRO_INT:
-        if (!json_value.is_number_integer()) {
-            throw AvroError("Expected integer value");
-        }
-        return ::avro::GenericDatum(json_value.get<int32_t>());
-
-    case ::avro::AVRO_LONG:
-        if (!json_value.is_number()) {
-            throw AvroError("Expected number value for long");
-        }
-        return ::avro::GenericDatum(json_value.get<int64_t>());
-
-    case ::avro::AVRO_FLOAT:
-        if (!json_value.is_number()) {
-            throw AvroError("Expected number value for float");
-        }
-        return ::avro::GenericDatum(json_value.get<float>());
-
-    case ::avro::AVRO_DOUBLE:
-        if (!json_value.is_number()) {
-            throw AvroError("Expected number value for double");
-        }
-        return ::avro::GenericDatum(json_value.get<double>());
-
-    case ::avro::AVRO_STRING:
-        if (!json_value.is_string()) {
-            throw AvroError("Expected string value");
-        }
-        return ::avro::GenericDatum(json_value.get<std::string>());
-
-    case ::avro::AVRO_BYTES: {
-        if (!json_value.is_array()) {
-            throw AvroError("Expected array for bytes");
-        }
-        std::vector<uint8_t> bytes;
-        for (const auto &elem : json_value) {
-            if (!elem.is_number_unsigned()) {
-                throw AvroError("Expected unsigned integers in bytes array");
+        case ::avro::AVRO_BOOL:
+            if (!json_value.is_boolean()) {
+                throw AvroError("Expected boolean value");
             }
-            bytes.push_back(elem.get<uint8_t>());
-        }
-        return ::avro::GenericDatum(bytes);
-    }
+            return ::avro::GenericDatum(json_value.get<bool>());
 
-    case ::avro::AVRO_ENUM: {
-        if (!json_value.is_string()) {
-            throw AvroError("Expected string value for enum");
-        }
-        ::avro::GenericDatum datum(schema);
-        auto &enum_val = datum.value<::avro::GenericEnum>();
-        enum_val.set(json_value.get<std::string>());
-        return datum;
-    }
-
-    case ::avro::AVRO_ARRAY: {
-        if (!json_value.is_array()) { throw AvroError("Expected array value"); }
-        ::avro::GenericDatum datum(schema);
-        auto &array = datum.value<::avro::GenericArray>();
-        auto item_schema = schema.root()->leafAt(0);
-        ::avro::ValidSchema item_valid_schema(item_schema);
-
-        for (const auto &item : json_value) {
-            array.value().push_back(jsonToAvro(item, item_valid_schema));
-        }
-        return datum;
-    }
-
-    case ::avro::AVRO_MAP: {
-        if (!json_value.is_object()) {
-            throw AvroError("Expected object value for map");
-        }
-        ::avro::GenericDatum datum(schema);
-        auto &map = datum.value<::avro::GenericMap>();
-        auto value_schema = schema.root()->leafAt(0);
-        ::avro::ValidSchema value_valid_schema(value_schema);
-
-        for (const auto &[key, value] : json_value.items()) {
-            map.value().push_back({key, jsonToAvro(value, value_valid_schema)});
-        }
-        return datum;
-    }
-
-    case ::avro::AVRO_RECORD: {
-        if (!json_value.is_object()) {
-            throw AvroError("Expected object value for record");
-        }
-        ::avro::GenericDatum datum(schema);
-        auto &record = datum.value<::avro::GenericRecord>();
-
-        for (size_t i = 0; i < schema.root()->leaves(); ++i) {
-            const std::string &field_name = schema.root()->nameAt(i);
-            auto field_it = json_value.find(field_name);
-            if (field_it != json_value.end()) {
-                auto field_schema = schema.root()->leafAt(i);
-                ::avro::ValidSchema field_valid_schema(field_schema);
-                record.setFieldAt(i, jsonToAvro(*field_it, field_valid_schema));
+        case ::avro::AVRO_INT:
+            if (!json_value.is_number_integer()) {
+                throw AvroError("Expected integer value");
             }
-        }
-        return datum;
-    }
+            return ::avro::GenericDatum(json_value.get<int32_t>());
 
-    default:
-        throw AvroError("Unsupported schema type for JSON to Avro conversion");
+        case ::avro::AVRO_LONG:
+            if (!json_value.is_number()) {
+                throw AvroError("Expected number value for long");
+            }
+            return ::avro::GenericDatum(json_value.get<int64_t>());
+
+        case ::avro::AVRO_FLOAT:
+            if (!json_value.is_number()) {
+                throw AvroError("Expected number value for float");
+            }
+            return ::avro::GenericDatum(json_value.get<float>());
+
+        case ::avro::AVRO_DOUBLE:
+            if (!json_value.is_number()) {
+                throw AvroError("Expected number value for double");
+            }
+            return ::avro::GenericDatum(json_value.get<double>());
+
+        case ::avro::AVRO_STRING:
+            if (!json_value.is_string()) {
+                throw AvroError("Expected string value");
+            }
+            return ::avro::GenericDatum(json_value.get<std::string>());
+
+        case ::avro::AVRO_BYTES: {
+            if (!json_value.is_array()) {
+                throw AvroError("Expected array for bytes");
+            }
+            std::vector<uint8_t> bytes;
+            for (const auto &elem : json_value) {
+                if (!elem.is_number_unsigned()) {
+                    throw AvroError(
+                        "Expected unsigned integers in bytes array");
+                }
+                bytes.push_back(elem.get<uint8_t>());
+            }
+            return ::avro::GenericDatum(bytes);
+        }
+
+        case ::avro::AVRO_ENUM: {
+            if (!json_value.is_string()) {
+                throw AvroError("Expected string value for enum");
+            }
+            ::avro::GenericDatum datum(schema);
+            auto &enum_val = datum.value<::avro::GenericEnum>();
+            enum_val.set(json_value.get<std::string>());
+            return datum;
+        }
+
+        case ::avro::AVRO_ARRAY: {
+            if (!json_value.is_array()) {
+                throw AvroError("Expected array value");
+            }
+            ::avro::GenericDatum datum(schema);
+            auto &array = datum.value<::avro::GenericArray>();
+            auto item_schema = schema.root()->leafAt(0);
+            ::avro::ValidSchema item_valid_schema(item_schema);
+
+            for (const auto &item : json_value) {
+                array.value().push_back(jsonToAvro(item, item_valid_schema));
+            }
+            return datum;
+        }
+
+        case ::avro::AVRO_MAP: {
+            if (!json_value.is_object()) {
+                throw AvroError("Expected object value for map");
+            }
+            ::avro::GenericDatum datum(schema);
+            auto &map = datum.value<::avro::GenericMap>();
+            auto value_schema = schema.root()->leafAt(0);
+            ::avro::ValidSchema value_valid_schema(value_schema);
+
+            for (const auto &[key, value] : json_value.items()) {
+                map.value().push_back(
+                    {key, jsonToAvro(value, value_valid_schema)});
+            }
+            return datum;
+        }
+
+        case ::avro::AVRO_RECORD: {
+            if (!json_value.is_object()) {
+                throw AvroError("Expected object value for record");
+            }
+            ::avro::GenericDatum datum(schema);
+            auto &record = datum.value<::avro::GenericRecord>();
+
+            for (size_t i = 0; i < schema.root()->leaves(); ++i) {
+                const std::string &field_name = schema.root()->nameAt(i);
+                auto field_it = json_value.find(field_name);
+                if (field_it != json_value.end()) {
+                    auto field_schema = schema.root()->leafAt(i);
+                    ::avro::ValidSchema field_valid_schema(field_schema);
+                    record.setFieldAt(
+                        i, jsonToAvro(*field_it, field_valid_schema));
+                }
+            }
+            return datum;
+        }
+
+        default:
+            throw AvroError(
+                "Unsupported schema type for JSON to Avro conversion");
     }
 }
 
-std::pair<size_t, ::avro::ValidSchema>
-resolveUnion(const ::avro::ValidSchema &union_schema,
-             const ::avro::GenericDatum &datum) {
+std::pair<size_t, ::avro::ValidSchema> resolveUnion(
+    const ::avro::ValidSchema &union_schema,
+    const ::avro::GenericDatum &datum) {
     if (union_schema.root()->type() != ::avro::AVRO_UNION) {
         throw AvroError("Schema is not a union type");
     }
@@ -439,10 +476,9 @@ std::optional<std::string> getSchemaName(const ::avro::ValidSchema &schema) {
     return std::nullopt;
 }
 
-std::vector<uint8_t>
-serializeAvroData(const ::avro::GenericDatum &datum,
-                  const ::avro::ValidSchema &writer_schema,
-                  const std::vector<::avro::ValidSchema> &named_schemas) {
+std::vector<uint8_t> serializeAvroData(
+    const ::avro::GenericDatum &datum, const ::avro::ValidSchema &writer_schema,
+    const std::vector<::avro::ValidSchema> &named_schemas) {
     try {
         auto output_stream = ::avro::memoryOutputStream();
         auto encoder = ::avro::binaryEncoder();
@@ -459,14 +495,15 @@ serializeAvroData(const ::avro::GenericDatum &datum,
             return std::vector<uint8_t>(data, data + size);
         }
         return {};
-    } catch (const ::avro::Exception &e) { throw AvroError(e); }
+    } catch (const ::avro::Exception &e) {
+        throw AvroError(e);
+    }
 }
 
-::avro::GenericDatum
-deserializeAvroData(const std::vector<uint8_t> &data,
-                    const ::avro::ValidSchema &writer_schema,
-                    const ::avro::ValidSchema *reader_schema,
-                    const std::vector<::avro::ValidSchema> &named_schemas) {
+::avro::GenericDatum deserializeAvroData(
+    const std::vector<uint8_t> &data, const ::avro::ValidSchema &writer_schema,
+    const ::avro::ValidSchema *reader_schema,
+    const std::vector<::avro::ValidSchema> &named_schemas) {
     try {
         auto input_stream = ::avro::memoryInputStream(data.data(), data.size());
         auto decoder = ::avro::binaryDecoder();
@@ -477,7 +514,9 @@ deserializeAvroData(const std::vector<uint8_t> &data,
         ::avro::decode(*decoder, datum);
 
         return datum;
-    } catch (const ::avro::Exception &e) { throw AvroError(e); }
+    } catch (const ::avro::Exception &e) {
+        throw AvroError(e);
+    }
 }
 
 std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
@@ -498,7 +537,9 @@ parseSchemaWithNamed(const std::string &schema_str,
         ::avro::ValidSchema main_schema = compileJsonSchema(schema_str);
 
         return {main_schema, parsed_named};
-    } catch (const ::avro::Exception &e) { throw AvroError(e); }
+    } catch (const ::avro::Exception &e) {
+        throw AvroError(e);
+    }
 }
 
 std::string impliedNamespace(const std::string &name) {
@@ -509,8 +550,8 @@ std::string impliedNamespace(const std::string &name) {
     return "";
 }
 
-std::unordered_map<std::string, std::unordered_set<std::string>>
-getInlineTags(const nlohmann::json &schema) {
+std::unordered_map<std::string, std::unordered_set<std::string>> getInlineTags(
+    const nlohmann::json &schema) {
     std::unordered_map<std::string, std::unordered_set<std::string>>
         inline_tags;
     getInlineTagsRecursively("", "", schema, inline_tags);
@@ -521,7 +562,9 @@ void getInlineTagsRecursively(
     const std::string &ns, const std::string &name,
     const nlohmann::json &schema,
     std::unordered_map<std::string, std::unordered_set<std::string>> &tags) {
-    if (schema.is_null()) { return; }
+    if (schema.is_null()) {
+        return;
+    }
 
     if (schema.is_array()) {
         for (const auto &subschema : schema) {
@@ -533,7 +576,9 @@ void getInlineTagsRecursively(
         return;
     } else {
         auto schema_type_it = schema.find("type");
-        if (schema_type_it == schema.end()) { return; }
+        if (schema_type_it == schema.end()) {
+            return;
+        }
 
         std::string schema_type = schema_type_it->is_string()
                                       ? schema_type_it->get<std::string>()
@@ -558,7 +603,9 @@ void getInlineTagsRecursively(
                 record_ns = ns_it->get<std::string>();
             } else {
                 record_ns = impliedNamespace(name);
-                if (record_ns.empty()) { record_ns = ns; }
+                if (record_ns.empty()) {
+                    record_ns = ns;
+                }
             }
 
             auto name_it = schema.find("name");
@@ -584,7 +631,6 @@ void getInlineTagsRecursively(
                         field_name_it != field.end() &&
                         field_tags_it->is_array() &&
                         field_name_it->is_string()) {
-
                         std::string field_name =
                             field_name_it->get<std::string>();
                         std::string full_field_name =
@@ -616,7 +662,9 @@ void removeConfluentTags(nlohmann::json &schema) {
     if (schema.is_object()) {
         // Remove confluent:tags if it exists
         auto tags_it = schema.find("confluent:tags");
-        if (tags_it != schema.end()) { schema.erase(tags_it); }
+        if (tags_it != schema.end()) {
+            schema.erase(tags_it);
+        }
 
         // Recursively process all values in the object
         for (auto &[key, value] : schema.items()) {
@@ -656,6 +704,6 @@ void removeConfluentTags(nlohmann::json &schema) {
     }
 }
 
-} // namespace utils
+}  // namespace utils
 
-} // namespace srclient::serdes::avro
+}  // namespace srclient::serdes::avro

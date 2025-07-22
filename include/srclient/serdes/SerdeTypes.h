@@ -19,7 +19,6 @@
 #include "srclient/rest/model/Rule.h"
 #include "srclient/rest/model/RuleSet.h"
 #include "srclient/rest/model/Schema.h"
-
 #include "srclient/serdes/SerdeError.h"
 
 namespace srclient::rest {
@@ -36,7 +35,8 @@ namespace json {
 class JsonValue;
 }
 namespace protobuf {
-template <typename T> class ProtobufValue;
+template <typename T>
+class ProtobufValue;
 }
 
 /**
@@ -68,26 +68,38 @@ class SerdeObject {
     virtual void moveFrom(SerdeObject &&other) = 0;
 
     // Template method to safely cast and access the value
-    template <typename T> const T &getObject() const {
-        if (typeid(T) != getType()) { throw std::bad_cast(); }
+    template <typename T>
+    const T &getObject() const {
+        if (typeid(T) != getType()) {
+            throw std::bad_cast();
+        }
         return *static_cast<const T *>(getRawObject());
     }
 
     // Template method to safely cast and get mutable access
-    template <typename T> T &getMutableObject() {
-        if (typeid(T) != getType()) { throw std::bad_cast(); }
+    template <typename T>
+    T &getMutableObject() {
+        if (typeid(T) != getType()) {
+            throw std::bad_cast();
+        }
         return *static_cast<T *>(getMutableRawObject());
     }
 
     // Template method to move a value into this SerdeObject
-    template <typename T> void setObject(T &&value) {
-        if (typeid(std::decay_t<T>) != getType()) { throw std::bad_cast(); }
+    template <typename T>
+    void setObject(T &&value) {
+        if (typeid(std::decay_t<T>) != getType()) {
+            throw std::bad_cast();
+        }
         *static_cast<T *>(getMutableRawObject()) = std::forward<T>(value);
     }
 
     // Template method to move a value out of this SerdeObject
-    template <typename T> T moveObject() {
-        if (typeid(T) != getType()) { throw std::bad_cast(); }
+    template <typename T>
+    T moveObject() {
+        if (typeid(T) != getType()) {
+            throw std::bad_cast();
+        }
         return std::move(*static_cast<T *>(getMutableRawObject()));
     }
 };
@@ -104,23 +116,33 @@ class SerdeValue : public SerdeObject {
     virtual void *getMutableRawValue() { return getMutableRawObject(); }
 
     // Template methods that delegate to Object methods from superclass
-    template <typename T> const T &getValue() const { return getObject<T>(); }
+    template <typename T>
+    const T &getValue() const {
+        return getObject<T>();
+    }
 
-    template <typename T> T &getMutableValue() { return getMutableObject<T>(); }
+    template <typename T>
+    T &getMutableValue() {
+        return getMutableObject<T>();
+    }
 
-    template <typename T> void setValue(T &&value) {
+    template <typename T>
+    void setValue(T &&value) {
         setObject<T>(std::forward<T>(value));
     }
 
-    template <typename T> T moveValue() { return moveObject<T>(); }
+    template <typename T>
+    T moveValue() {
+        return moveObject<T>();
+    }
 
     virtual std::unique_ptr<SerdeValue> clone() const = 0;
 
     // Static factory methods for creating SerdeValue instances
     static std::unique_ptr<SerdeValue> newString(SerdeFormat format,
                                                  const std::string &value);
-    static std::unique_ptr<SerdeValue>
-    newBytes(SerdeFormat format, const std::vector<uint8_t> &value);
+    static std::unique_ptr<SerdeValue> newBytes(
+        SerdeFormat format, const std::vector<uint8_t> &value);
 
     // Value extraction methods
     virtual bool asBool() const = 0;
@@ -141,17 +163,25 @@ class SerdeSchema : public SerdeObject {
     virtual void *getMutableRawSchema() { return getMutableRawObject(); }
 
     // Template methods that delegate to Object methods from superclass
-    template <typename T> const T &getSchema() const { return getObject<T>(); }
+    template <typename T>
+    const T &getSchema() const {
+        return getObject<T>();
+    }
 
-    template <typename T> T &getMutableSchema() {
+    template <typename T>
+    T &getMutableSchema() {
         return getMutableObject<T>();
     }
 
-    template <typename T> void setSchema(T &&schema) {
+    template <typename T>
+    void setSchema(T &&schema) {
         setObject<T>(std::forward<T>(schema));
     }
 
-    template <typename T> T moveSchema() { return moveObject<T>(); }
+    template <typename T>
+    T moveSchema() {
+        return moveObject<T>();
+    }
 
     // Clone method
     virtual std::unique_ptr<SerdeSchema> clone() const = 0;
@@ -291,7 +321,8 @@ using FieldTransformer = std::function<std::unique_ptr<SerdeValue>(
 /**
  * Cache for parsed schemas (from serde.rs)
  */
-template <typename T> class ParsedSchemaCache {
+template <typename T>
+class ParsedSchemaCache {
   private:
     std::unordered_map<std::string, T> cache_;
     mutable std::mutex mutex_;
@@ -338,6 +369,6 @@ std::string phaseToString(Phase phase);
  * Convert Kind to string
  */
 std::string kindToString(Kind kind);
-} // namespace type_utils
+}  // namespace type_utils
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

@@ -1,6 +1,8 @@
 #include "srclient/serdes/json/JsonTypes.h"
-#include "absl/strings/escaping.h"
+
 #include <algorithm>
+
+#include "absl/strings/escaping.h"
 
 namespace srclient::serdes::json {
 
@@ -14,17 +16,21 @@ std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
     }
     return std::vector<uint8_t>(decoded.begin(), decoded.end());
 }
-} // namespace
+}  // namespace
 
 // Implementation for JsonValue methods
 bool JsonValue::asBool() const {
-    if (value_.is_boolean()) { return value_.get<bool>(); }
+    if (value_.is_boolean()) {
+        return value_.get<bool>();
+    }
     // Default to true for non-boolean types (matching Rust behavior)
     return true;
 }
 
 std::string JsonValue::asString() const {
-    if (value_.is_string()) { return value_.get<std::string>(); }
+    if (value_.is_string()) {
+        return value_.get<std::string>();
+    }
     // Return empty string for non-string types (matching Rust behavior)
     return "";
 }
@@ -52,4 +58,4 @@ nlohmann::json asJson(const SerdeValue &value) {
     return value.getValue<nlohmann::json>();
 }
 
-} // namespace srclient::serdes::json
+}  // namespace srclient::serdes::json

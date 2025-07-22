@@ -1,4 +1,5 @@
 #include "srclient/serdes/json/JsonUtils.h"
+
 #include <algorithm>
 #include <sstream>
 
@@ -10,9 +11,10 @@ namespace schema_resolution {
 void resolveNamedSchema(
     const srclient::rest::model::Schema &schema,
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
-
     auto references = schema.getReferences();
-    if (!references.has_value()) { return; }
+    if (!references.has_value()) {
+        return;
+    }
 
     // Resolve each reference
     for (const auto &ref : references.value()) {
@@ -20,7 +22,9 @@ void resolveNamedSchema(
         auto subject_opt = ref.getSubject();
         auto version_opt = ref.getVersion();
 
-        if (!name_opt.has_value() || !subject_opt.has_value()) { continue; }
+        if (!name_opt.has_value() || !subject_opt.has_value()) {
+            continue;
+        }
 
         try {
             // Get referenced schema
@@ -49,22 +53,25 @@ std::unordered_map<std::string, nlohmann::json> resolveAllDependencies(
     const srclient::rest::model::Schema &schema,
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::unordered_set<std::string> &visited) {
-
     std::unordered_map<std::string, nlohmann::json> resolved_schemas;
 
     auto references = schema.getReferences();
-    if (!references.has_value()) { return resolved_schemas; }
+    if (!references.has_value()) {
+        return resolved_schemas;
+    }
 
     for (const auto &ref : references.value()) {
         auto name_opt = ref.getName();
         auto subject_opt = ref.getSubject();
         auto version_opt = ref.getVersion();
 
-        if (!name_opt.has_value() || !subject_opt.has_value()) { continue; }
+        if (!name_opt.has_value() || !subject_opt.has_value()) {
+            continue;
+        }
 
         std::string name = name_opt.value();
         if (visited.find(name) != visited.end()) {
-            continue; // Avoid cycles
+            continue;  // Avoid cycles
         }
         visited.insert(name);
 
@@ -94,10 +101,8 @@ std::unordered_map<std::string, nlohmann::json> resolveAllDependencies(
     return resolved_schemas;
 }
 
-std::vector<srclient::rest::model::SchemaReference>
-buildDependencies(const nlohmann::json &schema,
-                  const std::string &subject_prefix) {
-
+std::vector<srclient::rest::model::SchemaReference> buildDependencies(
+    const nlohmann::json &schema, const std::string &subject_prefix) {
     std::vector<srclient::rest::model::SchemaReference> dependencies;
 
     // TODO: Implement JSON schema analysis to find $ref dependencies
@@ -106,7 +111,7 @@ buildDependencies(const nlohmann::json &schema,
     return dependencies;
 }
 
-} // namespace schema_resolution
+}  // namespace schema_resolution
 
 // Value transformation implementations
 namespace value_transform {
@@ -115,7 +120,6 @@ nlohmann::json transformField(RuleContext &ctx, const nlohmann::json &schema,
                               const std::string &path,
                               const nlohmann::json &value,
                               const std::string &field_executor_type) {
-
     // TODO: Implement field-specific transformation logic
     // This would involve checking confluent tags and applying appropriate rules
     return value;
@@ -124,7 +128,6 @@ nlohmann::json transformField(RuleContext &ctx, const nlohmann::json &schema,
 nlohmann::json transformFields(RuleContext &ctx, const nlohmann::json &schema,
                                const nlohmann::json &value,
                                const std::string &field_executor_type) {
-
     return applyRulesRecursive(ctx, schema, "$", value, field_executor_type);
 }
 
@@ -133,7 +136,6 @@ nlohmann::json applyRulesRecursive(RuleContext &ctx,
                                    const std::string &path,
                                    const nlohmann::json &value,
                                    const std::string &field_executor_type) {
-
     // Handle allOf, anyOf, oneOf
     if (schema.contains("allOf")) {
         // For now, just use the first subschema - TODO: implement proper
@@ -184,24 +186,27 @@ nlohmann::json applyRulesRecursive(RuleContext &ctx,
 
 const nlohmann::json *validateSubschemas(const nlohmann::json &subschemas,
                                          const nlohmann::json &value) {
-
-    if (!subschemas.is_array()) { return nullptr; }
+    if (!subschemas.is_array()) {
+        return nullptr;
+    }
 
     // For now, return the first subschema
     // TODO: Implement proper validation to find the best matching subschema
-    if (!subschemas.empty()) { return &subschemas[0]; }
+    if (!subschemas.empty()) {
+        return &subschemas[0];
+    }
 
     return nullptr;
 }
 
-} // namespace value_transform
+}  // namespace value_transform
 
 // Schema navigation implementations
 namespace schema_navigation {
 
 FieldType getFieldType(const nlohmann::json &schema) {
     if (!schema.contains("type")) {
-        return FieldType::String; // Default fallback
+        return FieldType::String;  // Default fallback
     }
 
     std::string type = schema["type"];
@@ -222,7 +227,7 @@ FieldType getFieldType(const nlohmann::json &schema) {
         return FieldType::Null;
     }
 
-    return FieldType::String; // Default fallback
+    return FieldType::String;  // Default fallback
 }
 
 bool isObjectSchema(const nlohmann::json &schema) {
@@ -241,7 +246,9 @@ nlohmann::json getSchemaProperties(const nlohmann::json &schema) {
 }
 
 nlohmann::json getArrayItemsSchema(const nlohmann::json &schema) {
-    if (schema.contains("items")) { return schema["items"]; }
+    if (schema.contains("items")) {
+        return schema["items"];
+    }
     return nlohmann::json::object();
 }
 
@@ -251,7 +258,9 @@ std::unordered_set<std::string> getConfluentTags(const nlohmann::json &schema) {
     if (schema.contains("confluent:tags") &&
         schema["confluent:tags"].is_array()) {
         for (const auto &tag : schema["confluent:tags"]) {
-            if (tag.is_string()) { tags.insert(tag); }
+            if (tag.is_string()) {
+                tags.insert(tag);
+            }
         }
     }
 
@@ -265,7 +274,7 @@ nlohmann::json navigateToSubschema(const nlohmann::json &root_schema,
     return root_schema;
 }
 
-} // namespace schema_navigation
+}  // namespace schema_navigation
 
 // Validation utilities implementations
 namespace validation_utils {
@@ -284,7 +293,9 @@ bool validateJsonAgainstSchema(const nlohmann::json &value,
         // TODO: Implement actual value validation when the jsoncons API is
         // available
         return true;
-    } catch (const std::exception &e) { return false; }
+    } catch (const std::exception &e) {
+        return false;
+    }
 }
 
 std::string getValidationErrorDetails(const nlohmann::json &value,
@@ -293,13 +304,15 @@ std::string getValidationErrorDetails(const nlohmann::json &value,
     return "JSON validation failed against schema";
 }
 
-} // namespace validation_utils
+}  // namespace validation_utils
 
 // Path utilities implementations
 namespace path_utils {
 
 std::string buildJsonPath(const std::vector<std::string> &components) {
-    if (components.empty()) { return "$"; }
+    if (components.empty()) {
+        return "$";
+    }
 
     std::string path = "$";
     for (const auto &component : components) {
@@ -311,14 +324,18 @@ std::string buildJsonPath(const std::vector<std::string> &components) {
 std::vector<std::string> parseJsonPath(const std::string &path) {
     std::vector<std::string> components;
 
-    if (path == "$") { return components; }
+    if (path == "$") {
+        return components;
+    }
 
     // Simple implementation - split by '.'
-    std::stringstream ss(path.substr(1)); // Skip the '$'
+    std::stringstream ss(path.substr(1));  // Skip the '$'
     std::string component;
 
     while (std::getline(ss, component, '.')) {
-        if (!component.empty()) { components.push_back(component); }
+        if (!component.empty()) {
+            components.push_back(component);
+        }
     }
 
     return components;
@@ -326,23 +343,29 @@ std::vector<std::string> parseJsonPath(const std::string &path) {
 
 std::string appendToPath(const std::string &base_path,
                          const std::string &component) {
-    if (base_path == "$") { return "$." + component; }
+    if (base_path == "$") {
+        return "$." + component;
+    }
     return base_path + "." + component;
 }
 
 std::string getParentPath(const std::string &path) {
     auto last_dot = path.find_last_of('.');
-    if (last_dot == std::string::npos || last_dot == 0) { return "$"; }
+    if (last_dot == std::string::npos || last_dot == 0) {
+        return "$";
+    }
     return path.substr(0, last_dot);
 }
 
 std::string getFieldName(const std::string &path) {
     auto last_dot = path.find_last_of('.');
-    if (last_dot == std::string::npos) { return path; }
+    if (last_dot == std::string::npos) {
+        return path;
+    }
     return path.substr(last_dot + 1);
 }
 
-} // namespace path_utils
+}  // namespace path_utils
 
 // General utility functions
 jsoncons::json nlohmannToJsoncons(const nlohmann::json &nlohmann_json) {
@@ -368,7 +391,9 @@ nlohmann::json jsonconsToNlohmann(const jsoncons::json &jsoncons_json) {
 }
 
 nlohmann::json mergeSchemas(const std::vector<nlohmann::json> &schemas) {
-    if (schemas.empty()) { return nlohmann::json::object(); }
+    if (schemas.empty()) {
+        return nlohmann::json::object();
+    }
 
     nlohmann::json merged = schemas[0];
 
@@ -388,7 +413,9 @@ nlohmann::json mergeSchemas(const std::vector<nlohmann::json> &schemas) {
 bool hasConfluentExtensions(const nlohmann::json &schema) {
     // Check for confluent-specific properties
     for (auto &[key, value] : schema.items()) {
-        if (key.find("confluent:") == 0) { return true; }
+        if (key.find("confluent:") == 0) {
+            return true;
+        }
     }
     return false;
 }
@@ -421,4 +448,4 @@ nlohmann::json normalizeSchema(const nlohmann::json &schema) {
     return schema;
 }
 
-} // namespace srclient::serdes::json::utils
+}  // namespace srclient::serdes::json::utils

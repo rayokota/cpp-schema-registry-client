@@ -16,9 +16,13 @@ namespace srclient::rest {
 
 ClientConfiguration::ClientConfiguration(
     const std::vector<std::string> &base_urls)
-    : baseUrls_(base_urls), basic_auth_(std::nullopt),
-      bearer_access_token_(std::nullopt), cache_capacity_(1000),
-      cache_latest_ttl_sec_(3600), max_retries_(3), retries_wait_ms_(1000),
+    : baseUrls_(base_urls),
+      basic_auth_(std::nullopt),
+      bearer_access_token_(std::nullopt),
+      cache_capacity_(1000),
+      cache_latest_ttl_sec_(3600),
+      max_retries_(3),
+      retries_wait_ms_(1000),
       retries_max_wait_ms_(5000) {}
 
 ClientConfiguration::~ClientConfiguration() {}
@@ -104,4 +108,4 @@ bool ClientConfiguration::operator!=(const ClientConfiguration &other) const {
     return !(*this == other);
 }
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

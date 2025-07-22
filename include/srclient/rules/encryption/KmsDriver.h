@@ -5,11 +5,12 @@
 
 #pragma once
 
-#include "tink/kms_client.h"
-#include "tink/util/statusor.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
+
+#include "tink/kms_client.h"
+#include "tink/util/statusor.h"
 
 namespace srclient::rules::encryption {
 
@@ -52,9 +53,9 @@ class KmsDriver {
      * @return A shared pointer to the created KMS client
      * @throws TinkError if client creation fails
      */
-    virtual std::shared_ptr<crypto::tink::KmsClient>
-    newKmsClient(const std::unordered_map<std::string, std::string> &conf,
-                 const std::string &keyUrl) = 0;
+    virtual std::shared_ptr<crypto::tink::KmsClient> newKmsClient(
+        const std::unordered_map<std::string, std::string> &conf,
+        const std::string &keyUrl) = 0;
 };
 
-} // namespace srclient::rules::encryption
+}  // namespace srclient::rules::encryption

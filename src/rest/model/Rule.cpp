@@ -169,4 +169,4 @@ std::optional<bool> Rule::isDisabled() const { return disabled_; }
 
 void Rule::setDisabled(const std::optional<bool> &value) { disabled_ = value; }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

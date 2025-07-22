@@ -159,4 +159,4 @@ struct NamedValue {
         : name(std::move(n)), value(std::move(v)) {}
 };
 
-} // namespace srclient::serdes::avro
+}  // namespace srclient::serdes::avro

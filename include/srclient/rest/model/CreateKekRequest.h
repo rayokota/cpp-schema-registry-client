@@ -34,8 +34,8 @@ class CreateKekRequest {
     std::string getName() const;
     std::string getKmsType() const;
     std::string getKmsKeyId() const;
-    std::optional<std::unordered_map<std::string, std::string>>
-    getKmsProps() const;
+    std::optional<std::unordered_map<std::string, std::string>> getKmsProps()
+        const;
     std::optional<std::string> getDoc() const;
     bool getShared() const;
 
@@ -61,4 +61,4 @@ class CreateKekRequest {
     bool shared_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

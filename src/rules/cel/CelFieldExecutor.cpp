@@ -1,4 +1,5 @@
 #include "srclient/rules/cel/CelFieldExecutor.h"
+
 #include "eval/public/containers/container_backed_list_impl.h"
 #include "srclient/serdes/RuleRegistry.h"
 #include "srclient/serdes/avro/AvroTypes.h"
@@ -18,14 +19,17 @@ CelFieldExecutor::CelFieldExecutor(std::shared_ptr<CelExecutor> executor)
 // Implement the required getType method from RuleBase
 std::string CelFieldExecutor::getType() const { return "CEL_FIELD"; }
 
-std::unique_ptr<SerdeValue>
-CelFieldExecutor::transformField(RuleContext &ctx,
-                                 const SerdeValue &field_value) {
+std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(
+    RuleContext &ctx, const SerdeValue &field_value) {
     auto field_ctx = ctx.currentField();
-    if (!field_ctx || !field_ctx->isPrimitive()) { return field_value.clone(); }
+    if (!field_ctx || !field_ctx->isPrimitive()) {
+        return field_value.clone();
+    }
 
     // Only proceed if we have a valid executor
-    if (!executor_) { return field_value.clone(); }
+    if (!executor_) {
+        return field_value.clone();
+    }
 
     google::protobuf::Arena arena;
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
@@ -73,7 +77,9 @@ CelFieldExecutor::transformField(RuleContext &ctx,
 
     // Execute the CEL expression using the shared executor
     auto result = executor_->execute(ctx, field_value, args);
-    if (result) { return result; }
+    if (result) {
+        return result;
+    }
 
     return field_value.clone();
 }
@@ -85,4 +91,4 @@ void CelFieldExecutor::registerExecutor() {
     global_registry::registerRuleExecutor(std::make_shared<CelFieldExecutor>());
 }
 
-} // namespace srclient::rules::cel
+}  // namespace srclient::rules::cel

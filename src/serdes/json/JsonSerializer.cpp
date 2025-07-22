@@ -1,4 +1,5 @@
 #include "srclient/serdes/json/JsonSerializer.h"
+
 #include "srclient/serdes/json/JsonUtils.h"
 
 namespace srclient::serdes::json {
@@ -55,7 +56,9 @@ bool JsonSerde::validateJson(const nlohmann::json &value,
         // TODO: Implement actual value validation when the jsoncons API is
         // available
         return true;
-    } catch (const std::exception &e) { return false; }
+    } catch (const std::exception &e) {
+        return false;
+    }
 }
 
 void JsonSerde::clear() {
@@ -74,8 +77,9 @@ JsonSerializer::JsonSerializer(
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::optional<srclient::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry, const SerializerConfig &config)
-    : schema_(std::move(schema)), base_(std::make_shared<BaseSerializer>(
-                                      Serde(client, rule_registry), config)),
+    : schema_(std::move(schema)),
+      base_(std::make_shared<BaseSerializer>(Serde(client, rule_registry),
+                                             config)),
       serde_(std::make_unique<JsonSerde>()) {
     // Configure rule executors
     if (rule_registry) {
@@ -98,7 +102,7 @@ JsonSerializer::JsonSerializer(
 
 std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
                                                const nlohmann::json &value) {
-    auto mutable_value = value; // Copy for potential transformation
+    auto mutable_value = value;  // Copy for potential transformation
 
     // Get subject using strategy
     auto strategy = base_->getConfig().subject_name_strategy;
@@ -126,9 +130,13 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
     if (latest_schema.has_value()) {
         target_schema = latest_schema->toSchema();
         auto id_opt = latest_schema->getId();
-        if (id_opt.has_value()) { schema_id.setId(id_opt.value()); }
+        if (id_opt.has_value()) {
+            schema_id.setId(id_opt.value());
+        }
         auto guid_opt = latest_schema->getGuid();
-        if (guid_opt.has_value()) { schema_id.setGuid(guid_opt.value()); }
+        if (guid_opt.has_value()) {
+            schema_id.setGuid(guid_opt.value());
+        }
 
         // Get parsed schema
         std::tie(parsed_schema, schema_str) = getParsedSchema(target_schema);
@@ -153,17 +161,25 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
                     subject, target_schema,
                     base_->getConfig().normalize_schemas);
             auto id_opt = registered_schema.getId();
-            if (id_opt.has_value()) { schema_id.setId(id_opt.value()); }
+            if (id_opt.has_value()) {
+                schema_id.setId(id_opt.value());
+            }
             auto guid_opt = registered_schema.getGuid();
-            if (guid_opt.has_value()) { schema_id.setGuid(guid_opt.value()); }
+            if (guid_opt.has_value()) {
+                schema_id.setGuid(guid_opt.value());
+            }
         } else {
             auto registered_schema = base_->getSerde().getClient()->getBySchema(
                 subject, target_schema, base_->getConfig().normalize_schemas,
                 false);
             auto id_opt = registered_schema.getId();
-            if (id_opt.has_value()) { schema_id.setId(id_opt.value()); }
+            if (id_opt.has_value()) {
+                schema_id.setId(id_opt.value());
+            }
             auto guid_opt = registered_schema.getGuid();
-            if (guid_opt.has_value()) { schema_id.setGuid(guid_opt.value()); }
+            if (guid_opt.has_value()) {
+                schema_id.setGuid(guid_opt.value());
+            }
         }
 
         std::tie(parsed_schema, schema_str) = getParsedSchema(target_schema);
@@ -229,9 +245,8 @@ void JsonSerializer::validateSchema(
     }
 }
 
-std::unique_ptr<SerdeValue>
-JsonSerializer::transformValue(const SerdeValue &value, const Schema &schema,
-                               const std::string &subject) {
+std::unique_ptr<SerdeValue> JsonSerializer::transformValue(
+    const SerdeValue &value, const Schema &schema, const std::string &subject) {
     // Apply transformations and return as unique_ptr
     // For now, create a copy and return it
     // TODO: Implement actual transformations
@@ -245,4 +260,4 @@ nlohmann::json JsonSerializer::executeFieldTransformations(
     return value;
 }
 
-} // namespace srclient::serdes::json
+}  // namespace srclient::serdes::json

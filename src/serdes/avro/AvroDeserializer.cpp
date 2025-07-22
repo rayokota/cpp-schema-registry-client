@@ -1,9 +1,11 @@
 #include "srclient/serdes/avro/AvroDeserializer.h"
+
+#include <algorithm>
+#include <sstream>
+
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/avro/AvroUtils.h"
 #include "srclient/serdes/json/JsonTypes.h"
-#include <algorithm>
-#include <sstream>
 
 namespace srclient::serdes::avro {
 
@@ -181,19 +183,20 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
     return NamedValue{getName(reader_parsed.first), std::move(value)};
 }
 
-nlohmann::json
-AvroDeserializer::deserializeToJson(const SerializationContext &ctx,
-                                    const std::vector<uint8_t> &data) {
+nlohmann::json AvroDeserializer::deserializeToJson(
+    const SerializationContext &ctx, const std::vector<uint8_t> &data) {
     auto named_value = deserialize(ctx, data);
     return utils::avroToJson(named_value.value);
 }
 
 void AvroDeserializer::close() {
-    if (serde_) { serde_->clear(); }
+    if (serde_) {
+        serde_->clear();
+    }
 }
 
-std::optional<std::string>
-AvroDeserializer::getName(const ::avro::ValidSchema &schema) {
+std::optional<std::string> AvroDeserializer::getName(
+    const ::avro::ValidSchema &schema) {
     return utils::getSchemaName(schema);
 }
 
@@ -202,9 +205,8 @@ AvroDeserializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-std::pair<size_t, ::avro::ValidSchema>
-AvroDeserializer::resolveUnion(const ::avro::ValidSchema &schema,
-                               const ::avro::GenericDatum &datum) {
+std::pair<size_t, ::avro::ValidSchema> AvroDeserializer::resolveUnion(
+    const ::avro::ValidSchema &schema, const ::avro::GenericDatum &datum) {
     return utils::resolveUnion(schema, datum);
 }
 
@@ -212,4 +214,4 @@ FieldType AvroDeserializer::getFieldType(const ::avro::ValidSchema &schema) {
     return utils::avroSchemaToFieldType(schema);
 }
 
-} // namespace srclient::serdes::avro
+}  // namespace srclient::serdes::avro

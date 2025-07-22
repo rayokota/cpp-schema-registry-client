@@ -1,14 +1,17 @@
 #include "srclient/serdes/SerdeTypes.h"
+
+#include <google/protobuf/message.h>
+
+#include <avro/Compiler.hh>
+#include <avro/ValidSchema.hh>
+#include <sstream>
+
 #include "absl/strings/escaping.h"
 #include "srclient/rest/model/RegisteredSchema.h"
 #include "srclient/rest/model/Schema.h"
 #include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
-#include <avro/Compiler.hh>
-#include <avro/ValidSchema.hh>
-#include <google/protobuf/message.h>
-#include <sstream>
 
 namespace srclient::serdes {
 
@@ -42,21 +45,36 @@ Migration::Migration(Mode mode, std::optional<RegisteredSchema> src,
 // FieldType to string conversion
 std::string fieldTypeToString(FieldType type) {
     switch (type) {
-    case FieldType::Record: return "RECORD";
-    case FieldType::Enum: return "ENUM";
-    case FieldType::Array: return "ARRAY";
-    case FieldType::Map: return "MAP";
-    case FieldType::Combined: return "COMBINED";
-    case FieldType::Fixed: return "FIXED";
-    case FieldType::String: return "STRING";
-    case FieldType::Bytes: return "BYTES";
-    case FieldType::Int: return "INT";
-    case FieldType::Long: return "LONG";
-    case FieldType::Float: return "FLOAT";
-    case FieldType::Double: return "DOUBLE";
-    case FieldType::Boolean: return "BOOLEAN";
-    case FieldType::Null: return "NULL";
-    default: return "UNKNOWN";
+        case FieldType::Record:
+            return "RECORD";
+        case FieldType::Enum:
+            return "ENUM";
+        case FieldType::Array:
+            return "ARRAY";
+        case FieldType::Map:
+            return "MAP";
+        case FieldType::Combined:
+            return "COMBINED";
+        case FieldType::Fixed:
+            return "FIXED";
+        case FieldType::String:
+            return "STRING";
+        case FieldType::Bytes:
+            return "BYTES";
+        case FieldType::Int:
+            return "INT";
+        case FieldType::Long:
+            return "LONG";
+        case FieldType::Float:
+            return "FLOAT";
+        case FieldType::Double:
+            return "DOUBLE";
+        case FieldType::Boolean:
+            return "BOOLEAN";
+        case FieldType::Null:
+            return "NULL";
+        default:
+            return "UNKNOWN";
     }
 }
 
@@ -73,11 +91,14 @@ std::optional<T> ParsedSchemaCache<T>::get(const Schema &schema) const {
     std::lock_guard<std::mutex> lock(mutex_);
     std::string key = getSchemaKey(schema);
     auto it = cache_.find(key);
-    if (it != cache_.end()) { return it->second; }
+    if (it != cache_.end()) {
+        return it->second;
+    }
     return std::nullopt;
 }
 
-template <typename T> void ParsedSchemaCache<T>::clear() {
+template <typename T>
+void ParsedSchemaCache<T>::clear() {
     std::lock_guard<std::mutex> lock(mutex_);
     cache_.clear();
 }
@@ -110,50 +131,54 @@ std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
     }
     return std::vector<uint8_t>(decoded.begin(), decoded.end());
 }
-} // namespace
+}  // namespace
 
 // SerdeValue static factory method implementations
 std::unique_ptr<SerdeValue> SerdeValue::newString(SerdeFormat format,
                                                   const std::string &value) {
     switch (format) {
-    case SerdeFormat::Avro: {
-        ::avro::GenericDatum datum(value);
-        return std::make_unique<avro::AvroValue>(datum);
-    }
-    case SerdeFormat::Json: {
-        nlohmann::json json_value = value;
-        return std::make_unique<json::JsonValue>(json_value);
-    }
-    case SerdeFormat::Protobuf: {
-        // For protobuf, we cannot create a message from just a string value
-        // This would need a specific message type context
-        throw SerdeError("Cannot create Protobuf SerdeValue from string "
-                         "without message context");
-    }
-    default: throw SerdeError("Unsupported SerdeFormat");
+        case SerdeFormat::Avro: {
+            ::avro::GenericDatum datum(value);
+            return std::make_unique<avro::AvroValue>(datum);
+        }
+        case SerdeFormat::Json: {
+            nlohmann::json json_value = value;
+            return std::make_unique<json::JsonValue>(json_value);
+        }
+        case SerdeFormat::Protobuf: {
+            // For protobuf, we cannot create a message from just a string value
+            // This would need a specific message type context
+            throw SerdeError(
+                "Cannot create Protobuf SerdeValue from string "
+                "without message context");
+        }
+        default:
+            throw SerdeError("Unsupported SerdeFormat");
     }
 }
 
-std::unique_ptr<SerdeValue>
-SerdeValue::newBytes(SerdeFormat format, const std::vector<uint8_t> &value) {
+std::unique_ptr<SerdeValue> SerdeValue::newBytes(
+    SerdeFormat format, const std::vector<uint8_t> &value) {
     switch (format) {
-    case SerdeFormat::Avro: {
-        ::avro::GenericDatum datum(value);
-        return std::make_unique<avro::AvroValue>(datum);
-    }
-    case SerdeFormat::Json: {
-        // For JSON, encode bytes as base64 string
-        std::string base64_value = base64_encode(value);
-        nlohmann::json json_value = base64_value;
-        return std::make_unique<json::JsonValue>(json_value);
-    }
-    case SerdeFormat::Protobuf: {
-        // For protobuf, we cannot create a message from just bytes value
-        // This would need a specific message type context
-        throw SerdeError("Cannot create Protobuf SerdeValue from bytes without "
-                         "message context");
-    }
-    default: throw SerdeError("Unsupported SerdeFormat");
+        case SerdeFormat::Avro: {
+            ::avro::GenericDatum datum(value);
+            return std::make_unique<avro::AvroValue>(datum);
+        }
+        case SerdeFormat::Json: {
+            // For JSON, encode bytes as base64 string
+            std::string base64_value = base64_encode(value);
+            nlohmann::json json_value = base64_value;
+            return std::make_unique<json::JsonValue>(json_value);
+        }
+        case SerdeFormat::Protobuf: {
+            // For protobuf, we cannot create a message from just bytes value
+            // This would need a specific message type context
+            throw SerdeError(
+                "Cannot create Protobuf SerdeValue from bytes without "
+                "message context");
+        }
+        default:
+            throw SerdeError("Unsupported SerdeFormat");
     }
 }
 
@@ -161,10 +186,14 @@ namespace type_utils {
 
 std::string formatToString(SerdeFormat format) {
     switch (format) {
-    case SerdeFormat::Avro: return "AVRO";
-    case SerdeFormat::Json: return "JSON";
-    case SerdeFormat::Protobuf: return "PROTOBUF";
-    default: return "UNKNOWN";
+        case SerdeFormat::Avro:
+            return "AVRO";
+        case SerdeFormat::Json:
+            return "JSON";
+        case SerdeFormat::Protobuf:
+            return "PROTOBUF";
+        default:
+            return "UNKNOWN";
     }
 }
 
@@ -182,9 +211,12 @@ SerdeFormat stringToFormat(const std::string &format) {
 
 std::string typeToString(SerdeType type) {
     switch (type) {
-    case SerdeType::Key: return "KEY";
-    case SerdeType::Value: return "VALUE";
-    default: return "UNKNOWN";
+        case SerdeType::Key:
+            return "KEY";
+        case SerdeType::Value:
+            return "VALUE";
+        default:
+            return "UNKNOWN";
     }
 }
 
@@ -206,6 +238,6 @@ std::string kindToString(Kind kind) {
     return "KIND";
 }
 
-} // namespace type_utils
+}  // namespace type_utils
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

@@ -4,7 +4,10 @@
 #include <google/protobuf/descriptor.pb.h>
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/message.h>
+#include <google/protobuf/util/json_util.h>
+
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -15,11 +18,9 @@
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/json/JsonTypes.h"
-#include "srclient/serdes/protobuf/ProtobufSerializer.h" // For ProtobufSerde
+#include "srclient/serdes/protobuf/ProtobufSerializer.h"  // For ProtobufSerde
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
 #include "srclient/serdes/protobuf/ProtobufUtils.h"
-#include <google/protobuf/util/json_util.h>
-#include <nlohmann/json.hpp>
 
 using SerializationContext = srclient::serdes::SerializationContext;
 
@@ -27,7 +28,8 @@ namespace srclient::serdes::protobuf {
 
 // Forward declaration of templated deserializer
 
-template <typename T = google::protobuf::Message> class ProtobufDeserializer {
+template <typename T = google::protobuf::Message>
+class ProtobufDeserializer {
   public:
     ProtobufDeserializer(
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
@@ -43,11 +45,11 @@ template <typename T = google::protobuf::Message> class ProtobufDeserializer {
     std::shared_ptr<BaseDeserializer> base_;
     std::unique_ptr<ProtobufSerde> serde_;
 
-    std::unique_ptr<google::protobuf::Message>
-    createMessageFromDescriptor(const google::protobuf::Descriptor *descriptor);
+    std::unique_ptr<google::protobuf::Message> createMessageFromDescriptor(
+        const google::protobuf::Descriptor *descriptor);
 
-    std::optional<std::string>
-    getName(const google::protobuf::Message &message);
+    std::optional<std::string> getName(
+        const google::protobuf::Message &message);
 
     std::unique_ptr<google::protobuf::Message> deserializeWithMessageDescriptor(
         const std::vector<uint8_t> &payload,
@@ -61,10 +63,9 @@ template <typename T = google::protobuf::Message> class ProtobufDeserializer {
 
 // Forward declaration for transformFields helper (defined in ProtobufUtils.cpp)
 namespace utils {
-std::unique_ptr<srclient::serdes::SerdeValue>
-transformFields(srclient::serdes::RuleContext &ctx,
-                const std::string &field_executor_type,
-                const srclient::serdes::SerdeValue &value);
+std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
+    srclient::serdes::RuleContext &ctx, const std::string &field_executor_type,
+    const srclient::serdes::SerdeValue &value);
 }
 
 template <typename T>
@@ -106,9 +107,8 @@ inline ProtobufDeserializer<T>::ProtobufDeserializer(
 }
 
 template <typename T>
-inline std::unique_ptr<T>
-ProtobufDeserializer<T>::deserialize(const SerializationContext &ctx,
-                                     const std::vector<uint8_t> &data) {
+inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
+    const SerializationContext &ctx, const std::vector<uint8_t> &data) {
     using namespace srclient::serdes;
     using namespace srclient::serdes::protobuf;
 
@@ -286,10 +286,11 @@ ProtobufDeserializer<T>::deserialize(const SerializationContext &ctx,
     return out_msg;
 }
 
-template <typename T> inline void ProtobufDeserializer<T>::close() {
+template <typename T>
+inline void ProtobufDeserializer<T>::close() {
     serde_->clear();
 }
 
-#endif // SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL
+#endif  // SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL
 
-} // namespace srclient::serdes::protobuf
+}  // namespace srclient::serdes::protobuf

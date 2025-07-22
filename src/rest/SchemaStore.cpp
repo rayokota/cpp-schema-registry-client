@@ -5,6 +5,7 @@
  */
 
 #include "srclient/rest/SchemaStore.h"
+
 #include <functional>
 #include <sstream>
 
@@ -38,7 +39,9 @@ void SchemaStore::setRegisteredSchema(
     const srclient::rest::model::Schema &schema,
     const srclient::rest::model::RegisteredSchema &rs) {
     std::string subjectStr = "";
-    if (rs.getSubject().has_value()) { subjectStr = rs.getSubject().value(); }
+    if (rs.getSubject().has_value()) {
+        subjectStr = rs.getSubject().value();
+    }
 
     std::string schemaHash = createSchemaHash(schema);
 
@@ -57,10 +60,14 @@ void SchemaStore::setRegisteredSchema(
 
     // Also update the schema store
     std::optional<std::string> guid;
-    if (rs.getSchema().has_value()) { guid = rs.getSchema().value(); }
+    if (rs.getSchema().has_value()) {
+        guid = rs.getSchema().value();
+    }
 
     std::optional<std::string> subjectOpt;
-    if (!subjectStr.empty()) { subjectOpt = subjectStr; }
+    if (!subjectStr.empty()) {
+        subjectOpt = subjectStr;
+    }
 
     setSchema(subjectOpt, rs.getId(), guid, schema);
 }
@@ -71,26 +78,32 @@ SchemaStore::getSchemaById(const std::string &subject, int32_t schemaId) const {
     auto subjectIt = schemaIdIndex.find(subject);
     if (subjectIt != schemaIdIndex.end()) {
         auto schemaIt = subjectIt->second.find(schemaId);
-        if (schemaIt != subjectIt->second.end()) { return schemaIt->second; }
+        if (schemaIt != subjectIt->second.end()) {
+            return schemaIt->second;
+        }
     }
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::Schema>
-SchemaStore::getSchemaByGuid(const std::string &guid) const {
+std::optional<srclient::rest::model::Schema> SchemaStore::getSchemaByGuid(
+    const std::string &guid) const {
     auto it = schemaGuidIndex.find(guid);
-    if (it != schemaGuidIndex.end()) { return it->second; }
+    if (it != schemaGuidIndex.end()) {
+        return it->second;
+    }
     return std::nullopt;
 }
 
-std::optional<int32_t>
-SchemaStore::getIdBySchema(const std::string &subject,
-                           const srclient::rest::model::Schema &schema) const {
+std::optional<int32_t> SchemaStore::getIdBySchema(
+    const std::string &subject,
+    const srclient::rest::model::Schema &schema) const {
     auto subjectIt = schemaIndex.find(subject);
     if (subjectIt != schemaIndex.end()) {
         std::string schemaHash = createSchemaHash(schema);
         auto schemaIt = subjectIt->second.find(schemaHash);
-        if (schemaIt != subjectIt->second.end()) { return schemaIt->second; }
+        if (schemaIt != subjectIt->second.end()) {
+            return schemaIt->second;
+        }
     }
     return std::nullopt;
 }
@@ -103,7 +116,9 @@ SchemaStore::getRegisteredBySchema(
     if (subjectIt != rsSchemaIndex.end()) {
         std::string schemaHash = createSchemaHash(schema);
         auto schemaIt = subjectIt->second.find(schemaHash);
-        if (schemaIt != subjectIt->second.end()) { return schemaIt->second; }
+        if (schemaIt != subjectIt->second.end()) {
+            return schemaIt->second;
+        }
     }
     return std::nullopt;
 }
@@ -114,7 +129,9 @@ SchemaStore::getRegisteredByVersion(const std::string &subject,
     auto subjectIt = rsVersionIndex.find(subject);
     if (subjectIt != rsVersionIndex.end()) {
         auto versionIt = subjectIt->second.find(version);
-        if (versionIt != subjectIt->second.end()) { return versionIt->second; }
+        if (versionIt != subjectIt->second.end()) {
+            return versionIt->second;
+        }
     }
     return std::nullopt;
 }
@@ -125,7 +142,9 @@ SchemaStore::getRegisteredById(const std::string &subject,
     auto subjectIt = rsIdIndex.find(subject);
     if (subjectIt != rsIdIndex.end()) {
         auto idIt = subjectIt->second.find(schemaId);
-        if (idIt != subjectIt->second.end()) { return idIt->second; }
+        if (idIt != subjectIt->second.end()) {
+            return idIt->second;
+        }
     }
     return std::nullopt;
 }
@@ -147,4 +166,4 @@ std::string SchemaStore::createSchemaHash(
     return j.dump();
 }
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

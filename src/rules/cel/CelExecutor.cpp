@@ -1,4 +1,7 @@
 #include "srclient/rules/cel/CelExecutor.h"
+
+#include <regex>
+
 #include "absl/strings/str_split.h"
 #include "eval/public/activation.h"
 #include "eval/public/builtin_func_registrar.h"
@@ -16,7 +19,6 @@
 #include "srclient/serdes/avro/AvroTypes.h"
 #include "srclient/serdes/json/JsonTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
-#include <regex>
 
 namespace srclient::rules::cel {
 
@@ -36,7 +38,9 @@ CelExecutor::CelExecutor(
     std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder>
         runtime)
     : runtime_(std::move(runtime)) {
-    if (!runtime_) { throw SerdeError("CEL runtime cannot be null"); }
+    if (!runtime_) {
+        throw SerdeError("CEL runtime cannot be null");
+    }
 }
 
 // Implement the required getType method
@@ -57,20 +61,25 @@ CelExecutor::newRuleBuilder(google::protobuf::Arena *arena) {
         google::api::expr::runtime::CreateCelExpressionBuilder(options);
     auto register_status = google::api::expr::runtime::RegisterBuiltinFunctions(
         builder->GetRegistry(), options);
-    if (!register_status.ok()) { return register_status; }
+    if (!register_status.ok()) {
+        return register_status;
+    }
     register_status =
         google::api::expr::runtime::RegisterStringExtensionFunctions(
             builder->GetRegistry());
-    if (!register_status.ok()) { return register_status; }
+    if (!register_status.ok()) {
+        return register_status;
+    }
     // Register our custom extra functions
     register_status = RegisterExtraFuncs(*builder->GetRegistry(), arena);
-    if (!register_status.ok()) { return register_status; }
+    if (!register_status.ok()) {
+        return register_status;
+    }
     return builder;
 }
 
-std::unique_ptr<SerdeValue>
-CelExecutor::transform(srclient::serdes::RuleContext &ctx,
-                       const SerdeValue &msg) {
+std::unique_ptr<SerdeValue> CelExecutor::transform(
+    srclient::serdes::RuleContext &ctx, const SerdeValue &msg) {
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
     args.emplace("msg", fromSerdeValue(msg, &arena_));
 
@@ -121,7 +130,9 @@ std::unique_ptr<SerdeValue> CelExecutor::execute(
 
     // Execute the main expression
     auto result = executeRule(ctx, msg, expr, args, &arena);
-    if (result) { return toSerdeValue(msg, *result); }
+    if (result) {
+        return toSerdeValue(msg, *result);
+    }
 
     return nullptr;
 }
@@ -174,11 +185,15 @@ CelExecutor::getOrCompileExpression(const std::string &expr) {
     }
 
     auto pexpr_or = google::api::expr::parser::Parse(expr);
-    if (!pexpr_or.ok()) { return pexpr_or.status(); }
+    if (!pexpr_or.ok()) {
+        return pexpr_or.status();
+    }
     auto pexpr = std::move(pexpr_or).value();
     auto expr_or =
         runtime_->CreateExpression(&pexpr.expr(), &pexpr.source_info());
-    if (!expr_or.ok()) { return expr_or.status(); }
+    if (!expr_or.ok()) {
+        return expr_or.status();
+    }
 
     auto compiled_expr = std::move(expr_or.value());
 
@@ -193,23 +208,23 @@ CelExecutor::getOrCompileExpression(const std::string &expr) {
     return shared_expr;
 }
 
-google::api::expr::runtime::CelValue
-CelExecutor::fromSerdeValue(const SerdeValue &value,
-                            google::protobuf::Arena *arena) {
+google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(
+    const SerdeValue &value, google::protobuf::Arena *arena) {
     switch (value.getFormat()) {
-    case SerdeFormat::Json: {
-        auto json_value = srclient::serdes::json::asJson(value);
-        return fromJsonValue(json_value, arena);
-    }
-    case SerdeFormat::Avro: {
-        auto avro_value = srclient::serdes::avro::asAvro(value);
-        return fromAvroValue(avro_value, arena);
-    }
-    case SerdeFormat::Protobuf: {
-        auto &proto_message = srclient::serdes::protobuf::asProtobuf(value);
-        return fromProtobufValue(proto_message, arena);
-    }
-    default: return google::api::expr::runtime::CelValue::CreateNull();
+        case SerdeFormat::Json: {
+            auto json_value = srclient::serdes::json::asJson(value);
+            return fromJsonValue(json_value, arena);
+        }
+        case SerdeFormat::Avro: {
+            auto avro_value = srclient::serdes::avro::asAvro(value);
+            return fromAvroValue(avro_value, arena);
+        }
+        case SerdeFormat::Protobuf: {
+            auto &proto_message = srclient::serdes::protobuf::asProtobuf(value);
+            return fromProtobufValue(proto_message, arena);
+        }
+        default:
+            return google::api::expr::runtime::CelValue::CreateNull();
     }
 }
 
@@ -217,31 +232,31 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
     const SerdeValue &original,
     const google::api::expr::runtime::CelValue &cel_value) {
     switch (original.getFormat()) {
-    case SerdeFormat::Json: {
-        auto original_json = srclient::serdes::json::asJson(original);
-        auto converted_json = toJsonValue(original_json, cel_value);
-        return srclient::serdes::json::makeJsonValue(converted_json);
-    }
-    case SerdeFormat::Avro: {
-        auto original_avro = srclient::serdes::avro::asAvro(original);
-        auto converted_avro = toAvroValue(original_avro, cel_value);
-        return srclient::serdes::avro::makeAvroValue(converted_avro);
-    }
-    case SerdeFormat::Protobuf: {
-        auto &proto_message = srclient::serdes::protobuf::asProtobuf(original);
-        auto converted_proto = toProtobufValue(proto_message, cel_value);
-        return srclient::serdes::protobuf::makeProtobufValue(
-            std::move(converted_proto));
-    }
-    default:
-        // For unknown formats, return a copy of the original
-        return original.clone();
+        case SerdeFormat::Json: {
+            auto original_json = srclient::serdes::json::asJson(original);
+            auto converted_json = toJsonValue(original_json, cel_value);
+            return srclient::serdes::json::makeJsonValue(converted_json);
+        }
+        case SerdeFormat::Avro: {
+            auto original_avro = srclient::serdes::avro::asAvro(original);
+            auto converted_avro = toAvroValue(original_avro, cel_value);
+            return srclient::serdes::avro::makeAvroValue(converted_avro);
+        }
+        case SerdeFormat::Protobuf: {
+            auto &proto_message =
+                srclient::serdes::protobuf::asProtobuf(original);
+            auto converted_proto = toProtobufValue(proto_message, cel_value);
+            return srclient::serdes::protobuf::makeProtobufValue(
+                std::move(converted_proto));
+        }
+        default:
+            // For unknown formats, return a copy of the original
+            return original.clone();
     }
 }
 
-google::api::expr::runtime::CelValue
-CelExecutor::fromJsonValue(const nlohmann::json &json,
-                           google::protobuf::Arena *arena) {
+google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(
+    const nlohmann::json &json, google::protobuf::Arena *arena) {
     if (json.is_null())
         return google::api::expr::runtime::CelValue::CreateNull();
     if (json.is_boolean())
@@ -342,85 +357,91 @@ nlohmann::json CelExecutor::toJsonValue(
     return original;
 }
 
-google::api::expr::runtime::CelValue
-CelExecutor::fromAvroValue(const ::avro::GenericDatum &avro,
-                           google::protobuf::Arena *arena) {
+google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(
+    const ::avro::GenericDatum &avro, google::protobuf::Arena *arena) {
     switch (avro.type()) {
-    case ::avro::AVRO_BOOL:
-        return google::api::expr::runtime::CelValue::CreateBool(
-            avro.value<bool>());
-    case ::avro::AVRO_INT:
-        return google::api::expr::runtime::CelValue::CreateInt64(
-            avro.value<int32_t>());
-    case ::avro::AVRO_LONG:
-        return google::api::expr::runtime::CelValue::CreateInt64(
-            avro.value<int64_t>());
-    case ::avro::AVRO_FLOAT:
-        return google::api::expr::runtime::CelValue::CreateDouble(
-            avro.value<float>());
-    case ::avro::AVRO_DOUBLE:
-        return google::api::expr::runtime::CelValue::CreateDouble(
-            avro.value<double>());
-    case ::avro::AVRO_STRING: {
-        // Use arena allocation for string storage
-        auto *arena_str = google::protobuf::Arena::Create<std::string>(
-            arena, avro.value<std::string>());
-        return google::api::expr::runtime::CelValue::CreateString(arena_str);
-    }
-    case ::avro::AVRO_BYTES: {
-        auto bytes_vec = avro.value<std::vector<uint8_t>>();
-        // Use arena allocation for bytes storage
-        auto *arena_bytes = google::protobuf::Arena::Create<std::string>(arena);
-        arena_bytes->assign(bytes_vec.begin(), bytes_vec.end());
-        return google::api::expr::runtime::CelValue::CreateBytes(arena_bytes);
-    }
-    case ::avro::AVRO_ARRAY: {
-        const auto &arr = avro.value<::avro::GenericArray>().value();
-        std::vector<google::api::expr::runtime::CelValue> vec;
-        for (const auto &item : arr) {
-            vec.push_back(fromAvroValue(item, arena));
+        case ::avro::AVRO_BOOL:
+            return google::api::expr::runtime::CelValue::CreateBool(
+                avro.value<bool>());
+        case ::avro::AVRO_INT:
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                avro.value<int32_t>());
+        case ::avro::AVRO_LONG:
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                avro.value<int64_t>());
+        case ::avro::AVRO_FLOAT:
+            return google::api::expr::runtime::CelValue::CreateDouble(
+                avro.value<float>());
+        case ::avro::AVRO_DOUBLE:
+            return google::api::expr::runtime::CelValue::CreateDouble(
+                avro.value<double>());
+        case ::avro::AVRO_STRING: {
+            // Use arena allocation for string storage
+            auto *arena_str = google::protobuf::Arena::Create<std::string>(
+                arena, avro.value<std::string>());
+            return google::api::expr::runtime::CelValue::CreateString(
+                arena_str);
         }
-        auto *list_impl = google::protobuf::Arena::Create<
-            google::api::expr::runtime::ContainerBackedListImpl>(arena, vec);
-        return google::api::expr::runtime::CelValue::CreateList(list_impl);
-    }
-    case ::avro::AVRO_MAP: {
-        auto *map_impl = google::protobuf::Arena::Create<
-            google::api::expr::runtime::CelMapBuilder>(arena);
-        const auto &map = avro.value<::avro::GenericMap>().value();
-        for (const auto &pair : map) {
-            // Use arena allocation for string key
-            auto *arena_key =
-                google::protobuf::Arena::Create<std::string>(arena, pair.first);
-            auto status = map_impl->Add(
-                google::api::expr::runtime::CelValue::CreateString(arena_key),
-                fromAvroValue(pair.second, arena));
-            if (!status.ok()) {
-                // Log error or handle as needed, but continue processing
+        case ::avro::AVRO_BYTES: {
+            auto bytes_vec = avro.value<std::vector<uint8_t>>();
+            // Use arena allocation for bytes storage
+            auto *arena_bytes =
+                google::protobuf::Arena::Create<std::string>(arena);
+            arena_bytes->assign(bytes_vec.begin(), bytes_vec.end());
+            return google::api::expr::runtime::CelValue::CreateBytes(
+                arena_bytes);
+        }
+        case ::avro::AVRO_ARRAY: {
+            const auto &arr = avro.value<::avro::GenericArray>().value();
+            std::vector<google::api::expr::runtime::CelValue> vec;
+            for (const auto &item : arr) {
+                vec.push_back(fromAvroValue(item, arena));
             }
+            auto *list_impl = google::protobuf::Arena::Create<
+                google::api::expr::runtime::ContainerBackedListImpl>(arena,
+                                                                     vec);
+            return google::api::expr::runtime::CelValue::CreateList(list_impl);
         }
-        return google::api::expr::runtime::CelValue::CreateMap(map_impl);
-    }
-    case ::avro::AVRO_RECORD: {
-        auto *map_impl = google::protobuf::Arena::Create<
-            google::api::expr::runtime::CelMapBuilder>(arena);
-        const auto &record = avro.value<::avro::GenericRecord>();
-        for (size_t i = 0; i < record.schema()->names(); ++i) {
-            // Use arena allocation for field name
-            auto *arena_name = google::protobuf::Arena::Create<std::string>(
-                arena, record.schema()->nameAt(i));
-            auto status = map_impl->Add(
-                google::api::expr::runtime::CelValue::CreateString(arena_name),
-                fromAvroValue(record.fieldAt(i), arena));
-            if (!status.ok()) {
-                // Log error or handle as needed, but continue processing
+        case ::avro::AVRO_MAP: {
+            auto *map_impl = google::protobuf::Arena::Create<
+                google::api::expr::runtime::CelMapBuilder>(arena);
+            const auto &map = avro.value<::avro::GenericMap>().value();
+            for (const auto &pair : map) {
+                // Use arena allocation for string key
+                auto *arena_key = google::protobuf::Arena::Create<std::string>(
+                    arena, pair.first);
+                auto status = map_impl->Add(
+                    google::api::expr::runtime::CelValue::CreateString(
+                        arena_key),
+                    fromAvroValue(pair.second, arena));
+                if (!status.ok()) {
+                    // Log error or handle as needed, but continue processing
+                }
             }
+            return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
-        return google::api::expr::runtime::CelValue::CreateMap(map_impl);
-    }
-    case ::avro::AVRO_NULL:
-        return google::api::expr::runtime::CelValue::CreateNull();
-    default: return google::api::expr::runtime::CelValue::CreateNull();
+        case ::avro::AVRO_RECORD: {
+            auto *map_impl = google::protobuf::Arena::Create<
+                google::api::expr::runtime::CelMapBuilder>(arena);
+            const auto &record = avro.value<::avro::GenericRecord>();
+            for (size_t i = 0; i < record.schema()->names(); ++i) {
+                // Use arena allocation for field name
+                auto *arena_name = google::protobuf::Arena::Create<std::string>(
+                    arena, record.schema()->nameAt(i));
+                auto status = map_impl->Add(
+                    google::api::expr::runtime::CelValue::CreateString(
+                        arena_name),
+                    fromAvroValue(record.fieldAt(i), arena));
+                if (!status.ok()) {
+                    // Log error or handle as needed, but continue processing
+                }
+            }
+            return google::api::expr::runtime::CelValue::CreateMap(map_impl);
+        }
+        case ::avro::AVRO_NULL:
+            return google::api::expr::runtime::CelValue::CreateNull();
+        default:
+            return google::api::expr::runtime::CelValue::CreateNull();
     }
 }
 
@@ -443,7 +464,7 @@ CelExecutor::fromAvroValue(const ::avro::GenericDatum &avro,
         return ::avro::GenericDatum(
             std::string(cel_value.StringOrDie().value()));
     } else if (cel_value.IsNull()) {
-        return ::avro::GenericDatum(); // Creates null datum
+        return ::avro::GenericDatum();  // Creates null datum
     } else if (cel_value.IsList()) {
         // Convert CEL list to Avro array
         const auto *cel_list = cel_value.ListOrDie();
@@ -459,7 +480,9 @@ CelExecutor::fromAvroValue(const ::avro::GenericDatum &avro,
             // Get element template from original if available
             ::avro::GenericDatum element_template;
             auto &orig_array = original.value<::avro::GenericArray>().value();
-            if (!orig_array.empty()) { element_template = orig_array[0]; }
+            if (!orig_array.empty()) {
+                element_template = orig_array[0];
+            }
 
             // Recursively convert each list element
             for (int i = 0; i < cel_list->size(); ++i) {
@@ -581,7 +604,9 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
     const auto *descriptor = result->GetDescriptor();
     const auto *reflection = result->GetReflection();
 
-    if (!descriptor || !reflection) { return result; }
+    if (!descriptor || !reflection) {
+        return result;
+    }
 
     // Handle different CEL value types
     if (cel_value.IsBool()) {
@@ -603,28 +628,29 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
             if (field->is_repeated()) continue;
 
             switch (field->cpp_type()) {
-            case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
-                reflection->SetInt32(result.get(), field,
-                                     static_cast<int32_t>(int_value));
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
-                reflection->SetInt64(result.get(), field, int_value);
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
-                reflection->SetUInt32(result.get(), field,
-                                      static_cast<uint32_t>(int_value));
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
-                reflection->SetUInt64(result.get(), field,
-                                      static_cast<uint64_t>(int_value));
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
-                reflection->SetEnumValue(result.get(), field,
-                                         static_cast<int>(int_value));
-                break;
-            default: continue;
+                case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+                    reflection->SetInt32(result.get(), field,
+                                         static_cast<int32_t>(int_value));
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
+                    reflection->SetInt64(result.get(), field, int_value);
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+                    reflection->SetUInt32(result.get(), field,
+                                          static_cast<uint32_t>(int_value));
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
+                    reflection->SetUInt64(result.get(), field,
+                                          static_cast<uint64_t>(int_value));
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
+                    reflection->SetEnumValue(result.get(), field,
+                                             static_cast<int>(int_value));
+                    break;
+                default:
+                    continue;
             }
-            break; // Only update the first matching field
+            break;  // Only update the first matching field
         }
     } else if (cel_value.IsUint64()) {
         // Handle unsigned integer values
@@ -634,28 +660,29 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
             if (field->is_repeated()) continue;
 
             switch (field->cpp_type()) {
-            case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
-                reflection->SetInt32(result.get(), field,
-                                     static_cast<int32_t>(uint_value));
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
-                reflection->SetInt64(result.get(), field,
-                                     static_cast<int64_t>(uint_value));
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
-                reflection->SetUInt32(result.get(), field,
-                                      static_cast<uint32_t>(uint_value));
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
-                reflection->SetUInt64(result.get(), field, uint_value);
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
-                reflection->SetEnumValue(result.get(), field,
-                                         static_cast<int>(uint_value));
-                break;
-            default: continue;
+                case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+                    reflection->SetInt32(result.get(), field,
+                                         static_cast<int32_t>(uint_value));
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
+                    reflection->SetInt64(result.get(), field,
+                                         static_cast<int64_t>(uint_value));
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+                    reflection->SetUInt32(result.get(), field,
+                                          static_cast<uint32_t>(uint_value));
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
+                    reflection->SetUInt64(result.get(), field, uint_value);
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
+                    reflection->SetEnumValue(result.get(), field,
+                                             static_cast<int>(uint_value));
+                    break;
+                default:
+                    continue;
             }
-            break; // Only update the first matching field
+            break;  // Only update the first matching field
         }
     } else if (cel_value.IsDouble()) {
         // Handle floating point values
@@ -665,16 +692,17 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
             if (field->is_repeated()) continue;
 
             switch (field->cpp_type()) {
-            case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
-                reflection->SetFloat(result.get(), field,
-                                     static_cast<float>(double_value));
-                break;
-            case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
-                reflection->SetDouble(result.get(), field, double_value);
-                break;
-            default: continue;
+                case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
+                    reflection->SetFloat(result.get(), field,
+                                         static_cast<float>(double_value));
+                    break;
+                case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
+                    reflection->SetDouble(result.get(), field, double_value);
+                    break;
+                default:
+                    continue;
             }
-            break; // Only update the first matching field
+            break;  // Only update the first matching field
         }
     } else if (cel_value.IsString()) {
         // Handle string values
@@ -718,69 +746,70 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
                 if (item.IsError()) continue;
 
                 switch (field->cpp_type()) {
-                case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
-                    if (item.IsBool()) {
-                        reflection->AddBool(result.get(), field,
-                                            item.BoolOrDie());
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
-                    if (item.IsInt64()) {
-                        reflection->AddInt32(
-                            result.get(), field,
-                            static_cast<int32_t>(item.Int64OrDie()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
-                    if (item.IsInt64()) {
-                        reflection->AddInt64(result.get(), field,
-                                             item.Int64OrDie());
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
-                    if (item.IsUint64()) {
-                        reflection->AddUInt32(
-                            result.get(), field,
-                            static_cast<uint32_t>(item.Uint64OrDie()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
-                    if (item.IsUint64()) {
-                        reflection->AddUInt64(result.get(), field,
-                                              item.Uint64OrDie());
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
-                    if (item.IsDouble()) {
-                        reflection->AddFloat(
-                            result.get(), field,
-                            static_cast<float>(item.DoubleOrDie()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
-                    if (item.IsDouble()) {
-                        reflection->AddDouble(result.get(), field,
-                                              item.DoubleOrDie());
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
-                    if (item.IsString()) {
-                        reflection->AddString(
-                            result.get(), field,
-                            std::string(item.StringOrDie().value()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
-                    if (item.IsInt64()) {
-                        reflection->AddEnumValue(
-                            result.get(), field,
-                            static_cast<int>(item.Int64OrDie()));
-                    }
-                    break;
-                default: break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
+                        if (item.IsBool()) {
+                            reflection->AddBool(result.get(), field,
+                                                item.BoolOrDie());
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+                        if (item.IsInt64()) {
+                            reflection->AddInt32(
+                                result.get(), field,
+                                static_cast<int32_t>(item.Int64OrDie()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
+                        if (item.IsInt64()) {
+                            reflection->AddInt64(result.get(), field,
+                                                 item.Int64OrDie());
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+                        if (item.IsUint64()) {
+                            reflection->AddUInt32(
+                                result.get(), field,
+                                static_cast<uint32_t>(item.Uint64OrDie()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
+                        if (item.IsUint64()) {
+                            reflection->AddUInt64(result.get(), field,
+                                                  item.Uint64OrDie());
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
+                        if (item.IsDouble()) {
+                            reflection->AddFloat(
+                                result.get(), field,
+                                static_cast<float>(item.DoubleOrDie()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
+                        if (item.IsDouble()) {
+                            reflection->AddDouble(result.get(), field,
+                                                  item.DoubleOrDie());
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
+                        if (item.IsString()) {
+                            reflection->AddString(
+                                result.get(), field,
+                                std::string(item.StringOrDie().value()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
+                        if (item.IsInt64()) {
+                            reflection->AddEnumValue(
+                                result.get(), field,
+                                static_cast<int>(item.Int64OrDie()));
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
-            break; // Only update the first matching repeated field
+            break;  // Only update the first matching repeated field
         }
     } else if (cel_value.IsMap()) {
         // Handle map values by updating fields based on map keys
@@ -806,86 +835,89 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
 
                 // Set the field value based on its type
                 switch (field->cpp_type()) {
-                case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
-                    if (field_value.IsBool()) {
-                        reflection->SetBool(result.get(), field,
-                                            field_value.BoolOrDie());
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
-                    if (field_value.IsInt64()) {
-                        reflection->SetInt32(
-                            result.get(), field,
-                            static_cast<int32_t>(field_value.Int64OrDie()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
-                    if (field_value.IsInt64()) {
-                        reflection->SetInt64(result.get(), field,
-                                             field_value.Int64OrDie());
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
-                    if (field_value.IsUint64()) {
-                        reflection->SetUInt32(
-                            result.get(), field,
-                            static_cast<uint32_t>(field_value.Uint64OrDie()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
-                    if (field_value.IsUint64()) {
-                        reflection->SetUInt64(result.get(), field,
-                                              field_value.Uint64OrDie());
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
-                    if (field_value.IsDouble()) {
-                        reflection->SetFloat(
-                            result.get(), field,
-                            static_cast<float>(field_value.DoubleOrDie()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
-                    if (field_value.IsDouble()) {
-                        reflection->SetDouble(result.get(), field,
-                                              field_value.DoubleOrDie());
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
-                    if (field_value.IsString()) {
-                        reflection->SetString(
-                            result.get(), field,
-                            std::string(field_value.StringOrDie().value()));
-                    } else if (field_value.IsBytes() &&
-                               field->type() ==
-                                   google::protobuf::FieldDescriptor::
-                                       TYPE_BYTES) {
-                        reflection->SetString(
-                            result.get(), field,
-                            std::string(field_value.BytesOrDie().value()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
-                    if (field_value.IsInt64()) {
-                        reflection->SetEnumValue(
-                            result.get(), field,
-                            static_cast<int>(field_value.Int64OrDie()));
-                    }
-                    break;
-                case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
-                    // For nested messages, recursively convert
-                    if (field_value.IsMap()) {
-                        const auto &nested_original =
-                            reflection->GetMessage(original, field);
-                        auto nested_result =
-                            toProtobufValue(nested_original, field_value);
-                        if (nested_result) {
-                            reflection->SetAllocatedMessage(
-                                result.get(), nested_result.release(), field);
+                    case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
+                        if (field_value.IsBool()) {
+                            reflection->SetBool(result.get(), field,
+                                                field_value.BoolOrDie());
                         }
-                    }
-                    break;
-                default: break;
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+                        if (field_value.IsInt64()) {
+                            reflection->SetInt32(
+                                result.get(), field,
+                                static_cast<int32_t>(field_value.Int64OrDie()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
+                        if (field_value.IsInt64()) {
+                            reflection->SetInt64(result.get(), field,
+                                                 field_value.Int64OrDie());
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+                        if (field_value.IsUint64()) {
+                            reflection->SetUInt32(
+                                result.get(), field,
+                                static_cast<uint32_t>(
+                                    field_value.Uint64OrDie()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
+                        if (field_value.IsUint64()) {
+                            reflection->SetUInt64(result.get(), field,
+                                                  field_value.Uint64OrDie());
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
+                        if (field_value.IsDouble()) {
+                            reflection->SetFloat(
+                                result.get(), field,
+                                static_cast<float>(field_value.DoubleOrDie()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
+                        if (field_value.IsDouble()) {
+                            reflection->SetDouble(result.get(), field,
+                                                  field_value.DoubleOrDie());
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
+                        if (field_value.IsString()) {
+                            reflection->SetString(
+                                result.get(), field,
+                                std::string(field_value.StringOrDie().value()));
+                        } else if (field_value.IsBytes() &&
+                                   field->type() ==
+                                       google::protobuf::FieldDescriptor::
+                                           TYPE_BYTES) {
+                            reflection->SetString(
+                                result.get(), field,
+                                std::string(field_value.BytesOrDie().value()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
+                        if (field_value.IsInt64()) {
+                            reflection->SetEnumValue(
+                                result.get(), field,
+                                static_cast<int>(field_value.Int64OrDie()));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
+                        // For nested messages, recursively convert
+                        if (field_value.IsMap()) {
+                            const auto &nested_original =
+                                reflection->GetMessage(original, field);
+                            auto nested_result =
+                                toProtobufValue(nested_original, field_value);
+                            if (nested_result) {
+                                reflection->SetAllocatedMessage(
+                                    result.get(), nested_result.release(),
+                                    field);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
         }
@@ -894,9 +926,8 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
     return result;
 }
 
-google::api::expr::runtime::CelValue
-CelExecutor::fromProtobufValue(const google::protobuf::Message &protobuf,
-                               google::protobuf::Arena *arena) {
+google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(
+    const google::protobuf::Message &protobuf, google::protobuf::Arena *arena) {
     const auto *descriptor = protobuf.GetDescriptor();
     if (!descriptor) return google::api::expr::runtime::CelValue::CreateNull();
     const auto *reflection = protobuf.GetReflection();
@@ -928,7 +959,9 @@ CelExecutor::fromProtobufValue(const google::protobuf::Message &protobuf,
             for (int i = 0; i < field_size; ++i) {
                 cel_value = convertProtobufFieldToCel(protobuf, field,
                                                       reflection, arena, i);
-                if (!cel_value.IsError()) { vec.push_back(cel_value); }
+                if (!cel_value.IsError()) {
+                    vec.push_back(cel_value);
+                }
             }
 
             auto *list_impl = google::protobuf::Arena::Create<
@@ -959,103 +992,108 @@ google::api::expr::runtime::CelValue CelExecutor::convertProtobufFieldToCel(
     const google::protobuf::FieldDescriptor *field,
     const google::protobuf::Reflection *reflection,
     google::protobuf::Arena *arena, int index) {
-
     // For repeated fields, index >= 0; for singular fields, index = -1
 
     switch (field->cpp_type()) {
-    case google::protobuf::FieldDescriptor::CPPTYPE_BOOL: {
-        bool value = (index >= 0)
-                         ? reflection->GetRepeatedBool(message, field, index)
-                         : reflection->GetBool(message, field);
-        return google::api::expr::runtime::CelValue::CreateBool(value);
-    }
-
-    case google::protobuf::FieldDescriptor::CPPTYPE_INT32: {
-        int32_t value =
-            (index >= 0) ? reflection->GetRepeatedInt32(message, field, index)
-                         : reflection->GetInt32(message, field);
-        return google::api::expr::runtime::CelValue::CreateInt64(
-            static_cast<int64_t>(value));
-    }
-
-    case google::protobuf::FieldDescriptor::CPPTYPE_INT64: {
-        int64_t value =
-            (index >= 0) ? reflection->GetRepeatedInt64(message, field, index)
-                         : reflection->GetInt64(message, field);
-        return google::api::expr::runtime::CelValue::CreateInt64(value);
-    }
-
-    case google::protobuf::FieldDescriptor::CPPTYPE_UINT32: {
-        uint32_t value =
-            (index >= 0) ? reflection->GetRepeatedUInt32(message, field, index)
-                         : reflection->GetUInt32(message, field);
-        return google::api::expr::runtime::CelValue::CreateInt64(
-            static_cast<int64_t>(value));
-    }
-
-    case google::protobuf::FieldDescriptor::CPPTYPE_UINT64: {
-        uint64_t value =
-            (index >= 0) ? reflection->GetRepeatedUInt64(message, field, index)
-                         : reflection->GetUInt64(message, field);
-        return google::api::expr::runtime::CelValue::CreateInt64(
-            static_cast<int64_t>(value));
-    }
-
-    case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT: {
-        float value = (index >= 0)
-                          ? reflection->GetRepeatedFloat(message, field, index)
-                          : reflection->GetFloat(message, field);
-        return google::api::expr::runtime::CelValue::CreateDouble(
-            static_cast<double>(value));
-    }
-
-    case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE: {
-        double value =
-            (index >= 0) ? reflection->GetRepeatedDouble(message, field, index)
-                         : reflection->GetDouble(message, field);
-        return google::api::expr::runtime::CelValue::CreateDouble(value);
-    }
-
-    case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
-        std::string value =
-            (index >= 0) ? reflection->GetRepeatedString(message, field, index)
-                         : reflection->GetString(message, field);
-        // Use arena allocation for string storage
-        auto *arena_str =
-            google::protobuf::Arena::Create<std::string>(arena, value);
-
-        if (field->type() == google::protobuf::FieldDescriptor::TYPE_BYTES) {
-            return google::api::expr::runtime::CelValue::CreateBytes(arena_str);
-        } else {
-            return google::api::expr::runtime::CelValue::CreateString(
-                arena_str);
+        case google::protobuf::FieldDescriptor::CPPTYPE_BOOL: {
+            bool value = (index >= 0) ? reflection->GetRepeatedBool(
+                                            message, field, index)
+                                      : reflection->GetBool(message, field);
+            return google::api::expr::runtime::CelValue::CreateBool(value);
         }
-    }
 
-    case google::protobuf::FieldDescriptor::CPPTYPE_ENUM: {
-        int value =
-            (index >= 0)
-                ? reflection->GetRepeatedEnumValue(message, field, index)
-                : reflection->GetEnumValue(message, field);
-        return google::api::expr::runtime::CelValue::CreateInt64(
-            static_cast<int64_t>(value));
-    }
-
-    case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: {
-        const google::protobuf::Message &nested_message =
-            (index >= 0) ? reflection->GetRepeatedMessage(message, field, index)
-                         : reflection->GetMessage(message, field);
-
-        // Handle map fields specially
-        if (field->is_map()) {
-            return convertProtobufMapToCel(nested_message, field, arena);
-        } else {
-            // Recursively convert nested message
-            return fromProtobufValue(nested_message, arena);
+        case google::protobuf::FieldDescriptor::CPPTYPE_INT32: {
+            int32_t value = (index >= 0) ? reflection->GetRepeatedInt32(
+                                               message, field, index)
+                                         : reflection->GetInt32(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                static_cast<int64_t>(value));
         }
-    }
 
-    default: return google::api::expr::runtime::CelValue::CreateNull();
+        case google::protobuf::FieldDescriptor::CPPTYPE_INT64: {
+            int64_t value = (index >= 0) ? reflection->GetRepeatedInt64(
+                                               message, field, index)
+                                         : reflection->GetInt64(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(value);
+        }
+
+        case google::protobuf::FieldDescriptor::CPPTYPE_UINT32: {
+            uint32_t value =
+                (index >= 0)
+                    ? reflection->GetRepeatedUInt32(message, field, index)
+                    : reflection->GetUInt32(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                static_cast<int64_t>(value));
+        }
+
+        case google::protobuf::FieldDescriptor::CPPTYPE_UINT64: {
+            uint64_t value =
+                (index >= 0)
+                    ? reflection->GetRepeatedUInt64(message, field, index)
+                    : reflection->GetUInt64(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                static_cast<int64_t>(value));
+        }
+
+        case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT: {
+            float value = (index >= 0) ? reflection->GetRepeatedFloat(
+                                             message, field, index)
+                                       : reflection->GetFloat(message, field);
+            return google::api::expr::runtime::CelValue::CreateDouble(
+                static_cast<double>(value));
+        }
+
+        case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE: {
+            double value = (index >= 0) ? reflection->GetRepeatedDouble(
+                                              message, field, index)
+                                        : reflection->GetDouble(message, field);
+            return google::api::expr::runtime::CelValue::CreateDouble(value);
+        }
+
+        case google::protobuf::FieldDescriptor::CPPTYPE_STRING: {
+            std::string value =
+                (index >= 0)
+                    ? reflection->GetRepeatedString(message, field, index)
+                    : reflection->GetString(message, field);
+            // Use arena allocation for string storage
+            auto *arena_str =
+                google::protobuf::Arena::Create<std::string>(arena, value);
+
+            if (field->type() ==
+                google::protobuf::FieldDescriptor::TYPE_BYTES) {
+                return google::api::expr::runtime::CelValue::CreateBytes(
+                    arena_str);
+            } else {
+                return google::api::expr::runtime::CelValue::CreateString(
+                    arena_str);
+            }
+        }
+
+        case google::protobuf::FieldDescriptor::CPPTYPE_ENUM: {
+            int value = (index >= 0) ? reflection->GetRepeatedEnumValue(
+                                           message, field, index)
+                                     : reflection->GetEnumValue(message, field);
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                static_cast<int64_t>(value));
+        }
+
+        case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE: {
+            const google::protobuf::Message &nested_message =
+                (index >= 0)
+                    ? reflection->GetRepeatedMessage(message, field, index)
+                    : reflection->GetMessage(message, field);
+
+            // Handle map fields specially
+            if (field->is_map()) {
+                return convertProtobufMapToCel(nested_message, field, arena);
+            } else {
+                // Recursively convert nested message
+                return fromProtobufValue(nested_message, arena);
+            }
+        }
+
+        default:
+            return google::api::expr::runtime::CelValue::CreateNull();
     }
 }
 
@@ -1063,7 +1101,6 @@ google::api::expr::runtime::CelValue CelExecutor::convertProtobufMapToCel(
     const google::protobuf::Message &map_entry,
     const google::protobuf::FieldDescriptor *map_field,
     google::protobuf::Arena *arena) {
-
     auto *map_impl = google::protobuf::Arena::Create<
         google::api::expr::runtime::CelMapBuilder>(arena);
 
@@ -1075,8 +1112,8 @@ google::api::expr::runtime::CelValue CelExecutor::convertProtobufMapToCel(
     }
 
     // Map entries have exactly 2 fields: key and value
-    const auto *key_field = descriptor->field(0);   // "key"
-    const auto *value_field = descriptor->field(1); // "value"
+    const auto *key_field = descriptor->field(0);    // "key"
+    const auto *value_field = descriptor->field(1);  // "value"
 
     if (!key_field || !value_field) {
         return google::api::expr::runtime::CelValue::CreateMap(map_impl);
@@ -1108,4 +1145,4 @@ void CelExecutor::registerExecutor() {
     global_registry::registerRuleExecutor(std::make_shared<CelExecutor>());
 }
 
-} // namespace srclient::rules::cel
+}  // namespace srclient::rules::cel

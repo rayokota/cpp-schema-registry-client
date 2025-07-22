@@ -51,11 +51,10 @@ std::unordered_map<std::string, nlohmann::json> resolveAllDependencies(
  * @param subject_prefix Prefix for subject names
  * @return List of schema references
  */
-std::vector<srclient::rest::model::SchemaReference>
-buildDependencies(const nlohmann::json &schema,
-                  const std::string &subject_prefix);
+std::vector<srclient::rest::model::SchemaReference> buildDependencies(
+    const nlohmann::json &schema, const std::string &subject_prefix);
 
-} // namespace schema_resolution
+}  // namespace schema_resolution
 
 /**
  * JSON transformation utilities
@@ -112,7 +111,7 @@ nlohmann::json applyRulesRecursive(RuleContext &ctx,
 const nlohmann::json *validateSubschemas(const nlohmann::json &subschemas,
                                          const nlohmann::json &value);
 
-} // namespace value_transform
+}  // namespace value_transform
 
 /**
  * JSON schema navigation utilities
@@ -170,7 +169,7 @@ std::unordered_set<std::string> getConfluentTags(const nlohmann::json &schema);
 nlohmann::json navigateToSubschema(const nlohmann::json &root_schema,
                                    const std::string &path);
 
-} // namespace schema_navigation
+}  // namespace schema_navigation
 
 /**
  * JSON validation utilities
@@ -195,7 +194,7 @@ bool validateJsonAgainstSchema(const nlohmann::json &value,
 std::string getValidationErrorDetails(const nlohmann::json &value,
                                       const nlohmann::json &schema);
 
-} // namespace validation_utils
+}  // namespace validation_utils
 
 /**
  * JSON path utilities
@@ -239,7 +238,7 @@ std::string getParentPath(const std::string &path);
  */
 std::string getFieldName(const std::string &path);
 
-} // namespace path_utils
+}  // namespace path_utils
 
 /**
  * Utility functions for JSON schema and value manipulation
@@ -280,4 +279,4 @@ bool hasConfluentExtensions(const nlohmann::json &schema);
  */
 nlohmann::json normalizeSchema(const nlohmann::json &schema);
 
-} // namespace srclient::serdes::json::utils
+}  // namespace srclient::serdes::json::utils

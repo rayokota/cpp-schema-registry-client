@@ -25,11 +25,11 @@ class FieldEncryptionExecutor : public FieldRuleExecutor {
     void close() override;
 
     // FieldRuleExecutor interface
-    std::unique_ptr<SerdeValue>
-    transformField(RuleContext &ctx, const SerdeValue &field_value) override;
+    std::unique_ptr<SerdeValue> transformField(
+        RuleContext &ctx, const SerdeValue &field_value) override;
 
     // Static registration
     static void registerExecutor();
 };
 
-} // namespace srclient::rules::encryption
+}  // namespace srclient::rules::encryption

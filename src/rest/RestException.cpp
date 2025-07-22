@@ -17,8 +17,10 @@ namespace srclient::rest {
 RestException::RestException(
     const std::string_view message, int errorCode,
     std::shared_ptr<std::istream> content /*= nullptr*/)
-    : std::runtime_error(std::string(message)), content_(content),
-      message_(message), errorCode_(errorCode) {}
+    : std::runtime_error(std::string(message)),
+      content_(content),
+      message_(message),
+      errorCode_(errorCode) {}
 
 RestException::~RestException() {}
 
@@ -28,4 +30,4 @@ std::shared_ptr<std::istream> RestException::getContent() const {
 
 int RestException::getErrorCode() const { return errorCode_; }
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

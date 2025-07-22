@@ -19,7 +19,7 @@
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/avro/AvroSerializer.h" // For AvroSerde and NamedValue
+#include "srclient/serdes/avro/AvroSerializer.h"  // For AvroSerde and NamedValue
 #include "srclient/serdes/avro/AvroTypes.h"
 
 namespace srclient::serdes::avro {
@@ -99,9 +99,8 @@ class AvroDeserializer {
      * @param datum Datum to resolve against
      * @return Index and schema of the matching union branch
      */
-    std::pair<size_t, ::avro::ValidSchema>
-    resolveUnion(const ::avro::ValidSchema &schema,
-                 const ::avro::GenericDatum &datum);
+    std::pair<size_t, ::avro::ValidSchema> resolveUnion(
+        const ::avro::ValidSchema &schema, const ::avro::GenericDatum &datum);
 
     /**
      * Get field type from Avro schema
@@ -111,4 +110,4 @@ class AvroDeserializer {
     FieldType getFieldType(const ::avro::ValidSchema &schema);
 };
 
-} // namespace srclient::serdes::avro
+}  // namespace srclient::serdes::avro

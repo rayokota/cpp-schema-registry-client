@@ -5,11 +5,12 @@
 
 #pragma once
 
-#include "Dek.h"
 #include <cstdint>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
+
+#include "Dek.h"
 
 namespace srclient::rest::model {
 
@@ -52,4 +53,4 @@ class CreateDekRequest {
     std::optional<std::string> encryptedKeyMaterial_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

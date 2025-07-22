@@ -86,4 +86,4 @@ void RuleSet::setEncodingRules(
     encodingRules_ = value;
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

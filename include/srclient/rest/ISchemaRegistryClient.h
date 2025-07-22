@@ -33,10 +33,9 @@ class ISchemaRegistryClient {
     /**
      * Register a schema for the given subject
      */
-    virtual srclient::rest::model::RegisteredSchema
-    registerSchema(const std::string &subject,
-                   const srclient::rest::model::Schema &schema,
-                   bool normalize = false) = 0;
+    virtual srclient::rest::model::RegisteredSchema registerSchema(
+        const std::string &subject, const srclient::rest::model::Schema &schema,
+        bool normalize = false) = 0;
 
     /**
      * Get schema by subject and ID
@@ -48,25 +47,23 @@ class ISchemaRegistryClient {
     /**
      * Get schema by GUID
      */
-    virtual srclient::rest::model::Schema
-    getByGuid(const std::string &guid,
-              const std::optional<std::string> &format = std::nullopt) = 0;
+    virtual srclient::rest::model::Schema getByGuid(
+        const std::string &guid,
+        const std::optional<std::string> &format = std::nullopt) = 0;
 
     /**
      * Get registered schema by subject and schema
      */
-    virtual srclient::rest::model::RegisteredSchema
-    getBySchema(const std::string &subject,
-                const srclient::rest::model::Schema &schema,
-                bool normalize = false, bool deleted = false) = 0;
+    virtual srclient::rest::model::RegisteredSchema getBySchema(
+        const std::string &subject, const srclient::rest::model::Schema &schema,
+        bool normalize = false, bool deleted = false) = 0;
 
     /**
      * Get registered schema by subject and version
      */
-    virtual srclient::rest::model::RegisteredSchema
-    getVersion(const std::string &subject, int32_t version,
-               bool deleted = false,
-               const std::optional<std::string> &format = std::nullopt) = 0;
+    virtual srclient::rest::model::RegisteredSchema getVersion(
+        const std::string &subject, int32_t version, bool deleted = false,
+        const std::optional<std::string> &format = std::nullopt) = 0;
 
     /**
      * Get latest version of schema for subject
@@ -110,29 +107,29 @@ class ISchemaRegistryClient {
     /**
      * Test schema compatibility with latest version
      */
-    virtual bool
-    testSubjectCompatibility(const std::string &subject,
-                             const srclient::rest::model::Schema &schema) = 0;
+    virtual bool testSubjectCompatibility(
+        const std::string &subject,
+        const srclient::rest::model::Schema &schema) = 0;
 
     /**
      * Test schema compatibility with specific version
      */
-    virtual bool
-    testCompatibility(const std::string &subject, int32_t version,
-                      const srclient::rest::model::Schema &schema) = 0;
+    virtual bool testCompatibility(
+        const std::string &subject, int32_t version,
+        const srclient::rest::model::Schema &schema) = 0;
 
     /**
      * Get configuration for subject
      */
-    virtual srclient::rest::model::ServerConfig
-    getConfig(const std::string &subject) = 0;
+    virtual srclient::rest::model::ServerConfig getConfig(
+        const std::string &subject) = 0;
 
     /**
      * Update configuration for subject
      */
-    virtual srclient::rest::model::ServerConfig
-    updateConfig(const std::string &subject,
-                 const srclient::rest::model::ServerConfig &config) = 0;
+    virtual srclient::rest::model::ServerConfig updateConfig(
+        const std::string &subject,
+        const srclient::rest::model::ServerConfig &config) = 0;
 
     /**
      * Get default configuration
@@ -142,8 +139,8 @@ class ISchemaRegistryClient {
     /**
      * Update default configuration
      */
-    virtual srclient::rest::model::ServerConfig
-    updateDefaultConfig(const srclient::rest::model::ServerConfig &config) = 0;
+    virtual srclient::rest::model::ServerConfig updateDefaultConfig(
+        const srclient::rest::model::ServerConfig &config) = 0;
 
     /**
      * Clear latest version caches
@@ -161,4 +158,4 @@ class ISchemaRegistryClient {
     virtual void close() = 0;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

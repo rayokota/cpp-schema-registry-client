@@ -16,11 +16,12 @@
 #include <avro/ValidSchema.hh>
 
 // Project includes
+#include <nlohmann/json.hpp>
+
 #include "srclient/rest/model/Schema.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/avro/AvroTypes.h"
-#include <nlohmann/json.hpp>
 
 namespace srclient::serdes::avro {
 
@@ -83,9 +84,8 @@ nlohmann::json avroToJson(const ::avro::GenericDatum &datum);
  * @param datum Datum to match against union branches
  * @return Pair of branch index and corresponding schema
  */
-std::pair<size_t, ::avro::ValidSchema>
-resolveUnion(const ::avro::ValidSchema &union_schema,
-             const ::avro::GenericDatum &datum);
+std::pair<size_t, ::avro::ValidSchema> resolveUnion(
+    const ::avro::ValidSchema &union_schema, const ::avro::GenericDatum &datum);
 
 /**
  * Extract schema name from Avro ValidSchema
@@ -101,10 +101,9 @@ std::optional<std::string> getSchemaName(const ::avro::ValidSchema &schema);
  * @param named_schemas Additional named schemas for resolution
  * @return Serialized bytes
  */
-std::vector<uint8_t>
-serializeAvroData(const ::avro::GenericDatum &datum,
-                  const ::avro::ValidSchema &writer_schema,
-                  const std::vector<::avro::ValidSchema> &named_schemas = {});
+std::vector<uint8_t> serializeAvroData(
+    const ::avro::GenericDatum &datum, const ::avro::ValidSchema &writer_schema,
+    const std::vector<::avro::ValidSchema> &named_schemas = {});
 
 /**
  * Deserialize byte array to Avro datum
@@ -114,11 +113,10 @@ serializeAvroData(const ::avro::GenericDatum &datum,
  * @param named_schemas Additional named schemas for resolution
  * @return Deserialized Avro datum
  */
-::avro::GenericDatum
-deserializeAvroData(const std::vector<uint8_t> &data,
-                    const ::avro::ValidSchema &writer_schema,
-                    const ::avro::ValidSchema *reader_schema = nullptr,
-                    const std::vector<::avro::ValidSchema> &named_schemas = {});
+::avro::GenericDatum deserializeAvroData(
+    const std::vector<uint8_t> &data, const ::avro::ValidSchema &writer_schema,
+    const ::avro::ValidSchema *reader_schema = nullptr,
+    const std::vector<::avro::ValidSchema> &named_schemas = {});
 
 /**
  * Parse Avro schema string with named schema support
@@ -152,8 +150,8 @@ std::string impliedNamespace(const std::string &name);
  * @param schema Avro schema as JSON object
  * @return Map of field paths to their tag sets
  */
-std::unordered_map<std::string, std::unordered_set<std::string>>
-getInlineTags(const nlohmann::json &schema);
+std::unordered_map<std::string, std::unordered_set<std::string>> getInlineTags(
+    const nlohmann::json &schema);
 
 /**
  * Recursively extract inline tags from Avro schema
@@ -175,6 +173,6 @@ void getInlineTagsRecursively(
  */
 ::avro::ValidSchema compileJsonSchema(const std::string &schema_str);
 
-} // namespace utils
+}  // namespace utils
 
-} // namespace srclient::serdes::avro
+}  // namespace srclient::serdes::avro

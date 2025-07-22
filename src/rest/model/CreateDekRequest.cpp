@@ -13,7 +13,9 @@ CreateDekRequest::CreateDekRequest(
     const std::string &subject, const std::optional<int32_t> &version,
     const std::optional<Algorithm> &algorithm,
     const std::optional<std::string> &encryptedKeyMaterial)
-    : subject_(subject), version_(version), algorithm_(algorithm),
+    : subject_(subject),
+      version_(version),
+      algorithm_(algorithm),
       encryptedKeyMaterial_(encryptedKeyMaterial) {}
 
 bool CreateDekRequest::operator==(const CreateDekRequest &rhs) const {
@@ -55,9 +57,13 @@ void CreateDekRequest::setEncryptedKeyMaterial(
 void to_json(nlohmann::json &j, const CreateDekRequest &o) {
     j = nlohmann::json{{"subject", o.subject_}};
 
-    if (o.version_.has_value()) { j["version"] = o.version_.value(); }
+    if (o.version_.has_value()) {
+        j["version"] = o.version_.value();
+    }
 
-    if (o.algorithm_.has_value()) { j["algorithm"] = o.algorithm_.value(); }
+    if (o.algorithm_.has_value()) {
+        j["algorithm"] = o.algorithm_.value();
+    }
 
     if (o.encryptedKeyMaterial_.has_value()) {
         j["encryptedKeyMaterial"] = o.encryptedKeyMaterial_.value();
@@ -81,4 +87,4 @@ void from_json(const nlohmann::json &j, CreateDekRequest &o) {
     }
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

@@ -1,4 +1,5 @@
 #include "srclient/serdes/SerdeError.h"
+
 #include "srclient/serdes/SerdeTypes.h"
 
 namespace srclient::serdes {
@@ -30,6 +31,6 @@ IoError createIoError(const std::string &operation,
     return IoError("IO operation '" + operation + "' failed: " + details);
 }
 
-} // namespace error_utils
+}  // namespace error_utils
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

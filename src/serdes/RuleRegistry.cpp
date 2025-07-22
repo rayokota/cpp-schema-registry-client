@@ -1,8 +1,10 @@
 #include "srclient/serdes/RuleRegistry.h"
-#include "srclient/rest/ClientConfiguration.h"
-#include "srclient/serdes/Serde.h"
+
 #include <algorithm>
 #include <stdexcept>
+
+#include "srclient/rest/ClientConfiguration.h"
+#include "srclient/serdes/Serde.h"
 
 namespace srclient::serdes {
 
@@ -17,11 +19,13 @@ void RuleRegistry::registerExecutor(std::shared_ptr<RuleExecutor> executor) {
     rule_executors_[executor->getType()] = executor;
 }
 
-std::shared_ptr<RuleExecutor>
-RuleRegistry::getExecutor(const std::string &type) const {
+std::shared_ptr<RuleExecutor> RuleRegistry::getExecutor(
+    const std::string &type) const {
     std::shared_lock<std::shared_mutex> lock(mutex_);
     auto it = rule_executors_.find(type);
-    if (it != rule_executors_.end()) { return it->second; }
+    if (it != rule_executors_.end()) {
+        return it->second;
+    }
     return nullptr;
 }
 
@@ -38,17 +42,21 @@ std::vector<std::shared_ptr<RuleExecutor>> RuleRegistry::getExecutors() const {
 }
 
 void RuleRegistry::registerAction(std::shared_ptr<RuleAction> action) {
-    if (!action) { throw std::invalid_argument("Cannot register null action"); }
+    if (!action) {
+        throw std::invalid_argument("Cannot register null action");
+    }
 
     std::unique_lock<std::shared_mutex> lock(mutex_);
     rule_actions_[action->getType()] = action;
 }
 
-std::shared_ptr<RuleAction>
-RuleRegistry::getAction(const std::string &type) const {
+std::shared_ptr<RuleAction> RuleRegistry::getAction(
+    const std::string &type) const {
     std::shared_lock<std::shared_mutex> lock(mutex_);
     auto it = rule_actions_.find(type);
-    if (it != rule_actions_.end()) { return it->second; }
+    if (it != rule_actions_.end()) {
+        return it->second;
+    }
     return nullptr;
 }
 
@@ -69,11 +77,13 @@ void RuleRegistry::registerOverride(const RuleOverride &rule_override) {
     rule_overrides_[rule_override.type] = rule_override;
 }
 
-std::optional<RuleOverride>
-RuleRegistry::getOverride(const std::string &type) const {
+std::optional<RuleOverride> RuleRegistry::getOverride(
+    const std::string &type) const {
     std::shared_lock<std::shared_mutex> lock(mutex_);
     auto it = rule_overrides_.find(type);
-    if (it != rule_overrides_.end()) { return it->second; }
+    if (it != rule_overrides_.end()) {
+        return it->second;
+    }
     return std::nullopt;
 }
 
@@ -143,12 +153,12 @@ std::vector<RuleOverride> getRuleOverrides() {
 
 void clearGlobalRegistry() { getInstance().clear(); }
 
-} // namespace global_registry
+}  // namespace global_registry
 
 // FieldRuleExecutor implementation
 
-std::unique_ptr<SerdeValue>
-FieldRuleExecutor::transform(RuleContext &ctx, const SerdeValue &msg) {
+std::unique_ptr<SerdeValue> FieldRuleExecutor::transform(
+    RuleContext &ctx, const SerdeValue &msg) {
     Mode rule_mode = ctx.getRuleMode();
 
     // Check if we need to skip transformation based on mode and rule order
@@ -175,7 +185,9 @@ FieldRuleExecutor::transform(RuleContext &ctx, const SerdeValue &msg) {
 
     // If we have a field transformer, use it
     auto field_transformer = ctx.getFieldTransformer();
-    if (field_transformer) { return (*field_transformer)(ctx, getType(), msg); }
+    if (field_transformer) {
+        return (*field_transformer)(ctx, getType(), msg);
+    }
 
     // Default: return a clone of the original message
     return msg.clone();
@@ -209,48 +221,58 @@ bool areTransformsWithSameTag(const Rule &rule1, const Rule &rule2) {
     auto tags1 = rule1.getTags();
     auto tags2 = rule2.getTags();
 
-    if (!tags1.has_value() || !tags2.has_value()) { return false; }
+    if (!tags1.has_value() || !tags2.has_value()) {
+        return false;
+    }
 
     // Check if any tag matches between the two sets
     for (const auto &tag1 : tags1.value()) {
         for (const auto &tag2 : tags2.value()) {
-            if (tag1 == tag2) { return true; }
+            if (tag1 == tag2) {
+                return true;
+            }
         }
     }
 
     return false;
 }
 
-std::optional<std::string>
-getRuleActionName(const Rule &rule, Mode mode,
-                  std::optional<std::string> action_name) {
+std::optional<std::string> getRuleActionName(
+    const Rule &rule, Mode mode, std::optional<std::string> action_name) {
     // If action_name is explicitly provided, use it
-    if (action_name.has_value()) { return action_name; }
+    if (action_name.has_value()) {
+        return action_name;
+    }
 
     // Based on the rule's on_success and on_failure settings and the current
     // mode
     switch (mode) {
-    case Mode::Upgrade:
-    case Mode::UpDown:
-        // For upgrade operations, typically use on_success
-        return rule.getOnSuccess();
+        case Mode::Upgrade:
+        case Mode::UpDown:
+            // For upgrade operations, typically use on_success
+            return rule.getOnSuccess();
 
-    case Mode::Downgrade:
-        // For downgrade operations, use on_failure if available
-        if (rule.getOnFailure().has_value()) { return rule.getOnFailure(); }
-        return rule.getOnSuccess();
+        case Mode::Downgrade:
+            // For downgrade operations, use on_failure if available
+            if (rule.getOnFailure().has_value()) {
+                return rule.getOnFailure();
+            }
+            return rule.getOnSuccess();
 
-    case Mode::Write:
-    case Mode::Read:
-    case Mode::WriteRead:
-        // For read/write operations, use on_failure if available
-        if (rule.getOnFailure().has_value()) { return rule.getOnFailure(); }
-        return rule.getOnSuccess();
+        case Mode::Write:
+        case Mode::Read:
+        case Mode::WriteRead:
+            // For read/write operations, use on_failure if available
+            if (rule.getOnFailure().has_value()) {
+                return rule.getOnFailure();
+            }
+            return rule.getOnSuccess();
 
-    default: return rule.getOnSuccess();
+        default:
+            return rule.getOnSuccess();
     }
 }
 
-} // namespace rule_utils
+}  // namespace rule_utils
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

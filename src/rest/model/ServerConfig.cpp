@@ -205,8 +205,8 @@ void ServerConfig::setOverrideMetadata(
     overrideMetadata_ = value;
 }
 
-std::optional<srclient::rest::model::RuleSet>
-ServerConfig::getDefaultRuleSet() const {
+std::optional<srclient::rest::model::RuleSet> ServerConfig::getDefaultRuleSet()
+    const {
     return defaultRuleSet_;
 }
 
@@ -215,8 +215,8 @@ void ServerConfig::setDefaultRuleSet(
     defaultRuleSet_ = value;
 }
 
-std::optional<srclient::rest::model::RuleSet>
-ServerConfig::getOverrideRuleSet() const {
+std::optional<srclient::rest::model::RuleSet> ServerConfig::getOverrideRuleSet()
+    const {
     return overrideRuleSet_;
 }
 
@@ -225,4 +225,4 @@ void ServerConfig::setOverrideRuleSet(
     overrideRuleSet_ = value;
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

@@ -14,7 +14,7 @@ google::protobuf::Message &asProtobuf(const SerdeValue &value) {
         const_cast<void *>(value.getRawValue()));
 }
 
-} // namespace srclient::serdes::protobuf
+}  // namespace srclient::serdes::protobuf
 
 // Explicit instantiation for the default protobuf message wrapper
 template class srclient::serdes::protobuf::ProtobufValue<

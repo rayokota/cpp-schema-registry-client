@@ -4,10 +4,12 @@
  */
 
 #include "srclient/rules/encryption/localkms/LocalKmsDriver.h"
-#include "srclient/rules/encryption/EncryptionRegistry.h"
-#include "srclient/rules/encryption/KmsDriver.h"
+
 #include <cstdlib>
 #include <string>
+
+#include "srclient/rules/encryption/EncryptionRegistry.h"
+#include "srclient/rules/encryption/KmsDriver.h"
 
 namespace srclient::rules::encryption::localkms {
 
@@ -18,7 +20,6 @@ const std::string &LocalKmsDriver::getKeyUrlPrefix() const {
 std::shared_ptr<crypto::tink::KmsClient> LocalKmsDriver::newKmsClient(
     const std::unordered_map<std::string, std::string> &conf,
     const std::string &keyUrl) {
-
     // Validate that this driver supports the key URL
     if (keyUrl.find(keyUrlPrefix_) != 0) {
         throw TinkError("Key URL '" + keyUrl +
@@ -57,16 +58,19 @@ void LocalKmsDriver::registerDriver() {
 
 std::string LocalKmsDriver::resolveSecret(
     const std::unordered_map<std::string, std::string> &conf) const {
-
     // First, try to get secret from configuration
     auto configKey = std::string(getSecretConfigKey());
     auto it = conf.find(configKey);
-    if (it != conf.end() && !it->second.empty()) { return it->second; }
+    if (it != conf.end() && !it->second.empty()) {
+        return it->second;
+    }
 
     // If not found in config, try environment variable
     auto envVar = std::string(getSecretEnvVar());
     std::string envSecret = getEnvVar(envVar);
-    if (!envSecret.empty()) { return envSecret; }
+    if (!envSecret.empty()) {
+        return envSecret;
+    }
 
     // Return empty string if secret not found anywhere
     return "";
@@ -77,4 +81,4 @@ std::string LocalKmsDriver::getEnvVar(const std::string &name) const {
     return value ? std::string(value) : std::string();
 }
 
-} // namespace srclient::rules::encryption::localkms
+}  // namespace srclient::rules::encryption::localkms

@@ -5,10 +5,11 @@
 
 #pragma once
 
-#include "srclient/rest/model/Dek.h"
 #include <cstdint>
 #include <functional>
 #include <string>
+
+#include "srclient/rest/model/Dek.h"
 
 namespace srclient::rest {
 
@@ -41,16 +42,18 @@ struct DekId {
     }
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest
 
 // Hash specializations for std::unordered_map (implementations in
 // DekRegistryTypes.cpp)
 namespace std {
-template <> struct hash<srclient::rest::KekId> {
+template <>
+struct hash<srclient::rest::KekId> {
     std::size_t operator()(const srclient::rest::KekId &k) const;
 };
 
-template <> struct hash<srclient::rest::DekId> {
+template <>
+struct hash<srclient::rest::DekId> {
     std::size_t operator()(const srclient::rest::DekId &k) const;
 };
-} // namespace std
+}  // namespace std

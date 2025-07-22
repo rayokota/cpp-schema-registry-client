@@ -4,10 +4,12 @@
  */
 
 #include "srclient/rest/model/Dek.h"
-#include "absl/strings/escaping.h"
+
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+
+#include "absl/strings/escaping.h"
 
 namespace srclient::rest::model {
 
@@ -31,7 +33,7 @@ std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
     }
     return std::vector<uint8_t>(decoded.begin(), decoded.end());
 }
-} // namespace
+}  // namespace
 
 Dek::Dek() : version_(0), algorithm_(Algorithm::Aes256Gcm), ts_(0) {}
 
@@ -40,9 +42,14 @@ Dek::Dek(const std::string &kekName, const std::string &subject,
          const std::optional<std::string> &encryptedKeyMaterial,
          const std::optional<std::string> &keyMaterial, int64_t ts,
          const std::optional<bool> &deleted)
-    : kekName_(kekName), subject_(subject), version_(version),
-      algorithm_(algorithm), encryptedKeyMaterial_(encryptedKeyMaterial),
-      keyMaterial_(keyMaterial), ts_(ts), deleted_(deleted) {}
+    : kekName_(kekName),
+      subject_(subject),
+      version_(version),
+      algorithm_(algorithm),
+      encryptedKeyMaterial_(encryptedKeyMaterial),
+      keyMaterial_(keyMaterial),
+      ts_(ts),
+      deleted_(deleted) {}
 
 bool Dek::operator==(const Dek &rhs) const {
     return kekName_ == rhs.kekName_ && subject_ == rhs.subject_ &&
@@ -63,7 +70,9 @@ std::optional<std::string> Dek::getEncryptedKeyMaterial() const {
     return encryptedKeyMaterial_;
 }
 std::optional<std::vector<uint8_t>> Dek::getEncryptedKeyMaterialBytes() const {
-    if (!encryptedKeyMaterial_.has_value()) { return std::nullopt; }
+    if (!encryptedKeyMaterial_.has_value()) {
+        return std::nullopt;
+    }
 
     if (!encryptedKeyMaterialBytes_.has_value()) {
         encryptedKeyMaterialBytes_ =
@@ -74,7 +83,9 @@ std::optional<std::vector<uint8_t>> Dek::getEncryptedKeyMaterialBytes() const {
 }
 std::optional<std::string> Dek::getKeyMaterial() const { return keyMaterial_; }
 std::optional<std::vector<uint8_t>> Dek::getKeyMaterialBytes() const {
-    if (!keyMaterial_.has_value()) { return std::nullopt; }
+    if (!keyMaterial_.has_value()) {
+        return std::nullopt;
+    }
 
     if (!keyMaterialBytes_.has_value()) {
         keyMaterialBytes_ = base64_decode(keyMaterial_.value());
@@ -134,7 +145,9 @@ void to_json(nlohmann::json &j, const Dek &o) {
         j["keyMaterial"] = o.keyMaterial_.value();
     }
 
-    if (o.deleted_.has_value()) { j["deleted"] = o.deleted_.value(); }
+    if (o.deleted_.has_value()) {
+        j["deleted"] = o.deleted_.value();
+    }
 }
 
 void from_json(const nlohmann::json &j, Dek &o) {
@@ -158,4 +171,4 @@ void from_json(const nlohmann::json &j, Dek &o) {
     }
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

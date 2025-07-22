@@ -18,10 +18,11 @@
 
 #pragma once
 
-#include "Rule.h"
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <vector>
+
+#include "Rule.h"
 
 namespace srclient::rest::model {
 
@@ -42,22 +43,22 @@ class RuleSet {
     /// <summary>
     ///
     /// </summary>
-    std::optional<std::vector<srclient::rest::model::Rule>>
-    getMigrationRules() const;
+    std::optional<std::vector<srclient::rest::model::Rule>> getMigrationRules()
+        const;
     void setMigrationRules(
         const std::optional<std::vector<srclient::rest::model::Rule>> &value);
     /// <summary>
     ///
     /// </summary>
-    std::optional<std::vector<srclient::rest::model::Rule>>
-    getDomainRules() const;
+    std::optional<std::vector<srclient::rest::model::Rule>> getDomainRules()
+        const;
     void setDomainRules(
         const std::optional<std::vector<srclient::rest::model::Rule>> &value);
     /// <summary>
     ///
     /// </summary>
-    std::optional<std::vector<srclient::rest::model::Rule>>
-    getEncodingRules() const;
+    std::optional<std::vector<srclient::rest::model::Rule>> getEncodingRules()
+        const;
     void setEncodingRules(
         const std::optional<std::vector<srclient::rest::model::Rule>> &value);
 
@@ -70,4 +71,4 @@ class RuleSet {
     std::optional<std::vector<srclient::rest::model::Rule>> encodingRules_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

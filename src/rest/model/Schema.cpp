@@ -107,4 +107,4 @@ void Schema::setSchema(const std::optional<std::string> &value) {
     schema_ = value;
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

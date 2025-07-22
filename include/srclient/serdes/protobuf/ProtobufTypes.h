@@ -1,16 +1,18 @@
 #pragma once
 
-#include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/SerdeTypes.h"
-#include <any>
-#include <functional>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
+
+#include <any>
+#include <functional>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <type_traits>
+
+#include "srclient/serdes/SerdeError.h"
+#include "srclient/serdes/SerdeTypes.h"
 
 namespace srclient::serdes::protobuf {
 
@@ -36,7 +38,8 @@ class ProtobufReflectError : public SerdeError {
 /**
  * Protobuf implementation of SerdeValue
  */
-template <typename T> class ProtobufValue : public SerdeValue {
+template <typename T>
+class ProtobufValue : public SerdeValue {
     static_assert(std::is_base_of_v<google::protobuf::Message, T>,
                   "T must derive from google::protobuf::Message");
 
@@ -152,20 +155,20 @@ inline std::unique_ptr<SerdeValue> makeProtobufValue(T &value) {
 }
 
 // Helper function for creating Protobuf SerdeSchema instances
-inline std::unique_ptr<SerdeSchema>
-makeProtobufSchema(const google::protobuf::FileDescriptor *file_descriptor) {
+inline std::unique_ptr<SerdeSchema> makeProtobufSchema(
+    const google::protobuf::FileDescriptor *file_descriptor) {
     return std::make_unique<ProtobufSchema>(file_descriptor);
 }
 
 // Utility functions for Protobuf value and schema extraction
 google::protobuf::Message &asProtobuf(const SerdeValue &value);
 
-inline const google::protobuf::FileDescriptor *
-asProtobufSchema(const SerdeSchema &schema) {
+inline const google::protobuf::FileDescriptor *asProtobufSchema(
+    const SerdeSchema &schema) {
     if (schema.getFormat() != SerdeFormat::Protobuf) {
         throw std::invalid_argument("Schema is not a Protobuf schema");
     }
     return schema.getSchema<const google::protobuf::FileDescriptor *>();
 }
 
-} // namespace srclient::serdes::protobuf
+}  // namespace srclient::serdes::protobuf

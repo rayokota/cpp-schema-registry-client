@@ -5,15 +5,16 @@
 
 #pragma once
 
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
+
 #include "srclient/rest/ClientConfiguration.h"
 #include "srclient/rest/model/CreateDekRequest.h"
 #include "srclient/rest/model/CreateKekRequest.h"
 #include "srclient/rest/model/Dek.h"
 #include "srclient/rest/model/Kek.h"
-#include <cstdint>
-#include <optional>
-#include <string>
-#include <vector>
 
 namespace srclient::rest {
 
@@ -33,15 +34,15 @@ class IDekRegistryClient {
     /**
      * Register a new Key Encryption Key (KEK)
      */
-    virtual srclient::rest::model::Kek
-    registerKek(const srclient::rest::model::CreateKekRequest &request) = 0;
+    virtual srclient::rest::model::Kek registerKek(
+        const srclient::rest::model::CreateKekRequest &request) = 0;
 
     /**
      * Register a new Data Encryption Key (DEK)
      */
-    virtual srclient::rest::model::Dek
-    registerDek(const std::string &kek_name,
-                const srclient::rest::model::CreateDekRequest &request) = 0;
+    virtual srclient::rest::model::Dek registerDek(
+        const std::string &kek_name,
+        const srclient::rest::model::CreateDekRequest &request) = 0;
 
     /**
      * Get a KEK by name
@@ -52,12 +53,12 @@ class IDekRegistryClient {
     /**
      * Get a DEK by KEK name, subject, algorithm, and version
      */
-    virtual srclient::rest::model::Dek
-    getDek(const std::string &kek_name, const std::string &subject,
-           const std::optional<srclient::rest::model::Algorithm> &algorithm =
-               std::nullopt,
-           const std::optional<int32_t> &version = std::nullopt,
-           bool deleted = false) = 0;
+    virtual srclient::rest::model::Dek getDek(
+        const std::string &kek_name, const std::string &subject,
+        const std::optional<srclient::rest::model::Algorithm> &algorithm =
+            std::nullopt,
+        const std::optional<int32_t> &version = std::nullopt,
+        bool deleted = false) = 0;
 
     /**
      * Set the key material for a DEK
@@ -81,4 +82,4 @@ class IDekRegistryClient {
     virtual void close() = 0;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

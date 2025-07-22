@@ -26,9 +26,14 @@ RegisteredSchema::RegisteredSchema(const std::optional<int32_t> &id,
                                    const std::optional<std::string> &subject,
                                    const std::optional<int32_t> &version,
                                    const Schema &schema)
-    : id_(id), guid_(guid), subject_(subject), version_(version),
-      schemaType_(schema.getSchemaType()), references_(schema.getReferences()),
-      metadata_(schema.getMetadata()), ruleSet_(schema.getRuleSet()),
+    : id_(id),
+      guid_(guid),
+      subject_(subject),
+      version_(version),
+      schemaType_(schema.getSchemaType()),
+      references_(schema.getReferences()),
+      metadata_(schema.getMetadata()),
+      ruleSet_(schema.getRuleSet()),
       schema_(schema.getSchema()) {}
 
 bool RegisteredSchema::operator==(const RegisteredSchema &rhs) const {
@@ -148,8 +153,8 @@ void RegisteredSchema::setReferences(
     references_ = value;
 }
 
-std::optional<srclient::rest::model::Metadata>
-RegisteredSchema::getMetadata() const {
+std::optional<srclient::rest::model::Metadata> RegisteredSchema::getMetadata()
+    const {
     return metadata_;
 }
 
@@ -158,8 +163,8 @@ void RegisteredSchema::setMetadata(
     metadata_ = value;
 }
 
-std::optional<srclient::rest::model::RuleSet>
-RegisteredSchema::getRuleSet() const {
+std::optional<srclient::rest::model::RuleSet> RegisteredSchema::getRuleSet()
+    const {
     return ruleSet_;
 }
 
@@ -186,4 +191,4 @@ Schema RegisteredSchema::toSchema() const {
     return schema;
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

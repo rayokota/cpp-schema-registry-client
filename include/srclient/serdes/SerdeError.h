@@ -122,6 +122,6 @@ UuidError createUuidError(const std::string &invalid_uuid);
  * Create IO error from operation description
  */
 IoError createIoError(const std::string &operation, const std::string &details);
-} // namespace error_utils
+}  // namespace error_utils
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

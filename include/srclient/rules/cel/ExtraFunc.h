@@ -19,9 +19,9 @@
 
 namespace srclient::rules::cel {
 
-absl::Status
-RegisterExtraFuncs(google::api::expr::runtime::CelFunctionRegistry &registry,
-                   google::protobuf::Arena *regArena);
+absl::Status RegisterExtraFuncs(
+    google::api::expr::runtime::CelFunctionRegistry &registry,
+    google::protobuf::Arena *regArena);
 
 // define for testing
 bool IsIpv4Prefix(std::string_view toValidate, bool strict);
@@ -29,4 +29,4 @@ bool IsIpv6Prefix(std::string_view toValidate, bool strict);
 bool IsIpPrefix(std::string_view toValidate, bool strict);
 bool IsHostAndPort(std::string_view toValidate, bool portRequired);
 
-} // namespace srclient::rules::cel
+}  // namespace srclient::rules::cel

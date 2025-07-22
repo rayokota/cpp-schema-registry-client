@@ -18,13 +18,14 @@
 
 #pragma once
 
-#include "Metadata.h"
-#include "RuleSet.h"
-#include "SchemaReference.h"
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "Metadata.h"
+#include "RuleSet.h"
+#include "SchemaReference.h"
 
 namespace srclient::rest::model {
 
@@ -59,8 +60,8 @@ class Schema {
     ///
     /// </summary>
     std::optional<srclient::rest::model::Metadata> getMetadata() const;
-    void
-    setMetadata(const std::optional<srclient::rest::model::Metadata> &value);
+    void setMetadata(
+        const std::optional<srclient::rest::model::Metadata> &value);
     /// <summary>
     ///
     /// </summary>
@@ -84,4 +85,4 @@ class Schema {
     std::optional<std::string> schema_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

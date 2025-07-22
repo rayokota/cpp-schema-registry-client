@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <google/protobuf/any.pb.h>
 #include <google/protobuf/api.pb.h>
 #include <google/protobuf/descriptor.h>
@@ -15,6 +14,8 @@
 #include <google/protobuf/timestamp.pb.h>
 #include <google/protobuf/type.pb.h>
 #include <google/protobuf/wrappers.pb.h>
+
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -93,7 +94,8 @@ class ProtobufSerde {
  * Protobuf serializer class template
  * Based on ProtobufSerializer from protobuf.rs (converted to synchronous)
  */
-template <typename T = google::protobuf::Message> class ProtobufSerializer {
+template <typename T = google::protobuf::Message>
+class ProtobufSerializer {
   public:
     /**
      * Constructor with default reference subject name strategy
@@ -141,17 +143,17 @@ template <typename T = google::protobuf::Message> class ProtobufSerializer {
     ReferenceSubjectNameStrategy reference_subject_name_strategy_;
 
     // Helper methods
-    std::vector<int32_t>
-    toIndexArray(const google::protobuf::Descriptor *descriptor);
+    std::vector<int32_t> toIndexArray(
+        const google::protobuf::Descriptor *descriptor);
 
-    std::vector<srclient::rest::model::SchemaReference>
-    resolveDependencies(const SerializationContext &ctx,
-                        const google::protobuf::FileDescriptor *file_desc);
+    std::vector<srclient::rest::model::SchemaReference> resolveDependencies(
+        const SerializationContext &ctx,
+        const google::protobuf::FileDescriptor *file_desc);
 
     void validateSchema(const srclient::rest::model::Schema &schema);
 };
 
-} // namespace srclient::serdes::protobuf
+}  // namespace srclient::serdes::protobuf
 
 // Begin template method implementations moved from ProtobufSerializer.cpp so
 // that users can instantiate the serializer for custom protobuf message types
@@ -223,9 +225,8 @@ inline ProtobufSerializer<T>::ProtobufSerializer(
 }
 
 template <typename T>
-inline std::vector<uint8_t>
-ProtobufSerializer<T>::serialize(const SerializationContext &ctx,
-                                 const T &message) {
+inline std::vector<uint8_t> ProtobufSerializer<T>::serialize(
+    const SerializationContext &ctx, const T &message) {
     return serializeWithMessageDescriptor(ctx, message,
                                           message.GetDescriptor());
 }
@@ -255,10 +256,9 @@ ProtobufSerializer<T>::serializeWithFileDescriptorSet(
 // Forward declaration for transformFields helper that lives in
 // ProtobufUtils.cpp
 namespace utils {
-std::unique_ptr<srclient::serdes::SerdeValue>
-transformFields(srclient::serdes::RuleContext &ctx,
-                const std::string &field_executor_type,
-                const srclient::serdes::SerdeValue &value);
+std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
+    srclient::serdes::RuleContext &ctx, const std::string &field_executor_type,
+    const srclient::serdes::SerdeValue &value);
 }
 
 template <typename T>
@@ -392,7 +392,9 @@ ProtobufSerializer<T>::resolveDependencies(
 
     for (int i = 0; i < file_desc->dependency_count(); ++i) {
         const auto *dep = file_desc->dependency(i);
-        if (utils::isBuiltin(dep->name())) { continue; }
+        if (utils::isBuiltin(dep->name())) {
+            continue;
+        }
 
         auto dep_refs = resolveDependencies(ctx, dep);
         auto subject =
@@ -448,7 +450,7 @@ inline void ProtobufSerializer<T>::validateSchema(
     }
 }
 
-} // namespace srclient::serdes::protobuf
+}  // namespace srclient::serdes::protobuf
 
 // End of template method implementations
-#endif // SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL
+#endif  // SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL

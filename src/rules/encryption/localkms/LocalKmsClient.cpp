@@ -4,6 +4,9 @@
  */
 
 #include "srclient/rules/encryption/localkms/LocalKmsClient.h"
+
+#include <openssl/sha.h>
+
 #include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
@@ -12,14 +15,13 @@
 #include "tink/subtle/hkdf.h"
 #include "tink/util/status.h"
 #include "tink/util/statusor.h"
-#include <openssl/sha.h>
 
 namespace srclient::rules::encryption::localkms {
 
 namespace {
 constexpr absl::string_view kPrefix = "local-kms://";
-constexpr size_t kKeySize = 16; // 128-bit key for AES-128-GCM
-} // namespace
+constexpr size_t kKeySize = 16;  // 128-bit key for AES-128-GCM
+}  // namespace
 
 LocalKmsClient::LocalKmsClient(const std::string &secret) : secret_(secret) {
     if (secret.empty()) {
@@ -33,9 +35,8 @@ bool LocalKmsClient::DoesSupport(absl::string_view key_uri) const {
     return isValidKeyUri(key_uri);
 }
 
-absl::StatusOr<std::unique_ptr<crypto::tink::Aead>>
-LocalKmsClient::GetAead(absl::string_view key_uri) const {
-
+absl::StatusOr<std::unique_ptr<crypto::tink::Aead>> LocalKmsClient::GetAead(
+    absl::string_view key_uri) const {
     if (!DoesSupport(key_uri)) {
         return absl::InvalidArgumentError(absl::StrCat(
             "Key URI '", key_uri, "' not supported by LocalKmsClient"));
@@ -46,14 +47,15 @@ LocalKmsClient::GetAead(absl::string_view key_uri) const {
 
 absl::StatusOr<std::unique_ptr<crypto::tink::Aead>>
 LocalKmsClient::GetPrimitive(const std::string &secret) {
-
     if (secret.empty()) {
         return absl::InvalidArgumentError("Secret cannot be empty");
     }
 
     // Derive key using HKDF
     auto key_result = GetKey(secret);
-    if (!key_result.ok()) { return key_result.status(); }
+    if (!key_result.ok()) {
+        return key_result.status();
+    }
 
     std::vector<uint8_t> key = std::move(*key_result);
 
@@ -72,8 +74,8 @@ LocalKmsClient::GetPrimitive(const std::string &secret) {
     return std::move(*aes_gcm_result);
 }
 
-absl::StatusOr<std::vector<uint8_t>>
-LocalKmsClient::GetKey(const std::string &secret) {
+absl::StatusOr<std::vector<uint8_t>> LocalKmsClient::GetKey(
+    const std::string &secret) {
     if (secret.empty()) {
         return absl::InvalidArgumentError("Secret cannot be empty");
     }
@@ -87,10 +89,10 @@ LocalKmsClient::GetKey(const std::string &secret) {
 
     auto hkdf_result = crypto::tink::subtle::Hkdf::ComputeHkdf(
         crypto::tink::subtle::HashType::SHA256,
-        secret,  // Input key material (IKM)
-        "",      // Salt (empty)
-        "",      // Info (empty)
-        kKeySize // Output key length
+        secret,   // Input key material (IKM)
+        "",       // Salt (empty)
+        "",       // Info (empty)
+        kKeySize  // Output key length
     );
 
     if (!hkdf_result.ok()) {
@@ -109,4 +111,4 @@ bool LocalKmsClient::isValidKeyUri(absl::string_view key_uri) const {
     return key_uri.substr(0, kPrefix.size()) == kPrefix;
 }
 
-} // namespace srclient::rules::encryption::localkms
+}  // namespace srclient::rules::encryption::localkms

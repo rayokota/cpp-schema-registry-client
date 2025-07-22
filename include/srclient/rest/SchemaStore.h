@@ -5,12 +5,13 @@
 
 #pragma once
 
-#include "srclient/rest/model/RegisteredSchema.h"
-#include "srclient/rest/model/Schema.h"
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
+
+#include "srclient/rest/model/RegisteredSchema.h"
+#include "srclient/rest/model/Schema.h"
 
 namespace srclient::rest {
 
@@ -81,15 +82,15 @@ class SchemaStore {
     /**
      * Get schema by guid
      */
-    std::optional<srclient::rest::model::Schema>
-    getSchemaByGuid(const std::string &guid) const;
+    std::optional<srclient::rest::model::Schema> getSchemaByGuid(
+        const std::string &guid) const;
 
     /**
      * Get schema id by subject and schema
      */
-    std::optional<int32_t>
-    getIdBySchema(const std::string &subject,
-                  const srclient::rest::model::Schema &schema) const;
+    std::optional<int32_t> getIdBySchema(
+        const std::string &subject,
+        const srclient::rest::model::Schema &schema) const;
 
     /**
      * Get registered schema by subject and schema
@@ -107,8 +108,8 @@ class SchemaStore {
     /**
      * Get registered schema by subject and id
      */
-    std::optional<srclient::rest::model::RegisteredSchema>
-    getRegisteredById(const std::string &subject, int32_t schemaId) const;
+    std::optional<srclient::rest::model::RegisteredSchema> getRegisteredById(
+        const std::string &subject, int32_t schemaId) const;
 
     /**
      * Clear all cached data
@@ -117,8 +118,8 @@ class SchemaStore {
 
   private:
     // Helper to create a string hash for schemas
-    std::string
-    createSchemaHash(const srclient::rest::model::Schema &schema) const;
+    std::string createSchemaHash(
+        const srclient::rest::model::Schema &schema) const;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

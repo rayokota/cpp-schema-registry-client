@@ -5,15 +5,16 @@
 
 #pragma once
 
-#include "srclient/rest/ClientConfiguration.h"
-#include "srclient/rest/DekRegistryTypes.h"
-#include "srclient/rest/IDekRegistryClient.h"
-#include "srclient/rest/RestException.h"
 #include <chrono>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
+
+#include "srclient/rest/ClientConfiguration.h"
+#include "srclient/rest/DekRegistryTypes.h"
+#include "srclient/rest/IDekRegistryClient.h"
+#include "srclient/rest/RestException.h"
 
 namespace srclient::rest {
 
@@ -69,12 +70,12 @@ class MockDekRegistryClient : public IDekRegistryClient {
     virtual srclient::rest::model::Kek getKek(const std::string &name,
                                               bool deleted = false) override;
 
-    virtual srclient::rest::model::Dek
-    getDek(const std::string &kek_name, const std::string &subject,
-           const std::optional<srclient::rest::model::Algorithm> &algorithm =
-               std::nullopt,
-           const std::optional<int32_t> &version = std::nullopt,
-           bool deleted = false) override;
+    virtual srclient::rest::model::Dek getDek(
+        const std::string &kek_name, const std::string &subject,
+        const std::optional<srclient::rest::model::Algorithm> &algorithm =
+            std::nullopt,
+        const std::optional<int32_t> &version = std::nullopt,
+        bool deleted = false) override;
 
     virtual srclient::rest::model::Dek setDekKeyMaterial(
         const std::string &kek_name, const std::string &subject,
@@ -97,4 +98,4 @@ class MockDekRegistryClient : public IDekRegistryClient {
     int64_t getCurrentTimestamp() const;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

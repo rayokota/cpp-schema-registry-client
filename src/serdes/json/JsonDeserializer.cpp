@@ -1,4 +1,5 @@
 #include "srclient/serdes/json/JsonDeserializer.h"
+
 #include "srclient/serdes/json/JsonUtils.h"
 
 namespace srclient::serdes::json {
@@ -167,7 +168,6 @@ nlohmann::json JsonDeserializer::executeFieldTransformations(
 nlohmann::json JsonDeserializer::executeMigrations(
     const SerializationContext &ctx, const std::string &subject,
     const std::vector<Migration> &migrations, const nlohmann::json &value) {
-
     // Convert to SerdeValue for migration execution
     auto serde_value = makeJsonValue(value);
     auto migrated_value = base_->getSerde().executeMigrations(
@@ -180,7 +180,6 @@ nlohmann::json JsonDeserializer::executeMigrations(
 bool JsonDeserializer::isEvolutionRequired(
     const srclient::rest::model::Schema &writer_schema,
     const srclient::rest::model::Schema &reader_schema) {
-
     // Compare schema content to determine if evolution is needed
     auto writer_schema_str = writer_schema.getSchema();
     auto reader_schema_str = reader_schema.getSchema();
@@ -188,4 +187,4 @@ bool JsonDeserializer::isEvolutionRequired(
     return writer_schema_str != reader_schema_str;
 }
 
-} // namespace srclient::serdes::json
+}  // namespace srclient::serdes::json

@@ -1,4 +1,5 @@
 #include "srclient/rules/encryption/FieldEncryptionExecutor.h"
+
 #include "srclient/serdes/RuleRegistry.h"
 
 namespace srclient::rules::encryption {
@@ -19,12 +20,13 @@ std::string FieldEncryptionExecutor::getType() const { return "ENCRYPT"; }
 
 void FieldEncryptionExecutor::close() { executor_.close(); }
 
-std::unique_ptr<SerdeValue>
-FieldEncryptionExecutor::transformField(RuleContext &ctx,
-                                        const SerdeValue &field_value) {
+std::unique_ptr<SerdeValue> FieldEncryptionExecutor::transformField(
+    RuleContext &ctx, const SerdeValue &field_value) {
     auto transform = executor_.newTransform(ctx);
     auto field_ctx = ctx.currentField();
-    if (!field_ctx) { throw SerdeError("no field context"); }
+    if (!field_ctx) {
+        throw SerdeError("no field context");
+    }
 
     return transform->transform(ctx, field_ctx->getFieldType(), field_value);
 }
@@ -34,4 +36,4 @@ void FieldEncryptionExecutor::registerExecutor() {
         std::make_shared<FieldEncryptionExecutor>(nullptr));
 }
 
-} // namespace srclient::rules::encryption
+}  // namespace srclient::rules::encryption

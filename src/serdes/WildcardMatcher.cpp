@@ -4,6 +4,7 @@
  */
 
 #include "srclient/serdes/WildcardMatcher.h"
+
 #include <stdexcept>
 
 namespace srclient::serdes {
@@ -45,7 +46,7 @@ std::pair<std::string, size_t> doubleSlashes(const std::string &dst,
     return std::make_pair(result, i);
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 std::string wildcardToRegexp(const std::string &pattern,
                              const std::string &separator) {
@@ -59,7 +60,7 @@ std::string wildcardToRegexp(const std::string &pattern,
     size_t pos = 0;
     while ((pos = src.find(pat, pos)) != std::string::npos) {
         src.replace(pos, pat.length(), "**");
-        pos += 2; // Length of "**"
+        pos += 2;  // Length of "**"
     }
 
     size_t i = 0;
@@ -114,4 +115,4 @@ bool wildcardMatch(const std::string &text, const std::string &matcher) {
     }
 }
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

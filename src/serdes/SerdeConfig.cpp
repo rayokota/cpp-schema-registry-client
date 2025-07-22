@@ -1,14 +1,19 @@
 #include "srclient/serdes/SerdeConfig.h"
+
+#include <algorithm>
+
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeError.h"
-#include <algorithm>
 
 namespace srclient::serdes {
 
 // SerializerConfig implementation
 SerializerConfig::SerializerConfig()
-    : auto_register_schemas(true), use_schema(std::nullopt),
-      normalize_schemas(false), validate(false), rule_config({}),
+    : auto_register_schemas(true),
+      use_schema(std::nullopt),
+      normalize_schemas(false),
+      validate(false),
+      rule_config({}),
       subject_name_strategy(topicNameStrategy),
       schema_id_serializer(prefixSchemaIdSerializer) {}
 
@@ -16,9 +21,12 @@ SerializerConfig::SerializerConfig(
     bool auto_register_schemas, std::optional<SchemaSelectorData> use_schema,
     bool normalize_schemas, bool validate,
     const std::unordered_map<std::string, std::string> &rule_config)
-    : auto_register_schemas(auto_register_schemas), use_schema(use_schema),
-      normalize_schemas(normalize_schemas), validate(validate),
-      rule_config(rule_config), subject_name_strategy(topicNameStrategy),
+    : auto_register_schemas(auto_register_schemas),
+      use_schema(use_schema),
+      normalize_schemas(normalize_schemas),
+      validate(validate),
+      rule_config(rule_config),
+      subject_name_strategy(topicNameStrategy),
       schema_id_serializer(prefixSchemaIdSerializer) {}
 
 SerializerConfig SerializerConfig::createDefault() {
@@ -27,14 +35,18 @@ SerializerConfig SerializerConfig::createDefault() {
 
 // DeserializerConfig implementation
 DeserializerConfig::DeserializerConfig()
-    : use_schema(std::nullopt), validate(false), rule_config({}),
+    : use_schema(std::nullopt),
+      validate(false),
+      rule_config({}),
       subject_name_strategy(topicNameStrategy),
       schema_id_deserializer(dualSchemaIdDeserializer) {}
 
 DeserializerConfig::DeserializerConfig(
     std::optional<SchemaSelectorData> use_schema, bool validate,
     const std::unordered_map<std::string, std::string> &rule_config)
-    : use_schema(use_schema), validate(validate), rule_config(rule_config),
+    : use_schema(use_schema),
+      validate(validate),
+      rule_config(rule_config),
       subject_name_strategy(topicNameStrategy),
       schema_id_deserializer(dualSchemaIdDeserializer) {}
 
@@ -44,22 +56,22 @@ DeserializerConfig DeserializerConfig::createDefault() {
 
 // Default strategy functions implementation
 
-std::optional<std::string>
-topicNameStrategy(const std::string &topic, SerdeType serde_type,
-                  const std::optional<Schema> &schema) {
-
+std::optional<std::string> topicNameStrategy(
+    const std::string &topic, SerdeType serde_type,
+    const std::optional<Schema> &schema) {
     switch (serde_type) {
-    case SerdeType::Key: return topic + "-key";
-    case SerdeType::Value: return topic + "-value";
-    default: return std::nullopt;
+        case SerdeType::Key:
+            return topic + "-key";
+        case SerdeType::Value:
+            return topic + "-value";
+        default:
+            return std::nullopt;
     }
 }
 
-std::vector<uint8_t>
-prefixSchemaIdSerializer(const std::vector<uint8_t> &payload,
-                         const SerializationContext &ser_ctx,
-                         const SchemaId &schema_id) {
-
+std::vector<uint8_t> prefixSchemaIdSerializer(
+    const std::vector<uint8_t> &payload, const SerializationContext &ser_ctx,
+    const SchemaId &schema_id) {
     try {
         std::vector<uint8_t> id_bytes = schema_id.idToBytes();
         std::vector<uint8_t> result;
@@ -73,11 +85,9 @@ prefixSchemaIdSerializer(const std::vector<uint8_t> &payload,
     }
 }
 
-std::vector<uint8_t>
-headerSchemaIdSerializer(const std::vector<uint8_t> &payload,
-                         const SerializationContext &ser_ctx,
-                         const SchemaId &schema_id) {
-
+std::vector<uint8_t> headerSchemaIdSerializer(
+    const std::vector<uint8_t> &payload, const SerializationContext &ser_ctx,
+    const SchemaId &schema_id) {
     try {
         if (!ser_ctx.headers.has_value()) {
             throw SerializationError(
@@ -88,11 +98,15 @@ headerSchemaIdSerializer(const std::vector<uint8_t> &payload,
 
         std::string header_key;
         switch (ser_ctx.serde_type) {
-        case SerdeType::Key: header_key = KEY_SCHEMA_ID_HEADER; break;
-        case SerdeType::Value: header_key = VALUE_SCHEMA_ID_HEADER; break;
-        default:
-            throw SerializationError(
-                "Invalid serde type for header serialization");
+            case SerdeType::Key:
+                header_key = KEY_SCHEMA_ID_HEADER;
+                break;
+            case SerdeType::Value:
+                header_key = VALUE_SCHEMA_ID_HEADER;
+                break;
+            default:
+                throw SerializationError(
+                    "Invalid serde type for header serialization");
         }
 
         std::vector<uint8_t> header_value = schema_id.guidToBytes();
@@ -109,7 +123,6 @@ headerSchemaIdSerializer(const std::vector<uint8_t> &payload,
 size_t dualSchemaIdDeserializer(const std::vector<uint8_t> &payload,
                                 const SerializationContext &ser_ctx,
                                 SchemaId &schema_id) {
-
     try {
         // First try to get schema ID from headers
         if (ser_ctx.headers.has_value()) {
@@ -117,16 +130,21 @@ size_t dualSchemaIdDeserializer(const std::vector<uint8_t> &payload,
 
             std::string header_key;
             switch (ser_ctx.serde_type) {
-            case SerdeType::Key: header_key = KEY_SCHEMA_ID_HEADER; break;
-            case SerdeType::Value: header_key = VALUE_SCHEMA_ID_HEADER; break;
-            default: break;
+                case SerdeType::Key:
+                    header_key = KEY_SCHEMA_ID_HEADER;
+                    break;
+                case SerdeType::Value:
+                    header_key = VALUE_SCHEMA_ID_HEADER;
+                    break;
+                default:
+                    break;
             }
 
             if (!header_key.empty()) {
                 auto header_value = headers.getLastHeaderValue(header_key);
                 if (header_value.has_value() && !header_value.value().empty()) {
                     schema_id.readFromBytes(header_value.value());
-                    return 0; // No bytes consumed from payload
+                    return 0;  // No bytes consumed from payload
                 }
             }
         }
@@ -142,7 +160,6 @@ size_t dualSchemaIdDeserializer(const std::vector<uint8_t> &payload,
 size_t prefixSchemaIdDeserializer(const std::vector<uint8_t> &payload,
                                   const SerializationContext &ser_ctx,
                                   SchemaId &schema_id) {
-
     try {
         return schema_id.readFromBytes(payload);
     } catch (const std::exception &e) {
@@ -152,4 +169,4 @@ size_t prefixSchemaIdDeserializer(const std::vector<uint8_t> &payload,
     }
 }
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

@@ -5,12 +5,13 @@
 
 #pragma once
 
-#include "srclient/rules/encryption/KmsDriver.h"
-#include "srclient/rules/encryption/localkms/LocalKmsClient.h"
-#include "tink/kms_client.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
+
+#include "srclient/rules/encryption/KmsDriver.h"
+#include "srclient/rules/encryption/localkms/LocalKmsClient.h"
+#include "tink/kms_client.h"
 
 namespace srclient::rules::encryption::localkms {
 
@@ -51,9 +52,9 @@ class LocalKmsDriver : public KmsDriver {
      * @return A shared pointer to the created LocalKmsClient
      * @throws TinkError if client creation fails (e.g., missing secret)
      */
-    std::shared_ptr<crypto::tink::KmsClient>
-    newKmsClient(const std::unordered_map<std::string, std::string> &conf,
-                 const std::string &keyUrl) override;
+    std::shared_ptr<crypto::tink::KmsClient> newKmsClient(
+        const std::unordered_map<std::string, std::string> &conf,
+        const std::string &keyUrl) override;
 
     /**
      * Create a new instance of this driver
@@ -107,4 +108,4 @@ class LocalKmsDriver : public KmsDriver {
     std::string getEnvVar(const std::string &name) const;
 };
 
-} // namespace srclient::rules::encryption::localkms
+}  // namespace srclient::rules::encryption::localkms

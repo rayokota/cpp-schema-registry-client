@@ -63,4 +63,4 @@ class SchemaReference {
     std::optional<int32_t> version_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

@@ -5,18 +5,19 @@
 
 #pragma once
 
-#include "srclient/rest/ClientConfiguration.h"
-#include "srclient/rest/RestException.h"
-#include "srclient/rest/SchemaRegistryClient.h"
-#include "srclient/rest/model/RegisteredSchema.h"
-#include "srclient/rest/model/Schema.h"
-#include "srclient/rest/model/ServerConfig.h"
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "srclient/rest/ClientConfiguration.h"
+#include "srclient/rest/RestException.h"
+#include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/rest/model/RegisteredSchema.h"
+#include "srclient/rest/model/Schema.h"
+#include "srclient/rest/model/ServerConfig.h"
 
 namespace srclient::rest {
 
@@ -45,14 +46,14 @@ class MockSchemaStore {
     MockSchemaStore() = default;
     ~MockSchemaStore() = default;
 
-    void
-    setRegisteredSchema(const srclient::rest::model::RegisteredSchema &schema);
+    void setRegisteredSchema(
+        const srclient::rest::model::RegisteredSchema &schema);
 
-    std::optional<srclient::rest::model::Schema>
-    getSchemaById(int32_t schemaId) const;
+    std::optional<srclient::rest::model::Schema> getSchemaById(
+        int32_t schemaId) const;
 
-    std::optional<srclient::rest::model::Schema>
-    getSchemaByGuid(const std::string &guid) const;
+    std::optional<srclient::rest::model::Schema> getSchemaByGuid(
+        const std::string &guid) const;
 
     std::optional<srclient::rest::model::RegisteredSchema>
     getRegisteredBySchema(const std::string &subject,
@@ -61,8 +62,8 @@ class MockSchemaStore {
     std::optional<srclient::rest::model::RegisteredSchema>
     getRegisteredByVersion(const std::string &subject, int32_t version) const;
 
-    std::optional<srclient::rest::model::RegisteredSchema>
-    getLatestVersion(const std::string &subject) const;
+    std::optional<srclient::rest::model::RegisteredSchema> getLatestVersion(
+        const std::string &subject) const;
 
     std::optional<srclient::rest::model::RegisteredSchema>
     getLatestWithMetadata(
@@ -84,9 +85,9 @@ class MockSchemaStore {
     friend class MockSchemaRegistryClient;
 
   private:
-    bool
-    hasMetadata(const std::unordered_map<std::string, std::string> &metadata,
-                const srclient::rest::model::RegisteredSchema &rs) const;
+    bool hasMetadata(
+        const std::unordered_map<std::string, std::string> &metadata,
+        const srclient::rest::model::RegisteredSchema &rs) const;
 
     std::string generateGuid() const;
 };
@@ -110,23 +111,21 @@ class MockSchemaRegistryClient : public ISchemaRegistryClient {
     getConfiguration() const override;
 
     // Schema operations
-    virtual srclient::rest::model::RegisteredSchema
-    registerSchema(const std::string &subject,
-                   const srclient::rest::model::Schema &schema,
-                   bool normalize = false) override;
+    virtual srclient::rest::model::RegisteredSchema registerSchema(
+        const std::string &subject, const srclient::rest::model::Schema &schema,
+        bool normalize = false) override;
 
     virtual srclient::rest::model::Schema getBySubjectAndId(
         const std::optional<std::string> &subject, int32_t id,
         const std::optional<std::string> &format = std::nullopt) override;
 
-    virtual srclient::rest::model::Schema
-    getByGuid(const std::string &guid,
-              const std::optional<std::string> &format = std::nullopt) override;
+    virtual srclient::rest::model::Schema getByGuid(
+        const std::string &guid,
+        const std::optional<std::string> &format = std::nullopt) override;
 
-    virtual srclient::rest::model::RegisteredSchema
-    getBySchema(const std::string &subject,
-                const srclient::rest::model::Schema &schema,
-                bool normalize = false, bool deleted = false) override;
+    virtual srclient::rest::model::RegisteredSchema getBySchema(
+        const std::string &subject, const srclient::rest::model::Schema &schema,
+        bool normalize = false, bool deleted = false) override;
 
     virtual srclient::rest::model::RegisteredSchema getVersion(
         const std::string &subject, int32_t version, bool deleted = false,
@@ -142,11 +141,11 @@ class MockSchemaRegistryClient : public ISchemaRegistryClient {
         bool deleted = false,
         const std::optional<std::string> &format = std::nullopt) override;
 
-    virtual std::vector<int32_t>
-    getAllVersions(const std::string &subject) override;
+    virtual std::vector<int32_t> getAllVersions(
+        const std::string &subject) override;
 
-    virtual std::vector<std::string>
-    getAllSubjects(bool deleted = false) override;
+    virtual std::vector<std::string> getAllSubjects(
+        bool deleted = false) override;
 
     virtual std::vector<int32_t> deleteSubject(const std::string &subject,
                                                bool permanent = false) override;
@@ -160,17 +159,17 @@ class MockSchemaRegistryClient : public ISchemaRegistryClient {
         const std::string &subject,
         const srclient::rest::model::Schema &schema) override;
 
-    virtual bool
-    testCompatibility(const std::string &subject, int32_t version,
-                      const srclient::rest::model::Schema &schema) override;
+    virtual bool testCompatibility(
+        const std::string &subject, int32_t version,
+        const srclient::rest::model::Schema &schema) override;
 
     // Config operations
-    virtual srclient::rest::model::ServerConfig
-    getConfig(const std::string &subject) override;
+    virtual srclient::rest::model::ServerConfig getConfig(
+        const std::string &subject) override;
 
-    virtual srclient::rest::model::ServerConfig
-    updateConfig(const std::string &subject,
-                 const srclient::rest::model::ServerConfig &config) override;
+    virtual srclient::rest::model::ServerConfig updateConfig(
+        const std::string &subject,
+        const srclient::rest::model::ServerConfig &config) override;
 
     virtual srclient::rest::model::ServerConfig getDefaultConfig() override;
 
@@ -185,4 +184,4 @@ class MockSchemaRegistryClient : public ISchemaRegistryClient {
     virtual void close() override;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

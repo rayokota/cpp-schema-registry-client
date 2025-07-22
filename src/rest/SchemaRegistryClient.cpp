@@ -5,12 +5,14 @@
  */
 
 #include "srclient/rest/SchemaRegistryClient.h"
-#include "srclient/rest/MockSchemaRegistryClient.h"
+
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <sstream>
+
+#include "srclient/rest/MockSchemaRegistryClient.h"
 
 using json = nlohmann::json;
 
@@ -24,7 +26,7 @@ SchemaRegistryClient::SchemaRegistryClient(
       latestVersionCacheMutex(std::make_shared<std::mutex>()),
       latestWithMetadataCacheMutex(std::make_shared<std::mutex>()),
       cacheCapacity(1000),
-      cacheLatestTtl(std::chrono::seconds(300)) // 5 minutes
+      cacheLatestTtl(std::chrono::seconds(300))  // 5 minutes
 {
     if (config->getBaseUrls().empty()) {
         throw srclient::rest::RestException("Base URL is required");
@@ -122,8 +124,8 @@ SchemaRegistryClient::parseRegisteredSchemaFromJson(
     }
 }
 
-srclient::rest::model::ServerConfig
-SchemaRegistryClient::parseConfigFromJson(const std::string &jsonStr) const {
+srclient::rest::model::ServerConfig SchemaRegistryClient::parseConfigFromJson(
+    const std::string &jsonStr) const {
     try {
         json j = json::parse(jsonStr);
         srclient::rest::model::ServerConfig config;
@@ -145,8 +147,8 @@ bool SchemaRegistryClient::parseBoolFromJson(const std::string &jsonStr) const {
     }
 }
 
-std::vector<int32_t>
-SchemaRegistryClient::parseIntArrayFromJson(const std::string &jsonStr) const {
+std::vector<int32_t> SchemaRegistryClient::parseIntArrayFromJson(
+    const std::string &jsonStr) const {
     try {
         json j = json::parse(jsonStr);
         return j.get<std::vector<int32_t>>();
@@ -191,12 +193,13 @@ void SchemaRegistryClient::close() { clearCaches(); }
 srclient::rest::model::RegisteredSchema SchemaRegistryClient::registerSchema(
     const std::string &subject, const srclient::rest::model::Schema &schema,
     bool normalize) {
-
     // Check cache first
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
         auto registered = store->getRegisteredBySchema(subject, schema);
-        if (registered.has_value()) { return registered.value(); }
+        if (registered.has_value()) {
+            return registered.value();
+        }
     }
 
     // Prepare request
@@ -223,7 +226,8 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::registerSchema(
         if (response.getSchema().has_value()) {
             schemaKey = response.toSchema();
         } else {
-            schemaKey = schema; // Use the input schema if no schema in response
+            schemaKey =
+                schema;  // Use the input schema if no schema in response
         }
         store->setSchema(std::make_optional(subject), response.getId(),
                          response.getGuid(), schemaKey);
@@ -235,12 +239,13 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::registerSchema(
 srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     const std::optional<std::string> &subject, int32_t id,
     const std::optional<std::string> &format) {
-
     // Check cache first
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
         auto result = store->getSchemaById(subject.value_or(""), id);
-        if (result.has_value()) { return result.value().second; }
+        if (result.has_value()) {
+            return result.value().second;
+        }
     }
 
     // Prepare request
@@ -271,15 +276,15 @@ srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     return schema;
 }
 
-srclient::rest::model::Schema
-SchemaRegistryClient::getByGuid(const std::string &guid,
-                                const std::optional<std::string> &format) {
-
+srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
+    const std::string &guid, const std::optional<std::string> &format) {
     // Check cache first
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
         auto result = store->getSchemaByGuid(guid);
-        if (result.has_value()) { return result.value(); }
+        if (result.has_value()) {
+            return result.value();
+        }
     }
 
     // Prepare request
@@ -307,16 +312,16 @@ SchemaRegistryClient::getByGuid(const std::string &guid,
     return schema;
 }
 
-srclient::rest::model::RegisteredSchema
-SchemaRegistryClient::getBySchema(const std::string &subject,
-                                  const srclient::rest::model::Schema &schema,
-                                  bool normalize, bool deleted) {
-
+srclient::rest::model::RegisteredSchema SchemaRegistryClient::getBySchema(
+    const std::string &subject, const srclient::rest::model::Schema &schema,
+    bool normalize, bool deleted) {
     // Check cache first
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
         auto result = store->getRegisteredBySchema(subject, schema);
-        if (result.has_value()) { return result.value(); }
+        if (result.has_value()) {
+            return result.value();
+        }
     }
 
     // Prepare request
@@ -350,16 +355,16 @@ SchemaRegistryClient::getBySchema(const std::string &subject,
     return response;
 }
 
-srclient::rest::model::RegisteredSchema
-SchemaRegistryClient::getVersion(const std::string &subject, int32_t version,
-                                 bool deleted,
-                                 const std::optional<std::string> &format) {
-
+srclient::rest::model::RegisteredSchema SchemaRegistryClient::getVersion(
+    const std::string &subject, int32_t version, bool deleted,
+    const std::optional<std::string> &format) {
     // Check cache first
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
         auto result = store->getRegisteredByVersion(subject, version);
-        if (result.has_value()) { return result.value(); }
+        if (result.has_value()) {
+            return result.value();
+        }
     }
 
     // Prepare request
@@ -390,12 +395,13 @@ SchemaRegistryClient::getVersion(const std::string &subject, int32_t version,
 
 srclient::rest::model::RegisteredSchema SchemaRegistryClient::getLatestVersion(
     const std::string &subject, const std::optional<std::string> &format) {
-
     // Check cache first
     {
         std::lock_guard<std::mutex> lock(*latestVersionCacheMutex);
         auto it = latestVersionCache.find(subject);
-        if (it != latestVersionCache.end()) { return it->second; }
+        if (it != latestVersionCache.end()) {
+            return it->second;
+        }
     }
 
     // Prepare request
@@ -426,13 +432,14 @@ SchemaRegistryClient::getLatestWithMetadata(
     const std::string &subject,
     const std::unordered_map<std::string, std::string> &metadata, bool deleted,
     const std::optional<std::string> &format) {
-
     // Check cache first
     std::string cacheKey = createMetadataKey(subject, metadata);
     {
         std::lock_guard<std::mutex> lock(*latestWithMetadataCacheMutex);
         auto it = latestWithMetadataCache.find(cacheKey);
-        if (it != latestWithMetadataCache.end()) { return it->second; }
+        if (it != latestWithMetadataCache.end()) {
+            return it->second;
+        }
     }
 
     // Prepare request
@@ -465,8 +472,8 @@ SchemaRegistryClient::getLatestWithMetadata(
     return response;
 }
 
-std::vector<int32_t>
-SchemaRegistryClient::getAllVersions(const std::string &subject) {
+std::vector<int32_t> SchemaRegistryClient::getAllVersions(
+    const std::string &subject) {
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions";
 
@@ -490,9 +497,8 @@ std::vector<std::string> SchemaRegistryClient::getAllSubjects(bool deleted) {
     return parseStringArrayFromJson(responseBody);
 }
 
-std::vector<int32_t>
-SchemaRegistryClient::deleteSubject(const std::string &subject,
-                                    bool permanent) {
+std::vector<int32_t> SchemaRegistryClient::deleteSubject(
+    const std::string &subject, bool permanent) {
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject);
     httplib::Params query;
@@ -578,8 +584,8 @@ bool SchemaRegistryClient::testCompatibility(
     }
 }
 
-srclient::rest::model::ServerConfig
-SchemaRegistryClient::getConfig(const std::string &subject) {
+srclient::rest::model::ServerConfig SchemaRegistryClient::getConfig(
+    const std::string &subject) {
     // Prepare request
     std::string path = "/config/" + urlEncode(subject);
 
@@ -636,4 +642,4 @@ srclient::rest::model::ServerConfig SchemaRegistryClient::updateDefaultConfig(
     return parseConfigFromJson(responseBody);
 }
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

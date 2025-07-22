@@ -6,13 +6,14 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "absl/strings/string_view.h"
 #include "tink/aead.h"
 #include "tink/kms_client.h"
 #include "tink/util/statusor.h"
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace srclient::rules::encryption::localkms {
 
@@ -55,8 +56,8 @@ class LocalKmsClient : public crypto::tink::KmsClient {
      * @param key_uri The key URI (must start with "local-kms://")
      * @return StatusOr containing the AEAD primitive or an error
      */
-    absl::StatusOr<std::unique_ptr<crypto::tink::Aead>>
-    GetAead(absl::string_view key_uri) const override;
+    absl::StatusOr<std::unique_ptr<crypto::tink::Aead>> GetAead(
+        absl::string_view key_uri) const override;
 
     /**
      * Static method to create an AEAD primitive from a secret
@@ -64,8 +65,8 @@ class LocalKmsClient : public crypto::tink::KmsClient {
      * @param secret The secret to derive the key from
      * @return StatusOr containing the AEAD primitive or an error
      */
-    static absl::StatusOr<std::unique_ptr<crypto::tink::Aead>>
-    GetPrimitive(const std::string &secret);
+    static absl::StatusOr<std::unique_ptr<crypto::tink::Aead>> GetPrimitive(
+        const std::string &secret);
 
     /**
      * Static method to derive a key from a secret using HKDF
@@ -73,8 +74,8 @@ class LocalKmsClient : public crypto::tink::KmsClient {
      * @param secret The input secret
      * @return StatusOr containing the derived key bytes or an error
      */
-    static absl::StatusOr<std::vector<uint8_t>>
-    GetKey(const std::string &secret);
+    static absl::StatusOr<std::vector<uint8_t>> GetKey(
+        const std::string &secret);
 
     /**
      * Get the key URL prefix supported by this client
@@ -90,4 +91,4 @@ class LocalKmsClient : public crypto::tink::KmsClient {
     bool isValidKeyUri(absl::string_view key_uri) const;
 };
 
-} // namespace srclient::rules::encryption::localkms
+}  // namespace srclient::rules::encryption::localkms

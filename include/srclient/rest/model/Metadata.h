@@ -43,11 +43,11 @@ class Metadata {
     /// <summary>
     ///
     /// </summary>
-    std::optional<std::map<std::string, std::vector<std::string>>>
-    getTags() const;
-    void
-    setTags(const std::optional<std::map<std::string, std::vector<std::string>>>
-                &value);
+    std::optional<std::map<std::string, std::vector<std::string>>> getTags()
+        const;
+    void setTags(
+        const std::optional<std::map<std::string, std::vector<std::string>>>
+            &value);
     /// <summary>
     ///
     /// </summary>
@@ -69,4 +69,4 @@ class Metadata {
     std::optional<std::vector<std::string>> sensitive_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

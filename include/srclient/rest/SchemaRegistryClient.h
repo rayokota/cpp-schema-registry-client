@@ -54,21 +54,21 @@ class SchemaRegistryClient : public ISchemaRegistryClient {
         const std::unordered_map<std::string, std::string> &metadata) const;
 
     // JSON processing helpers
-    srclient::rest::model::Schema
-    parseSchemaFromJson(const std::string &json) const;
+    srclient::rest::model::Schema parseSchemaFromJson(
+        const std::string &json) const;
 
-    srclient::rest::model::RegisteredSchema
-    parseRegisteredSchemaFromJson(const std::string &json) const;
+    srclient::rest::model::RegisteredSchema parseRegisteredSchemaFromJson(
+        const std::string &json) const;
 
-    srclient::rest::model::ServerConfig
-    parseConfigFromJson(const std::string &json) const;
+    srclient::rest::model::ServerConfig parseConfigFromJson(
+        const std::string &json) const;
 
     bool parseBoolFromJson(const std::string &json) const;
 
     std::vector<int32_t> parseIntArrayFromJson(const std::string &json) const;
 
-    std::vector<std::string>
-    parseStringArrayFromJson(const std::string &json) const;
+    std::vector<std::string> parseStringArrayFromJson(
+        const std::string &json) const;
 
     // HTTP request helpers
     std::string sendHttpRequest(const std::string &path,
@@ -103,23 +103,21 @@ class SchemaRegistryClient : public ISchemaRegistryClient {
     getConfiguration() const override;
 
     // Implement ISchemaRegistryClient methods
-    srclient::rest::model::RegisteredSchema
-    registerSchema(const std::string &subject,
-                   const srclient::rest::model::Schema &schema,
-                   bool normalize = false) override;
+    srclient::rest::model::RegisteredSchema registerSchema(
+        const std::string &subject, const srclient::rest::model::Schema &schema,
+        bool normalize = false) override;
 
     srclient::rest::model::Schema getBySubjectAndId(
         const std::optional<std::string> &subject, int32_t id,
         const std::optional<std::string> &format = std::nullopt) override;
 
-    srclient::rest::model::Schema
-    getByGuid(const std::string &guid,
-              const std::optional<std::string> &format = std::nullopt) override;
+    srclient::rest::model::Schema getByGuid(
+        const std::string &guid,
+        const std::optional<std::string> &format = std::nullopt) override;
 
-    srclient::rest::model::RegisteredSchema
-    getBySchema(const std::string &subject,
-                const srclient::rest::model::Schema &schema,
-                bool normalize = false, bool deleted = false) override;
+    srclient::rest::model::RegisteredSchema getBySchema(
+        const std::string &subject, const srclient::rest::model::Schema &schema,
+        bool normalize = false, bool deleted = false) override;
 
     srclient::rest::model::RegisteredSchema getVersion(
         const std::string &subject, int32_t version, bool deleted = false,
@@ -149,16 +147,16 @@ class SchemaRegistryClient : public ISchemaRegistryClient {
         const std::string &subject,
         const srclient::rest::model::Schema &schema) override;
 
-    bool
-    testCompatibility(const std::string &subject, int32_t version,
-                      const srclient::rest::model::Schema &schema) override;
+    bool testCompatibility(
+        const std::string &subject, int32_t version,
+        const srclient::rest::model::Schema &schema) override;
 
-    srclient::rest::model::ServerConfig
-    getConfig(const std::string &subject) override;
+    srclient::rest::model::ServerConfig getConfig(
+        const std::string &subject) override;
 
-    srclient::rest::model::ServerConfig
-    updateConfig(const std::string &subject,
-                 const srclient::rest::model::ServerConfig &config) override;
+    srclient::rest::model::ServerConfig updateConfig(
+        const std::string &subject,
+        const srclient::rest::model::ServerConfig &config) override;
 
     srclient::rest::model::ServerConfig getDefaultConfig() override;
 
@@ -172,4 +170,4 @@ class SchemaRegistryClient : public ISchemaRegistryClient {
     void close() override;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

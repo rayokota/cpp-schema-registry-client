@@ -71,8 +71,8 @@ class SchemaId {
     SchemaId &operator=(SchemaId &&) = default;
 
   private:
-    std::pair<std::vector<int32_t>, size_t>
-    readIndexArrayAndData(const std::vector<uint8_t> &buf) const;
+    std::pair<std::vector<int32_t>, size_t> readIndexArrayAndData(
+        const std::vector<uint8_t> &buf) const;
     std::optional<std::vector<uint8_t>> toEncodedIndexArray() const;
 };
 
@@ -120,8 +120,8 @@ class SerdeHeaders {
     // Modification
     void insert(const SerdeHeader &header);
     std::optional<SerdeHeader> lastHeader(const std::string &key) const;
-    std::optional<std::vector<uint8_t>>
-    getLastHeaderValue(const std::string &key) const;
+    std::optional<std::vector<uint8_t>> getLastHeaderValue(
+        const std::string &key) const;
     void remove(const std::string &key);
 
     // Copy/move constructors and assignment operators
@@ -243,8 +243,8 @@ class RuleContext {
     // Parameter handling
     std::optional<std::string> getParameter(const std::string &name) const;
 
-    std::optional<std::unordered_set<std::string>>
-    getInlineTags(const std::string &name) const;
+    std::optional<std::unordered_set<std::string>> getInlineTags(
+        const std::string &name) const;
 
     // Field context management
     std::optional<FieldContext> currentField() const;
@@ -279,10 +279,9 @@ class Serde {
           std::shared_ptr<RuleRegistry> rule_registry = nullptr);
 
     // Schema retrieval (synchronous versions)
-    std::optional<RegisteredSchema>
-    getReaderSchema(const std::string &subject,
-                    std::optional<std::string> format,
-                    const std::optional<SchemaSelectorData> &use_schema) const;
+    std::optional<RegisteredSchema> getReaderSchema(
+        const std::string &subject, std::optional<std::string> format,
+        const std::optional<SchemaSelectorData> &use_schema) const;
 
     // Rule execution (synchronous versions)
     std::unique_ptr<SerdeValue> executeRules(
@@ -306,15 +305,15 @@ class Serde {
         std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
 
     // Migration support (synchronous versions)
-    std::vector<Migration>
-    getMigrations(const std::string &subject, const Schema &source_info,
-                  const RegisteredSchema &target,
-                  std::optional<std::string> format = std::nullopt) const;
+    std::vector<Migration> getMigrations(
+        const std::string &subject, const Schema &source_info,
+        const RegisteredSchema &target,
+        std::optional<std::string> format = std::nullopt) const;
 
-    std::vector<RegisteredSchema>
-    getSchemasBetween(const std::string &subject, const RegisteredSchema &first,
-                      const RegisteredSchema &last,
-                      std::optional<std::string> format = std::nullopt) const;
+    std::vector<RegisteredSchema> getSchemasBetween(
+        const std::string &subject, const RegisteredSchema &first,
+        const RegisteredSchema &last,
+        std::optional<std::string> format = std::nullopt) const;
 
     std::unique_ptr<SerdeValue> executeMigrations(
         const SerializationContext &ser_ctx, const std::string &subject,
@@ -343,12 +342,12 @@ class Serde {
                    std::optional<SerdeError> ex,
                    const std::string &default_action) const;
 
-    std::optional<std::string>
-    getRuleActionName(const Rule &rule, Mode mode,
-                      std::optional<std::string> action_name) const;
+    std::optional<std::string> getRuleActionName(
+        const Rule &rule, Mode mode,
+        std::optional<std::string> action_name) const;
 
-    std::shared_ptr<RuleAction>
-    getRuleAction(const RuleContext &ctx, const std::string &action_name) const;
+    std::shared_ptr<RuleAction> getRuleAction(
+        const RuleContext &ctx, const std::string &action_name) const;
 
     bool hasRules(std::optional<RuleSet> rule_set, Phase phase,
                   Mode mode) const;
@@ -391,10 +390,10 @@ class BaseDeserializer {
     BaseDeserializer(Serde serde, const DeserializerConfig &config);
 
     // Schema retrieval (synchronous version)
-    Schema
-    getWriterSchema(const SchemaId &schema_id,
-                    std::optional<std::string> subject = std::nullopt,
-                    std::optional<std::string> format = std::nullopt) const;
+    Schema getWriterSchema(
+        const SchemaId &schema_id,
+        std::optional<std::string> subject = std::nullopt,
+        std::optional<std::string> format = std::nullopt) const;
 
     // Accessors
     const Serde &getSerde() const { return serde_; }
@@ -408,4 +407,4 @@ class BaseDeserializer {
     BaseDeserializer &operator=(BaseDeserializer &&) = delete;
 };
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

@@ -13,7 +13,7 @@
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/json/JsonSerializer.h" // For JsonSerde
+#include "srclient/serdes/json/JsonSerializer.h"  // For JsonSerde
 #include "srclient/serdes/json/JsonTypes.h"
 
 namespace srclient::serdes::json {
@@ -55,8 +55,8 @@ class JsonDeserializer {
     std::unique_ptr<JsonSerde> serde_;
 
     // Helper methods
-    std::pair<nlohmann::json, std::optional<std::string>>
-    getParsedSchema(const srclient::rest::model::Schema &schema);
+    std::pair<nlohmann::json, std::optional<std::string>> getParsedSchema(
+        const srclient::rest::model::Schema &schema);
 
     bool validateJson(const nlohmann::json &value,
                       const nlohmann::json &schema);
@@ -70,9 +70,9 @@ class JsonDeserializer {
                                      const std::vector<Migration> &migrations,
                                      const nlohmann::json &value);
 
-    bool
-    isEvolutionRequired(const srclient::rest::model::Schema &writer_schema,
-                        const srclient::rest::model::Schema &reader_schema);
+    bool isEvolutionRequired(
+        const srclient::rest::model::Schema &writer_schema,
+        const srclient::rest::model::Schema &reader_schema);
 };
 
-} // namespace srclient::serdes::json
+}  // namespace srclient::serdes::json

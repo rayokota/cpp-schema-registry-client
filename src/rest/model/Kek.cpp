@@ -15,8 +15,14 @@ Kek::Kek(
     const std::optional<std::unordered_map<std::string, std::string>> &kmsProps,
     const std::optional<std::string> &doc, bool shared, int64_t ts,
     const std::optional<bool> &deleted)
-    : name_(name), kmsType_(kmsType), kmsKeyId_(kmsKeyId), kmsProps_(kmsProps),
-      doc_(doc), shared_(shared), ts_(ts), deleted_(deleted) {}
+    : name_(name),
+      kmsType_(kmsType),
+      kmsKeyId_(kmsKeyId),
+      kmsProps_(kmsProps),
+      doc_(doc),
+      shared_(shared),
+      ts_(ts),
+      deleted_(deleted) {}
 
 bool Kek::operator==(const Kek &rhs) const {
     return name_ == rhs.name_ && kmsType_ == rhs.kmsType_ &&
@@ -31,8 +37,8 @@ bool Kek::operator!=(const Kek &rhs) const { return !(*this == rhs); }
 std::string Kek::getName() const { return name_; }
 std::string Kek::getKmsType() const { return kmsType_; }
 std::string Kek::getKmsKeyId() const { return kmsKeyId_; }
-std::optional<std::unordered_map<std::string, std::string>>
-Kek::getKmsProps() const {
+std::optional<std::unordered_map<std::string, std::string>> Kek::getKmsProps()
+    const {
     return kmsProps_;
 }
 std::optional<std::string> Kek::getDoc() const { return doc_; }
@@ -62,11 +68,17 @@ void to_json(nlohmann::json &j, const Kek &o) {
                        {"shared", o.shared_},
                        {"ts", o.ts_}};
 
-    if (o.kmsProps_.has_value()) { j["kmsProps"] = o.kmsProps_.value(); }
+    if (o.kmsProps_.has_value()) {
+        j["kmsProps"] = o.kmsProps_.value();
+    }
 
-    if (o.doc_.has_value()) { j["doc"] = o.doc_.value(); }
+    if (o.doc_.has_value()) {
+        j["doc"] = o.doc_.value();
+    }
 
-    if (o.deleted_.has_value()) { j["deleted"] = o.deleted_.value(); }
+    if (o.deleted_.has_value()) {
+        j["deleted"] = o.deleted_.value();
+    }
 }
 
 void from_json(const nlohmann::json &j, Kek &o) {
@@ -90,4 +102,4 @@ void from_json(const nlohmann::json &j, Kek &o) {
     }
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

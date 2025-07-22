@@ -1,6 +1,3 @@
-BasedOnStyle: LLVM
-AllowShortBlocksOnASingleLine: true
-AllowShortCaseLabelsOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: true
-Cpp11BracedListStyle: true
+BasedOnStyle: Google
+AccessModifierOffset: -2
 IndentWidth: 4

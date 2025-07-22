@@ -84,4 +84,4 @@ class Dek {
     std::optional<bool> deleted_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

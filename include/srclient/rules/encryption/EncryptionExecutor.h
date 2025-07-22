@@ -1,5 +1,13 @@
 #pragma once
 
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "proto/tink.pb.h"
 #include "srclient/rest/ClientConfiguration.h"
 #include "srclient/rest/DekRegistryClient.h"
@@ -20,13 +28,6 @@
 #include "tink/keyset_handle.h"
 #include "tink/kms_client.h"
 #include "tink/util/statusor.h"
-#include <chrono>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace srclient::rules::encryption {
 
@@ -91,14 +92,12 @@ class Cryptor {
 
     bool isDeterministic() const;
     std::vector<uint8_t> generateKey() const;
-    std::vector<uint8_t>
-    encrypt(const std::vector<uint8_t> &dek,
-            const std::vector<uint8_t> &plaintext,
-            const std::vector<uint8_t> &associated_data) const;
-    std::vector<uint8_t>
-    decrypt(const std::vector<uint8_t> &dek,
-            const std::vector<uint8_t> &ciphertext,
-            const std::vector<uint8_t> &associated_data) const;
+    std::vector<uint8_t> encrypt(
+        const std::vector<uint8_t> &dek, const std::vector<uint8_t> &plaintext,
+        const std::vector<uint8_t> &associated_data) const;
+    std::vector<uint8_t> decrypt(
+        const std::vector<uint8_t> &dek, const std::vector<uint8_t> &ciphertext,
+        const std::vector<uint8_t> &associated_data) const;
 };
 
 // Forward declarations
@@ -135,8 +134,8 @@ class EncryptionExecutor : public RuleExecutor {
     IDekRegistryClient *getClient() const;
 
     // Helper methods
-    std::unique_ptr<EncryptionExecutorTransform>
-    newTransform(RuleContext &ctx) const;
+    std::unique_ptr<EncryptionExecutorTransform> newTransform(
+        RuleContext &ctx) const;
 
     // Static registration
     static void registerExecutor();
@@ -175,56 +174,55 @@ class EncryptionExecutorTransform {
     bool isDekRotated() const;
     srclient::rest::model::Kek getKek(RuleContext &ctx);
     srclient::rest::model::Kek getOrCreateKek(RuleContext &ctx);
-    std::optional<srclient::rest::model::Kek>
-    retrieveKekFromRegistry(const KekId &kek_id);
-    std::optional<srclient::rest::model::Kek>
-    storeKekToRegistry(const KekId &kek_id, const std::string &kms_type,
-                       const std::string &kms_key_id, bool shared);
+    std::optional<srclient::rest::model::Kek> retrieveKekFromRegistry(
+        const KekId &kek_id);
+    std::optional<srclient::rest::model::Kek> storeKekToRegistry(
+        const KekId &kek_id, const std::string &kms_type,
+        const std::string &kms_key_id, bool shared);
 
     srclient::rest::model::Dek getOrCreateDek(RuleContext &ctx,
                                               std::optional<int32_t> version);
-    srclient::rest::model::Dek
-    createDek(const DekId &dek_id, int32_t new_version,
-              const std::optional<std::vector<uint8_t>> &encrypted_dek);
-    std::optional<std::vector<uint8_t>>
-    encryptDek(const srclient::rest::model::Kek &kek,
-               const std::vector<uint8_t> &raw_dek);
+    srclient::rest::model::Dek createDek(
+        const DekId &dek_id, int32_t new_version,
+        const std::optional<std::vector<uint8_t>> &encrypted_dek);
+    std::optional<std::vector<uint8_t>> encryptDek(
+        const srclient::rest::model::Kek &kek,
+        const std::vector<uint8_t> &raw_dek);
     std::vector<uint8_t> decryptDek(const srclient::rest::model::Kek &kek,
                                     const std::vector<uint8_t> &encrypted_dek);
-    srclient::rest::model::Dek
-    updateCachedDek(const std::string &kek_name, const std::string &subject,
-                    std::optional<srclient::rest::model::Algorithm> algorithm,
-                    std::optional<int32_t> version, bool deleted,
-                    const std::vector<uint8_t> &key_material_bytes);
-    std::optional<srclient::rest::model::Dek>
-    retrieveDekFromRegistry(const DekId &dek_id);
+    srclient::rest::model::Dek updateCachedDek(
+        const std::string &kek_name, const std::string &subject,
+        std::optional<srclient::rest::model::Algorithm> algorithm,
+        std::optional<int32_t> version, bool deleted,
+        const std::vector<uint8_t> &key_material_bytes);
+    std::optional<srclient::rest::model::Dek> retrieveDekFromRegistry(
+        const DekId &dek_id);
     std::optional<srclient::rest::model::Dek> storeDekToRegistry(
         const DekId &dek_id,
         const std::optional<std::vector<uint8_t>> &encrypted_dek);
 
     bool isExpired(RuleContext &ctx,
                    const std::optional<srclient::rest::model::Dek> &dek) const;
-    std::vector<uint8_t>
-    prefixVersion(int32_t version,
-                  const std::vector<uint8_t> &ciphertext) const;
-    std::pair<std::optional<int32_t>, std::vector<uint8_t>>
-    extractVersion(const std::vector<uint8_t> &ciphertext) const;
+    std::vector<uint8_t> prefixVersion(
+        int32_t version, const std::vector<uint8_t> &ciphertext) const;
+    std::pair<std::optional<int32_t>, std::vector<uint8_t>> extractVersion(
+        const std::vector<uint8_t> &ciphertext) const;
     std::optional<std::vector<uint8_t>> toBytes(FieldType field_type,
                                                 const SerdeValue &value) const;
-    std::unique_ptr<SerdeValue>
-    toObject(RuleContext &ctx, FieldType field_type,
-             const std::vector<uint8_t> &value) const;
+    std::unique_ptr<SerdeValue> toObject(
+        RuleContext &ctx, FieldType field_type,
+        const std::vector<uint8_t> &value) const;
 
-    std::unique_ptr<crypto::tink::Aead>
-    getAead(const std::unordered_map<std::string, std::string> &config,
-            const srclient::rest::model::Kek &kek);
-    std::shared_ptr<crypto::tink::KmsClient>
-    getKmsClient(const std::unordered_map<std::string, std::string> &config,
-                 const std::string &kek_url);
+    std::unique_ptr<crypto::tink::Aead> getAead(
+        const std::unordered_map<std::string, std::string> &config,
+        const srclient::rest::model::Kek &kek);
+    std::shared_ptr<crypto::tink::KmsClient> getKmsClient(
+        const std::unordered_map<std::string, std::string> &config,
+        const std::string &kek_url);
     std::shared_ptr<crypto::tink::KmsClient> registerKmsClient(
         std::shared_ptr<KmsDriver> kms_driver,
         const std::unordered_map<std::string, std::string> &config,
         const std::string &kek_url);
 };
 
-} // namespace srclient::rules::encryption
+}  // namespace srclient::rules::encryption

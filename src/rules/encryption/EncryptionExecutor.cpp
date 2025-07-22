@@ -1,4 +1,10 @@
 #include "srclient/rules/encryption/EncryptionExecutor.h"
+
+#include <algorithm>
+#include <cstring>
+#include <ctime>
+#include <random>
+
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
 #include "srclient/rules/encryption/EncryptionRegistry.h"
@@ -16,10 +22,6 @@
 #include "tink/registry.h"
 #include "tink/util/status.h"
 #include "tink/util/statusor.h"
-#include <algorithm>
-#include <cstring>
-#include <ctime>
-#include <random>
 #ifdef __APPLE__
 #include <libkern/OSByteOrder.h>
 #define htobe32(x) OSSwapHostToBigInt32(x)
@@ -72,20 +74,21 @@ Cryptor::Cryptor(srclient::rest::model::Algorithm dek_format)
 
     // Create key template based on algorithm
     switch (dek_format) {
-    case srclient::rest::model::Algorithm::Aes128Gcm: {
-        key_template_ = crypto::tink::AeadKeyTemplates::Aes128Gcm();
-        break;
-    }
-    case srclient::rest::model::Algorithm::Aes256Gcm: {
-        key_template_ = crypto::tink::AeadKeyTemplates::Aes256Gcm();
-        break;
-    }
-    case srclient::rest::model::Algorithm::Aes256Siv: {
-        key_template_ =
-            crypto::tink::DeterministicAeadKeyTemplates::Aes256Siv();
-        break;
-    }
-    default: throw SerdeError("Unsupported DEK algorithm");
+        case srclient::rest::model::Algorithm::Aes128Gcm: {
+            key_template_ = crypto::tink::AeadKeyTemplates::Aes128Gcm();
+            break;
+        }
+        case srclient::rest::model::Algorithm::Aes256Gcm: {
+            key_template_ = crypto::tink::AeadKeyTemplates::Aes256Gcm();
+            break;
+        }
+        case srclient::rest::model::Algorithm::Aes256Siv: {
+            key_template_ =
+                crypto::tink::DeterministicAeadKeyTemplates::Aes256Siv();
+            break;
+        }
+        default:
+            throw SerdeError("Unsupported DEK algorithm");
     }
 }
 
@@ -104,10 +107,9 @@ std::vector<uint8_t> Cryptor::generateKey() const {
     return std::vector<uint8_t>(key_value.begin(), key_value.end());
 }
 
-std::vector<uint8_t>
-Cryptor::encrypt(const std::vector<uint8_t> &dek,
-                 const std::vector<uint8_t> &plaintext,
-                 const std::vector<uint8_t> &associated_data) const {
+std::vector<uint8_t> Cryptor::encrypt(
+    const std::vector<uint8_t> &dek, const std::vector<uint8_t> &plaintext,
+    const std::vector<uint8_t> &associated_data) const {
     google::crypto::tink::KeyData key_data;
     key_data.set_type_url(key_template_.type_url());
     key_data.set_key_material_type(
@@ -163,10 +165,9 @@ Cryptor::encrypt(const std::vector<uint8_t> &dek,
     }
 }
 
-std::vector<uint8_t>
-Cryptor::decrypt(const std::vector<uint8_t> &dek,
-                 const std::vector<uint8_t> &ciphertext,
-                 const std::vector<uint8_t> &associated_data) const {
+std::vector<uint8_t> Cryptor::decrypt(
+    const std::vector<uint8_t> &dek, const std::vector<uint8_t> &ciphertext,
+    const std::vector<uint8_t> &associated_data) const {
     google::crypto::tink::KeyData key_data;
     key_data.set_type_url(key_template_.type_url());
     key_data.set_key_material_type(
@@ -256,8 +257,8 @@ void EncryptionExecutor::close() {
     client_.reset();
 }
 
-std::unique_ptr<SerdeValue>
-EncryptionExecutor::transform(RuleContext &ctx, const SerdeValue &msg) {
+std::unique_ptr<SerdeValue> EncryptionExecutor::transform(
+    RuleContext &ctx, const SerdeValue &msg) {
     auto transform = newTransform(ctx);
     return transform->transform(ctx, FieldType::Bytes, msg);
 }
@@ -296,25 +297,31 @@ Cryptor EncryptionExecutor::getCryptor(RuleContext &ctx) const {
 
 std::string EncryptionExecutor::getKekName(RuleContext &ctx) const {
     auto param = ctx.getParameter(ENCRYPT_KEK_NAME);
-    if (!param || param->empty()) { throw SerdeError("no kek name found"); }
+    if (!param || param->empty()) {
+        throw SerdeError("no kek name found");
+    }
     return *param;
 }
 
 int64_t EncryptionExecutor::getDekExpiryDays(RuleContext &ctx) const {
     auto param = ctx.getParameter(ENCRYPT_DEK_EXPIRY_DAYS);
-    if (!param) { return 0; }
+    if (!param) {
+        return 0;
+    }
 
     try {
         int64_t days = std::stoll(*param);
-        if (days < 0) { throw SerdeError("negative expiry days"); }
+        if (days < 0) {
+            throw SerdeError("negative expiry days");
+        }
         return days;
     } catch (const std::exception &) {
         throw SerdeError("invalid expiry days");
     }
 }
 
-std::unique_ptr<EncryptionExecutorTransform>
-EncryptionExecutor::newTransform(RuleContext &ctx) const {
+std::unique_ptr<EncryptionExecutorTransform> EncryptionExecutor::newTransform(
+    RuleContext &ctx) const {
     auto cryptor = getCryptor(ctx);
     auto kek_name = getKekName(ctx);
     auto dek_expiry_days = getDekExpiryDays(ctx);
@@ -327,84 +334,97 @@ EncryptionExecutor::newTransform(RuleContext &ctx) const {
 EncryptionExecutorTransform::EncryptionExecutorTransform(
     const EncryptionExecutor *executor, Cryptor cryptor,
     const std::string &kek_name, int64_t dek_expiry_days)
-    : executor_(executor), cryptor_(std::move(cryptor)), kek_name_(kek_name),
+    : executor_(executor),
+      cryptor_(std::move(cryptor)),
+      kek_name_(kek_name),
       dek_expiry_days_(dek_expiry_days) {}
 
-std::unique_ptr<SerdeValue>
-EncryptionExecutorTransform::transform(RuleContext &ctx, FieldType field_type,
-                                       const SerdeValue &field_value) {
+std::unique_ptr<SerdeValue> EncryptionExecutorTransform::transform(
+    RuleContext &ctx, FieldType field_type, const SerdeValue &field_value) {
     Mode rule_mode = ctx.getRuleMode();
 
     switch (rule_mode) {
-    case Mode::Write: {
-        auto plaintext = toBytes(field_type, field_value);
-        if (!plaintext) { throw SerdeError("unsupported field type"); }
-
-        std::optional<int32_t> version;
-        if (isDekRotated()) { version = -1; }
-
-        auto dek = getOrCreateDek(ctx, version);
-        auto key_material_bytes = dek.getKeyMaterialBytes();
-        if (!key_material_bytes) { throw SerdeError("no key material found"); }
-
-        std::vector<uint8_t> empty_aad;
-        auto ciphertext =
-            cryptor_.encrypt(*key_material_bytes, *plaintext, empty_aad);
-
-        if (isDekRotated()) {
-            ciphertext = prefixVersion(dek.getVersion(), ciphertext);
-        }
-
-        if (field_type == FieldType::String) {
-            std::string encrypted_value_str =
-                absl::Base64Escape(absl::string_view(
-                    reinterpret_cast<const char *>(ciphertext.data()),
-                    ciphertext.size()));
-            return SerdeValue::newString(
-                ctx.getSerializationContext().serde_format,
-                encrypted_value_str);
-        } else {
-            return SerdeValue::newBytes(
-                ctx.getSerializationContext().serde_format, ciphertext);
-        }
-    }
-
-    case Mode::Read: {
-        std::optional<std::vector<uint8_t>> ciphertext;
-
-        if (field_type == FieldType::String) {
-            auto str_value = field_value.asString();
-            std::string decoded;
-            if (!absl::Base64Unescape(str_value, &decoded)) {
-                throw SerdeError("could not decode base64 ciphertext");
+        case Mode::Write: {
+            auto plaintext = toBytes(field_type, field_value);
+            if (!plaintext) {
+                throw SerdeError("unsupported field type");
             }
-            ciphertext = std::vector<uint8_t>(decoded.begin(), decoded.end());
-        } else {
-            ciphertext = toBytes(field_type, field_value);
+
+            std::optional<int32_t> version;
+            if (isDekRotated()) {
+                version = -1;
+            }
+
+            auto dek = getOrCreateDek(ctx, version);
+            auto key_material_bytes = dek.getKeyMaterialBytes();
+            if (!key_material_bytes) {
+                throw SerdeError("no key material found");
+            }
+
+            std::vector<uint8_t> empty_aad;
+            auto ciphertext =
+                cryptor_.encrypt(*key_material_bytes, *plaintext, empty_aad);
+
+            if (isDekRotated()) {
+                ciphertext = prefixVersion(dek.getVersion(), ciphertext);
+            }
+
+            if (field_type == FieldType::String) {
+                std::string encrypted_value_str =
+                    absl::Base64Escape(absl::string_view(
+                        reinterpret_cast<const char *>(ciphertext.data()),
+                        ciphertext.size()));
+                return SerdeValue::newString(
+                    ctx.getSerializationContext().serde_format,
+                    encrypted_value_str);
+            } else {
+                return SerdeValue::newBytes(
+                    ctx.getSerializationContext().serde_format, ciphertext);
+            }
         }
 
-        if (!ciphertext) { return field_value.clone(); }
+        case Mode::Read: {
+            std::optional<std::vector<uint8_t>> ciphertext;
 
-        std::optional<int32_t> version;
-        if (isDekRotated()) {
-            auto [v, c] = extractVersion(*ciphertext);
-            if (!v) { throw SerdeError("no version found"); }
-            version = v;
-            ciphertext = std::move(c);
+            if (field_type == FieldType::String) {
+                auto str_value = field_value.asString();
+                std::string decoded;
+                if (!absl::Base64Unescape(str_value, &decoded)) {
+                    throw SerdeError("could not decode base64 ciphertext");
+                }
+                ciphertext =
+                    std::vector<uint8_t>(decoded.begin(), decoded.end());
+            } else {
+                ciphertext = toBytes(field_type, field_value);
+            }
+
+            if (!ciphertext) {
+                return field_value.clone();
+            }
+
+            std::optional<int32_t> version;
+            if (isDekRotated()) {
+                auto [v, c] = extractVersion(*ciphertext);
+                if (!v) {
+                    throw SerdeError("no version found");
+                }
+                version = v;
+                ciphertext = std::move(c);
+            }
+
+            auto dek = getOrCreateDek(ctx, version);
+            auto key_material_bytes = dek.getKeyMaterialBytes();
+
+            std::vector<uint8_t> empty_aad;
+            auto plaintext =
+                cryptor_.decrypt(*key_material_bytes, *ciphertext, empty_aad);
+
+            auto result = toObject(ctx, field_type, plaintext);
+            return result ? std::move(result) : field_value.clone();
         }
 
-        auto dek = getOrCreateDek(ctx, version);
-        auto key_material_bytes = dek.getKeyMaterialBytes();
-
-        std::vector<uint8_t> empty_aad;
-        auto plaintext =
-            cryptor_.decrypt(*key_material_bytes, *ciphertext, empty_aad);
-
-        auto result = toObject(ctx, field_type, plaintext);
-        return result ? std::move(result) : field_value.clone();
-    }
-
-    default: throw SerdeError("unsupported rule mode");
+        default:
+            throw SerdeError("unsupported rule mode");
     }
 }
 
@@ -412,19 +432,21 @@ bool EncryptionExecutorTransform::isDekRotated() const {
     return dek_expiry_days_ > 0;
 }
 
-srclient::rest::model::Kek
-EncryptionExecutorTransform::getKek(RuleContext &ctx) {
+srclient::rest::model::Kek EncryptionExecutorTransform::getKek(
+    RuleContext &ctx) {
     std::lock_guard<std::mutex> lock(kek_mutex_);
 
-    if (kek_) { return *kek_; }
+    if (kek_) {
+        return *kek_;
+    }
 
     auto kek = getOrCreateKek(ctx);
     kek_ = kek;
     return kek;
 }
 
-srclient::rest::model::Kek
-EncryptionExecutorTransform::getOrCreateKek(RuleContext &ctx) {
+srclient::rest::model::Kek EncryptionExecutorTransform::getOrCreateKek(
+    RuleContext &ctx) {
     bool is_read = ctx.getRuleMode() == Mode::Read;
     auto kms_type = ctx.getParameter(ENCRYPT_KMS_TYPE);
     auto kms_key_id = ctx.getParameter(ENCRYPT_KMS_KEY_ID);
@@ -480,7 +502,9 @@ std::optional<srclient::rest::model::Kek>
 EncryptionExecutorTransform::retrieveKekFromRegistry(const KekId &kek_id) {
     try {
         auto client = executor_->getClient();
-        if (!client) { throw SerdeError("Client not configured"); }
+        if (!client) {
+            throw SerdeError("Client not configured");
+        }
 
         auto kek = client->getKek(kek_id.name, kek_id.deleted);
         return kek;
@@ -498,7 +522,9 @@ EncryptionExecutorTransform::storeKekToRegistry(const KekId &kek_id,
                                                 bool shared) {
     try {
         auto client = executor_->getClient();
-        if (!client) { throw SerdeError("Client not configured"); }
+        if (!client) {
+            throw SerdeError("Client not configured");
+        }
 
         srclient::rest::model::CreateKekRequest request;
         request.setName(kek_id.name);
@@ -514,14 +540,15 @@ EncryptionExecutorTransform::storeKekToRegistry(const KekId &kek_id,
     }
 }
 
-srclient::rest::model::Dek
-EncryptionExecutorTransform::getOrCreateDek(RuleContext &ctx,
-                                            std::optional<int32_t> version) {
+srclient::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(
+    RuleContext &ctx, std::optional<int32_t> version) {
     auto kek = getKek(ctx);
     bool is_read = ctx.getRuleMode() == Mode::Read;
 
     int32_t actual_version = version.value_or(1);
-    if (actual_version == 0) { actual_version = 1; }
+    if (actual_version == 0) {
+        actual_version = 1;
+    }
 
     DekId dek_id;
     dek_id.kek_name = kek.getName();
@@ -553,7 +580,9 @@ EncryptionExecutorTransform::getOrCreateDek(RuleContext &ctx,
             auto new_dek = createDek(dek_id, new_version, encrypted_dek);
             dek = new_dek;
         } catch (const std::exception &e) {
-            if (!dek) { throw; }
+            if (!dek) {
+                throw;
+            }
             // Use existing DEK if creation failed
         }
     }
@@ -595,9 +624,9 @@ srclient::rest::model::Dek EncryptionExecutorTransform::createDek(
     return *dek;
 }
 
-std::optional<std::vector<uint8_t>>
-EncryptionExecutorTransform::encryptDek(const srclient::rest::model::Kek &kek,
-                                        const std::vector<uint8_t> &raw_dek) {
+std::optional<std::vector<uint8_t>> EncryptionExecutorTransform::encryptDek(
+    const srclient::rest::model::Kek &kek,
+    const std::vector<uint8_t> &raw_dek) {
     std::shared_lock<std::shared_mutex> config_lock(executor_->config_mutex_);
     auto aead = getAead(executor_->config_, kek);
 
@@ -645,7 +674,9 @@ srclient::rest::model::Dek EncryptionExecutorTransform::updateCachedDek(
     std::optional<int32_t> version, bool deleted,
     const std::vector<uint8_t> &key_material_bytes) {
     auto client = executor_->getClient();
-    if (!client) { throw SerdeError("Client not configured"); }
+    if (!client) {
+        throw SerdeError("Client not configured");
+    }
 
     auto dek = client->setDekKeyMaterial(kek_name, subject, algorithm, version,
                                          deleted, key_material_bytes);
@@ -656,7 +687,9 @@ std::optional<srclient::rest::model::Dek>
 EncryptionExecutorTransform::retrieveDekFromRegistry(const DekId &dek_id) {
     try {
         auto client = executor_->getClient();
-        if (!client) { throw SerdeError("Client not configured"); }
+        if (!client) {
+            throw SerdeError("Client not configured");
+        }
 
         auto dek =
             client->getDek(dek_id.kek_name, dek_id.subject, dek_id.algorithm,
@@ -674,7 +707,9 @@ EncryptionExecutorTransform::storeDekToRegistry(
     const std::optional<std::vector<uint8_t>> &encrypted_dek) {
     try {
         auto client = executor_->getClient();
-        if (!client) { throw SerdeError("Client not configured"); }
+        if (!client) {
+            throw SerdeError("Client not configured");
+        }
 
         srclient::rest::model::CreateDekRequest request;
         request.setSubject(dek_id.subject);
@@ -709,7 +744,7 @@ bool EncryptionExecutorTransform::isExpired(
 std::vector<uint8_t> EncryptionExecutorTransform::prefixVersion(
     int32_t version, const std::vector<uint8_t> &ciphertext) const {
     std::vector<uint8_t> payload;
-    payload.push_back(0); // Magic byte
+    payload.push_back(0);  // Magic byte
 
     // Convert version to big-endian 4 bytes
     uint32_t version_be = htobe32(static_cast<uint32_t>(version));
@@ -724,7 +759,9 @@ std::vector<uint8_t> EncryptionExecutorTransform::prefixVersion(
 std::pair<std::optional<int32_t>, std::vector<uint8_t>>
 EncryptionExecutorTransform::extractVersion(
     const std::vector<uint8_t> &ciphertext) const {
-    if (ciphertext.size() < 5) { return {std::nullopt, ciphertext}; }
+    if (ciphertext.size() < 5) {
+        return {std::nullopt, ciphertext};
+    }
 
     // Extract version from bytes 1-4 (big-endian)
     uint32_t version_be;
@@ -736,34 +773,36 @@ EncryptionExecutorTransform::extractVersion(
     return {version, remaining_ciphertext};
 }
 
-std::optional<std::vector<uint8_t>>
-EncryptionExecutorTransform::toBytes(FieldType field_type,
-                                     const SerdeValue &value) const {
+std::optional<std::vector<uint8_t>> EncryptionExecutorTransform::toBytes(
+    FieldType field_type, const SerdeValue &value) const {
     switch (field_type) {
-    case FieldType::String: {
-        auto str_value = value.asString();
-        return std::vector<uint8_t>(str_value.begin(), str_value.end());
-    }
-    case FieldType::Bytes: return value.asBytes();
-    default: return std::nullopt;
+        case FieldType::String: {
+            auto str_value = value.asString();
+            return std::vector<uint8_t>(str_value.begin(), str_value.end());
+        }
+        case FieldType::Bytes:
+            return value.asBytes();
+        default:
+            return std::nullopt;
     }
 }
 
-std::unique_ptr<SerdeValue>
-EncryptionExecutorTransform::toObject(RuleContext &ctx, FieldType field_type,
-                                      const std::vector<uint8_t> &value) const {
+std::unique_ptr<SerdeValue> EncryptionExecutorTransform::toObject(
+    RuleContext &ctx, FieldType field_type,
+    const std::vector<uint8_t> &value) const {
     switch (field_type) {
-    case FieldType::String: {
-        // Convert bytes to string
-        std::string str_value(value.begin(), value.end());
-        return SerdeValue::newString(ctx.getSerializationContext().serde_format,
-                                     str_value);
-    }
-    case FieldType::Bytes: {
-        return SerdeValue::newBytes(ctx.getSerializationContext().serde_format,
-                                    value);
-    }
-    default: return nullptr;
+        case FieldType::String: {
+            // Convert bytes to string
+            std::string str_value(value.begin(), value.end());
+            return SerdeValue::newString(
+                ctx.getSerializationContext().serde_format, str_value);
+        }
+        case FieldType::Bytes: {
+            return SerdeValue::newBytes(
+                ctx.getSerializationContext().serde_format, value);
+        }
+        default:
+            return nullptr;
     }
 }
 
@@ -814,4 +853,4 @@ EncryptionExecutorTransform::registerKmsClient(
     return kms_client;
 }
 
-} // namespace srclient::rules::encryption
+}  // namespace srclient::rules::encryption

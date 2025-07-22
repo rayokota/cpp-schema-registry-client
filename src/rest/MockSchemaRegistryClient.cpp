@@ -4,6 +4,7 @@
  */
 
 #include "srclient/rest/MockSchemaRegistryClient.h"
+
 #include <algorithm>
 #include <iomanip>
 #include <random>
@@ -20,21 +21,16 @@ std::string MockSchemaStore::generateGuid() const {
 
     std::stringstream ss;
     ss << std::hex;
-    for (int i = 0; i < 8; i++)
-        ss << dis(gen);
+    for (int i = 0; i < 8; i++) ss << dis(gen);
     ss << "-";
-    for (int i = 0; i < 4; i++)
-        ss << dis(gen);
+    for (int i = 0; i < 4; i++) ss << dis(gen);
     ss << "-4";
-    for (int i = 0; i < 3; i++)
-        ss << dis(gen);
+    for (int i = 0; i < 3; i++) ss << dis(gen);
     ss << "-";
     ss << dis(gen);
-    for (int i = 0; i < 3; i++)
-        ss << dis(gen);
+    for (int i = 0; i < 3; i++) ss << dis(gen);
     ss << "-";
-    for (int i = 0; i < 12; i++)
-        ss << dis(gen);
+    for (int i = 0; i < 12; i++) ss << dis(gen);
 
     return ss.str();
 }
@@ -63,17 +59,21 @@ void MockSchemaStore::setRegisteredSchema(
     }
 }
 
-std::optional<srclient::rest::model::Schema>
-MockSchemaStore::getSchemaById(int32_t schemaId) const {
+std::optional<srclient::rest::model::Schema> MockSchemaStore::getSchemaById(
+    int32_t schemaId) const {
     auto it = schemaIdIndex.find(schemaId);
-    if (it != schemaIdIndex.end()) { return it->second.toSchema(); }
+    if (it != schemaIdIndex.end()) {
+        return it->second.toSchema();
+    }
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::Schema>
-MockSchemaStore::getSchemaByGuid(const std::string &guid) const {
+std::optional<srclient::rest::model::Schema> MockSchemaStore::getSchemaByGuid(
+    const std::string &guid) const {
     auto it = schemaGuidIndex.find(guid);
-    if (it != schemaGuidIndex.end()) { return it->second.toSchema(); }
+    if (it != schemaGuidIndex.end()) {
+        return it->second.toSchema();
+    }
     return std::nullopt;
 }
 
@@ -81,12 +81,13 @@ std::optional<srclient::rest::model::RegisteredSchema>
 MockSchemaStore::getRegisteredBySchema(
     const std::string &subject,
     const srclient::rest::model::Schema &schema) const {
-
     auto it = schemas.find(subject);
     if (it != schemas.end()) {
         auto schemaStr = schema.getSchema().value_or("");
         for (const auto &rs : it->second) {
-            if (rs.getSchema().value_or("") == schemaStr) { return rs; }
+            if (rs.getSchema().value_or("") == schemaStr) {
+                return rs;
+            }
         }
     }
     return std::nullopt;
@@ -95,11 +96,12 @@ MockSchemaStore::getRegisteredBySchema(
 std::optional<srclient::rest::model::RegisteredSchema>
 MockSchemaStore::getRegisteredByVersion(const std::string &subject,
                                         int32_t version) const {
-
     auto it = schemas.find(subject);
     if (it != schemas.end()) {
         for (const auto &rs : it->second) {
-            if (rs.getVersion().value_or(0) == version) { return rs; }
+            if (rs.getVersion().value_or(0) == version) {
+                return rs;
+            }
         }
     }
     return std::nullopt;
@@ -107,7 +109,6 @@ MockSchemaStore::getRegisteredByVersion(const std::string &subject,
 
 std::optional<srclient::rest::model::RegisteredSchema>
 MockSchemaStore::getLatestVersion(const std::string &subject) const {
-
     auto it = schemas.find(subject);
     if (it != schemas.end() && !it->second.empty()) {
         auto maxIt = std::max_element(
@@ -125,11 +126,12 @@ std::optional<srclient::rest::model::RegisteredSchema>
 MockSchemaStore::getLatestWithMetadata(
     const std::string &subject,
     const std::unordered_map<std::string, std::string> &metadata) const {
-
     auto it = schemas.find(subject);
     if (it != schemas.end()) {
         for (const auto &rs : it->second) {
-            if (hasMetadata(metadata, rs)) { return rs; }
+            if (hasMetadata(metadata, rs)) {
+                return rs;
+            }
         }
     }
     return std::nullopt;
@@ -144,8 +146,8 @@ std::vector<std::string> MockSchemaStore::getSubjects() const {
     return subjects;
 }
 
-std::vector<int32_t>
-MockSchemaStore::getVersions(const std::string &subject) const {
+std::vector<int32_t> MockSchemaStore::getVersions(
+    const std::string &subject) const {
     std::vector<int32_t> versions;
     auto it = schemas.find(subject);
     if (it != schemas.end()) {
@@ -172,8 +174,8 @@ void MockSchemaStore::removeBySchema(
     }
 }
 
-std::vector<int32_t>
-MockSchemaStore::removeBySubject(const std::string &subject) {
+std::vector<int32_t> MockSchemaStore::removeBySubject(
+    const std::string &subject) {
     std::vector<int32_t> versions;
     auto it = schemas.find(subject);
     if (it != schemas.end()) {
@@ -201,7 +203,9 @@ void MockSchemaStore::clear() {
 bool MockSchemaStore::hasMetadata(
     const std::unordered_map<std::string, std::string> &metadata,
     const srclient::rest::model::RegisteredSchema &rs) const {
-    if (!rs.getMetadata().has_value()) { return metadata.empty(); }
+    if (!rs.getMetadata().has_value()) {
+        return metadata.empty();
+    }
 
     // For now, just return true if any metadata is requested
     // This would need to be enhanced based on actual Metadata model
@@ -213,9 +217,9 @@ bool MockSchemaStore::hasMetadata(
 
 MockSchemaRegistryClient::MockSchemaRegistryClient(
     std::shared_ptr<const srclient::rest::ClientConfiguration> config)
-    : store(std::make_shared<MockSchemaStore>()), config(config),
+    : store(std::make_shared<MockSchemaStore>()),
+      config(config),
       storeMutex(std::make_shared<std::mutex>()) {
-
     if (config->getBaseUrls().empty()) {
         throw srclient::rest::RestException("Base URL is required");
     }
@@ -230,12 +234,13 @@ srclient::rest::model::RegisteredSchema
 MockSchemaRegistryClient::registerSchema(
     const std::string &subject, const srclient::rest::model::Schema &schema,
     bool normalize) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     // Check if schema already exists
     auto existing = store->getRegisteredBySchema(subject, schema);
-    if (existing.has_value()) { return existing.value(); }
+    if (existing.has_value()) {
+        return existing.value();
+    }
 
     // Get latest version for the subject
     auto latest = store->getLatestVersion(subject);
@@ -256,7 +261,6 @@ MockSchemaRegistryClient::registerSchema(
 srclient::rest::model::Schema MockSchemaRegistryClient::getBySubjectAndId(
     const std::optional<std::string> &subject, int32_t id,
     const std::optional<std::string> &format) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto schema = store->getSchemaById(id);
@@ -267,10 +271,8 @@ srclient::rest::model::Schema MockSchemaRegistryClient::getBySubjectAndId(
     return schema.value();
 }
 
-srclient::rest::model::Schema
-MockSchemaRegistryClient::getByGuid(const std::string &guid,
-                                    const std::optional<std::string> &format) {
-
+srclient::rest::model::Schema MockSchemaRegistryClient::getByGuid(
+    const std::string &guid, const std::optional<std::string> &format) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto schema = store->getSchemaByGuid(guid);
@@ -284,7 +286,6 @@ MockSchemaRegistryClient::getByGuid(const std::string &guid,
 srclient::rest::model::RegisteredSchema MockSchemaRegistryClient::getBySchema(
     const std::string &subject, const srclient::rest::model::Schema &schema,
     bool normalize, bool deleted) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto rs = store->getRegisteredBySchema(subject, schema);
@@ -295,11 +296,9 @@ srclient::rest::model::RegisteredSchema MockSchemaRegistryClient::getBySchema(
     return rs.value();
 }
 
-srclient::rest::model::RegisteredSchema
-MockSchemaRegistryClient::getVersion(const std::string &subject,
-                                     int32_t version, bool deleted,
-                                     const std::optional<std::string> &format) {
-
+srclient::rest::model::RegisteredSchema MockSchemaRegistryClient::getVersion(
+    const std::string &subject, int32_t version, bool deleted,
+    const std::optional<std::string> &format) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto rs = store->getRegisteredByVersion(subject, version);
@@ -313,7 +312,6 @@ MockSchemaRegistryClient::getVersion(const std::string &subject,
 srclient::rest::model::RegisteredSchema
 MockSchemaRegistryClient::getLatestVersion(
     const std::string &subject, const std::optional<std::string> &format) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto rs = store->getLatestVersion(subject);
@@ -329,7 +327,6 @@ MockSchemaRegistryClient::getLatestWithMetadata(
     const std::string &subject,
     const std::unordered_map<std::string, std::string> &metadata, bool deleted,
     const std::optional<std::string> &format) {
-
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto rs = store->getLatestWithMetadata(subject, metadata);
@@ -340,21 +337,20 @@ MockSchemaRegistryClient::getLatestWithMetadata(
     return rs.value();
 }
 
-std::vector<int32_t>
-MockSchemaRegistryClient::getAllVersions(const std::string &subject) {
+std::vector<int32_t> MockSchemaRegistryClient::getAllVersions(
+    const std::string &subject) {
     std::lock_guard<std::mutex> lock(*storeMutex);
     return store->getVersions(subject);
 }
 
-std::vector<std::string>
-MockSchemaRegistryClient::getAllSubjects(bool deleted) {
+std::vector<std::string> MockSchemaRegistryClient::getAllSubjects(
+    bool deleted) {
     std::lock_guard<std::mutex> lock(*storeMutex);
     return store->getSubjects();
 }
 
-std::vector<int32_t>
-MockSchemaRegistryClient::deleteSubject(const std::string &subject,
-                                        bool permanent) {
+std::vector<int32_t> MockSchemaRegistryClient::deleteSubject(
+    const std::string &subject, bool permanent) {
     std::lock_guard<std::mutex> lock(*storeMutex);
     return store->removeBySubject(subject);
 }
@@ -385,8 +381,8 @@ bool MockSchemaRegistryClient::testCompatibility(
     return true;
 }
 
-srclient::rest::model::ServerConfig
-MockSchemaRegistryClient::getConfig(const std::string &subject) {
+srclient::rest::model::ServerConfig MockSchemaRegistryClient::getConfig(
+    const std::string &subject) {
     return srclient::rest::model::ServerConfig();
 }
 
@@ -418,4 +414,4 @@ void MockSchemaRegistryClient::clearCaches() {
 
 void MockSchemaRegistryClient::close() { clearCaches(); }
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

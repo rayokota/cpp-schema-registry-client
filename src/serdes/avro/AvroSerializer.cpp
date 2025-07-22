@@ -1,7 +1,9 @@
 #include "srclient/serdes/avro/AvroSerializer.h"
-#include "srclient/serdes/avro/AvroUtils.h"
+
 #include <algorithm>
 #include <sstream>
+
+#include "srclient/serdes/avro/AvroUtils.h"
 
 namespace srclient::serdes::avro {
 
@@ -20,7 +22,9 @@ AvroSerde::getParsedSchema(
     {
         std::shared_lock lock(mutex_);
         auto it = parsed_schemas_.find(cache_key);
-        if (it != parsed_schemas_.end()) { return it->second; }
+        if (it != parsed_schemas_.end()) {
+            return it->second;
+        }
     }
 
     // Parse schema with references
@@ -50,11 +54,15 @@ void AvroSerde::resolveNamedSchema(
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::vector<std::string> &schemas,
     std::unordered_set<std::string> &visited) {
-    if (!schema.getReferences().has_value()) { return; }
+    if (!schema.getReferences().has_value()) {
+        return;
+    }
 
     for (const auto &ref : schema.getReferences().value()) {
         std::string name = ref.getName().value_or("");
-        if (visited.find(name) != visited.end()) { continue; }
+        if (visited.find(name) != visited.end()) {
+            continue;
+        }
         visited.insert(name);
 
         // Fetch referenced schema
@@ -91,8 +99,9 @@ AvroSerializer::AvroSerializer(
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::optional<srclient::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry, const SerializerConfig &config)
-    : schema_(std::move(schema)), base_(std::make_shared<BaseSerializer>(
-                                      Serde(client, rule_registry), config)),
+    : schema_(std::move(schema)),
+      base_(std::make_shared<BaseSerializer>(Serde(client, rule_registry),
+                                             config)),
       serde_(std::make_shared<AvroSerde>()) {
     // Configure rule executors
     if (rule_registry) {
@@ -109,10 +118,9 @@ AvroSerializer::AvroSerializer(
     }
 }
 
-std::vector<uint8_t>
-AvroSerializer::serialize(const SerializationContext &ctx,
-                          const ::avro::GenericDatum &datum) {
-    auto value = datum; // Copy for potential transformation
+std::vector<uint8_t> AvroSerializer::serialize(
+    const SerializationContext &ctx, const ::avro::GenericDatum &datum) {
+    auto value = datum;  // Copy for potential transformation
 
     // Get subject using strategy
     auto strategy = base_->getConfig().subject_name_strategy;
@@ -229,9 +237,8 @@ AvroSerializer::serialize(const SerializationContext &ctx,
     return id_serializer(avro_bytes, ctx, schema_id);
 }
 
-std::vector<uint8_t>
-AvroSerializer::serializeJson(const SerializationContext &ctx,
-                              const nlohmann::json &json_value) {
+std::vector<uint8_t> AvroSerializer::serializeJson(
+    const SerializationContext &ctx, const nlohmann::json &json_value) {
     if (!schema_.has_value()) {
         throw AvroError("Schema required for JSON to Avro conversion");
     }
@@ -244,7 +251,9 @@ AvroSerializer::serializeJson(const SerializationContext &ctx,
 }
 
 void AvroSerializer::close() {
-    if (serde_) { serde_->clear(); }
+    if (serde_) {
+        serde_->clear();
+    }
 }
 
 std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
@@ -252,4 +261,4 @@ AvroSerializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-} // namespace srclient::serdes::avro
+}  // namespace srclient::serdes::avro

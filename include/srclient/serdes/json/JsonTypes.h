@@ -1,12 +1,13 @@
 #pragma once
 
-#include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/SerdeTypes.h"
 #include <any>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
+
+#include "srclient/serdes/SerdeError.h"
+#include "srclient/serdes/SerdeTypes.h"
 
 namespace srclient::serdes::json {
 
@@ -80,7 +81,8 @@ class JsonValue : public SerdeValue {
 /**
  * JSON Schema implementation
  */
-template <typename Json> class JsonSchema : public SerdeSchema {
+template <typename Json>
+class JsonSchema : public SerdeSchema {
   private:
     jsoncons::jsonschema::json_schema<Json> &schema_;
 
@@ -125,8 +127,8 @@ inline std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value) {
 
 // Helper function for creating JSON SerdeSchema instances
 template <typename Json>
-inline std::unique_ptr<SerdeSchema>
-makeJsonSchema(const jsoncons::jsonschema::json_schema<Json> &schema) {
+inline std::unique_ptr<SerdeSchema> makeJsonSchema(
+    const jsoncons::jsonschema::json_schema<Json> &schema) {
     return std::make_unique<JsonSchema>(schema);
 }
 
@@ -134,8 +136,8 @@ makeJsonSchema(const jsoncons::jsonschema::json_schema<Json> &schema) {
 nlohmann::json asJson(const SerdeValue &value);
 
 template <typename Json>
-inline jsoncons::jsonschema::json_schema<Json> &
-asJsonSchema(const SerdeSchema &schema) {
+inline jsoncons::jsonschema::json_schema<Json> &asJsonSchema(
+    const SerdeSchema &schema) {
     if (schema.getFormat() != SerdeFormat::Json) {
         throw std::invalid_argument("Schema is not a JSON schema");
     }
@@ -143,4 +145,4 @@ asJsonSchema(const SerdeSchema &schema) {
         schema.getSchema<jsoncons::jsonschema::json_schema<Json>>());
 }
 
-} // namespace srclient::serdes::json
+}  // namespace srclient::serdes::json

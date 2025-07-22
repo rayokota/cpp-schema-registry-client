@@ -4,9 +4,11 @@
  */
 
 #include "srclient/rules/encryption/EncryptionRegistry.h"
-#include "tink/kms_clients.h"
+
 #include <algorithm>
 #include <stdexcept>
+
+#include "tink/kms_clients.h"
 
 namespace srclient::rules::encryption {
 
@@ -17,7 +19,9 @@ EncryptionRegistry &EncryptionRegistry::getInstance() {
 }
 
 void EncryptionRegistry::registerKmsDriver(std::shared_ptr<KmsDriver> driver) {
-    if (!driver) { throw TinkError("Cannot register null KMS driver"); }
+    if (!driver) {
+        throw TinkError("Cannot register null KMS driver");
+    }
 
     std::lock_guard<std::mutex> lock(driversMutex_);
     drivers_.push_back(driver);
@@ -28,14 +32,18 @@ void EncryptionRegistry::clearKmsDrivers() {
     drivers_.clear();
 }
 
-std::shared_ptr<KmsDriver>
-EncryptionRegistry::getKmsDriver(const std::string &keyUri) {
-    if (keyUri.empty()) { throw TinkError("Key URI cannot be empty"); }
+std::shared_ptr<KmsDriver> EncryptionRegistry::getKmsDriver(
+    const std::string &keyUri) {
+    if (keyUri.empty()) {
+        throw TinkError("Key URI cannot be empty");
+    }
 
     std::lock_guard<std::mutex> lock(driversMutex_);
 
     for (const auto &driver : drivers_) {
-        if (keyUri.find(driver->getKeyUrlPrefix()) == 0) { return driver; }
+        if (keyUri.find(driver->getKeyUrlPrefix()) == 0) {
+            return driver;
+        }
     }
 
     throw TinkError("KMS driver supporting " + keyUri + " not found");
@@ -43,7 +51,9 @@ EncryptionRegistry::getKmsDriver(const std::string &keyUri) {
 
 void EncryptionRegistry::registerKmsClient(
     std::shared_ptr<crypto::tink::KmsClient> client) {
-    if (!client) { throw TinkError("Cannot register null KMS client"); }
+    if (!client) {
+        throw TinkError("Cannot register null KMS client");
+    }
 
     // Register in our local registry
     {
@@ -66,16 +76,20 @@ void EncryptionRegistry::clearKmsClients() {
     // state
 }
 
-std::shared_ptr<crypto::tink::KmsClient>
-EncryptionRegistry::getKmsClient(const std::string &keyUri) {
-    if (keyUri.empty()) { throw TinkError("Key URI cannot be empty"); }
+std::shared_ptr<crypto::tink::KmsClient> EncryptionRegistry::getKmsClient(
+    const std::string &keyUri) {
+    if (keyUri.empty()) {
+        throw TinkError("Key URI cannot be empty");
+    }
 
     // First check our local registry
     {
         std::lock_guard<std::mutex> lock(clientsMutex_);
 
         for (const auto &client : clients_) {
-            if (client->DoesSupport(keyUri)) { return client; }
+            if (client->DoesSupport(keyUri)) {
+                return client;
+            }
         }
     }
 
@@ -86,10 +100,11 @@ EncryptionRegistry::getKmsClient(const std::string &keyUri) {
         // Since Tink maintains ownership, we can't safely convert to shared_ptr
         // without risking double-deletion. For now, we'll throw an error
         // suggesting to use our registry instead.
-        throw TinkError("KMS client found in Tink registry but not accessible "
-                        "via shared_ptr. "
-                        "Please register clients using "
-                        "EncryptionRegistry::registerKmsClient()");
+        throw TinkError(
+            "KMS client found in Tink registry but not accessible "
+            "via shared_ptr. "
+            "Please register clients using "
+            "EncryptionRegistry::registerKmsClient()");
     }
 
     throw TinkError("KMS client supporting " + keyUri + " not found");
@@ -108,9 +123,9 @@ void registerKmsClient(std::shared_ptr<crypto::tink::KmsClient> client) {
 
 void clearKmsClients() { EncryptionRegistry::getInstance().clearKmsClients(); }
 
-std::shared_ptr<crypto::tink::KmsClient>
-getKmsClient(const std::string &keyUri) {
+std::shared_ptr<crypto::tink::KmsClient> getKmsClient(
+    const std::string &keyUri) {
     return EncryptionRegistry::getInstance().getKmsClient(keyUri);
 }
 
-} // namespace srclient::rules::encryption
+}  // namespace srclient::rules::encryption

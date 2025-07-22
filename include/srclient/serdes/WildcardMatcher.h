@@ -35,4 +35,4 @@ bool wildcardMatch(const std::string &text, const std::string &matcher);
 std::string wildcardToRegexp(const std::string &pattern,
                              const std::string &separator = ".");
 
-} // namespace srclient::serdes
+}  // namespace srclient::serdes

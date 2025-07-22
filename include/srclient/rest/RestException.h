@@ -40,4 +40,4 @@ class RestException : public std::runtime_error {
     int errorCode_;
 };
 
-} // namespace srclient::rest
+}  // namespace srclient::rest

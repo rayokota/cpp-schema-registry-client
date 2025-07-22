@@ -1,8 +1,6 @@
 #define SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL
 #include "srclient/serdes/protobuf/ProtobufSerializer.h"
-#include "confluent/meta.pb.h"
-#include "confluent/type/decimal.pb.h"
-#include "srclient/serdes/protobuf/ProtobufUtils.h"
+
 #include <google/protobuf/any.pb.h>
 #include <google/protobuf/api.pb.h>
 #include <google/protobuf/duration.pb.h>
@@ -14,12 +12,15 @@
 #include <google/protobuf/type.pb.h>
 #include <google/protobuf/wrappers.pb.h>
 
+#include "confluent/meta.pb.h"
+#include "confluent/type/decimal.pb.h"
+#include "srclient/serdes/protobuf/ProtobufUtils.h"
+
 // Forward declaration for transformFields function from ProtobufUtils.cpp
 namespace srclient::serdes::protobuf::utils {
-std::unique_ptr<srclient::serdes::SerdeValue>
-transformFields(srclient::serdes::RuleContext &ctx,
-                const std::string &field_executor_type,
-                const srclient::serdes::SerdeValue &value);
+std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
+    srclient::serdes::RuleContext &ctx, const std::string &field_executor_type,
+    const srclient::serdes::SerdeValue &value);
 }
 
 namespace srclient::serdes::protobuf {
@@ -152,4 +153,4 @@ void ProtobufSerde::resolveNamedSchema(
     }
 }
 
-} // namespace srclient::serdes::protobuf
+}  // namespace srclient::serdes::protobuf

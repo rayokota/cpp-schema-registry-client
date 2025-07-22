@@ -34,6 +34,6 @@ void registerFieldEncryptionExecutor() {
     FieldEncryptionExecutor::registerExecutor();
 }
 
-} // namespace registration
+}  // namespace registration
 
-} // namespace srclient::rules::encryption
+}  // namespace srclient::rules::encryption

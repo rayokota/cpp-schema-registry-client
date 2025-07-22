@@ -14,8 +14,12 @@ CreateKekRequest::CreateKekRequest(
     const std::string &kmsKeyId,
     const std::optional<std::unordered_map<std::string, std::string>> &kmsProps,
     const std::optional<std::string> &doc, bool shared)
-    : name_(name), kmsType_(kmsType), kmsKeyId_(kmsKeyId), kmsProps_(kmsProps),
-      doc_(doc), shared_(shared) {}
+    : name_(name),
+      kmsType_(kmsType),
+      kmsKeyId_(kmsKeyId),
+      kmsProps_(kmsProps),
+      doc_(doc),
+      shared_(shared) {}
 
 bool CreateKekRequest::operator==(const CreateKekRequest &rhs) const {
     return name_ == rhs.name_ && kmsType_ == rhs.kmsType_ &&
@@ -63,9 +67,13 @@ void to_json(nlohmann::json &j, const CreateKekRequest &o) {
                        {"kmsKeyId", o.kmsKeyId_},
                        {"shared", o.shared_}};
 
-    if (o.kmsProps_.has_value()) { j["kmsProps"] = o.kmsProps_.value(); }
+    if (o.kmsProps_.has_value()) {
+        j["kmsProps"] = o.kmsProps_.value();
+    }
 
-    if (o.doc_.has_value()) { j["doc"] = o.doc_.value(); }
+    if (o.doc_.has_value()) {
+        j["doc"] = o.doc_.value();
+    }
 }
 
 void from_json(const nlohmann::json &j, CreateKekRequest &o) {
@@ -84,4 +92,4 @@ void from_json(const nlohmann::json &j, CreateKekRequest &o) {
     }
 }
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model

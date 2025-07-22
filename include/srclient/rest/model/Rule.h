@@ -94,8 +94,8 @@ class Rule {
     /// Optional params for the rule
     /// </summary>
     std::optional<std::map<std::string, std::string>> getParams() const;
-    void
-    setParams(const std::optional<std::map<std::string, std::string>> &value);
+    void setParams(
+        const std::optional<std::map<std::string, std::string>> &value);
     /// <summary>
     /// Rule expression
     /// </summary>
@@ -134,4 +134,4 @@ class Rule {
     std::optional<bool> disabled_;
 };
 
-} // namespace srclient::rest::model
+}  // namespace srclient::rest::model
