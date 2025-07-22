@@ -1,26 +1,26 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <optional>
+#include <vector>
 
 // Avro C++ includes
-#include <avro/Encoder.hh>
-#include <avro/Decoder.hh>
 #include <avro/Compiler.hh>
-#include <avro/ValidSchema.hh>
+#include <avro/Decoder.hh>
+#include <avro/Encoder.hh>
 #include <avro/Generic.hh>
 #include <avro/Specific.hh>
+#include <avro/ValidSchema.hh>
 
 // Project includes
-#include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/avro/AvroTypes.h"
+#include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/rest/model/Schema.h"
+#include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/Serde.h"
+#include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/avro/AvroSerializer.h" // For AvroSerde and NamedValue
-#include "srclient/rest/model/Schema.h"
-#include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/serdes/avro/AvroTypes.h"
 
 namespace srclient::serdes::avro {
 
@@ -33,7 +33,7 @@ using BaseDeserializer = srclient::serdes::BaseDeserializer;
  * Converts Avro binary format to objects with schema registry integration
  */
 class AvroDeserializer {
-public:
+  public:
     /**
      * Constructor for AvroDeserializer
      * @param client Schema registry client for schema operations
@@ -43,8 +43,7 @@ public:
     AvroDeserializer(
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::shared_ptr<RuleRegistry> rule_registry,
-        const DeserializerConfig& config
-    );
+        const DeserializerConfig &config);
 
     /**
      * Destructor
@@ -57,10 +56,8 @@ public:
      * @param data Serialized bytes with schema ID header
      * @return NamedValue containing the deserialized Avro datum
      */
-    NamedValue deserialize(
-        const SerializationContext& ctx,
-        const std::vector<uint8_t>& data
-    );
+    NamedValue deserialize(const SerializationContext &ctx,
+                           const std::vector<uint8_t> &data);
 
     /**
      * Deserialize bytes to JSON
@@ -69,17 +66,15 @@ public:
      * @param data Serialized bytes with schema ID header
      * @return JSON representation of the deserialized data
      */
-    nlohmann::json deserializeToJson(
-        const SerializationContext& ctx,
-        const std::vector<uint8_t>& data
-    );
+    nlohmann::json deserializeToJson(const SerializationContext &ctx,
+                                     const std::vector<uint8_t> &data);
 
     /**
      * Close the deserializer and cleanup resources
      */
     void close();
 
-private:
+  private:
     std::shared_ptr<BaseDeserializer> base_;
     std::shared_ptr<AvroSerde> serde_;
 
@@ -88,15 +83,15 @@ private:
      * @param schema Avro schema to extract name from
      * @return Optional schema name
      */
-    std::optional<std::string> getName(const ::avro::ValidSchema& schema);
+    std::optional<std::string> getName(const ::avro::ValidSchema &schema);
 
     /**
      * Get parsed Avro schema with caching
      * @param schema Schema to parse
      * @return Tuple of main schema and named schemas
      */
-    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> 
-    getParsedSchema(const srclient::rest::model::Schema& schema);
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
+    getParsedSchema(const srclient::rest::model::Schema &schema);
 
     /**
      * Resolve union schema for a given datum
@@ -104,17 +99,16 @@ private:
      * @param datum Datum to resolve against
      * @return Index and schema of the matching union branch
      */
-    std::pair<size_t, ::avro::ValidSchema> resolveUnion(
-        const ::avro::ValidSchema& schema,
-        const ::avro::GenericDatum& datum
-    );
+    std::pair<size_t, ::avro::ValidSchema>
+    resolveUnion(const ::avro::ValidSchema &schema,
+                 const ::avro::GenericDatum &datum);
 
     /**
      * Get field type from Avro schema
      * @param schema Avro schema
      * @return Corresponding FieldType
      */
-    FieldType getFieldType(const ::avro::ValidSchema& schema);
+    FieldType getFieldType(const ::avro::ValidSchema &schema);
 };
 
-} // namespace srclient::serdes::avro 
+} // namespace srclient::serdes::avro

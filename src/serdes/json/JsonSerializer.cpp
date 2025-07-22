@@ -8,51 +8,54 @@ using namespace utils;
 // JsonSerde implementation
 JsonSerde::JsonSerde() {}
 
-std::pair<nlohmann::json, std::optional<std::string>> 
-JsonSerde::getParsedSchema(const srclient::rest::model::Schema& schema, 
-                          std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
+std::pair<nlohmann::json, std::optional<std::string>>
+JsonSerde::getParsedSchema(
+    const srclient::rest::model::Schema &schema,
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
     std::lock_guard<std::mutex> lock(cache_mutex_);
-    
+
     // Create cache key from schema content
     auto schema_str = schema.getSchema();
     std::string cache_key = schema_str.value_or("");
-    
+
     auto it = parsed_schemas_cache_.find(cache_key);
     if (it != parsed_schemas_cache_.end()) {
         return {it->second.first, it->second.second};
     }
-    
+
     // Parse new schema
     nlohmann::json parsed_schema;
     try {
         parsed_schema = nlohmann::json::parse(cache_key);
-    } catch (const nlohmann::json::parse_error& e) {
-        throw JsonError("Failed to parse JSON schema: " + std::string(e.what()));
+    } catch (const nlohmann::json::parse_error &e) {
+        throw JsonError("Failed to parse JSON schema: " +
+                        std::string(e.what()));
     }
-    
+
     // TODO: Resolve named schemas/references
     resolveNamedSchema(schema, client);
-    
+
     // Store in cache
     parsed_schemas_cache_[cache_key] = {parsed_schema, cache_key};
-    
+
     return {parsed_schema, cache_key};
 }
 
-bool JsonSerde::validateJson(const nlohmann::json& value,
-                             const nlohmann::json& schema) {
+bool JsonSerde::validateJson(const nlohmann::json &value,
+                             const nlohmann::json &schema) {
     try {
         // For now, just try to create the schema document
-        // Full validation can be implemented later with the correct jsoncons API
+        // Full validation can be implemented later with the correct jsoncons
+        // API
         auto jsoncons_schema = nlohmannToJsoncons(schema);
-        auto compiled_schema = jsoncons::jsonschema::make_json_schema(jsoncons_schema);
-        
+        auto compiled_schema =
+            jsoncons::jsonschema::make_json_schema(jsoncons_schema);
+
         // If we can create the schema successfully, consider validation passed
-        // TODO: Implement actual value validation when the jsoncons API is available
+        // TODO: Implement actual value validation when the jsoncons API is
+        // available
         return true;
-    } catch (const std::exception& e) {
-        return false;
-    }
+    } catch (const std::exception &e) { return false; }
 }
 
 void JsonSerde::clear() {
@@ -60,42 +63,41 @@ void JsonSerde::clear() {
     parsed_schemas_cache_.clear();
 }
 
-void JsonSerde::resolveNamedSchema(const srclient::rest::model::Schema& schema,
-                                  std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
+void JsonSerde::resolveNamedSchema(
+    const srclient::rest::model::Schema &schema,
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
     // Use the schema resolution utilities
     // TODO: Implement reference resolution for JSON schemas
 }
 
 JsonSerializer::JsonSerializer(
-        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
-        std::optional<srclient::rest::model::Schema> schema,
-        std::shared_ptr<RuleRegistry> rule_registry,
-        const SerializerConfig& config
-) : schema_(std::move(schema)),
-    base_(std::make_shared<BaseSerializer>(Serde(client, rule_registry), config)),
-    serde_(std::make_unique<JsonSerde>())
-{
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+    std::optional<srclient::rest::model::Schema> schema,
+    std::shared_ptr<RuleRegistry> rule_registry, const SerializerConfig &config)
+    : schema_(std::move(schema)), base_(std::make_shared<BaseSerializer>(
+                                      Serde(client, rule_registry), config)),
+      serde_(std::make_unique<JsonSerde>()) {
     // Configure rule executors
     if (rule_registry) {
         auto executors = rule_registry->getExecutors();
-        for (const auto& executor : executors) {
+        for (const auto &executor : executors) {
             try {
                 auto rule_registry = base_->getSerde().getRuleRegistry();
                 if (rule_registry) {
                     auto client = base_->getSerde().getClient();
-                    executor->configure(client->getConfiguration(), config.rule_config);
+                    executor->configure(client->getConfiguration(),
+                                        config.rule_config);
                 }
-            } catch (const std::exception& e) {
-                throw JsonError("Failed to configure rule executor: " + std::string(e.what()));
+            } catch (const std::exception &e) {
+                throw JsonError("Failed to configure rule executor: " +
+                                std::string(e.what()));
             }
         }
     }
 }
 
-std::vector<uint8_t> JsonSerializer::serialize(
-        const SerializationContext& ctx,
-        const nlohmann::json& value
-) {
+std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
+                                               const nlohmann::json &value) {
     auto mutable_value = value; // Copy for potential transformation
 
     // Get subject using strategy
@@ -111,8 +113,9 @@ std::vector<uint8_t> JsonSerializer::serialize(
     std::optional<srclient::rest::model::RegisteredSchema> latest_schema;
 
     try {
-        latest_schema = base_->getSerde().getReaderSchema(subject, std::nullopt, base_->getConfig().use_schema);
-    } catch (const std::exception& e) {
+        latest_schema = base_->getSerde().getReaderSchema(
+            subject, std::nullopt, base_->getConfig().use_schema);
+    } catch (const std::exception &e) {
         // Schema not found - will use provided schema
     }
 
@@ -123,13 +126,9 @@ std::vector<uint8_t> JsonSerializer::serialize(
     if (latest_schema.has_value()) {
         target_schema = latest_schema->toSchema();
         auto id_opt = latest_schema->getId();
-        if (id_opt.has_value()) {
-            schema_id.setId(id_opt.value());
-        }
+        if (id_opt.has_value()) { schema_id.setId(id_opt.value()); }
         auto guid_opt = latest_schema->getGuid();
-        if (guid_opt.has_value()) {
-            schema_id.setGuid(guid_opt.value());
-        }
+        if (guid_opt.has_value()) { schema_id.setGuid(guid_opt.value()); }
 
         // Get parsed schema
         std::tie(parsed_schema, schema_str) = getParsedSchema(target_schema);
@@ -137,7 +136,8 @@ std::vector<uint8_t> JsonSerializer::serialize(
         // Apply field transformations if rule registry exists
         if (base_->getSerde().getRuleRegistry()) {
             // TODO: Implement field transformation execution
-            // This would involve traversing the JSON structure and applying rules
+            // This would involve traversing the JSON structure and applying
+            // rules
         }
     } else {
         // Use provided schema
@@ -148,27 +148,22 @@ std::vector<uint8_t> JsonSerializer::serialize(
 
         // Register or get schema
         if (base_->getConfig().auto_register_schemas) {
-            auto registered_schema = base_->getSerde().getClient()->registerSchema(
-                    subject, target_schema, base_->getConfig().normalize_schemas);
+            auto registered_schema =
+                base_->getSerde().getClient()->registerSchema(
+                    subject, target_schema,
+                    base_->getConfig().normalize_schemas);
             auto id_opt = registered_schema.getId();
-            if (id_opt.has_value()) {
-                schema_id.setId(id_opt.value());
-            }
+            if (id_opt.has_value()) { schema_id.setId(id_opt.value()); }
             auto guid_opt = registered_schema.getGuid();
-            if (guid_opt.has_value()) {
-                schema_id.setGuid(guid_opt.value());
-            }
+            if (guid_opt.has_value()) { schema_id.setGuid(guid_opt.value()); }
         } else {
             auto registered_schema = base_->getSerde().getClient()->getBySchema(
-                    subject, target_schema, base_->getConfig().normalize_schemas, false);
+                subject, target_schema, base_->getConfig().normalize_schemas,
+                false);
             auto id_opt = registered_schema.getId();
-            if (id_opt.has_value()) {
-                schema_id.setId(id_opt.value());
-            }
+            if (id_opt.has_value()) { schema_id.setId(id_opt.value()); }
             auto guid_opt = registered_schema.getGuid();
-            if (guid_opt.has_value()) {
-                schema_id.setGuid(guid_opt.value());
-            }
+            if (guid_opt.has_value()) { schema_id.setGuid(guid_opt.value()); }
         }
 
         std::tie(parsed_schema, schema_str) = getParsedSchema(target_schema);
@@ -179,8 +174,9 @@ std::vector<uint8_t> JsonSerializer::serialize(
         if (schema_str.has_value()) {
             try {
                 validateJson(mutable_value, parsed_schema);
-            } catch (const std::exception& e) {
-                throw JsonValidationError("JSON validation failed: " + std::string(e.what()));
+            } catch (const std::exception &e) {
+                throw JsonValidationError("JSON validation failed: " +
+                                          std::string(e.what()));
             }
         } else {
             // If schema string is not available, we cannot validate
@@ -211,16 +207,17 @@ void JsonSerializer::close() {
 
 // Helper method implementations
 std::pair<nlohmann::json, std::optional<std::string>>
-JsonSerializer::getParsedSchema(const srclient::rest::model::Schema& schema) {
+JsonSerializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-bool JsonSerializer::validateJson(const nlohmann::json& value,
-                                  const nlohmann::json& schema) {
+bool JsonSerializer::validateJson(const nlohmann::json &value,
+                                  const nlohmann::json &schema) {
     return serde_->validateJson(value, schema);
 }
 
-void JsonSerializer::validateSchema(const srclient::rest::model::Schema& schema) {
+void JsonSerializer::validateSchema(
+    const srclient::rest::model::Schema &schema) {
     auto schema_str = schema.getSchema();
     if (!schema_str.has_value() || schema_str->empty()) {
         throw JsonError("Schema content is empty");
@@ -232,9 +229,9 @@ void JsonSerializer::validateSchema(const srclient::rest::model::Schema& schema)
     }
 }
 
-std::unique_ptr<SerdeValue> JsonSerializer::transformValue(const SerdeValue& value,
-                                        const Schema& schema,
-                                        const std::string& subject) {
+std::unique_ptr<SerdeValue>
+JsonSerializer::transformValue(const SerdeValue &value, const Schema &schema,
+                               const std::string &subject) {
     // Apply transformations and return as unique_ptr
     // For now, create a copy and return it
     // TODO: Implement actual transformations
@@ -242,10 +239,8 @@ std::unique_ptr<SerdeValue> JsonSerializer::transformValue(const SerdeValue& val
 }
 
 nlohmann::json JsonSerializer::executeFieldTransformations(
-        const nlohmann::json& value,
-        const nlohmann::json& schema,
-        const RuleContext& context,
-        const std::string& field_executor_type) {
+    const nlohmann::json &value, const nlohmann::json &schema,
+    const RuleContext &context, const std::string &field_executor_type) {
     // TODO: Implement field-level transformations
     return value;
 }

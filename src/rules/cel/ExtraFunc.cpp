@@ -37,7 +37,9 @@
 // Implement a stub version of RegisterExtraFuncs
 namespace srclient::rules::cel {
 
-absl::Status RegisterExtraFuncs(google::api::expr::runtime::CelFunctionRegistry& registry, google::protobuf::Arena* arena) {
+absl::Status
+RegisterExtraFuncs(google::api::expr::runtime::CelFunctionRegistry &registry,
+                   google::protobuf::Arena *arena) {
     // Stub implementation - comment out actual functionality for now
     // Just return OK status
     return absl::OkStatus();

@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <string>
+#include "srclient/rest/model/RegisteredSchema.h"
+#include "srclient/rest/model/Schema.h"
 #include <memory>
 #include <optional>
-#include "srclient/rest/model/Schema.h"
-#include "srclient/rest/model/RegisteredSchema.h"
+#include <string>
+#include <unordered_map>
 
 namespace srclient::rest {
 
@@ -18,26 +18,41 @@ namespace srclient::rest {
  * Schema store for caching schema and registered schema information
  */
 class SchemaStore {
-private:
+  private:
     // Maps subject -> schema_id -> (guid, schema)
-    std::unordered_map<std::string, std::unordered_map<int32_t, std::pair<std::optional<std::string>, srclient::rest::model::Schema>>> schemaIdIndex;
+    std::unordered_map<
+        std::string,
+        std::unordered_map<int32_t, std::pair<std::optional<std::string>,
+                                              srclient::rest::model::Schema>>>
+        schemaIdIndex;
 
     // Maps guid -> schema
-    std::unordered_map<std::string, srclient::rest::model::Schema> schemaGuidIndex;
+    std::unordered_map<std::string, srclient::rest::model::Schema>
+        schemaGuidIndex;
 
     // Maps subject -> schema -> schema_id
-    std::unordered_map<std::string, std::unordered_map<std::string, int32_t>> schemaIndex;
+    std::unordered_map<std::string, std::unordered_map<std::string, int32_t>>
+        schemaIndex;
 
     // Maps subject -> schema_id -> registered_schema
-    std::unordered_map<std::string, std::unordered_map<int32_t, srclient::rest::model::RegisteredSchema>> rsIdIndex;
+    std::unordered_map<
+        std::string,
+        std::unordered_map<int32_t, srclient::rest::model::RegisteredSchema>>
+        rsIdIndex;
 
     // Maps subject -> version -> registered_schema
-    std::unordered_map<std::string, std::unordered_map<int32_t, srclient::rest::model::RegisteredSchema>> rsVersionIndex;
+    std::unordered_map<
+        std::string,
+        std::unordered_map<int32_t, srclient::rest::model::RegisteredSchema>>
+        rsVersionIndex;
 
     // Maps subject -> schema -> registered_schema
-    std::unordered_map<std::string, std::unordered_map<std::string, srclient::rest::model::RegisteredSchema>> rsSchemaIndex;
+    std::unordered_map<
+        std::string, std::unordered_map<
+                         std::string, srclient::rest::model::RegisteredSchema>>
+        rsSchemaIndex;
 
-public:
+  public:
     SchemaStore();
 
     ~SchemaStore() = default;
@@ -59,19 +74,22 @@ public:
     /**
      * Get schema by subject and id
      */
-    std::optional<std::pair<std::optional<std::string>, srclient::rest::model::Schema>>
+    std::optional<
+        std::pair<std::optional<std::string>, srclient::rest::model::Schema>>
     getSchemaById(const std::string &subject, int32_t schemaId) const;
 
     /**
      * Get schema by guid
      */
-    std::optional<srclient::rest::model::Schema> getSchemaByGuid(const std::string &guid) const;
+    std::optional<srclient::rest::model::Schema>
+    getSchemaByGuid(const std::string &guid) const;
 
     /**
      * Get schema id by subject and schema
      */
-    std::optional<int32_t> getIdBySchema(const std::string &subject,
-                                         const srclient::rest::model::Schema &schema) const;
+    std::optional<int32_t>
+    getIdBySchema(const std::string &subject,
+                  const srclient::rest::model::Schema &schema) const;
 
     /**
      * Get registered schema by subject and schema
@@ -97,9 +115,10 @@ public:
      */
     void clear();
 
-private:
+  private:
     // Helper to create a string hash for schemas
-    std::string createSchemaHash(const srclient::rest::model::Schema &schema) const;
+    std::string
+    createSchemaHash(const srclient::rest::model::Schema &schema) const;
 };
 
-}
+} // namespace srclient::rest

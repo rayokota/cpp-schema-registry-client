@@ -6,9 +6,9 @@
 #pragma once
 
 #include "srclient/rest/model/Dek.h"
-#include <string>
-#include <functional>
 #include <cstdint>
+#include <functional>
+#include <string>
 
 namespace srclient::rest {
 
@@ -19,7 +19,7 @@ struct KekId {
     std::string name;
     bool deleted;
 
-    bool operator==(const KekId& other) const {
+    bool operator==(const KekId &other) const {
         return name == other.name && deleted == other.deleted;
     }
 };
@@ -34,26 +34,23 @@ struct DekId {
     srclient::rest::model::Algorithm algorithm;
     bool deleted;
 
-    bool operator==(const DekId& other) const {
-        return kek_name == other.kek_name &&
-               subject == other.subject &&
-               version == other.version &&
-               algorithm == other.algorithm &&
+    bool operator==(const DekId &other) const {
+        return kek_name == other.kek_name && subject == other.subject &&
+               version == other.version && algorithm == other.algorithm &&
                deleted == other.deleted;
     }
 };
 
 } // namespace srclient::rest
 
-// Hash specializations for std::unordered_map (implementations in DekRegistryTypes.cpp)
+// Hash specializations for std::unordered_map (implementations in
+// DekRegistryTypes.cpp)
 namespace std {
-    template<>
-    struct hash<srclient::rest::KekId> {
-        std::size_t operator()(const srclient::rest::KekId& k) const;
-    };
+template <> struct hash<srclient::rest::KekId> {
+    std::size_t operator()(const srclient::rest::KekId &k) const;
+};
 
-    template<>
-    struct hash<srclient::rest::DekId> {
-        std::size_t operator()(const srclient::rest::DekId& k) const;
-    };
-} 
+template <> struct hash<srclient::rest::DekId> {
+    std::size_t operator()(const srclient::rest::DekId &k) const;
+};
+} // namespace std

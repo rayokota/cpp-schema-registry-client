@@ -1,28 +1,28 @@
 #pragma once
 
 #include <memory>
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <mutex>
 #include <optional>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 // Avro C++ includes
-#include <avro/Encoder.hh>
-#include <avro/Decoder.hh>
 #include <avro/Compiler.hh>
-#include <avro/ValidSchema.hh>
+#include <avro/Decoder.hh>
+#include <avro/Encoder.hh>
 #include <avro/Generic.hh>
 #include <avro/Specific.hh>
+#include <avro/ValidSchema.hh>
 
 // Project includes
-#include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/avro/AvroTypes.h"
+#include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/rest/model/Schema.h"
+#include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/Serde.h"
-#include "srclient/rest/model/Schema.h"
-#include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/serdes/SerdeTypes.h"
+#include "srclient/serdes/avro/AvroTypes.h"
 
 namespace srclient::serdes::avro {
 
@@ -36,7 +36,7 @@ using BaseSerializer = srclient::serdes::BaseSerializer;
  * Converts objects to Avro binary format with schema registry integration
  */
 class AvroSerializer {
-public:
+  public:
     /**
      * Constructor for AvroSerializer
      * @param client Schema registry client for schema operations
@@ -48,8 +48,7 @@ public:
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
         std::optional<srclient::rest::model::Schema> schema,
         std::shared_ptr<RuleRegistry> rule_registry,
-        const SerializerConfig& config
-    );
+        const SerializerConfig &config);
 
     /**
      * Destructor
@@ -62,10 +61,8 @@ public:
      * @param datum Avro generic datum to serialize
      * @return Serialized bytes with schema ID header
      */
-    std::vector<uint8_t> serialize(
-        const SerializationContext& ctx,
-        const ::avro::GenericDatum& datum
-    );
+    std::vector<uint8_t> serialize(const SerializationContext &ctx,
+                                   const ::avro::GenericDatum &datum);
 
     /**
      * Serialize a JSON value to Avro bytes
@@ -74,17 +71,15 @@ public:
      * @param json_value JSON value to convert and serialize
      * @return Serialized bytes with schema ID header
      */
-    std::vector<uint8_t> serializeJson(
-        const SerializationContext& ctx,
-        const nlohmann::json& json_value
-    );
+    std::vector<uint8_t> serializeJson(const SerializationContext &ctx,
+                                       const nlohmann::json &json_value);
 
     /**
      * Close the serializer and cleanup resources
      */
     void close();
 
-private:
+  private:
     std::optional<srclient::rest::model::Schema> schema_;
     std::shared_ptr<BaseSerializer> base_;
     std::shared_ptr<AvroSerde> serde_;
@@ -94,8 +89,8 @@ private:
      * @param schema Schema to parse
      * @return Tuple of main schema and named schemas
      */
-    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>> 
-    getParsedSchema(const srclient::rest::model::Schema& schema);
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
+    getParsedSchema(const srclient::rest::model::Schema &schema);
 
     /**
      * Convert JSON value to Avro GenericDatum
@@ -103,10 +98,8 @@ private:
      * @param schema Avro schema for the conversion
      * @return Converted Avro datum
      */
-    ::avro::GenericDatum jsonToAvro(
-        const nlohmann::json& json_value,
-        const ::avro::ValidSchema& schema
-    );
+    ::avro::GenericDatum jsonToAvro(const nlohmann::json &json_value,
+                                    const ::avro::ValidSchema &schema);
 };
 
 /**
@@ -114,7 +107,7 @@ private:
  * Thread-safe storage of compiled schemas
  */
 class AvroSerde {
-public:
+  public:
     AvroSerde() = default;
     ~AvroSerde() = default;
 
@@ -126,18 +119,18 @@ public:
      */
     std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
     getParsedSchema(
-        const srclient::rest::model::Schema& schema,
-        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client
-    );
+        const srclient::rest::model::Schema &schema,
+        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client);
 
     /**
      * Clear all cached schemas
      */
     void clear();
 
-private:
+  private:
     mutable std::shared_mutex mutex_;
-    std::unordered_map<std::string, std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>> 
+    std::unordered_map<std::string, std::pair<::avro::ValidSchema,
+                                              std::vector<::avro::ValidSchema>>>
         parsed_schemas_;
 
     /**
@@ -148,11 +141,10 @@ private:
      * @param visited Set of already visited schemas to prevent cycles
      */
     void resolveNamedSchema(
-        const srclient::rest::model::Schema& schema,
+        const srclient::rest::model::Schema &schema,
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
-        std::vector<std::string>& schemas,
-        std::unordered_set<std::string>& visited
-    );
+        std::vector<std::string> &schemas,
+        std::unordered_set<std::string> &visited);
 };
 
 /**
@@ -167,4 +159,4 @@ struct NamedValue {
         : name(std::move(n)), value(std::move(v)) {}
 };
 
-} // namespace srclient::serdes::avro 
+} // namespace srclient::serdes::avro

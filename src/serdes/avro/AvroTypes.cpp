@@ -4,9 +4,7 @@ namespace srclient::serdes::avro {
 
 // Implementation for AvroValue methods
 bool AvroValue::asBool() const {
-    if (value_.type() == ::avro::AVRO_BOOL) {
-        return value_.value<bool>();
-    }
+    if (value_.type() == ::avro::AVRO_BOOL) { return value_.value<bool>(); }
     // Default to true for non-boolean types (matching Rust behavior)
     return true;
 }
@@ -28,11 +26,11 @@ std::vector<uint8_t> AvroValue::asBytes() const {
 }
 
 // Utility function implementation
-::avro::GenericDatum asAvro(const SerdeValue& value) {
+::avro::GenericDatum asAvro(const SerdeValue &value) {
     if (value.getFormat() != SerdeFormat::Avro) {
         throw std::invalid_argument("SerdeValue is not Avro");
     }
     return value.getValue<::avro::GenericDatum>();
 }
 
-} // namespace srclient::serdes::avro 
+} // namespace srclient::serdes::avro
