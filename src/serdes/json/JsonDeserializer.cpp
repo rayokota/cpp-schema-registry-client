@@ -123,10 +123,36 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
         value = executeMigrations(ctx, subject, migrations, value);
     }
 
-    // Apply transformation rules
-    if (base_->getSerde().getRuleRegistry()) {
-        // TODO: Implement rule execution for JSON messages
-        // This would involve field transformations similar to Avro/Protobuf
+    // Create field transformer lambda
+    auto field_transformer =
+        [this, &reader_schema](
+            RuleContext &ctx, const std::string &rule_type,
+            const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
+        if (msg.getFormat() == SerdeFormat::Json) {
+            auto json = asJson(msg);
+            auto transformed = utils::value_transform::transformFields(ctx, reader_schema, json,
+                                                                       rule_type);
+            return makeJsonValue(transformed);
+        }
+        return msg.clone();
+    };
+
+    // Create SerdeValue and SerdeSchema instances
+    auto json_value = makeJsonValue(value);
+
+    // Execute rules on the serde value
+    auto transformed_value = base_->getSerde().executeRules(
+        ctx, subject, Mode::Read, std::nullopt, reader_schema_raw,
+        std::nullopt, *json_value,
+        {},
+        std::make_shared<FieldTransformer>(field_transformer));
+
+    // Extract Json value from result
+    if (transformed_value->getFormat() == SerdeFormat::Json) {
+        value = asJson(*transformed_value);
+    } else {
+        throw JsonError(
+            "Unexpected serde value type returned from rule execution");
     }
 
     // Validate JSON against reader schema if validation is enabled
