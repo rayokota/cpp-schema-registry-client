@@ -6,11 +6,14 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/util/json_util.h>
 
+#include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
 #include <vector>
 
 #include "srclient/rest/ISchemaRegistryClient.h"
@@ -21,6 +24,116 @@
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
 
 namespace srclient::serdes::protobuf::utils {
+
+// Forward declaration
+struct ProtobufVariantValue;
+
+// C++ variant representing protobuf values - type alias for map keys
+using MapKey = std::variant<std::string, int32_t, int64_t, uint32_t, uint64_t, bool>;
+
+/**
+ * C++ variant-based structure representing protobuf values
+ * Ported from Rust Value enum to use std::variant
+ */
+struct ProtobufVariantValue {
+    enum class ValueType {
+        Bool, I32, I64, U32, U64, F32, F64, String, Bytes, EnumNumber, Message, List, Map
+    };
+    
+    using ValueVariant = std::variant<
+        bool,                                                    // Bool
+        int32_t,                                                // I32
+        int64_t,                                                // I64
+        uint32_t,                                               // U32
+        uint64_t,                                               // U64
+        float,                                                  // F32
+        double,                                                 // F64
+        std::string,                                            // String
+        std::vector<uint8_t>,                                   // Bytes
+        std::unique_ptr<google::protobuf::Message>,             // Message
+        std::vector<ProtobufVariantValue>,                             // List
+        std::map<MapKey, ProtobufVariantValue>                         // Map
+    >;
+    
+    ValueVariant value;
+    ValueType type_;
+    
+    // Constructors for each type
+    ProtobufVariantValue(bool v) : value(v), type_(ValueType::Bool) {}
+    ProtobufVariantValue(int32_t v, ValueType type = ValueType::I32) : value(v), type_(type) {}
+    ProtobufVariantValue(int64_t v) : value(v), type_(ValueType::I64) {}
+    ProtobufVariantValue(uint32_t v) : value(v), type_(ValueType::U32) {}
+    ProtobufVariantValue(uint64_t v) : value(v), type_(ValueType::U64) {}
+    ProtobufVariantValue(float v) : value(v), type_(ValueType::F32) {}
+    ProtobufVariantValue(double v) : value(v), type_(ValueType::F64) {}
+    ProtobufVariantValue(const std::string& v) : value(v), type_(ValueType::String) {}
+    ProtobufVariantValue(const std::vector<uint8_t>& v) : value(v), type_(ValueType::Bytes) {}
+    ProtobufVariantValue(std::unique_ptr<google::protobuf::Message> v) : value(std::move(v)), type_(ValueType::Message) {}
+    ProtobufVariantValue(const std::vector<ProtobufVariantValue>& v) : value(v), type_(ValueType::List) {}
+    ProtobufVariantValue(const std::map<MapKey, ProtobufVariantValue>& v) : value(v), type_(ValueType::Map) {}
+    
+    // Special constructor for enum values
+    static ProtobufVariantValue createEnum(int32_t value) {
+        return ProtobufVariantValue(value, ValueType::EnumNumber);
+    }
+    
+    // Copy constructor and assignment operator
+    ProtobufVariantValue(const ProtobufVariantValue& other);
+    ProtobufVariantValue& operator=(const ProtobufVariantValue& other);
+    
+    // Move constructor and assignment operator
+    ProtobufVariantValue(ProtobufVariantValue&& other) = default;
+    ProtobufVariantValue& operator=(ProtobufVariantValue&& other) = default;
+    
+    // Visitor helper methods
+    template<typename T>
+    bool is() const { return std::holds_alternative<T>(value); }
+    
+    template<typename T>
+    const T& get() const { return std::get<T>(value); }
+    
+    template<typename T>
+    T& get() { return std::get<T>(value); }
+};
+
+/**
+ * Transform protobuf values recursively (synchronous version)
+ * Ported from Rust async implementation
+ */
+ProtobufVariantValue transformRecursive(
+    RuleContext& ctx,
+    const google::protobuf::Descriptor* descriptor,
+    const ProtobufVariantValue& message,
+    const std::string& field_executor_type);
+
+/**
+ * Transform field with rule context (synchronous version)
+ * Ported from Rust async implementation
+ */
+std::optional<ProtobufVariantValue> transformFieldWithCtx(
+    RuleContext& ctx,
+    const google::protobuf::FieldDescriptor* fd,
+    const google::protobuf::Descriptor* desc,
+    const google::protobuf::Message* message,
+    const std::string& field_executor_type);
+
+/**
+ * Extract field value from protobuf message
+ */
+ProtobufVariantValue getMessageFieldValue(const google::protobuf::Message* message, 
+                                   const google::protobuf::FieldDescriptor* fd);
+
+/**
+ * Set field value in protobuf message
+ */
+void setMessageField(google::protobuf::Message* message, 
+                     const google::protobuf::FieldDescriptor* fd, 
+                     const ProtobufVariantValue& value);
+
+/**
+ * Convert SerdeValue back to ProtobufVariantValue
+ */
+ProtobufVariantValue convertSerdeValueToProtobufValue(const SerdeValue& serde_value);
 
 /**
  * Convert a FileDescriptor to base64-encoded string
