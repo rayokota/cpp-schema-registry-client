@@ -249,10 +249,11 @@ const nlohmann::json *validateSubschemas(const nlohmann::json &subschemas,
         return nullptr;
     }
 
-    // For now, return the first subschema
-    // TODO: Implement proper validation to find the best matching subschema
-    if (!subschemas.empty()) {
-        return &subschemas[0];
+    // Iterate over subschemas and find the best matching one
+    for (const auto &subschema : subschemas) {
+        if (validation_utils::validateJsonAgainstSchema(value, subschema)) {
+            return &subschema;
+        }
     }
 
     return nullptr;
@@ -337,13 +338,13 @@ bool validateJsonAgainstSchema(const nlohmann::json &value,
         // For now, just try to create the schema document
         // Full validation can be implemented later with the correct jsoncons
         // API
+        auto jsoncons_value = nlohmannToJsoncons(value);
         auto jsoncons_schema = nlohmannToJsoncons(schema);
         auto compiled_schema =
             jsoncons::jsonschema::make_json_schema(jsoncons_schema);
 
-        // If we can create the schema successfully, consider validation passed
-        // TODO: Implement actual value validation when the jsoncons API is
-        // available
+        compiled_schema.validate(jsoncons_value);
+
         return true;
     } catch (const std::exception &e) {
         return false;
