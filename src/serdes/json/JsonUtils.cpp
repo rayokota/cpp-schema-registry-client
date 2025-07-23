@@ -89,11 +89,27 @@ nlohmann::json transformRecursive(RuleContext &ctx,
                                    const std::string &field_executor_type) {
     // Handle allOf, anyOf, oneOf
     if (schema.contains("allOf")) {
-        // For now, just use the first subschema - TODO: implement proper
-        // validation
-        if (schema["allOf"].is_array() && !schema["allOf"].empty()) {
-            return transformRecursive(ctx, schema["allOf"][0], path, value,
-                                       field_executor_type);
+        // validate subschemas
+        auto subschemas = schema["allOf"];
+        auto subschema = validateSubschemas(subschemas, value);
+        if (subschema) {
+            return transformRecursive(ctx, *subschema, path, value, field_executor_type);
+        }
+    }
+    if (schema.contains("anyOf")) {
+        // validate subschemas
+        auto subschemas = schema["anyOf"];
+        auto subschema = validateSubschemas(subschemas, value);
+        if (subschema) {
+            return transformRecursive(ctx, *subschema, path, value, field_executor_type);
+        }
+    }
+    if (schema.contains("oneOf")) {
+        // validate subschemas
+        auto subschemas = schema["oneOf"];
+        auto subschema = validateSubschemas(subschemas, value);
+        if (subschema) {
+            return transformRecursive(ctx, *subschema, path, value, field_executor_type);
         }
     }
 
@@ -208,7 +224,7 @@ nlohmann::json transformFieldWithContext(RuleContext &ctx, const nlohmann::json 
     
     // Get field name from path
     std::string field_name = path_utils::getFieldName(path);
-    
+
     // Create message value from the JSON value
     auto message_value = makeJsonValue(value);
     
