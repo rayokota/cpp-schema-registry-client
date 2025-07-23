@@ -326,13 +326,6 @@ std::unordered_set<std::string> getConfluentTags(const nlohmann::json &schema) {
     return tags;
 }
 
-nlohmann::json navigateToSubschema(const nlohmann::json &root_schema,
-                                   const std::string &path) {
-    // TODO: Implement JSON path navigation
-    // This would involve parsing the path and traversing the schema structure
-    return root_schema;
-}
-
 }  // namespace schema_navigation
 
 // Validation utilities implementations
@@ -368,52 +361,9 @@ std::string getValidationErrorDetails(const nlohmann::json &value,
 // Path utilities implementations
 namespace path_utils {
 
-std::string buildJsonPath(const std::vector<std::string> &components) {
-    if (components.empty()) {
-        return "$";
-    }
-
-    std::string path = "$";
-    for (const auto &component : components) {
-        path += "." + component;
-    }
-    return path;
-}
-
-std::vector<std::string> parseJsonPath(const std::string &path) {
-    std::vector<std::string> components;
-
-    if (path == "$") {
-        return components;
-    }
-
-    // Simple implementation - split by '.'
-    std::stringstream ss(path.substr(1));  // Skip the '$'
-    std::string component;
-
-    while (std::getline(ss, component, '.')) {
-        if (!component.empty()) {
-            components.push_back(component);
-        }
-    }
-
-    return components;
-}
-
 std::string appendToPath(const std::string &base_path,
                          const std::string &component) {
-    if (base_path == "$") {
-        return "$." + component;
-    }
     return base_path + "." + component;
-}
-
-std::string getParentPath(const std::string &path) {
-    auto last_dot = path.find_last_of('.');
-    if (last_dot == std::string::npos || last_dot == 0) {
-        return "$";
-    }
-    return path.substr(0, last_dot);
 }
 
 std::string getFieldName(const std::string &path) {

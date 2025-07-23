@@ -35,15 +35,6 @@ std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::unordered_set<std::string> &visited);
 
-/**
- * Build dependency references for a schema
- * @param schema Schema to analyze
- * @param subject_prefix Prefix for subject names
- * @return List of schema references
- */
-std::vector<srclient::rest::model::SchemaReference> buildDependencies(
-    const nlohmann::json &schema, const std::string &subject_prefix);
-
 }  // namespace schema_resolution
 
 /**
@@ -150,15 +141,6 @@ nlohmann::json getArrayItemsSchema(const nlohmann::json &schema);
  */
 std::unordered_set<std::string> getConfluentTags(const nlohmann::json &schema);
 
-/**
- * Navigate to a subschema by JSON path
- * @param root_schema Root JSON schema
- * @param path JSON path (e.g., "/properties/field/items")
- * @return Subschema at the given path or null if not found
- */
-nlohmann::json navigateToSubschema(const nlohmann::json &root_schema,
-                                   const std::string &path);
-
 }  // namespace schema_navigation
 
 /**
@@ -192,20 +174,6 @@ std::string getValidationErrorDetails(const nlohmann::json &value,
 namespace path_utils {
 
 /**
- * Build JSON path from components
- * @param components Path components
- * @return JSON path string
- */
-std::string buildJsonPath(const std::vector<std::string> &components);
-
-/**
- * Parse JSON path into components
- * @param path JSON path string
- * @return Vector of path components
- */
-std::vector<std::string> parseJsonPath(const std::string &path);
-
-/**
  * Append to JSON path
  * @param base_path Base path
  * @param component Component to append
@@ -213,13 +181,6 @@ std::vector<std::string> parseJsonPath(const std::string &path);
  */
 std::string appendToPath(const std::string &base_path,
                          const std::string &component);
-
-/**
- * Get parent path
- * @param path JSON path
- * @return Parent path or empty string if at root
- */
-std::string getParentPath(const std::string &path);
 
 /**
  * Get field name from path
