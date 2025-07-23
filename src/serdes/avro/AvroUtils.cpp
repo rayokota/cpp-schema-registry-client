@@ -16,10 +16,6 @@ namespace utils {
 ::avro::GenericDatum transformFields(RuleContext &ctx,
                                      const ::avro::GenericDatum &datum,
                                      const ::avro::ValidSchema &schema) {
-    // Field transformation logic would be implemented here
-    // This would recursively process records, arrays, maps, and unions
-    // applying field-level rules as configured
-
     switch (schema.root()->type()) {
         case ::avro::AVRO_RECORD: {
             auto record = datum.value<::avro::GenericRecord>();

@@ -62,20 +62,6 @@ std::vector<srclient::rest::model::SchemaReference> buildDependencies(
 namespace value_transform {
 
 /**
- * Transform a JSON value according to field rules
- * @param ctx Rule execution context
- * @param schema JSON schema for the field
- * @param path JSON path to the field
- * @param value JSON value to transform
- * @param field_executor_type Type of field executor to use
- * @return Transformed JSON value
- */
-nlohmann::json transformField(RuleContext &ctx, const nlohmann::json &schema,
-                              const std::string &path,
-                              const nlohmann::json &value,
-                              const std::string &field_executor_type);
-
-/**
  * Transform all fields in a JSON object
  * @param ctx Rule execution context
  * @param schema Root JSON schema
@@ -88,7 +74,7 @@ nlohmann::json transformFields(RuleContext &ctx, const nlohmann::json &schema,
                                const std::string &field_executor_type);
 
 /**
- * Apply rules to a JSON value recursively
+ * Transform a JSON object
  * @param ctx Rule execution context
  * @param schema JSON schema at current level
  * @param path Current JSON path
@@ -96,11 +82,25 @@ nlohmann::json transformFields(RuleContext &ctx, const nlohmann::json &schema,
  * @param field_executor_type Type of field executor to use
  * @return Transformed JSON value
  */
-nlohmann::json applyRulesRecursive(RuleContext &ctx,
+nlohmann::json transformRecursive(RuleContext &ctx,
                                    const nlohmann::json &schema,
                                    const std::string &path,
                                    const nlohmann::json &value,
                                    const std::string &field_executor_type);
+
+/**
+ * Transform a JSON value according to field rules
+ * @param ctx Rule execution context
+ * @param schema JSON schema for the field
+ * @param path JSON path to the field
+ * @param value JSON value to transform
+ * @param field_executor_type Type of field executor to use
+ * @return Transformed JSON value
+ */
+nlohmann::json transformFieldWithContext(RuleContext &ctx, const nlohmann::json &schema,
+                                         const std::string &path,
+                                         const nlohmann::json &value,
+                                         const std::string &field_executor_type);
 
 /**
  * Validate subschemas (for allOf, anyOf, oneOf)

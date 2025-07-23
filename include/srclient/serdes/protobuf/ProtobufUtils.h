@@ -60,7 +60,7 @@ std::unordered_set<std::string> getInlineTags(
 /**
  * Transform protobuf message fields based on rules
  */
-google::protobuf::Message *transformMessage(
+google::protobuf::Message *transformRecursive(
     RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
     google::protobuf::Message *message, const std::string &field_executor_type);
 

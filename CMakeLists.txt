@@ -79,7 +79,6 @@ if(NOT googletest_POPULATED)
 endif()
 
 # Note: absl is provided by Tink, so we don't find_package it separately
-find_package(Boost REQUIRED)
 find_package(nlohmann_json 3.12.0 REQUIRED)
 find_package(Protobuf REQUIRED)
 
@@ -166,7 +165,6 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} 
     PUBLIC 
         avrocpp
-        Boost::headers
         cel_cpp
         cel_cpp_parser
         cel_cpp_minimal_descriptor_set

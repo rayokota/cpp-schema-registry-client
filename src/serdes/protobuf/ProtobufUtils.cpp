@@ -51,7 +51,7 @@ std::unique_ptr<SerdeValue> transformFields(
                 }
 
                 // Transform the message using the synchronous method
-                auto transformed_message = transformMessage(
+                auto transformed_message = transformRecursive(
                     ctx, descriptor, message_ptr, field_executor_type);
                 return protobuf::makeProtobufValue(*transformed_message);
             }
@@ -60,7 +60,7 @@ std::unique_ptr<SerdeValue> transformFields(
     return value.clone();
 }
 
-google::protobuf::Message *transformMessage(
+google::protobuf::Message *transformRecursive(
     RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
     google::protobuf::Message *message,
     const std::string &field_executor_type) {
