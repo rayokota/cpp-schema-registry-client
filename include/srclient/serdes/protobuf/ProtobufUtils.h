@@ -66,23 +66,6 @@ std::unique_ptr<SerdeValue> transformFields(
     const SerdeValue &value);
 
 /**
- * Recursively transform protobuf message and its fields (synchronous version)
- * Ported from Rust async implementation
- */
-std::unique_ptr<google::protobuf::Message> transformRecursive(
-    RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
-    google::protobuf::Message *message, const std::string &field_executor_type);
-
-/**
- * Transform individual field with context management (synchronous version)
- * Ported from Rust async implementation
- */
-std::optional<google::protobuf::Message*> transformFieldWithContext(
-    RuleContext &ctx, const google::protobuf::FieldDescriptor *field_desc,
-    const google::protobuf::Descriptor *message_desc,
-    google::protobuf::Message *message, const std::string &field_executor_type);
-
-/**
  * Protobuf Message to JSON conversion
  */
 nlohmann::json messageToJson(const google::protobuf::Message &message);

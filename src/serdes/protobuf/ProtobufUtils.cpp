@@ -60,134 +60,134 @@ std::unique_ptr<SerdeValue> transformFields(
     return value.clone();
 }
 
-std::unique_ptr<google::protobuf::Message> transformRecursive(
-    RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
-    google::protobuf::Message *message, const std::string &field_executor_type) {
-    
-    // Handle different message types based on their structure
-    // This is a synchronous version of the Rust async function
-    
-    // Clone the input message for transformation
-    auto result = std::unique_ptr<google::protobuf::Message>(message->New());
-    result->CopyFrom(*message);
-    
-    // Transform all fields in the message
-    for (int i = 0; i < descriptor->field_count(); ++i) {
-        const google::protobuf::FieldDescriptor *field_desc = descriptor->field(i);
-        
-        auto transformed_field = transformFieldWithContext(
-            ctx, field_desc, descriptor, result.get(), field_executor_type);
-        
-        if (transformed_field.has_value()) {
-            // Set the transformed field value in the result message
-            // The actual field setting logic would depend on the field type
-            // This is a simplified version - actual implementation would need
-            // proper field value handling based on protobuf reflection API
-        }
-    }
-    
-    // Check if we need to apply field-level transformations
-    auto current_field = ctx.currentField();
-    if (current_field.has_value()) {
-        // Get rule tags from context
-        auto rule_tags = ctx.getRule().getTags();
-        std::unordered_set<std::string> rule_tag_set;
-        if (rule_tags.has_value()) {
-            rule_tag_set.insert(rule_tags->begin(), rule_tags->end());
-        }
-        
-        // Check if rule tags intersect with field tags
-        const auto &field_tags = current_field->getTags();
-        bool tags_intersect = rule_tag_set.empty();
-        if (!rule_tag_set.empty()) {
-            for (const auto &tag : field_tags) {
-                if (rule_tag_set.find(tag) != rule_tag_set.end()) {
-                    tags_intersect = true;
-                    break;
-                }
-            }
-        }
-        
-        if (tags_intersect) {
-            // Create SerdeValue for the message
-            auto message_value = makeProtobufValue(*result);
-            
-            // Get the field executor
-            auto executor = ctx.getRuleRegistry() 
-                ? ctx.getRuleRegistry()->getExecutor(field_executor_type)
-                : global_registry::getRuleExecutor(field_executor_type);
-            
-            if (executor) {
-                // Cast to field rule executor
-                auto field_executor = std::dynamic_pointer_cast<FieldRuleExecutor>(executor);
-                if (field_executor) {
-                    auto transformed_value = field_executor->transform(ctx, *message_value);
-                    if (transformed_value->getFormat() == SerdeFormat::Protobuf) {
-                        auto &transformed_pb = asProtobuf(*transformed_value);
-                        result = std::unique_ptr<google::protobuf::Message>(transformed_pb.New());
-                        result->CopyFrom(transformed_pb);
-                    }
-                } else {
-                    throw SerdeError("executor " + field_executor_type + 
-                                   " is not a field rule executor");
-                }
-            }
-        }
-    }
-    
-    return result;
+
+pub enum Value {
+    /// A boolean value, encoded as the `bool` protobuf type.
+    Bool(bool),
+    /// A 32-bit signed integer, encoded as one of the `int32`, `sint32` or `sfixed32` protobuf types.
+    I32(i32),
+    /// A 64-bit signed integer, encoded as one of the `int64`, `sint64` or `sfixed64` protobuf types.
+    I64(i64),
+    /// A 32-bit unsigned integer, encoded as one of the `uint32` or `ufixed32` protobuf types.
+    U32(u32),
+    /// A 64-bit unsigned integer, encoded as one of the `uint64` or `ufixed64` protobuf types.
+    U64(u64),
+    /// A 32-bit floating point number, encoded as the `float` protobuf type.
+    F32(f32),
+    /// A 64-bit floating point number, encoded as the `double` protobuf type.
+    F64(f64),
+    /// A string, encoded as the `string` protobuf type.
+    String(String),
+    /// A byte string, encoded as the `bytes` protobuf type.
+    Bytes(Bytes),
+    /// An enumeration value, encoded as a protobuf enum.
+    EnumNumber(i32),
+    /// A protobuf message.
+    Message(DynamicMessage),
+    /// A list of values, encoded as a protobuf repeated field.
+    List(Vec<Value>),
+    /// A map of values, encoded as a protobuf map field.
+    Map(HashMap<MapKey, Value>),
 }
 
-std::optional<google::protobuf::Message*> transformFieldWithContext(
-    RuleContext &ctx, const google::protobuf::FieldDescriptor *field_desc,
-    const google::protobuf::Descriptor *message_desc,
-    google::protobuf::Message *message, const std::string &field_executor_type) {
-    
-    // Create message value for context
-    auto message_value = makeProtobufValue(*message);
-    
-    // Get field type
-    FieldType field_type = getFieldType(field_desc);
-    
-    // Get inline tags
-    auto inline_tags = getInlineTags(field_desc);
-    
-    // Enter field context
-    ctx.enterField(*message_value, 
-                   field_desc->full_name(), 
-                   field_desc->name(),
-                   field_type,
-                   inline_tags);
-    
-    try {
-        // Skip oneof fields that are not set
-        if (field_desc->containing_oneof() && 
-            !message->GetReflection()->HasField(*message, field_desc)) {
-            ctx.exitField();
-            return std::nullopt;
+async fn transform(
+    ctx: &mut RuleContext,
+    descriptor: &MessageDescriptor,
+    message: &Value,
+    field_executor_type: &str,
+) -> Result<Value, SerdeError> {
+    match message {
+        Value::List(items) => {
+            let mut result = Vec::with_capacity(items.len());
+            for item in items {
+                let item = transform(ctx, descriptor, item, field_executor_type).await?;
+                result.push(item);
+            }
+            return Ok(Value::List(result));
         }
-        
-        // Transform the field recursively
-        auto transformed_message = transformRecursive(
-            ctx, message_desc, message, field_executor_type);
-        
-        // Check for condition rules
-        auto rule_kind = ctx.getRule().getKind();
-        if (rule_kind.has_value() && rule_kind.value() == Kind::Condition) {
-            // For condition rules, we need to check if the result is boolean
-            // This is a simplified check - actual implementation would depend
-            // on how boolean results are represented in protobuf messages
-            // For now, we'll assume the transformation succeeded
+        Value::Map(map) => {
+            let mut result = HashMap::new();
+            for (key, value) in map {
+                let value = transform(ctx, descriptor, value, field_executor_type).await?;
+                result.insert(key.clone(), value);
+            }
+            return Ok(Value::Map(result));
         }
-        
-        ctx.exitField();
-        return transformed_message.get();
-        
-    } catch (const std::exception &e) {
-        ctx.exitField();
-        throw;
+        Value::Message(message) => {
+            let mut result = message.clone();
+            for fd in descriptor.fields() {
+                let field =
+                    transform_field_with_ctx(ctx, &fd, descriptor, message, field_executor_type)
+                        .await?;
+                if let Some(field) = field {
+                    result.set_field(&fd, field);
+                }
+            }
+            return Ok(Value::Message(result));
+        }
+        _ => {
+            if let Some(field_ctx) = ctx.current_field() {
+                let rule_tags = ctx
+                    .rule
+                    .tags
+                    .clone()
+                    .map(|v| HashSet::from_iter(v.into_iter()));
+                if rule_tags.is_none_or(|tags| !tags.is_disjoint(&field_ctx.tags)) {
+                    let message_value = SerdeValue::Protobuf(message.clone());
+                    let executor = get_executor(ctx.rule_registry.as_ref(), field_executor_type);
+                    if let Some(executor) = executor {
+                        let field_executor =
+                            executor
+                                .as_field_rule_executor()
+                                .ok_or(SerdeError::Rule(format!(
+                                    "executor {field_executor_type} is not a field rule executor"
+                                )))?;
+                        let new_value = field_executor.transform_field(ctx, &message_value).await?;
+                        if let SerdeValue::Protobuf(v) = new_value {
+                            return Ok(v);
+                        }
+                    }
+                }
+            }
+        }
     }
+    Ok(message.clone())
 }
+
+async fn transform_field_with_ctx(
+    ctx: &mut RuleContext,
+    fd: &FieldDescriptor,
+    desc: &MessageDescriptor,
+    message: &DynamicMessage,
+    field_executor_type: &str,
+) -> Result<Option<Value>, SerdeError> {
+    let message_value = SerdeValue::Protobuf(Value::Message(message.clone()));
+    ctx.enter_field(
+        message_value,
+        fd.full_name().to_string(),
+        fd.name().to_string(),
+        get_type(fd),
+        get_inline_tags(fd),
+    );
+    if fd.containing_oneof().is_some() && !message.has_field(fd) {
+        // skip oneof fields that are not set
+        return Ok(None);
+    }
+    let value = message.get_field(fd);
+    let new_value = transform(ctx, desc, &value, field_executor_type).await?;
+    if let Some(Kind::Condition) = ctx.rule.kind {
+        if let Value::Bool(b) = new_value {
+            if !b {
+                return Err(SerdeError::RuleCondition(Box::new(ctx.rule.clone())));
+            }
+        }
+    }
+    ctx.exit_field();
+    Ok(Some(new_value))
+}
+
+
+
 
 std::unordered_set<std::string> getInlineTags(
     const google::protobuf::FieldDescriptor *field_desc) {
