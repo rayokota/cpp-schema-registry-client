@@ -90,7 +90,7 @@ pub enum Value {
     Map(HashMap<MapKey, Value>),
 }
 
-async fn transform(
+async fn transform_recursive(
     ctx: &mut RuleContext,
     descriptor: &MessageDescriptor,
     message: &Value,
@@ -100,7 +100,7 @@ async fn transform(
         Value::List(items) => {
             let mut result = Vec::with_capacity(items.len());
             for item in items {
-                let item = transform(ctx, descriptor, item, field_executor_type).await?;
+                let item = transform_recursive(ctx, descriptor, item, field_executor_type).await?;
                 result.push(item);
             }
             return Ok(Value::List(result));
@@ -108,7 +108,7 @@ async fn transform(
         Value::Map(map) => {
             let mut result = HashMap::new();
             for (key, value) in map {
-                let value = transform(ctx, descriptor, value, field_executor_type).await?;
+                let value = transform_recursive(ctx, descriptor, value, field_executor_type).await?;
                 result.insert(key.clone(), value);
             }
             return Ok(Value::Map(result));
@@ -174,7 +174,7 @@ async fn transform_field_with_ctx(
         return Ok(None);
     }
     let value = message.get_field(fd);
-    let new_value = transform(ctx, desc, &value, field_executor_type).await?;
+    let new_value = transform_recursive(ctx, desc, &value, field_executor_type).await?;
     if let Some(Kind::Condition) = ctx.rule.kind {
         if let Value::Bool(b) = new_value {
             if !b {
