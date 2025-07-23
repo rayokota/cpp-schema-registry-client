@@ -27,7 +27,7 @@ namespace utils {
                 ::avro::ValidSchema field_schema(field_schema_node);
                 const std::string &field_name = schema.root()->nameAt(i);
 
-                auto transformed_field = transformFieldWithCtx(
+                auto transformed_field = transformFieldWithContext(
                     ctx, schema, field_name, field_datum, field_schema);
                 result.setFieldAt(i, transformed_field);
             }
@@ -154,7 +154,7 @@ namespace utils {
 }
 
 // Transform individual field with context handling
-::avro::GenericDatum transformFieldWithCtx(
+::avro::GenericDatum transformFieldWithContext(
     RuleContext &ctx, const ::avro::ValidSchema &record_schema,
     const std::string &field_name, const ::avro::GenericDatum &field_datum,
     const ::avro::ValidSchema &field_schema) {

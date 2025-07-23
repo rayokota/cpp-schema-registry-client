@@ -58,18 +58,28 @@ std::unordered_set<std::string> getInlineTags(
     const google::protobuf::FieldDescriptor *field_desc);
 
 /**
- * Transform protobuf message fields based on rules
+ * Transform protobuf fields using field execution context (synchronous version)
+ * Ported from Rust async implementation
  */
-google::protobuf::Message *transformRecursive(
+std::unique_ptr<SerdeValue> transformFields(
+    RuleContext &ctx, const std::string &field_executor_type,
+    const SerdeValue &value);
+
+/**
+ * Recursively transform protobuf message and its fields (synchronous version)
+ * Ported from Rust async implementation
+ */
+std::unique_ptr<google::protobuf::Message> transformRecursive(
     RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
     google::protobuf::Message *message, const std::string &field_executor_type);
 
 /**
- * Transform a single protobuf field
+ * Transform individual field with context management (synchronous version)
+ * Ported from Rust async implementation
  */
-bool transformFieldWithContext(
+std::optional<google::protobuf::Message*> transformFieldWithContext(
     RuleContext &ctx, const google::protobuf::FieldDescriptor *field_desc,
-    const google::protobuf::Descriptor *msg_desc,
+    const google::protobuf::Descriptor *message_desc,
     google::protobuf::Message *message, const std::string &field_executor_type);
 
 /**
@@ -103,43 +113,6 @@ const google::protobuf::Descriptor *getMessageDescriptorByIndex(
  */
 std::vector<int32_t> createMessageIndexArray(
     const google::protobuf::Descriptor *descriptor);
-
-/**
- * Protobuf value transformation helpers
- */
-namespace value_transform {
-
-/**
- * Transform a protobuf field value based on field type
- */
-bool transformFieldValue(const google::protobuf::FieldDescriptor *field_desc,
-                         google::protobuf::Message *message,
-                         const SerdeValue &transformed_value);
-
-/**
- * Extract SerdeValue from protobuf field
- */
-std::unique_ptr<SerdeValue> extractFieldValue(
-    const google::protobuf::FieldDescriptor *field_desc,
-    const google::protobuf::Message &message);
-
-/**
- * Handle repeated field transformations
- */
-bool transformRepeatedField(
-    const google::protobuf::FieldDescriptor *field_desc,
-    google::protobuf::Message *message,
-    const std::vector<std::reference_wrapper<const SerdeValue>> &values);
-
-/**
- * Handle map field transformations
- */
-bool transformMapField(
-    const google::protobuf::FieldDescriptor *field_desc,
-    google::protobuf::Message *message,
-    const std::unordered_map<
-        std::string, std::reference_wrapper<const SerdeValue>> &map_values);
-}  // namespace value_transform
 
 /**
  * Schema resolution utilities

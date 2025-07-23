@@ -50,7 +50,7 @@ namespace utils {
  * @param field_schema Schema of the field
  * @return Transformed field datum
  */
-::avro::GenericDatum transformFieldWithCtx(
+::avro::GenericDatum transformFieldWithContext(
     RuleContext &ctx, const ::avro::ValidSchema &record_schema,
     const std::string &field_name, const ::avro::GenericDatum &field_datum,
     const ::avro::ValidSchema &field_schema);
