@@ -9,48 +9,7 @@ namespace srclient::serdes::json::utils {
 // Schema resolution implementations
 namespace schema_resolution {
 
-void resolveNamedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
-    auto references = schema.getReferences();
-    if (!references.has_value()) {
-        return;
-    }
-
-    // Resolve each reference
-    for (const auto &ref : references.value()) {
-        auto name_opt = ref.getName();
-        auto subject_opt = ref.getSubject();
-        auto version_opt = ref.getVersion();
-
-        if (!name_opt.has_value() || !subject_opt.has_value()) {
-            continue;
-        }
-
-        try {
-            // Get referenced schema
-            auto registered_schema = client->getVersion(
-                subject_opt.value(), version_opt.value_or(-1), true,
-                std::nullopt);
-
-            auto ref_schema = registered_schema.toSchema();
-            auto ref_schema_str = ref_schema.getSchema();
-
-            if (ref_schema_str.has_value()) {
-                // Parse referenced schema
-                nlohmann::json ref_parsed_schema =
-                    nlohmann::json::parse(ref_schema_str.value());
-
-                // TODO: Add resolved reference to schema document
-                // This would involve integrating the referenced schema
-            }
-        } catch (const std::exception &e) {
-            // Skip missing references
-        }
-    }
-}
-
-std::unordered_map<std::string, nlohmann::json> resolveAllDependencies(
+std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
     const srclient::rest::model::Schema &schema,
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::unordered_set<std::string> &visited) {
@@ -91,7 +50,7 @@ std::unordered_map<std::string, nlohmann::json> resolveAllDependencies(
 
                 // Recursively resolve dependencies
                 auto nested_deps =
-                    resolveAllDependencies(ref_schema, client, visited);
+                    resolveNamedSchema(ref_schema, client, visited);
                 resolved_schemas.insert(nested_deps.begin(), nested_deps.end());
             }
         } catch (const std::exception &e) {
@@ -488,64 +447,6 @@ nlohmann::json jsonconsToNlohmann(const jsoncons::json &jsoncons_json) {
         throw JsonError("Failed to convert jsoncons to nlohmann: " +
                         std::string(e.what()));
     }
-}
-
-nlohmann::json mergeSchemas(const std::vector<nlohmann::json> &schemas) {
-    if (schemas.empty()) {
-        return nlohmann::json::object();
-    }
-
-    nlohmann::json merged = schemas[0];
-
-    for (size_t i = 1; i < schemas.size(); ++i) {
-        // Simple merge - combine properties
-        if (merged.contains("properties") &&
-            schemas[i].contains("properties")) {
-            for (auto &[key, value] : schemas[i]["properties"].items()) {
-                merged["properties"][key] = value;
-            }
-        }
-    }
-
-    return merged;
-}
-
-bool hasConfluentExtensions(const nlohmann::json &schema) {
-    // Check for confluent-specific properties
-    for (auto &[key, value] : schema.items()) {
-        if (key.find("confluent:") == 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-nlohmann::json normalizeSchema(const nlohmann::json &schema) {
-    // Simple normalization - sort keys
-    if (schema.is_object()) {
-        nlohmann::json normalized = nlohmann::json::object();
-        std::vector<std::string> keys;
-
-        for (auto &[key, value] : schema.items()) {
-            keys.push_back(key);
-        }
-
-        std::sort(keys.begin(), keys.end());
-
-        for (const auto &key : keys) {
-            normalized[key] = normalizeSchema(schema[key]);
-        }
-
-        return normalized;
-    } else if (schema.is_array()) {
-        nlohmann::json normalized = nlohmann::json::array();
-        for (const auto &item : schema) {
-            normalized.push_back(normalizeSchema(item));
-        }
-        return normalized;
-    }
-
-    return schema;
 }
 
 }  // namespace srclient::serdes::json::utils

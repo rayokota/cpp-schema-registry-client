@@ -24,23 +24,13 @@ namespace srclient::serdes::json::utils {
 namespace schema_resolution {
 
 /**
- * Resolve named schemas and their references
- * @param schema Schema with potential references
- * @param client Schema registry client
- * @return Resolved schema registry for validation
- */
-void resolveNamedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client);
-
-/**
  * Resolve all dependencies for a schema
  * @param schema Root schema
  * @param client Schema registry client
  * @param visited Set of already visited schema names to prevent cycles
  * @return Map of resolved schema references
  */
-std::unordered_map<std::string, nlohmann::json> resolveAllDependencies(
+std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
     const srclient::rest::model::Schema &schema,
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::unordered_set<std::string> &visited);
@@ -257,26 +247,5 @@ jsoncons::json nlohmannToJsoncons(const nlohmann::json &nlohmann_json);
  * @return nlohmann::json object
  */
 nlohmann::json jsonconsToNlohmann(const jsoncons::json &jsoncons_json);
-
-/**
- * Merge JSON schemas (for allOf, etc.)
- * @param schemas Vector of schemas to merge
- * @return Merged schema
- */
-nlohmann::json mergeSchemas(const std::vector<nlohmann::json> &schemas);
-
-/**
- * Check if schema has confluent extensions
- * @param schema JSON schema
- * @return True if schema has confluent-specific extensions
- */
-bool hasConfluentExtensions(const nlohmann::json &schema);
-
-/**
- * Normalize JSON schema for comparison
- * @param schema JSON schema to normalize
- * @return Normalized schema
- */
-nlohmann::json normalizeSchema(const nlohmann::json &schema);
 
 }  // namespace srclient::serdes::json::utils
