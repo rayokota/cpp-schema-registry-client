@@ -31,48 +31,6 @@ std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
 }
 }  // namespace
 
-std::unique_ptr<SerdeValue> transformFields(
-    RuleContext &ctx, const std::string &field_executor_type,
-    const SerdeValue &value) {
-    // Check if we have a protobuf schema and value
-    const auto &parsed_target = ctx.getParsedTarget();
-    if (parsed_target.has_value() && parsed_target->get() &&
-        parsed_target->get()->getFormat() == SerdeFormat::Protobuf) {
-        if (value.getFormat() == SerdeFormat::Protobuf) {
-            auto &message = asProtobuf(value);
-            auto message_ptr =
-                const_cast<google::protobuf::Message *>(&message);
-            if (message_ptr) {
-                const google::protobuf::Descriptor *descriptor =
-                    message_ptr->GetDescriptor();
-                if (!descriptor) {
-                    throw ProtobufError("Message descriptor not found for " +
-                                        message_ptr->GetTypeName());
-                }
-
-                // Transform the message using the synchronous method
-                auto message_ptr_copy = std::unique_ptr<google::protobuf::Message>(message_ptr->New());
-                message_ptr_copy->CopyFrom(*message_ptr);
-                ProtobufVariantValue message_variant(std::move(message_ptr_copy));
-                auto transformed_message = transformRecursive(
-                    ctx, descriptor, message_variant, field_executor_type);
-                
-                // Extract the transformed message and create SerdeValue
-                if (transformed_message.type_ == ProtobufVariantValue::ValueType::Message && 
-                    transformed_message.is<std::unique_ptr<google::protobuf::Message>>()) {
-                    auto& msg_ptr = transformed_message.get<std::unique_ptr<google::protobuf::Message>>();
-                    return protobuf::makeProtobufValue(*msg_ptr);
-                }
-                
-                // Fallback: return original message
-                return protobuf::makeProtobufValue(*message_ptr);
-            }
-        }
-    }
-    return value.clone();
-}
-
-
 // Implementation of ProtobufVariantValue methods (declaration is in header)
 
 // Copy constructor implementation
@@ -205,6 +163,47 @@ ProtobufVariantValue& ProtobufVariantValue::operator=(const ProtobufVariantValue
     return *this;
 }
 
+std::unique_ptr<SerdeValue> transformFields(
+    RuleContext &ctx, const std::string &field_executor_type,
+    const SerdeValue &value) {
+    // Check if we have a protobuf schema and value
+    const auto &parsed_target = ctx.getParsedTarget();
+    if (parsed_target.has_value() && parsed_target->get() &&
+        parsed_target->get()->getFormat() == SerdeFormat::Protobuf) {
+        if (value.getFormat() == SerdeFormat::Protobuf) {
+            auto &message = asProtobuf(value);
+            auto message_ptr =
+                const_cast<google::protobuf::Message *>(&message);
+            if (message_ptr) {
+                const google::protobuf::Descriptor *descriptor =
+                    message_ptr->GetDescriptor();
+                if (!descriptor) {
+                    throw ProtobufError("Message descriptor not found for " +
+                                        message_ptr->GetTypeName());
+                }
+
+                // Transform the message using the synchronous method
+                auto message_ptr_copy = std::unique_ptr<google::protobuf::Message>(message_ptr->New());
+                message_ptr_copy->CopyFrom(*message_ptr);
+                ProtobufVariantValue message_variant(std::move(message_ptr_copy));
+                auto transformed_message = transformRecursive(
+                    ctx, descriptor, message_variant, field_executor_type);
+
+                // Extract the transformed message and create SerdeValue
+                if (transformed_message.type_ == ProtobufVariantValue::ValueType::Message &&
+                    transformed_message.is<std::unique_ptr<google::protobuf::Message>>()) {
+                    auto& msg_ptr = transformed_message.get<std::unique_ptr<google::protobuf::Message>>();
+                    return protobuf::makeProtobufValue(*msg_ptr);
+                }
+
+                // Fallback: return original message
+                return protobuf::makeProtobufValue(*message_ptr);
+            }
+        }
+    }
+    return value.clone();
+}
+
 ProtobufVariantValue transformRecursive(
     RuleContext& ctx,
     const google::protobuf::Descriptor* descriptor,
@@ -243,7 +242,7 @@ ProtobufVariantValue transformRecursive(
             
             for (int i = 0; i < descriptor->field_count(); ++i) {
                 const google::protobuf::FieldDescriptor* fd = descriptor->field(i);
-                auto field = transformFieldWithCtx(ctx, fd, descriptor, result.get(), field_executor_type);
+                auto field = transformFieldWithContext(ctx, fd, descriptor, result.get(), field_executor_type);
                 if (field.has_value()) {
                     // Set the field in the message based on the transformed value
                     setMessageField(result.get(), fd, field.value());
@@ -259,7 +258,7 @@ ProtobufVariantValue transformRecursive(
     }
 }
 
-std::optional<ProtobufVariantValue> transformFieldWithCtx(
+std::optional<ProtobufVariantValue> transformFieldWithContext(
     RuleContext& ctx,
     const google::protobuf::FieldDescriptor* fd,
     const google::protobuf::Descriptor* desc,

@@ -97,6 +97,14 @@ struct ProtobufVariantValue {
 };
 
 /**
+ * Transform protobuf fields using field execution context (synchronous version)
+ * Ported from Rust async implementation
+ */
+std::unique_ptr<SerdeValue> transformFields(
+    RuleContext &ctx, const std::string &field_executor_type,
+    const SerdeValue &value);
+
+/**
  * Transform protobuf values recursively (synchronous version)
  * Ported from Rust async implementation
  */
@@ -110,7 +118,7 @@ ProtobufVariantValue transformRecursive(
  * Transform field with rule context (synchronous version)
  * Ported from Rust async implementation
  */
-std::optional<ProtobufVariantValue> transformFieldWithCtx(
+std::optional<ProtobufVariantValue> transformFieldWithContext(
     RuleContext& ctx,
     const google::protobuf::FieldDescriptor* fd,
     const google::protobuf::Descriptor* desc,
@@ -169,14 +177,6 @@ FieldType getFieldType(const google::protobuf::FieldDescriptor *field_desc);
  */
 std::unordered_set<std::string> getInlineTags(
     const google::protobuf::FieldDescriptor *field_desc);
-
-/**
- * Transform protobuf fields using field execution context (synchronous version)
- * Ported from Rust async implementation
- */
-std::unique_ptr<SerdeValue> transformFields(
-    RuleContext &ctx, const std::string &field_executor_type,
-    const SerdeValue &value);
 
 /**
  * Protobuf Message to JSON conversion
