@@ -21,9 +21,6 @@
 
 namespace srclient::serdes::protobuf {
 
-// Forward declaration
-struct ProtobufVariant;
-
 // C++ variant representing protobuf values - type alias for map keys
 using MapKey =
     std::variant<std::string, int32_t, int64_t, uint32_t, uint64_t, bool>;
@@ -164,48 +161,12 @@ class ProtobufValue : public SerdeValue {
     ProtobufVariant &getMutableProtobufVariant();
 };
 
-/**
- * Protobuf Schema implementation
- */
-class ProtobufSchema : public SerdeSchema {
-  private:
-    const google::protobuf::FileDescriptor *schema_;
-
-  public:
-    explicit ProtobufSchema(const google::protobuf::FileDescriptor *schema);
-
-    // SerdeObject interface methods
-    const void *getRawObject() const override;
-    void *getMutableRawObject() override;
-    SerdeFormat getFormat() const override;
-    const std::type_info &getType() const override;
-    void moveFrom(SerdeObject &&other) override;
-    std::unique_ptr<SerdeSchema> clone() const override;
-
-    // Direct access to Protobuf schema
-    const google::protobuf::FileDescriptor *getProtobufSchema() const;
-};
-
 // Helper functions for creating Protobuf SerdeValue instances
 inline std::unique_ptr<SerdeValue> makeProtobufValue(ProtobufVariant value) {
     return std::make_unique<ProtobufValue>(std::move(value));
 }
 
-// Helper function for creating Protobuf SerdeSchema instances
-inline std::unique_ptr<SerdeSchema> makeProtobufSchema(
-    const google::protobuf::FileDescriptor *file_descriptor) {
-    return std::make_unique<ProtobufSchema>(file_descriptor);
-}
-
 // Utility functions for Protobuf value and schema extraction
 ProtobufVariant &asProtobuf(const SerdeValue &value);
-
-inline const google::protobuf::FileDescriptor *asProtobufSchema(
-    const SerdeSchema &schema) {
-    if (schema.getFormat() != SerdeFormat::Protobuf) {
-        throw std::invalid_argument("Schema is not a Protobuf schema");
-    }
-    return schema.getSchema<const google::protobuf::FileDescriptor *>();
-}
 
 }  // namespace srclient::serdes::protobuf

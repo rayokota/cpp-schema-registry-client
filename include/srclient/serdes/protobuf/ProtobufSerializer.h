@@ -316,11 +316,10 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
         dynamic_msg_copy->CopyFrom(*dynamic_msg);
         auto protobuf_value = protobuf::makeProtobufValue(
             ProtobufVariant(std::move(dynamic_msg_copy)));
-        auto protobuf_schema = protobuf::makeProtobufSchema(fd);
 
         auto serde_value = base_->getSerde().executeRules(
             ctx, subject, Mode::Write, std::nullopt, std::make_optional(schema),
-            std::make_optional(protobuf_schema.get()), *protobuf_value, {},
+            *protobuf_value, {},
             std::make_shared<FieldTransformer>(field_tf));
 
         if (serde_value->getFormat() != SerdeFormat::Protobuf) {
@@ -377,7 +376,7 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
                     SerdeValue::newBytes(SerdeFormat::Protobuf, encoded_bytes);
                 auto result = base_->getSerde().executeRulesWithPhase(
                     ctx, subject, Phase::Encoding, Mode::Write, std::nullopt,
-                    std::make_optional(schema), std::nullopt, *bytes_value, {});
+                    std::make_optional(schema), *bytes_value, {});
                 encoded_bytes = result->getValue<std::vector<uint8_t>>();
             }
         }

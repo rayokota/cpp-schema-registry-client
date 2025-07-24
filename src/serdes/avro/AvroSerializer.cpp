@@ -167,14 +167,12 @@ std::vector<uint8_t> AvroSerializer::serialize(
             return msg.clone();
         };
 
-        // Create SerdeValue and SerdeSchema instances
         auto avro_value = makeAvroValue(value);
-        auto avro_schema = makeAvroSchema(parsed_schema);
 
         // Execute rules on the serde value
         auto transformed_value = base_->getSerde().executeRules(
             ctx, subject, Mode::Write, std::nullopt, std::make_optional(schema),
-            std::make_optional(avro_schema.get()), *avro_value,
+            *avro_value,
             utils::getInlineTags(
                 nlohmann::json::parse(schema.getSchema().value())),
             std::make_shared<FieldTransformer>(field_transformer));
@@ -226,7 +224,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
                     SerdeValue::newBytes(SerdeFormat::Avro, avro_bytes);
                 auto result = base_->getSerde().executeRulesWithPhase(
                     ctx, subject, Phase::Encoding, Mode::Write, std::nullopt,
-                    std::make_optional(schema), std::nullopt, *bytes_value, {});
+                    std::make_optional(schema), *bytes_value, {});
                 avro_bytes = result->getValue<std::vector<uint8_t>>();
             }
         }

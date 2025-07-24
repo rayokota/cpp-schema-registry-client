@@ -168,7 +168,7 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
             SerdeValue::newBytes(SerdeFormat::Protobuf, processed_data);
         auto res_val = base_->getSerde().executeRulesWithPhase(
             ctx, subject, Phase::Encoding, Mode::Read, std::nullopt,
-            std::make_optional(writer_schema_raw), std::nullopt, *bytes_val,
+            std::make_optional(writer_schema_raw), *bytes_val,
             {});
         processed_data = res_val->asBytes();
     }
@@ -261,12 +261,11 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
     auto msg_copy = std::unique_ptr<google::protobuf::Message>(msg->New());
     msg_copy->CopyFrom(*msg);
     auto protobuf_val = makeProtobufValue(ProtobufVariant(std::move(msg_copy)));
-    auto protobuf_schema = std::make_shared<ProtobufSchema>(reader_schema_fd);
 
     auto result_val = base_->getSerde().executeRules(
         ctx, subject, Mode::Read, std::nullopt,
         std::make_optional(reader_schema_raw),
-        std::make_optional<SerdeSchema *>(protobuf_schema.get()), *protobuf_val,
+        *protobuf_val,
         {}, std::make_shared<FieldTransformer>(field_tf));
 
     if (result_val->getFormat() != SerdeFormat::Protobuf) {

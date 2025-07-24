@@ -339,7 +339,6 @@ std::string FieldContext::typeName() const {
 RuleContext::RuleContext(
     const SerializationContext &ser_ctx, std::optional<Schema> source,
     std::optional<Schema> target,
-    std::optional<std::unique_ptr<SerdeSchema>> parsed_target,
     const std::string &subject, Mode rule_mode, const Rule &rule, size_t index,
     const std::vector<Rule> &rules,
     std::unordered_map<std::string, std::unordered_set<std::string>>
@@ -349,7 +348,6 @@ RuleContext::RuleContext(
     : ser_ctx_(ser_ctx),
       source_(source),
       target_(target),
-      parsed_target_(std::move(parsed_target)),
       subject_(subject),
       rule_mode_(rule_mode),
       rule_(rule),
@@ -500,12 +498,12 @@ std::optional<RegisteredSchema> Serde::getReaderSchema(
 std::unique_ptr<SerdeValue> Serde::executeRules(
     const SerializationContext &ser_ctx, const std::string &subject,
     Mode rule_mode, std::optional<Schema> source, std::optional<Schema> target,
-    const std::optional<SerdeSchema *> &parsed_target, const SerdeValue &msg,
+    const SerdeValue &msg,
     std::unordered_map<std::string, std::unordered_set<std::string>>
         inline_tags,
     std::shared_ptr<FieldTransformer> field_transformer) const {
     return executeRulesWithPhase(ser_ctx, subject, Phase::Domain, rule_mode,
-                                 source, target, parsed_target, msg,
+                                 source, target, msg,
                                  inline_tags, field_transformer);
 }
 
@@ -513,7 +511,7 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
     const SerializationContext &ser_ctx, const std::string &subject,
     Phase rule_phase, Mode rule_mode, std::optional<Schema> source,
     std::optional<Schema> target,
-    const std::optional<SerdeSchema *> &parsed_target, const SerdeValue &msg,
+    const SerdeValue &msg,
     std::unordered_map<std::string, std::unordered_set<std::string>>
         inline_tags,
     std::shared_ptr<FieldTransformer> field_transformer) const {
@@ -574,9 +572,6 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
         }
 
         RuleContext ctx(ser_ctx, source, target,
-                        parsed_target.has_value()
-                            ? std::make_optional(std::unique_ptr<SerdeSchema>())
-                            : std::nullopt,
                         subject, rule_mode, rule, index, rules, inline_tags,
                         field_transformer, rule_registry_);
 
@@ -727,7 +722,7 @@ std::unique_ptr<SerdeValue> Serde::executeMigrations(
 
         current_msg = executeRulesWithPhase(ser_ctx, subject, Phase::Migration,
                                             migration.rule_mode, source, target,
-                                            std::nullopt, *current_msg, {});
+                                            *current_msg, {});
     }
 
     return current_msg;

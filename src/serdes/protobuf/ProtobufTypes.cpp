@@ -248,40 +248,6 @@ const ProtobufVariant &ProtobufValue::getProtobufVariant() const {
 
 ProtobufVariant &ProtobufValue::getMutableProtobufVariant() { return value_; }
 
-// ProtobufSchema implementation
-
-ProtobufSchema::ProtobufSchema(const google::protobuf::FileDescriptor *schema)
-    : schema_(schema) {}
-
-const void *ProtobufSchema::getRawObject() const { return &schema_; }
-
-void *ProtobufSchema::getMutableRawObject() {
-    return const_cast<void *>(static_cast<const void *>(&schema_));
-}
-
-SerdeFormat ProtobufSchema::getFormat() const { return SerdeFormat::Protobuf; }
-
-const std::type_info &ProtobufSchema::getType() const {
-    return typeid(const google::protobuf::FileDescriptor *);
-}
-
-void ProtobufSchema::moveFrom(SerdeObject &&other) {
-    if (auto *protobuf_other = dynamic_cast<ProtobufSchema *>(&other)) {
-        schema_ = std::move(protobuf_other->schema_);
-    } else {
-        throw std::bad_cast();
-    }
-}
-
-std::unique_ptr<SerdeSchema> ProtobufSchema::clone() const {
-    return std::make_unique<ProtobufSchema>(schema_);
-}
-
-const google::protobuf::FileDescriptor *ProtobufSchema::getProtobufSchema()
-    const {
-    return schema_;
-}
-
 // Utility function implementation
 ProtobufVariant &asProtobuf(const SerdeValue &value) {
     if (value.getFormat() != SerdeFormat::Protobuf) {

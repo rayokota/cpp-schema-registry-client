@@ -149,43 +149,6 @@ class SerdeValue : public SerdeObject {
     virtual std::vector<uint8_t> asBytes() const = 0;
 };
 
-/**
- * Base interface for schema wrappers
- * Based on SerdeSchema from serde.rs
- */
-class SerdeSchema : public SerdeObject {
-  public:
-    virtual ~SerdeSchema() = default;
-
-    // Schema methods that delegate to Object methods from superclass
-    virtual const void *getRawSchema() const { return getRawObject(); }
-    virtual void *getMutableRawSchema() { return getMutableRawObject(); }
-
-    // Template methods that delegate to Object methods from superclass
-    template <typename T>
-    const T &getSchema() const {
-        return getObject<T>();
-    }
-
-    template <typename T>
-    T &getMutableSchema() {
-        return getMutableObject<T>();
-    }
-
-    template <typename T>
-    void setSchema(T &&schema) {
-        setObject<T>(std::forward<T>(schema));
-    }
-
-    template <typename T>
-    T moveSchema() {
-        return moveObject<T>();
-    }
-
-    // Clone method
-    virtual std::unique_ptr<SerdeSchema> clone() const = 0;
-};
-
 // Magic bytes for schema ID encoding (from serde.rs)
 constexpr uint8_t MAGIC_BYTE_V0 = 0;
 constexpr uint8_t MAGIC_BYTE_V1 = 1;
@@ -225,7 +188,6 @@ enum class FieldType {
 std::string fieldTypeToString(FieldType type);
 
 // Forward declarations for serdes classes
-class SerdeSchema;
 class SerdeHeaders;
 class SchemaId;
 class RuleContext;

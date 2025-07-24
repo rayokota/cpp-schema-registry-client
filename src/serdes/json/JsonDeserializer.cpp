@@ -137,12 +137,11 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
         return msg.clone();
     };
 
-    // Create SerdeValue and SerdeSchema instances
     auto json_value = makeJsonValue(value);
 
     // Execute rules on the serde value
     auto transformed_value = base_->getSerde().executeRules(
-        ctx, subject, Mode::Read, std::nullopt, reader_schema_raw, std::nullopt,
+        ctx, subject, Mode::Read, std::nullopt, reader_schema_raw,
         *json_value, {}, std::make_shared<FieldTransformer>(field_transformer));
 
     // Extract Json value from result

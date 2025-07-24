@@ -196,7 +196,6 @@ class RuleContext {
     SerializationContext ser_ctx_;
     std::optional<Schema> source_;
     std::optional<Schema> target_;
-    std::optional<std::unique_ptr<SerdeSchema>> parsed_target_;
     std::string subject_;
     Mode rule_mode_;
     Rule rule_;
@@ -211,7 +210,6 @@ class RuleContext {
   public:
     RuleContext(const SerializationContext &ser_ctx,
                 std::optional<Schema> source, std::optional<Schema> target,
-                std::optional<std::unique_ptr<SerdeSchema>> parsed_target,
                 const std::string &subject, Mode rule_mode, const Rule &rule,
                 size_t index, const std::vector<Rule> &rules,
                 std::unordered_map<std::string, std::unordered_set<std::string>>
@@ -225,9 +223,6 @@ class RuleContext {
     }
     const std::optional<Schema> &getSource() const { return source_; }
     const std::optional<Schema> &getTarget() const { return target_; }
-    const std::optional<std::unique_ptr<SerdeSchema>> &getParsedTarget() const {
-        return parsed_target_;
-    }
     const std::string &getSubject() const { return subject_; }
     Mode getRuleMode() const { return rule_mode_; }
     const Rule &getRule() const { return rule_; }
@@ -288,7 +283,6 @@ class Serde {
         const SerializationContext &ser_ctx, const std::string &subject,
         Mode rule_mode, std::optional<Schema> source,
         std::optional<Schema> target,
-        const std::optional<SerdeSchema *> &parsed_target,
         const SerdeValue &msg,
         std::unordered_map<std::string, std::unordered_set<std::string>>
             inline_tags,
@@ -298,7 +292,6 @@ class Serde {
         const SerializationContext &ser_ctx, const std::string &subject,
         Phase rule_phase, Mode rule_mode, std::optional<Schema> source,
         std::optional<Schema> target,
-        const std::optional<SerdeSchema *> &parsed_target,
         const SerdeValue &msg,
         std::unordered_map<std::string, std::unordered_set<std::string>>
             inline_tags,

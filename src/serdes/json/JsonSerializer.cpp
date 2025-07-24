@@ -155,13 +155,12 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
             return msg.clone();
         };
 
-        // Create SerdeValue and SerdeSchema instances
         auto json_value = makeJsonValue(mutable_value);
 
         // Execute rules on the serde value
         auto transformed_value = base_->getSerde().executeRules(
             ctx, subject, Mode::Write, std::nullopt, target_schema,
-            std::nullopt, *json_value, {},
+            *json_value, {},
             std::make_shared<FieldTransformer>(field_transformer));
 
         // Extract Json value from result
