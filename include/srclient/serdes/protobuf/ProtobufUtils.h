@@ -159,49 +159,4 @@ std::vector<srclient::rest::model::SchemaReference> buildDependencies(
     SerdeType serde_type);
 }  // namespace schema_resolution
 
-/**
- * Message descriptor navigation utilities
- */
-namespace descriptor_navigation {
-
-/**
- * Navigate to nested message descriptor using path
- */
-std::pair<std::string, const google::protobuf::DescriptorProto *>
-getMessageDescriptorProtoFile(const std::string &path,
-                              const google::protobuf::FileDescriptorProto *desc,
-                              const std::vector<int32_t> &msg_index);
-
-/**
- * Navigate nested message descriptors
- */
-std::pair<std::string, const google::protobuf::DescriptorProto *>
-getMessageDescriptorProtoNested(const std::string &path,
-                                const google::protobuf::DescriptorProto *desc,
-                                const std::vector<int32_t> &msg_index);
-}  // namespace descriptor_navigation
-
-/**
- * Stream utilities for protobuf serialization
- */
-namespace stream_utils {
-
-/**
- * Serialize message to byte vector
- */
-std::vector<uint8_t> serializeMessage(const google::protobuf::Message &message);
-
-/**
- * Parse message from byte vector
- */
-bool parseMessage(google::protobuf::Message &message,
-                  const std::vector<uint8_t> &data);
-
-/**
- * Parse message from byte array
- */
-bool parseMessage(google::protobuf::Message &message, const uint8_t *data,
-                  size_t size);
-}  // namespace stream_utils
-
 }  // namespace srclient::serdes::protobuf::utils
