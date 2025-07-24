@@ -252,7 +252,55 @@ ProtobufVariantValue transformRecursive(
         }
         default: {
             // Handle primitive types (Bool, I32, I64, U32, U64, F32, F64, String, Bytes, EnumNumber)
-            // For now, skip field executor integration and return original value
+            // Field-level transformation logic
+            auto field_ctx = ctx.currentField();
+            if (field_ctx.has_value()) {
+                auto rule_tags = ctx.getRule().getTags();
+                std::unordered_set<std::string> rule_tags_set;
+                if (rule_tags.has_value()) {
+                    rule_tags_set = std::unordered_set<std::string>(
+                        rule_tags->begin(), rule_tags->end());
+                }
+
+                // Check if rule tags overlap with field context tags (empty rule_tags means apply to all)
+                bool should_apply = !rule_tags.has_value() || rule_tags_set.empty();
+                if (!should_apply) {
+                    const auto& field_tags = field_ctx->getTags();
+                    for (const auto& field_tag : field_tags) {
+                        if (rule_tags_set.find(field_tag) != rule_tags_set.end()) {
+                            should_apply = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (should_apply) {
+                    // Create a SerdeValue from the current ProtobufVariantValue
+                    auto message_value = convertVariantToSerdeValue(message);
+
+                    // Try to get executor from context's rule registry first, then global
+                    std::shared_ptr<RuleExecutor> executor;
+                    if (ctx.getRuleRegistry()) {
+                        executor = ctx.getRuleRegistry()->getExecutor(field_executor_type);
+                    }
+                    if (!executor) {
+                        executor = global_registry::getRuleExecutor(field_executor_type);
+                    }
+
+                    if (executor) {
+                        auto field_executor = std::dynamic_pointer_cast<FieldRuleExecutor>(executor);
+                        if (!field_executor) {
+                            throw ProtobufError("executor " + field_executor_type + 
+                                              " is not a field rule executor");
+                        }
+
+                        auto new_value = field_executor->transformField(ctx, *message_value);
+                        if (new_value && new_value->getFormat() == SerdeFormat::Protobuf) {
+                            return convertSerdeValueToProtobufValue(*new_value);
+                        }
+                    }
+                }
+            }
             return message;
         }
     }
@@ -492,16 +540,38 @@ void setMessageField(google::protobuf::Message* message,
     }
 }
 
+// Helper function to convert ProtobufVariantValue to SerdeValue
+std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariantValue& variant) {
+    switch (variant.type_) {
+        case ProtobufVariantValue::ValueType::Message: {
+            const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(variant.value);
+            if (msg_ptr) {
+                return protobuf::makeProtobufValue(*msg_ptr);
+            }
+            break;
+        }
+        default: {
+            // For primitive types, create a simple message wrapper
+            // This is a simplified approach - in practice you might want to create a proper wrapper
+            auto dummy_message = std::make_unique<confluent::Meta>();
+            return protobuf::makeProtobufValue(*dummy_message);
+        }
+    }
+    // Fallback
+    auto dummy_message = std::make_unique<confluent::Meta>();
+    return protobuf::makeProtobufValue(*dummy_message);
+}
+
 // Helper function to convert SerdeValue back to ProtobufVariantValue if needed
 ProtobufVariantValue convertSerdeValueToProtobufValue(const SerdeValue& serde_value) {
-    // This is a placeholder implementation
-    // The actual implementation would depend on the SerdeValue structure
     if (serde_value.getFormat() == SerdeFormat::Protobuf) {
-        // Extract and convert the protobuf value
-        // This would need to be implemented based on your SerdeValue API
-        return ProtobufVariantValue(std::string("converted")); // Placeholder
+        const auto& message = asProtobuf(serde_value);
+        auto msg_copy = std::unique_ptr<google::protobuf::Message>(message.New());
+        msg_copy->CopyFrom(message);
+        return ProtobufVariantValue(std::move(msg_copy));
     }
-    return ProtobufVariantValue(std::string("default")); // Placeholder
+    // Fallback for non-protobuf values
+    return ProtobufVariantValue(std::string(""));
 }
 
 

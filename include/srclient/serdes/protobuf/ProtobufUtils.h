@@ -139,6 +139,11 @@ void setMessageField(google::protobuf::Message* message,
                      const ProtobufVariantValue& value);
 
 /**
+ * Convert ProtobufVariantValue to SerdeValue
+ */
+std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariantValue& variant);
+
+/**
  * Convert SerdeValue back to ProtobufVariantValue
  */
 ProtobufVariantValue convertSerdeValueToProtobufValue(const SerdeValue& serde_value);
