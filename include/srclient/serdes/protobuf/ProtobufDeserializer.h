@@ -252,9 +252,9 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
     }
 
     // Execute field-level rules
-    auto field_tf = [](RuleContext &rctx, const std::string &rule_type,
+    auto field_tf = [reader_desc](RuleContext &rctx, const std::string &rule_type,
                        const SerdeValue &val) {
-        return utils::transformFields(rctx, rule_type, val);
+        return utils::transformFields(rctx, rule_type, reader_desc, val);
     };
 
     auto protobuf_val = makeProtobufValue(*msg);

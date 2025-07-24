@@ -102,6 +102,7 @@ struct ProtobufVariantValue {
  */
 std::unique_ptr<SerdeValue> transformFields(
     RuleContext &ctx, const std::string &field_executor_type,
+    const google::protobuf::Descriptor *descriptor,
     const SerdeValue &value);
 
 /**

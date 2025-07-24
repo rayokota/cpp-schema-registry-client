@@ -165,18 +165,14 @@ ProtobufVariantValue& ProtobufVariantValue::operator=(const ProtobufVariantValue
 
 std::unique_ptr<SerdeValue> transformFields(
     RuleContext &ctx, const std::string &field_executor_type,
+    const google::protobuf::Descriptor *descriptor,
     const SerdeValue &value) {
     // Check if we have a protobuf schema and value
-    const auto &parsed_target = ctx.getParsedTarget();
-    if (parsed_target.has_value() && parsed_target->get() &&
-        parsed_target->get()->getFormat() == SerdeFormat::Protobuf) {
         if (value.getFormat() == SerdeFormat::Protobuf) {
             auto &message = asProtobuf(value);
             auto message_ptr =
                 const_cast<google::protobuf::Message *>(&message);
             if (message_ptr) {
-                const google::protobuf::Descriptor *descriptor =
-                    message_ptr->GetDescriptor();
                 if (!descriptor) {
                     throw ProtobufError("Message descriptor not found for " +
                                         message_ptr->GetTypeName());
@@ -200,7 +196,6 @@ std::unique_ptr<SerdeValue> transformFields(
                 return protobuf::makeProtobufValue(*message_ptr);
             }
         }
-    }
     return value.clone();
 }
 

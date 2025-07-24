@@ -299,9 +299,9 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
         auto [fd, pool] =
             serde_->getParsedSchema(schema, base_->getSerde().getClient());
 
-        auto field_tf = [](RuleContext &rctx, const std::string &rule_type,
+        auto field_tf = [descriptor](RuleContext &rctx, const std::string &rule_type,
                            const SerdeValue &val) {
-            return utils::transformFields(rctx, rule_type, val);
+            return utils::transformFields(rctx, rule_type, descriptor, val);
         };
 
         google::protobuf::DynamicMessageFactory msg_factory;

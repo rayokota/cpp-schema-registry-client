@@ -607,6 +607,7 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
 
             Kind kind = rule.getKind().value_or(Kind::Transform);
             if (kind == Kind::Condition) {
+                // TODO
                 // For condition rules, check if result is true
                 // Implementation depends on SerdeValue interface
                 // if (!result->asBool()) {
