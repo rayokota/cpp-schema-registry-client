@@ -412,10 +412,17 @@ void setMessageField(google::protobuf::Message* message,
 
 // Helper function to convert ProtobufVariant to SerdeValue
 std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariant& variant) {
+    return protobuf::makeProtobufValue(variant);
 }
 
 // Helper function to convert SerdeValue back to ProtobufVariant if needed
 ProtobufVariant convertSerdeValueToProtobufValue(const SerdeValue& serde_value) {
+    if (serde_value.getFormat() != SerdeFormat::Protobuf) {
+        throw ProtobufError("SerdeValue is not a Protobuf value, cannot convert to ProtobufVariant");
+    }
+    
+    // Use the existing utility function to extract ProtobufVariant from SerdeValue
+    return protobuf::asProtobuf(serde_value);
 }
 
 
