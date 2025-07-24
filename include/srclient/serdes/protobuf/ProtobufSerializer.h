@@ -325,8 +325,9 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
                 "Unexpected serde value type after rule execution");
         }
 
-        auto &transformed_msg =
-            serde_value->template getMutableValue<google::protobuf::Message>();
+        // Convert the serde_value to a Protobuf message
+        auto &proto_variant = asProtobuf(*serde_value);
+        auto &transformed_msg = *proto_variant.template get<std::unique_ptr<google::protobuf::Message>>();
         encoded_bytes.resize(
             static_cast<size_t>(transformed_msg.ByteSizeLong()));
         if (!transformed_msg.SerializeToArray(
