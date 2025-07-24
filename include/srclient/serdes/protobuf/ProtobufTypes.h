@@ -119,101 +119,24 @@ class ProtobufValue : public SerdeValue {
     ProtobufVariant value_;
 
   public:
-    explicit ProtobufValue(ProtobufVariant value)
-        : value_(std::move(value)) {}
+    explicit ProtobufValue(ProtobufVariant value);
 
     // SerdeValue interface implementation
-    const void *getRawObject() const override {
-        if (value_.type_ == ProtobufVariant::ValueType::Message) {
-            return value_.get<std::unique_ptr<google::protobuf::Message>>().get();
-        }
-        return &value_;
-    }
-    
-    void *getMutableRawObject() override {
-        if (value_.type_ == ProtobufVariant::ValueType::Message) {
-            return value_.get<std::unique_ptr<google::protobuf::Message>>().get();
-        }
-        return &value_;
-    }
-    
-    SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
-    
-    const std::type_info &getType() const override {
-        if (value_.type_ == ProtobufVariant::ValueType::Message) {
-            auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
-            if (msg_ptr) {
-                return typeid(*msg_ptr);
-            }
-        }
-        return typeid(ProtobufVariant);
-    }
-
-    std::unique_ptr<SerdeValue> clone() const override {
-        return std::make_unique<ProtobufValue>(value_);
-    }
-
-    void moveFrom(SerdeObject &&other) override {
-        if (other.getFormat() == SerdeFormat::Protobuf) {
-            if (auto *protobuf_value = dynamic_cast<ProtobufValue *>(&other)) {
-                value_ = std::move(protobuf_value->value_);
-            }
-        }
-    }
+    const void *getRawObject() const override;
+    void *getMutableRawObject() override;
+    SerdeFormat getFormat() const override;
+    const std::type_info &getType() const override;
+    std::unique_ptr<SerdeValue> clone() const override;
+    void moveFrom(SerdeObject &&other) override;
 
     // Value extraction methods
-    bool asBool() const override {
-        if (value_.type_ == ProtobufVariant::ValueType::Bool) {
-            return value_.get<bool>();
-        }
-        throw ProtobufError("Protobuf SerdeValue cannot be converted to bool");
-    }
-
-    std::string asString() const override {
-        switch (value_.type_) {
-            case ProtobufVariant::ValueType::String:
-                return value_.get<std::string>();
-            case ProtobufVariant::ValueType::Message: {
-                auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
-                if (msg_ptr) {
-                    std::string output;
-                    google::protobuf::util::MessageToJsonString(*msg_ptr, &output)
-                        .IgnoreError();
-                    return output;
-                }
-                break;
-            }
-            default:
-                break;
-        }
-        throw ProtobufError("Protobuf SerdeValue cannot be converted to string");
-    }
-
-    std::vector<uint8_t> asBytes() const override {
-        switch (value_.type_) {
-            case ProtobufVariant::ValueType::Bytes:
-                return value_.get<std::vector<uint8_t>>();
-            case ProtobufVariant::ValueType::Message: {
-                auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
-                if (msg_ptr) {
-                    std::string binary;
-                    if (!msg_ptr->SerializeToString(&binary)) {
-                        throw ProtobufError(
-                            "Failed to serialize Protobuf message to bytes");
-                    }
-                    return std::vector<uint8_t>(binary.begin(), binary.end());
-                }
-                break;
-            }
-            default:
-                break;
-        }
-        throw ProtobufError("Protobuf SerdeValue cannot be converted to bytes");
-    }
+    bool asBool() const override;
+    std::string asString() const override;
+    std::vector<uint8_t> asBytes() const override;
 
     // Direct access to ProtobufVariant
-    const ProtobufVariant& getProtobufVariant() const { return value_; }
-    ProtobufVariant& getMutableProtobufVariant() { return value_; }
+    const ProtobufVariant& getProtobufVariant() const;
+    ProtobufVariant& getMutableProtobufVariant();
 };
 
 /**
@@ -224,35 +147,18 @@ class ProtobufSchema : public SerdeSchema {
     const google::protobuf::FileDescriptor *schema_;
 
   public:
-    explicit ProtobufSchema(const google::protobuf::FileDescriptor *schema)
-        : schema_(schema) {}
+    explicit ProtobufSchema(const google::protobuf::FileDescriptor *schema);
 
     // SerdeObject interface methods
-    const void *getRawObject() const override { return &schema_; }
-    void *getMutableRawObject() override {
-        return const_cast<void *>(static_cast<const void *>(&schema_));
-    }
-    SerdeFormat getFormat() const override { return SerdeFormat::Protobuf; }
-    const std::type_info &getType() const override {
-        return typeid(const google::protobuf::FileDescriptor *);
-    }
-
-    void moveFrom(SerdeObject &&other) override {
-        if (auto *protobuf_other = dynamic_cast<ProtobufSchema *>(&other)) {
-            schema_ = std::move(protobuf_other->schema_);
-        } else {
-            throw std::bad_cast();
-        }
-    }
-
-    std::unique_ptr<SerdeSchema> clone() const override {
-        return std::make_unique<ProtobufSchema>(schema_);
-    }
+    const void *getRawObject() const override;
+    void *getMutableRawObject() override;
+    SerdeFormat getFormat() const override;
+    const std::type_info &getType() const override;
+    void moveFrom(SerdeObject &&other) override;
+    std::unique_ptr<SerdeSchema> clone() const override;
 
     // Direct access to Protobuf schema
-    const google::protobuf::FileDescriptor *getProtobufSchema() const {
-        return schema_;
-    }
+    const google::protobuf::FileDescriptor *getProtobufSchema() const;
 };
 
 // Helper functions for creating Protobuf SerdeValue instances

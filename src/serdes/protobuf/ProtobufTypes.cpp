@@ -134,6 +134,143 @@ ProtobufVariant& ProtobufVariant::operator=(const ProtobufVariant& other) {
     return *this;
 }
 
+// ProtobufValue implementation
+
+ProtobufValue::ProtobufValue(ProtobufVariant value) : value_(std::move(value)) {}
+
+const void *ProtobufValue::getRawObject() const {
+    if (value_.type_ == ProtobufVariant::ValueType::Message) {
+        return value_.get<std::unique_ptr<google::protobuf::Message>>().get();
+    }
+    return &value_;
+}
+
+void *ProtobufValue::getMutableRawObject() {
+    if (value_.type_ == ProtobufVariant::ValueType::Message) {
+        return value_.get<std::unique_ptr<google::protobuf::Message>>().get();
+    }
+    return &value_;
+}
+
+SerdeFormat ProtobufValue::getFormat() const {
+    return SerdeFormat::Protobuf;
+}
+
+const std::type_info &ProtobufValue::getType() const {
+    if (value_.type_ == ProtobufVariant::ValueType::Message) {
+        auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
+        if (msg_ptr) {
+            return typeid(*msg_ptr);
+        }
+    }
+    return typeid(ProtobufVariant);
+}
+
+std::unique_ptr<SerdeValue> ProtobufValue::clone() const {
+    return std::make_unique<ProtobufValue>(value_);
+}
+
+void ProtobufValue::moveFrom(SerdeObject &&other) {
+    if (other.getFormat() == SerdeFormat::Protobuf) {
+        if (auto *protobuf_value = dynamic_cast<ProtobufValue *>(&other)) {
+            value_ = std::move(protobuf_value->value_);
+        }
+    }
+}
+
+bool ProtobufValue::asBool() const {
+    if (value_.type_ == ProtobufVariant::ValueType::Bool) {
+        return value_.get<bool>();
+    }
+    throw ProtobufError("Protobuf SerdeValue cannot be converted to bool");
+}
+
+std::string ProtobufValue::asString() const {
+    switch (value_.type_) {
+        case ProtobufVariant::ValueType::String:
+            return value_.get<std::string>();
+        case ProtobufVariant::ValueType::Message: {
+            auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
+            if (msg_ptr) {
+                std::string output;
+                google::protobuf::util::MessageToJsonString(*msg_ptr, &output)
+                    .IgnoreError();
+                return output;
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    throw ProtobufError("Protobuf SerdeValue cannot be converted to string");
+}
+
+std::vector<uint8_t> ProtobufValue::asBytes() const {
+    switch (value_.type_) {
+        case ProtobufVariant::ValueType::Bytes:
+            return value_.get<std::vector<uint8_t>>();
+        case ProtobufVariant::ValueType::Message: {
+            auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
+            if (msg_ptr) {
+                std::string binary;
+                if (!msg_ptr->SerializeToString(&binary)) {
+                    throw ProtobufError(
+                        "Failed to serialize Protobuf message to bytes");
+                }
+                return std::vector<uint8_t>(binary.begin(), binary.end());
+            }
+            break;
+        }
+        default:
+            break;
+    }
+    throw ProtobufError("Protobuf SerdeValue cannot be converted to bytes");
+}
+
+const ProtobufVariant& ProtobufValue::getProtobufVariant() const {
+    return value_;
+}
+
+ProtobufVariant& ProtobufValue::getMutableProtobufVariant() {
+    return value_;
+}
+
+// ProtobufSchema implementation
+
+ProtobufSchema::ProtobufSchema(const google::protobuf::FileDescriptor *schema) : schema_(schema) {}
+
+const void *ProtobufSchema::getRawObject() const {
+    return &schema_;
+}
+
+void *ProtobufSchema::getMutableRawObject() {
+    return const_cast<void *>(static_cast<const void *>(&schema_));
+}
+
+SerdeFormat ProtobufSchema::getFormat() const {
+    return SerdeFormat::Protobuf;
+}
+
+const std::type_info &ProtobufSchema::getType() const {
+    return typeid(const google::protobuf::FileDescriptor *);
+}
+
+void ProtobufSchema::moveFrom(SerdeObject &&other) {
+    if (auto *protobuf_other = dynamic_cast<ProtobufSchema *>(&other)) {
+        schema_ = std::move(protobuf_other->schema_);
+    } else {
+        throw std::bad_cast();
+    }
+}
+
+std::unique_ptr<SerdeSchema> ProtobufSchema::clone() const {
+    return std::make_unique<ProtobufSchema>(schema_);
+}
+
+const google::protobuf::FileDescriptor *ProtobufSchema::getProtobufSchema() const {
+    return schema_;
+}
+
 // Utility function implementation
 google::protobuf::Message &asProtobuf(const SerdeValue &value) {
     if (value.getFormat() != SerdeFormat::Protobuf) {
