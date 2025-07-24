@@ -159,7 +159,7 @@ ProtobufVariant transformRecursive(
 
                 if (should_apply) {
                     // Create a SerdeValue from the current ProtobufVariant
-                    auto message_value = convertVariantToSerdeValue(message);
+                    auto message_value = makeProtobufValue(message);
 
                     // Get field executor type from the rule
                     auto field_executor_type =
@@ -191,7 +191,7 @@ ProtobufVariant transformRecursive(
                             field_executor->transformField(ctx, *message_value);
                         if (new_value &&
                             new_value->getFormat() == SerdeFormat::Protobuf) {
-                            return convertSerdeValueToProtobufValue(*new_value);
+                            return asProtobuf(*new_value);
                         }
                     }
                 }
@@ -687,26 +687,6 @@ void setMessageField(google::protobuf::Message* message,
             break;
         }
     }
-}
-
-// Helper function to convert ProtobufVariant to SerdeValue
-std::unique_ptr<SerdeValue> convertVariantToSerdeValue(
-    const ProtobufVariant& variant) {
-    return protobuf::makeProtobufValue(variant);
-}
-
-// Helper function to convert SerdeValue back to ProtobufVariant if needed
-ProtobufVariant convertSerdeValueToProtobufValue(
-    const SerdeValue& serde_value) {
-    if (serde_value.getFormat() != SerdeFormat::Protobuf) {
-        throw ProtobufError(
-            "SerdeValue is not a Protobuf value, cannot convert to "
-            "ProtobufVariant");
-    }
-
-    // Use the existing utility function to extract ProtobufVariant from
-    // SerdeValue
-    return protobuf::asProtobuf(serde_value);
 }
 
 std::unordered_set<std::string> getInlineTags(

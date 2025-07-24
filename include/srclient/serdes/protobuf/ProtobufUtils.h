@@ -69,17 +69,6 @@ void setMessageField(google::protobuf::Message *message,
                      const ProtobufVariant &value);
 
 /**
- * Convert ProtobufVariant to SerdeValue
- */
-std::unique_ptr<SerdeValue> convertVariantToSerdeValue(
-    const ProtobufVariant &variant);
-
-/**
- * Convert SerdeValue back to ProtobufVariant
- */
-ProtobufVariant convertSerdeValueToProtobufValue(const SerdeValue &serde_value);
-
-/**
  * Convert a FileDescriptor to base64-encoded string
  */
 std::string schemaToString(const google::protobuf::FileDescriptor *file_desc);
