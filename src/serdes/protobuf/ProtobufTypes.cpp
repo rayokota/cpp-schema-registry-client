@@ -272,15 +272,13 @@ const google::protobuf::FileDescriptor *ProtobufSchema::getProtobufSchema() cons
 }
 
 // Utility function implementation
-google::protobuf::Message &asProtobuf(const SerdeValue &value) {
+ProtobufVariant &asProtobuf(const SerdeValue &value) {
     if (value.getFormat() != SerdeFormat::Protobuf) {
         throw std::invalid_argument("SerdeValue is not Protobuf");
     }
-    // Directly access the raw value to avoid slicing that occurs with
-    // getValue<google::protobuf::Message>() The stored value is actually a
-    // concrete protobuf message type, not the base class
-    return *static_cast<google::protobuf::Message *>(
-        const_cast<void *>(value.getRawObject()));
+    // Cast to ProtobufValue and return its internal ProtobufVariant
+    auto& protobuf_value = static_cast<const ProtobufValue&>(value);
+    return const_cast<ProtobufVariant&>(protobuf_value.getProtobufVariant());
 }
 
 }  // namespace srclient::serdes::protobuf

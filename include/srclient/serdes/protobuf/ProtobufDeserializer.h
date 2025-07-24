@@ -257,7 +257,9 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
         return utils::transformFields(rctx, rule_type, reader_desc, val);
     };
 
-    auto protobuf_val = makeProtobufValue(*msg);
+    auto msg_copy = std::unique_ptr<google::protobuf::Message>(msg->New());
+    msg_copy->CopyFrom(*msg);
+    auto protobuf_val = makeProtobufValue(ProtobufVariant(std::move(msg_copy)));
     auto protobuf_schema = std::make_shared<ProtobufSchema>(reader_schema_fd);
 
     auto result_val = base_->getSerde().executeRules(
@@ -271,7 +273,11 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
     }
 
     // Copy final message into a newly created T instance
-    google::protobuf::Message &final_msg = asProtobuf(*result_val);
+    auto &proto_variant = asProtobuf(*result_val);
+    if (proto_variant.type_ != ProtobufVariant::ValueType::Message) {
+        throw ProtobufError("Expected message variant but got different type");
+    }
+    google::protobuf::Message &final_msg = *proto_variant.template get<std::unique_ptr<google::protobuf::Message>>();
     auto out_msg = std::make_unique<T>();
 
     // Don't use CopyFrom, as the descriptors are from different pools

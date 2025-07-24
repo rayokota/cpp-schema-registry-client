@@ -13,6 +13,7 @@
 #include "nlohmann/json.hpp"
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeError.h"
+#include "srclient/serdes/protobuf/ProtobufTypes.h"
 
 namespace srclient::rules::cel {
 
@@ -78,8 +79,8 @@ class CelExecutor : public RuleExecutor {
     ::avro::GenericDatum toAvroValue(
         const ::avro::GenericDatum &original,
         const google::api::expr::runtime::CelValue &cel_value);
-    std::unique_ptr<google::protobuf::Message> toProtobufValue(
-        const google::protobuf::Message &original,
+    srclient::serdes::protobuf::ProtobufVariant toProtobufValue(
+        const srclient::serdes::protobuf::ProtobufVariant &original,
         const google::api::expr::runtime::CelValue &cel_value);
 
     // Helper methods for protobuf conversion

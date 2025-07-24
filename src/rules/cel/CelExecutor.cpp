@@ -220,7 +220,11 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(
             return fromAvroValue(avro_value, arena);
         }
         case SerdeFormat::Protobuf: {
-            auto &proto_message = srclient::serdes::protobuf::asProtobuf(value);
+            auto &proto_variant = srclient::serdes::protobuf::asProtobuf(value);
+            if (proto_variant.type_ != srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
+                return google::api::expr::runtime::CelValue::CreateNull();
+            }
+            auto &proto_message = *proto_variant.template get<std::unique_ptr<google::protobuf::Message>>();
             return fromProtobufValue(proto_message, arena);
         }
         default:
@@ -243,11 +247,13 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
             return srclient::serdes::avro::makeAvroValue(converted_avro);
         }
         case SerdeFormat::Protobuf: {
-            auto &proto_message =
+            auto &proto_variant =
                 srclient::serdes::protobuf::asProtobuf(original);
-            auto converted_proto = toProtobufValue(proto_message, cel_value);
-            return srclient::serdes::protobuf::makeProtobufValue(
-                std::move(converted_proto));
+            if (proto_variant.type_ != srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
+                return nullptr;
+            }
+            auto converted_proto_variant = toProtobufValue(proto_variant, cel_value);
+            return srclient::serdes::protobuf::makeProtobufValue(std::move(converted_proto_variant));
         }
         default:
             // For unknown formats, return a copy of the original
@@ -594,18 +600,26 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(
     return original;
 }
 
-std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
-    const google::protobuf::Message &original,
+srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
+    const srclient::serdes::protobuf::ProtobufVariant &original,
     const google::api::expr::runtime::CelValue &cel_value) {
+    // If the original is not a message variant, return it as-is
+    if (original.type_ != srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
+        return original;
+    }
+    
+    // Extract the message from the variant
+    const auto &original_message = *original.template get<std::unique_ptr<google::protobuf::Message>>();
+    
     // Create a copy of the original message
-    std::unique_ptr<google::protobuf::Message> result(original.New());
-    result->CopyFrom(original);
+    std::unique_ptr<google::protobuf::Message> result(original_message.New());
+    result->CopyFrom(original_message);
 
     const auto *descriptor = result->GetDescriptor();
     const auto *reflection = result->GetReflection();
 
     if (!descriptor || !reflection) {
-        return result;
+        return srclient::serdes::protobuf::ProtobufVariant(std::move(result));
     }
 
     // Handle different CEL value types
@@ -905,11 +919,17 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
                     case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
                         // For nested messages, recursively convert
                         if (field_value.IsMap()) {
-                            const auto &nested_original =
-                                reflection->GetMessage(original, field);
-                            auto nested_result =
-                                toProtobufValue(nested_original, field_value);
-                            if (nested_result) {
+                            const auto &nested_original_message =
+                                reflection->GetMessage(original_message, field);
+                            // Create a ProtobufVariant for the nested message
+                            auto nested_original_msg_copy = std::unique_ptr<google::protobuf::Message>(nested_original_message.New());
+                            nested_original_msg_copy->CopyFrom(nested_original_message);
+                            srclient::serdes::protobuf::ProtobufVariant nested_original_variant(std::move(nested_original_msg_copy));
+                            
+                            auto nested_result_variant =
+                                toProtobufValue(nested_original_variant, field_value);
+                            if (nested_result_variant.type_ == srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
+                                auto nested_result = std::move(nested_result_variant.template get<std::unique_ptr<google::protobuf::Message>>());
                                 reflection->SetAllocatedMessage(
                                     result.get(), nested_result.release(),
                                     field);
@@ -923,7 +943,7 @@ std::unique_ptr<google::protobuf::Message> CelExecutor::toProtobufValue(
         }
     }
 
-    return result;
+    return srclient::serdes::protobuf::ProtobufVariant(std::move(result));
 }
 
 google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(

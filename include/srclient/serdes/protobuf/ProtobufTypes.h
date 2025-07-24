@@ -166,28 +166,6 @@ inline std::unique_ptr<SerdeValue> makeProtobufValue(ProtobufVariant value) {
     return std::make_unique<ProtobufValue>(std::move(value));
 }
 
-// Overload for convenience – takes a reference and makes a copy
-inline std::unique_ptr<SerdeValue> makeProtobufValue(const ProtobufVariant &value) {
-    return std::make_unique<ProtobufValue>(value);
-}
-
-// Convenience overloads for protobuf messages
-template <typename T>
-inline std::unique_ptr<SerdeValue> makeProtobufValue(std::unique_ptr<T> value) {
-    static_assert(std::is_base_of_v<google::protobuf::Message, T>,
-                  "T must derive from google::protobuf::Message");
-    return std::make_unique<ProtobufValue>(ProtobufVariant(std::move(value)));
-}
-
-template <typename T>
-inline std::unique_ptr<SerdeValue> makeProtobufValue(const T &value) {
-    static_assert(std::is_base_of_v<google::protobuf::Message, T>,
-                  "T must derive from google::protobuf::Message");
-    std::unique_ptr<T> owned_value(static_cast<T *>(value.New()));
-    owned_value->CopyFrom(value);
-    return std::make_unique<ProtobufValue>(ProtobufVariant(std::move(owned_value)));
-}
-
 // Helper function for creating Protobuf SerdeSchema instances
 inline std::unique_ptr<SerdeSchema> makeProtobufSchema(
     const google::protobuf::FileDescriptor *file_descriptor) {
@@ -195,7 +173,7 @@ inline std::unique_ptr<SerdeSchema> makeProtobufSchema(
 }
 
 // Utility functions for Protobuf value and schema extraction
-google::protobuf::Message &asProtobuf(const SerdeValue &value);
+ProtobufVariant &asProtobuf(const SerdeValue &value);
 
 inline const google::protobuf::FileDescriptor *asProtobufSchema(
     const SerdeSchema &schema) {

@@ -39,7 +39,11 @@ std::unique_ptr<SerdeValue> transformFields(
     const SerdeValue &value) {
     // Check if we have a protobuf schema and value
         if (value.getFormat() == SerdeFormat::Protobuf) {
-            auto &message = asProtobuf(value);
+            auto &proto_variant = asProtobuf(value);
+            if (proto_variant.type_ != srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
+                throw ProtobufError("Expected message variant but got different type");
+            }
+            auto &message = *proto_variant.template get<std::unique_ptr<google::protobuf::Message>>();
             auto message_ptr =
                 const_cast<google::protobuf::Message *>(&message);
             if (message_ptr) {
@@ -58,12 +62,13 @@ std::unique_ptr<SerdeValue> transformFields(
                 // Extract the transformed message and create SerdeValue
                 if (transformed_message.type_ == ProtobufVariant::ValueType::Message &&
                     transformed_message.is<std::unique_ptr<google::protobuf::Message>>()) {
-                    auto& msg_ptr = transformed_message.get<std::unique_ptr<google::protobuf::Message>>();
-                    return protobuf::makeProtobufValue(*msg_ptr);
+                    return protobuf::makeProtobufValue(transformed_message);
                 }
 
                 // Fallback: return original message
-                return protobuf::makeProtobufValue(*message_ptr);
+                auto fallback_msg = std::unique_ptr<google::protobuf::Message>(message_ptr->New());
+                fallback_msg->CopyFrom(*message_ptr);
+                return protobuf::makeProtobufValue(ProtobufVariant(std::move(fallback_msg)));
             }
         }
     return value.clone();
@@ -181,7 +186,7 @@ std::optional<ProtobufVariant> transformFieldWithContext(
     // Create a simple SerdeValue for the field context (simplified implementation)
     auto temp_message = std::unique_ptr<google::protobuf::Message>(message->New());
     temp_message->CopyFrom(*message);
-    auto temp_serde_value = protobuf::makeProtobufValue(*temp_message);
+    auto temp_serde_value = protobuf::makeProtobufValue(ProtobufVariant(std::move(temp_message)));
     
     ctx.enterField(
         *temp_serde_value,
@@ -407,36 +412,10 @@ void setMessageField(google::protobuf::Message* message,
 
 // Helper function to convert ProtobufVariant to SerdeValue
 std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariant& variant) {
-    switch (variant.type_) {
-        case ProtobufVariant::ValueType::Message: {
-            const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(variant.value);
-            if (msg_ptr) {
-                return protobuf::makeProtobufValue(*msg_ptr);
-            }
-            break;
-        }
-        default: {
-            // For primitive types, create a simple message wrapper
-            // This is a simplified approach - in practice you might want to create a proper wrapper
-            auto dummy_message = std::make_unique<confluent::Meta>();
-            return protobuf::makeProtobufValue(*dummy_message);
-        }
-    }
-    // Fallback
-    auto dummy_message = std::make_unique<confluent::Meta>();
-    return protobuf::makeProtobufValue(*dummy_message);
 }
 
 // Helper function to convert SerdeValue back to ProtobufVariant if needed
 ProtobufVariant convertSerdeValueToProtobufValue(const SerdeValue& serde_value) {
-    if (serde_value.getFormat() == SerdeFormat::Protobuf) {
-        const auto& message = asProtobuf(serde_value);
-        auto msg_copy = std::unique_ptr<google::protobuf::Message>(message.New());
-        msg_copy->CopyFrom(message);
-        return ProtobufVariant(std::move(msg_copy));
-    }
-    // Fallback for non-protobuf values
-    return ProtobufVariant(std::string(""));
 }
 
 

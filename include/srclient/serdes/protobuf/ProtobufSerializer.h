@@ -310,7 +310,9 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
             std::unique_ptr<google::protobuf::Message>(dynamic_proto->New());
         dynamic_msg->CopyFrom(message);
 
-        auto protobuf_value = protobuf::makeProtobufValue(*dynamic_msg);
+        auto dynamic_msg_copy = std::unique_ptr<google::protobuf::Message>(dynamic_msg->New());
+        dynamic_msg_copy->CopyFrom(*dynamic_msg);
+        auto protobuf_value = protobuf::makeProtobufValue(ProtobufVariant(std::move(dynamic_msg_copy)));
         auto protobuf_schema = protobuf::makeProtobufSchema(fd);
 
         auto serde_value = base_->getSerde().executeRules(
