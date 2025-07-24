@@ -204,8 +204,6 @@ std::optional<ProtobufVariant> transformFieldWithContext(
     const google::protobuf::Descriptor* desc,
     const google::protobuf::Message* message,
     const std::string& field_executor_type) {
-    // Create a simple SerdeValue for the field context (simplified
-    // implementation)
     auto temp_message =
         std::unique_ptr<google::protobuf::Message>(message->New());
     temp_message->CopyFrom(*message);
@@ -222,20 +220,29 @@ std::optional<ProtobufVariant> transformFieldWithContext(
         return std::nullopt;
     }
 
-    ProtobufVariant value = getMessageFieldValue(message, fd);
-    ProtobufVariant new_value =
-        transformRecursive(ctx, desc, value, field_executor_type);
+    try {
+        ProtobufVariant value = getMessageFieldValue(message, fd);
+        ProtobufVariant new_value =
+            transformRecursive(ctx, desc, value, field_executor_type);
 
-    // Check if this is a condition rule - simplified check
-    if (new_value.type_ == ProtobufVariant::ValueType::Bool &&
-        new_value.is<bool>() && !new_value.get<bool>()) {
+        // Check for condition rules
+        auto rule_kind = ctx.getRule().getKind();
+        if (rule_kind.has_value() && rule_kind.value() == Kind::Condition) {
+            if (new_value.type_ == ProtobufVariant::ValueType::Bool) {
+                bool condition_result = new_value.get<bool>();
+                if (!condition_result) {
+                    throw ProtobufError("Rule condition failed for field: " +
+                                        fd->name());
+                }
+            }
+        }
+
         ctx.exitField();
-        // Simplified error for now - would need proper SerdeError construction
-        throw std::runtime_error("Rule condition failed");
+        return new_value;
+    } catch (const std::exception &e) {
+        ctx.exitField();
+        throw;
     }
-
-    ctx.exitField();
-    return new_value;
 }
 
 // Helper function to extract field value from protobuf message

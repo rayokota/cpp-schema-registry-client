@@ -244,7 +244,6 @@ nlohmann::json transformFieldWithContext(
             if (new_value.is_boolean()) {
                 bool condition_result = new_value.get<bool>();
                 if (!condition_result) {
-                    ctx.exitField();
                     throw JsonError("Rule condition failed for field: " +
                                     field_name);
                 }

@@ -186,7 +186,6 @@ namespace utils {
             if (new_value.type() == ::avro::AVRO_BOOL) {
                 bool condition_result = new_value.value<bool>();
                 if (!condition_result) {
-                    ctx.exitField();
                     throw AvroError("Rule condition failed for field: " +
                                     field_name);
                 }
