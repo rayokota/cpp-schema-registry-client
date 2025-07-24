@@ -275,7 +275,7 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
 
     // Copy final message into a newly created T instance
     auto &proto_variant = asProtobuf(*result_val);
-    if (proto_variant.type_ != ProtobufVariant::ValueType::Message) {
+            if (proto_variant.type != ProtobufVariant::ValueType::Message) {
         throw ProtobufError("Expected message variant but got different type");
     }
     google::protobuf::Message &final_msg =

@@ -37,7 +37,7 @@ std::unique_ptr<SerdeValue> transformFields(
     // Check if we have a protobuf schema and value
     if (value.getFormat() == SerdeFormat::Protobuf) {
         auto& proto_variant = asProtobuf(value);
-        if (proto_variant.type_ !=
+        if (proto_variant.type !=
             srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
             throw ProtobufError(
                 "Expected message variant but got different type");
@@ -61,7 +61,7 @@ std::unique_ptr<SerdeValue> transformFields(
                 ctx, descriptor, message_variant, field_executor_type);
 
             // Extract the transformed message and create SerdeValue
-            if (transformed_message.type_ ==
+            if (transformed_message.type ==
                     ProtobufVariant::ValueType::Message &&
                 transformed_message
                     .is<std::unique_ptr<google::protobuf::Message>>()) {
@@ -82,7 +82,7 @@ std::unique_ptr<SerdeValue> transformFields(
 ProtobufVariant transformRecursive(
     RuleContext& ctx, const google::protobuf::Descriptor* descriptor,
     const ProtobufVariant& message, const std::string& field_executor_type) {
-    switch (message.type_) {
+    switch (message.type) {
         case ProtobufVariant::ValueType::List: {
             // Handle List
             const auto& list =
@@ -228,7 +228,7 @@ std::optional<ProtobufVariant> transformFieldWithContext(
         // Check for condition rules
         auto rule_kind = ctx.getRule().getKind();
         if (rule_kind.has_value() && rule_kind.value() == Kind::Condition) {
-            if (new_value.type_ == ProtobufVariant::ValueType::Bool) {
+            if (new_value.type == ProtobufVariant::ValueType::Bool) {
                 bool condition_result = new_value.get<bool>();
                 if (!condition_result) {
                     throw ProtobufError("Rule condition failed for field: " +
@@ -392,7 +392,7 @@ void setMessageField(google::protobuf::Message* message,
                      const ProtobufVariant& value) {
     const google::protobuf::Reflection* reflection = message->GetReflection();
 
-    switch (value.type_) {
+    switch (value.type) {
         case ProtobufVariant::ValueType::Bool: {
             const auto& v = std::get<bool>(value.value);
             reflection->SetBool(message, fd, v);
@@ -466,7 +466,7 @@ void setMessageField(google::protobuf::Message* message,
             for (const auto& item : list) {
                 switch (fd->type()) {
                     case google::protobuf::FieldDescriptor::TYPE_BOOL:
-                        if (item.type_ == ProtobufVariant::ValueType::Bool) {
+                        if (item.type == ProtobufVariant::ValueType::Bool) {
                             reflection->AddBool(message, fd,
                                                 std::get<bool>(item.value));
                         }
@@ -474,7 +474,7 @@ void setMessageField(google::protobuf::Message* message,
                     case google::protobuf::FieldDescriptor::TYPE_INT32:
                     case google::protobuf::FieldDescriptor::TYPE_SINT32:
                     case google::protobuf::FieldDescriptor::TYPE_SFIXED32:
-                        if (item.type_ == ProtobufVariant::ValueType::I32) {
+                        if (item.type == ProtobufVariant::ValueType::I32) {
                             reflection->AddInt32(message, fd,
                                                  std::get<int32_t>(item.value));
                         }
@@ -482,45 +482,45 @@ void setMessageField(google::protobuf::Message* message,
                     case google::protobuf::FieldDescriptor::TYPE_INT64:
                     case google::protobuf::FieldDescriptor::TYPE_SINT64:
                     case google::protobuf::FieldDescriptor::TYPE_SFIXED64:
-                        if (item.type_ == ProtobufVariant::ValueType::I64) {
+                        if (item.type == ProtobufVariant::ValueType::I64) {
                             reflection->AddInt64(message, fd,
                                                  std::get<int64_t>(item.value));
                         }
                         break;
                     case google::protobuf::FieldDescriptor::TYPE_UINT32:
                     case google::protobuf::FieldDescriptor::TYPE_FIXED32:
-                        if (item.type_ == ProtobufVariant::ValueType::U32) {
+                        if (item.type == ProtobufVariant::ValueType::U32) {
                             reflection->AddUInt32(
                                 message, fd, std::get<uint32_t>(item.value));
                         }
                         break;
                     case google::protobuf::FieldDescriptor::TYPE_UINT64:
                     case google::protobuf::FieldDescriptor::TYPE_FIXED64:
-                        if (item.type_ == ProtobufVariant::ValueType::U64) {
+                        if (item.type == ProtobufVariant::ValueType::U64) {
                             reflection->AddUInt64(
                                 message, fd, std::get<uint64_t>(item.value));
                         }
                         break;
                     case google::protobuf::FieldDescriptor::TYPE_FLOAT:
-                        if (item.type_ == ProtobufVariant::ValueType::F32) {
+                        if (item.type == ProtobufVariant::ValueType::F32) {
                             reflection->AddFloat(message, fd,
                                                  std::get<float>(item.value));
                         }
                         break;
                     case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
-                        if (item.type_ == ProtobufVariant::ValueType::F64) {
+                        if (item.type == ProtobufVariant::ValueType::F64) {
                             reflection->AddDouble(message, fd,
                                                   std::get<double>(item.value));
                         }
                         break;
                     case google::protobuf::FieldDescriptor::TYPE_STRING:
-                        if (item.type_ == ProtobufVariant::ValueType::String) {
+                        if (item.type == ProtobufVariant::ValueType::String) {
                             reflection->AddString(
                                 message, fd, std::get<std::string>(item.value));
                         }
                         break;
                     case google::protobuf::FieldDescriptor::TYPE_BYTES:
-                        if (item.type_ == ProtobufVariant::ValueType::Bytes) {
+                        if (item.type == ProtobufVariant::ValueType::Bytes) {
                             const auto& bytes =
                                 std::get<std::vector<uint8_t>>(item.value);
                             std::string bytes_str(bytes.begin(), bytes.end());
@@ -528,7 +528,7 @@ void setMessageField(google::protobuf::Message* message,
                         }
                         break;
                     case google::protobuf::FieldDescriptor::TYPE_ENUM:
-                        if (item.type_ ==
+                        if (item.type ==
                             ProtobufVariant::ValueType::EnumNumber) {
                             reflection->AddEnumValue(
                                 message, fd, std::get<int32_t>(item.value));
@@ -536,7 +536,7 @@ void setMessageField(google::protobuf::Message* message,
                         break;
                     case google::protobuf::FieldDescriptor::TYPE_MESSAGE:
                     case google::protobuf::FieldDescriptor::TYPE_GROUP:
-                        if (item.type_ == ProtobufVariant::ValueType::Message) {
+                        if (item.type == ProtobufVariant::ValueType::Message) {
                             const auto& msg_ptr = std::get<
                                 std::unique_ptr<google::protobuf::Message>>(
                                 item.value);
@@ -608,7 +608,7 @@ void setMessageField(google::protobuf::Message* message,
                     map_key);
 
                 // Set the value field based on the ProtobufVariant type
-                switch (map_value.type_) {
+                switch (map_value.type) {
                     case ProtobufVariant::ValueType::Bool:
                         entry_reflection->SetBool(
                             entry_msg, value_field,

@@ -65,27 +65,27 @@ struct ProtobufVariant {
                      >;
 
     ValueVariant value;
-    ValueType type_;
+    ValueType type;
 
     // Constructors for each type
-    ProtobufVariant(bool v) : value(v), type_(ValueType::Bool) {}
-    ProtobufVariant(int32_t v, ValueType type = ValueType::I32)
-        : value(v), type_(type) {}
-    ProtobufVariant(int64_t v) : value(v), type_(ValueType::I64) {}
-    ProtobufVariant(uint32_t v) : value(v), type_(ValueType::U32) {}
-    ProtobufVariant(uint64_t v) : value(v), type_(ValueType::U64) {}
-    ProtobufVariant(float v) : value(v), type_(ValueType::F32) {}
-    ProtobufVariant(double v) : value(v), type_(ValueType::F64) {}
+    ProtobufVariant(bool v) : value(v), type(ValueType::Bool) {}
+    ProtobufVariant(int32_t v, ValueType value_type = ValueType::I32)
+        : value(v), type(value_type) {}
+    ProtobufVariant(int64_t v) : value(v), type(ValueType::I64) {}
+    ProtobufVariant(uint32_t v) : value(v), type(ValueType::U32) {}
+    ProtobufVariant(uint64_t v) : value(v), type(ValueType::U64) {}
+    ProtobufVariant(float v) : value(v), type(ValueType::F32) {}
+    ProtobufVariant(double v) : value(v), type(ValueType::F64) {}
     ProtobufVariant(const std::string &v)
-        : value(v), type_(ValueType::String) {}
+        : value(v), type(ValueType::String) {}
     ProtobufVariant(const std::vector<uint8_t> &v)
-        : value(v), type_(ValueType::Bytes) {}
+        : value(v), type(ValueType::Bytes) {}
     ProtobufVariant(std::unique_ptr<google::protobuf::Message> v)
-        : value(std::move(v)), type_(ValueType::Message) {}
+        : value(std::move(v)), type(ValueType::Message) {}
     ProtobufVariant(const std::vector<ProtobufVariant> &v)
-        : value(v), type_(ValueType::List) {}
+        : value(v), type(ValueType::List) {}
     ProtobufVariant(const std::map<MapKey, ProtobufVariant> &v)
-        : value(v), type_(ValueType::Map) {}
+        : value(v), type(ValueType::Map) {}
 
     // Special constructor for enum values
     static ProtobufVariant createEnum(int32_t value) {

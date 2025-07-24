@@ -604,7 +604,7 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
         return ProtobufVariant(cel_value.BoolOrDie());
     } else if (cel_value.IsInt64()) {
         int64_t value = cel_value.Int64OrDie();
-        switch (original.type_) {
+        switch (original.type) {
             case ProtobufVariant::ValueType::I32:
                 return ProtobufVariant(static_cast<int32_t>(value),
                                        ProtobufVariant::ValueType::I32);
@@ -621,7 +621,7 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
         }
     } else if (cel_value.IsUint64()) {
         uint64_t value = cel_value.Uint64OrDie();
-        switch (original.type_) {
+        switch (original.type) {
             case ProtobufVariant::ValueType::I32:
                 return ProtobufVariant(static_cast<int32_t>(value),
                                        ProtobufVariant::ValueType::I32);
@@ -638,7 +638,7 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
         }
     } else if (cel_value.IsDouble()) {
         double value = cel_value.DoubleOrDie();
-        if (original.type_ == ProtobufVariant::ValueType::F32) {
+        if (original.type == ProtobufVariant::ValueType::F32) {
             return ProtobufVariant(static_cast<float>(value));
         } else {
             return ProtobufVariant(value);
@@ -657,7 +657,7 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
 
         // Get element template from original if available
         ProtobufVariant element_template(false);  // Default template
-        if (original.type_ == ProtobufVariant::ValueType::List) {
+        if (original.type == ProtobufVariant::ValueType::List) {
             const auto &orig_list =
                 original.get<std::vector<ProtobufVariant>>();
             if (!orig_list.empty()) {
@@ -680,7 +680,7 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
 
         // Get value template from original if available
         ProtobufVariant value_template(false);  // Default template
-        if (original.type_ == ProtobufVariant::ValueType::Map) {
+        if (original.type == ProtobufVariant::ValueType::Map) {
             const auto &orig_map =
                 original.get<std::map<MapKey, ProtobufVariant>>();
             if (!orig_map.empty()) {
@@ -736,7 +736,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(
     google::protobuf::Arena *arena) {
     using namespace srclient::serdes::protobuf;
 
-    switch (variant.type_) {
+    switch (variant.type) {
         case ProtobufVariant::ValueType::Bool:
             return google::api::expr::runtime::CelValue::CreateBool(
                 variant.get<bool>());

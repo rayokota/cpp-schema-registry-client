@@ -6,8 +6,8 @@ namespace srclient::serdes::protobuf {
 
 // Copy constructor implementation
 ProtobufVariant::ProtobufVariant(const ProtobufVariant &other)
-    : type_(other.type_) {
-    switch (other.type_) {
+    : type(other.type) {
+    switch (other.type) {
         case ValueType::Message: {
             const auto &msg_ptr =
                 std::get<std::unique_ptr<google::protobuf::Message>>(
@@ -77,8 +77,8 @@ ProtobufVariant::ProtobufVariant(const ProtobufVariant &other)
 // Assignment operator implementation
 ProtobufVariant &ProtobufVariant::operator=(const ProtobufVariant &other) {
     if (this != &other) {
-        type_ = other.type_;
-        switch (other.type_) {
+        type = other.type;
+        switch (other.type) {
             case ValueType::Message: {
                 const auto &msg_ptr =
                     std::get<std::unique_ptr<google::protobuf::Message>>(
@@ -153,14 +153,14 @@ ProtobufValue::ProtobufValue(ProtobufVariant value)
     : value_(std::move(value)) {}
 
 const void *ProtobufValue::getRawObject() const {
-    if (value_.type_ == ProtobufVariant::ValueType::Message) {
+    if (value_.type == ProtobufVariant::ValueType::Message) {
         return value_.get<std::unique_ptr<google::protobuf::Message>>().get();
     }
     return &value_;
 }
 
 void *ProtobufValue::getMutableRawObject() {
-    if (value_.type_ == ProtobufVariant::ValueType::Message) {
+    if (value_.type == ProtobufVariant::ValueType::Message) {
         return value_.get<std::unique_ptr<google::protobuf::Message>>().get();
     }
     return &value_;
@@ -169,7 +169,7 @@ void *ProtobufValue::getMutableRawObject() {
 SerdeFormat ProtobufValue::getFormat() const { return SerdeFormat::Protobuf; }
 
 const std::type_info &ProtobufValue::getType() const {
-    if (value_.type_ == ProtobufVariant::ValueType::Message) {
+    if (value_.type == ProtobufVariant::ValueType::Message) {
         auto &msg_ptr =
             value_.get<std::unique_ptr<google::protobuf::Message>>();
         if (msg_ptr) {
@@ -192,14 +192,14 @@ void ProtobufValue::moveFrom(SerdeObject &&other) {
 }
 
 bool ProtobufValue::asBool() const {
-    if (value_.type_ == ProtobufVariant::ValueType::Bool) {
+    if (value_.type == ProtobufVariant::ValueType::Bool) {
         return value_.get<bool>();
     }
     throw ProtobufError("Protobuf SerdeValue cannot be converted to bool");
 }
 
 std::string ProtobufValue::asString() const {
-    switch (value_.type_) {
+    switch (value_.type) {
         case ProtobufVariant::ValueType::String:
             return value_.get<std::string>();
         case ProtobufVariant::ValueType::Message: {
@@ -220,7 +220,7 @@ std::string ProtobufValue::asString() const {
 }
 
 std::vector<uint8_t> ProtobufValue::asBytes() const {
-    switch (value_.type_) {
+    switch (value_.type) {
         case ProtobufVariant::ValueType::Bytes:
             return value_.get<std::vector<uint8_t>>();
         case ProtobufVariant::ValueType::Message: {
