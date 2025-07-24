@@ -144,12 +144,12 @@ class ProtobufValue : public SerdeValue {
     explicit ProtobufValue(ProtobufVariant value);
 
     // SerdeValue interface implementation
-    const void *getRawObject() const override;
-    void *getMutableRawObject() override;
+    const void *getRawValue() const override;
+    void *getMutableRawValue() override;
     SerdeFormat getFormat() const override;
     const std::type_info &getType() const override;
     std::unique_ptr<SerdeValue> clone() const override;
-    void moveFrom(SerdeObject &&other) override;
+    void moveFrom(SerdeValue &&other) override;
 
     // Value extraction methods
     bool asBool() const override;

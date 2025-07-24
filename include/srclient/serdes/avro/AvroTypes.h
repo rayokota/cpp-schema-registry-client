@@ -41,9 +41,9 @@ class AvroValue : public SerdeValue {
     explicit AvroValue(::avro::GenericDatum &&value)
         : value_(std::move(value)) {}
 
-    // SerdeObject interface implementation
-    const void *getRawObject() const override { return &value_; }
-    void *getMutableRawObject() override { return &value_; }
+    // SerdeValue interface implementation
+    const void *getRawValue() const override { return &value_; }
+    void *getMutableRawValue() override { return &value_; }
     SerdeFormat getFormat() const override { return SerdeFormat::Avro; }
     const std::type_info &getType() const override {
         return typeid(::avro::GenericDatum);
@@ -53,10 +53,10 @@ class AvroValue : public SerdeValue {
         return std::make_unique<AvroValue>(value_);
     }
 
-    void moveFrom(SerdeObject &&other) override {
+    void moveFrom(SerdeValue &&other) override {
         if (other.getFormat() == SerdeFormat::Avro) {
             value_ = std::move(*static_cast<::avro::GenericDatum *>(
-                other.getMutableRawObject()));
+                other.getMutableRawValue()));
         }
     }
 

@@ -44,18 +44,18 @@ class ProtobufValue;
 enum class SerdeFormat { Avro, Json, Protobuf };
 
 /**
- * Base interface for serialization objects of different formats
+ * Base interface for serialization values of different formats
  */
-class SerdeObject {
+class SerdeValue {
   public:
-    virtual ~SerdeObject() = default;
+    virtual ~SerdeValue() = default;
 
     // Pure virtual method to get type-erased access to the raw value
     // Returns const void* to the underlying value
-    virtual const void *getRawObject() const = 0;
+    virtual const void *getRawValue() const = 0;
 
     // Pure virtual method to get mutable access to the raw value
-    virtual void *getMutableRawObject() = 0;
+    virtual void *getMutableRawValue() = 0;
 
     // Get the format type
     virtual SerdeFormat getFormat() const = 0;
@@ -64,75 +64,42 @@ class SerdeObject {
     virtual const std::type_info &getType() const = 0;
 
     // Pure virtual methods for moving values in and out
-    virtual void moveFrom(SerdeObject &&other) = 0;
+    virtual void moveFrom(SerdeValue &&other) = 0;
 
     // Template method to safely cast and access the value
     template <typename T>
-    const T &getObject() const {
+    const T &getValue() const {
         if (typeid(T) != getType()) {
             throw std::bad_cast();
         }
-        return *static_cast<const T *>(getRawObject());
+        return *static_cast<const T *>(getRawValue());
     }
 
     // Template method to safely cast and get mutable access
     template <typename T>
-    T &getMutableObject() {
+    T &getMutableValue() {
         if (typeid(T) != getType()) {
             throw std::bad_cast();
         }
-        return *static_cast<T *>(getMutableRawObject());
+        return *static_cast<T *>(getMutableRawValue());
     }
 
-    // Template method to move a value into this SerdeObject
+    // Template method to move a value into this SerdeValue
     template <typename T>
-    void setObject(T &&value) {
+    void setValue(T &&value) {
         if (typeid(std::decay_t<T>) != getType()) {
             throw std::bad_cast();
         }
-        *static_cast<T *>(getMutableRawObject()) = std::forward<T>(value);
+        *static_cast<T *>(getMutableRawValue()) = std::forward<T>(value);
     }
 
-    // Template method to move a value out of this SerdeObject
+    // Template method to move a value out of this SerdeValue
     template <typename T>
-    T moveObject() {
+    T moveValue() {
         if (typeid(T) != getType()) {
             throw std::bad_cast();
         }
-        return std::move(*static_cast<T *>(getMutableRawObject()));
-    }
-};
-
-/**
- * Base interface for serialization values of different formats
- */
-class SerdeValue : public SerdeObject {
-  public:
-    virtual ~SerdeValue() = default;
-
-    // Value methods that delegate to Object methods from superclass
-    virtual const void *getRawValue() const { return getRawObject(); }
-    virtual void *getMutableRawValue() { return getMutableRawObject(); }
-
-    // Template methods that delegate to Object methods from superclass
-    template <typename T>
-    const T &getValue() const {
-        return getObject<T>();
-    }
-
-    template <typename T>
-    T &getMutableValue() {
-        return getMutableObject<T>();
-    }
-
-    template <typename T>
-    void setValue(T &&value) {
-        setObject<T>(std::forward<T>(value));
-    }
-
-    template <typename T>
-    T moveValue() {
-        return moveObject<T>();
+        return std::move(*static_cast<T *>(getMutableRawValue()));
     }
 
     virtual std::unique_ptr<SerdeValue> clone() const = 0;

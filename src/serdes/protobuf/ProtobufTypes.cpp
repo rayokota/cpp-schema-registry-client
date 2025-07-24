@@ -152,14 +152,14 @@ ProtobufVariant &ProtobufVariant::operator=(const ProtobufVariant &other) {
 ProtobufValue::ProtobufValue(ProtobufVariant value)
     : value_(std::move(value)) {}
 
-const void *ProtobufValue::getRawObject() const {
+const void *ProtobufValue::getRawValue() const {
     if (value_.type == ProtobufVariant::ValueType::Message) {
         return value_.get<std::unique_ptr<google::protobuf::Message>>().get();
     }
     return &value_;
 }
 
-void *ProtobufValue::getMutableRawObject() {
+void *ProtobufValue::getMutableRawValue() {
     if (value_.type == ProtobufVariant::ValueType::Message) {
         return value_.get<std::unique_ptr<google::protobuf::Message>>().get();
     }
@@ -183,7 +183,7 @@ std::unique_ptr<SerdeValue> ProtobufValue::clone() const {
     return std::make_unique<ProtobufValue>(value_);
 }
 
-void ProtobufValue::moveFrom(SerdeObject &&other) {
+void ProtobufValue::moveFrom(SerdeValue &&other) {
     if (other.getFormat() == SerdeFormat::Protobuf) {
         if (auto *protobuf_value = dynamic_cast<ProtobufValue *>(&other)) {
             value_ = std::move(protobuf_value->value_);
