@@ -338,9 +338,8 @@ std::string FieldContext::typeName() const {
 
 RuleContext::RuleContext(
     const SerializationContext &ser_ctx, std::optional<Schema> source,
-    std::optional<Schema> target,
-    const std::string &subject, Mode rule_mode, const Rule &rule, size_t index,
-    const std::vector<Rule> &rules,
+    std::optional<Schema> target, const std::string &subject, Mode rule_mode,
+    const Rule &rule, size_t index, const std::vector<Rule> &rules,
     std::unordered_map<std::string, std::unordered_set<std::string>>
         inline_tags,
     std::shared_ptr<FieldTransformer> field_transformer,
@@ -503,15 +502,14 @@ std::unique_ptr<SerdeValue> Serde::executeRules(
         inline_tags,
     std::shared_ptr<FieldTransformer> field_transformer) const {
     return executeRulesWithPhase(ser_ctx, subject, Phase::Domain, rule_mode,
-                                 source, target, msg,
-                                 inline_tags, field_transformer);
+                                 source, target, msg, inline_tags,
+                                 field_transformer);
 }
 
 std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
     const SerializationContext &ser_ctx, const std::string &subject,
     Phase rule_phase, Mode rule_mode, std::optional<Schema> source,
-    std::optional<Schema> target,
-    const SerdeValue &msg,
+    std::optional<Schema> target, const SerdeValue &msg,
     std::unordered_map<std::string, std::unordered_set<std::string>>
         inline_tags,
     std::shared_ptr<FieldTransformer> field_transformer) const {
@@ -571,9 +569,9 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
                 break;
         }
 
-        RuleContext ctx(ser_ctx, source, target,
-                        subject, rule_mode, rule, index, rules, inline_tags,
-                        field_transformer, rule_registry_);
+        RuleContext ctx(ser_ctx, source, target, subject, rule_mode, rule,
+                        index, rules, inline_tags, field_transformer,
+                        rule_registry_);
 
         // Fix: Check if rule type is available before using it
         if (!rule.getType().has_value()) {

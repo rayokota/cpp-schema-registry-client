@@ -15,7 +15,7 @@ namespace utils {
 
 ::avro::GenericDatum transformFields(RuleContext &ctx,
                                      const ::avro::ValidSchema &schema,
-    const ::avro::GenericDatum &datum) {
+                                     const ::avro::GenericDatum &datum) {
     switch (schema.root()->type()) {
         case ::avro::AVRO_RECORD: {
             auto record = datum.value<::avro::GenericRecord>();

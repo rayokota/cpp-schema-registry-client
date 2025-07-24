@@ -160,8 +160,8 @@ std::vector<uint8_t> AvroSerializer::serialize(
                 const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
             if (msg.getFormat() == SerdeFormat::Avro) {
                 auto avro_datum = asAvro(msg);
-                auto transformed = utils::transformFields(ctx,
-                                                          parsed_schema.first, avro_datum);
+                auto transformed = utils::transformFields(
+                    ctx, parsed_schema.first, avro_datum);
                 return makeAvroValue(transformed);
             }
             return msg.clone();

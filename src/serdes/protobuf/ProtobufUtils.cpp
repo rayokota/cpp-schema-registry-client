@@ -32,8 +32,8 @@ std::vector<uint8_t> base64_decode(const std::string& encoded_string) {
 }  // namespace
 
 std::unique_ptr<SerdeValue> transformFields(
-    RuleContext& ctx,
-    const google::protobuf::Descriptor* descriptor, const SerdeValue& value) {
+    RuleContext& ctx, const google::protobuf::Descriptor* descriptor,
+    const SerdeValue& value) {
     // Check if we have a protobuf schema and value
     if (value.getFormat() == SerdeFormat::Protobuf) {
         auto& proto_variant = asProtobuf(value);
@@ -57,8 +57,8 @@ std::unique_ptr<SerdeValue> transformFields(
                 std::unique_ptr<google::protobuf::Message>(message_ptr->New());
             message_ptr_copy->CopyFrom(*message_ptr);
             ProtobufVariant message_variant(std::move(message_ptr_copy));
-            auto transformed_message = transformRecursive(
-                ctx, descriptor, message_variant);
+            auto transformed_message =
+                transformRecursive(ctx, descriptor, message_variant);
 
             // Extract the transformed message and create SerdeValue
             if (transformed_message.type ==
@@ -120,8 +120,8 @@ ProtobufVariant transformRecursive(
             for (int i = 0; i < descriptor->field_count(); ++i) {
                 const google::protobuf::FieldDescriptor* fd =
                     descriptor->field(i);
-                auto field = transformFieldWithContext(
-                    ctx, fd, descriptor, result.get());
+                auto field = transformFieldWithContext(ctx, fd, descriptor,
+                                                       result.get());
                 if (field.has_value()) {
                     // Set the field in the message based on the transformed
                     // value
@@ -223,8 +223,7 @@ std::optional<ProtobufVariant> transformFieldWithContext(
 
     try {
         ProtobufVariant value = getMessageFieldValue(message, fd);
-        ProtobufVariant new_value =
-            transformRecursive(ctx, desc, value );
+        ProtobufVariant new_value = transformRecursive(ctx, desc, value);
 
         // Check for condition rules
         auto rule_kind = ctx.getRule().getKind();
@@ -240,7 +239,7 @@ std::optional<ProtobufVariant> transformFieldWithContext(
 
         ctx.exitField();
         return new_value;
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         ctx.exitField();
         throw;
     }

@@ -73,8 +73,7 @@ struct ProtobufVariant {
     ProtobufVariant(uint64_t v) : value(v), type(ValueType::U64) {}
     ProtobufVariant(float v) : value(v), type(ValueType::F32) {}
     ProtobufVariant(double v) : value(v), type(ValueType::F64) {}
-    ProtobufVariant(const std::string &v)
-        : value(v), type(ValueType::String) {}
+    ProtobufVariant(const std::string &v) : value(v), type(ValueType::String) {}
     ProtobufVariant(const std::vector<uint8_t> &v)
         : value(v), type(ValueType::Bytes) {}
     ProtobufVariant(std::unique_ptr<google::protobuf::Message> v)

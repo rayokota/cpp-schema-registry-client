@@ -282,8 +282,7 @@ class Serde {
     std::unique_ptr<SerdeValue> executeRules(
         const SerializationContext &ser_ctx, const std::string &subject,
         Mode rule_mode, std::optional<Schema> source,
-        std::optional<Schema> target,
-        const SerdeValue &msg,
+        std::optional<Schema> target, const SerdeValue &msg,
         std::unordered_map<std::string, std::unordered_set<std::string>>
             inline_tags,
         std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;
@@ -291,8 +290,7 @@ class Serde {
     std::unique_ptr<SerdeValue> executeRulesWithPhase(
         const SerializationContext &ser_ctx, const std::string &subject,
         Phase rule_phase, Mode rule_mode, std::optional<Schema> source,
-        std::optional<Schema> target,
-        const SerdeValue &msg,
+        std::optional<Schema> target, const SerdeValue &msg,
         std::unordered_map<std::string, std::unordered_set<std::string>>
             inline_tags,
         std::shared_ptr<FieldTransformer> field_transformer = nullptr) const;

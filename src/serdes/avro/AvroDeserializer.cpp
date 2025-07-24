@@ -91,8 +91,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
                 SerdeValue::newBytes(SerdeFormat::Avro, payload_data);
             auto result = base_->getSerde().executeRulesWithPhase(
                 ctx, subject, Phase::Encoding, Mode::Read, std::nullopt,
-                std::make_optional(writer_schema_raw),
-                *bytes_value, {});
+                std::make_optional(writer_schema_raw), *bytes_value, {});
             payload_data = result->getValue<std::vector<uint8_t>>();
         }
     }
@@ -158,8 +157,8 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
                 const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
             if (msg.getFormat() == SerdeFormat::Avro) {
                 auto avro_datum = asAvro(msg);
-                auto transformed = utils::transformFields(ctx,
-                                                          parsed_schema.first, avro_datum);
+                auto transformed = utils::transformFields(
+                    ctx, parsed_schema.first, avro_datum);
                 return makeAvroValue(transformed);
             }
             return msg.clone();
@@ -169,8 +168,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
 
         auto transformed = base_->getSerde().executeRules(
             ctx, subject, Mode::Read, std::nullopt,
-            std::make_optional(reader_schema_raw),
-            *serde_value,
+            std::make_optional(reader_schema_raw), *serde_value,
             utils::getInlineTags(
                 nlohmann::json::parse(reader_schema_raw.getSchema().value())),
             std::make_shared<FieldTransformer>(field_transformer));

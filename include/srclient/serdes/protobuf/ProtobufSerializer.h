@@ -319,8 +319,7 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
 
         auto serde_value = base_->getSerde().executeRules(
             ctx, subject, Mode::Write, std::nullopt, std::make_optional(schema),
-            *protobuf_value, {},
-            std::make_shared<FieldTransformer>(field_tf));
+            *protobuf_value, {}, std::make_shared<FieldTransformer>(field_tf));
 
         if (serde_value->getFormat() != SerdeFormat::Protobuf) {
             throw ProtobufError(

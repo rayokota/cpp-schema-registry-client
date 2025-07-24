@@ -39,7 +39,7 @@ namespace utils {
  */
 ::avro::GenericDatum transformFields(RuleContext &ctx,
                                      const ::avro::ValidSchema &schema,
-const ::avro::GenericDatum &datum);
+                                     const ::avro::GenericDatum &datum);
 
 /**
  * Transform individual field with context handling

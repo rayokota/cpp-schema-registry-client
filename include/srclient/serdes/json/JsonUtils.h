@@ -73,9 +73,10 @@ nlohmann::json transformRecursive(RuleContext &ctx,
  * @param value JSON value to transform
  * @return Transformed JSON value
  */
-nlohmann::json transformFieldWithContext(
-    RuleContext &ctx, const nlohmann::json &schema, const std::string &path,
-    const nlohmann::json &value);
+nlohmann::json transformFieldWithContext(RuleContext &ctx,
+                                         const nlohmann::json &schema,
+                                         const std::string &path,
+                                         const nlohmann::json &value);
 
 /**
  * Validate subschemas (for allOf, anyOf, oneOf)

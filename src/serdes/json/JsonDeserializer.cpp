@@ -131,7 +131,7 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
         if (msg.getFormat() == SerdeFormat::Json) {
             auto json = asJson(msg);
             auto transformed = utils::value_transform::transformFields(
-                ctx, reader_schema, json );
+                ctx, reader_schema, json);
             return makeJsonValue(transformed);
         }
         return msg.clone();
@@ -141,8 +141,8 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
 
     // Execute rules on the serde value
     auto transformed_value = base_->getSerde().executeRules(
-        ctx, subject, Mode::Read, std::nullopt, reader_schema_raw,
-        *json_value, {}, std::make_shared<FieldTransformer>(field_transformer));
+        ctx, subject, Mode::Read, std::nullopt, reader_schema_raw, *json_value,
+        {}, std::make_shared<FieldTransformer>(field_transformer));
 
     // Extract Json value from result
     if (transformed_value->getFormat() == SerdeFormat::Json) {

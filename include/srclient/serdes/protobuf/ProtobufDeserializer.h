@@ -168,8 +168,7 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
             SerdeValue::newBytes(SerdeFormat::Protobuf, processed_data);
         auto res_val = base_->getSerde().executeRulesWithPhase(
             ctx, subject, Phase::Encoding, Mode::Read, std::nullopt,
-            std::make_optional(writer_schema_raw), *bytes_val,
-            {});
+            std::make_optional(writer_schema_raw), *bytes_val, {});
         processed_data = res_val->asBytes();
     }
 
@@ -264,9 +263,8 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
 
     auto result_val = base_->getSerde().executeRules(
         ctx, subject, Mode::Read, std::nullopt,
-        std::make_optional(reader_schema_raw),
-        *protobuf_val,
-        {}, std::make_shared<FieldTransformer>(field_tf));
+        std::make_optional(reader_schema_raw), *protobuf_val, {},
+        std::make_shared<FieldTransformer>(field_tf));
 
     if (result_val->getFormat() != SerdeFormat::Protobuf) {
         throw ProtobufError("Expected protobuf value after rule execution");
@@ -274,7 +272,7 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
 
     // Copy final message into a newly created T instance
     auto &proto_variant = asProtobuf(*result_val);
-            if (proto_variant.type != ProtobufVariant::ValueType::Message) {
+    if (proto_variant.type != ProtobufVariant::ValueType::Message) {
         throw ProtobufError("Expected message variant but got different type");
     }
     google::protobuf::Message &final_msg =

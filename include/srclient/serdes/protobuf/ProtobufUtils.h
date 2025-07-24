@@ -34,8 +34,8 @@ using srclient::serdes::protobuf::ProtobufVariant;
  * Ported from Rust async implementation
  */
 std::unique_ptr<SerdeValue> transformFields(
-    RuleContext &ctx,
-    const google::protobuf::Descriptor *descriptor, const SerdeValue &value);
+    RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
+    const SerdeValue &value);
 
 /**
  * Transform protobuf values recursively (synchronous version)

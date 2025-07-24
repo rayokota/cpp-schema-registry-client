@@ -120,9 +120,8 @@ nlohmann::json transformRecursive(RuleContext &ctx,
         for (auto &[key, field_value] : result.items()) {
             if (properties.contains(key)) {
                 std::string field_path = path_utils::appendToPath(path, key);
-                result[key] =
-                    transformFieldWithContext(ctx, properties[key], field_path,
-                                              field_value);
+                result[key] = transformFieldWithContext(
+                    ctx, properties[key], field_path, field_value);
             }
         }
 
@@ -138,8 +137,8 @@ nlohmann::json transformRecursive(RuleContext &ctx,
             for (size_t i = 0; i < result.size(); ++i) {
                 std::string item_path =
                     path_utils::appendToPath(path, std::to_string(i));
-                result[i] = transformRecursive(ctx, items_schema, item_path,
-                                               result[i]);
+                result[i] =
+                    transformRecursive(ctx, items_schema, item_path, result[i]);
             }
         }
 
@@ -209,9 +208,10 @@ nlohmann::json transformRecursive(RuleContext &ctx,
     return value;
 }
 
-nlohmann::json transformFieldWithContext(
-    RuleContext &ctx, const nlohmann::json &schema, const std::string &path,
-    const nlohmann::json &value) {
+nlohmann::json transformFieldWithContext(RuleContext &ctx,
+                                         const nlohmann::json &schema,
+                                         const std::string &path,
+                                         const nlohmann::json &value) {
     // Get field type from schema
     FieldType field_type = schema_navigation::getFieldType(schema);
 
@@ -230,8 +230,7 @@ nlohmann::json transformFieldWithContext(
 
     try {
         // Transform the field value (synchronous call)
-        nlohmann::json new_value =
-            transformRecursive(ctx, schema, path, value);
+        nlohmann::json new_value = transformRecursive(ctx, schema, path, value);
 
         // Check for condition rules
         auto rule_kind = ctx.getRule().getKind();
