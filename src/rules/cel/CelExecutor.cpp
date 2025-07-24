@@ -221,11 +221,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(
         }
         case SerdeFormat::Protobuf: {
             auto &proto_variant = srclient::serdes::protobuf::asProtobuf(value);
-            if (proto_variant.type_ != srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
-                return google::api::expr::runtime::CelValue::CreateNull();
-            }
-            auto &proto_message = *proto_variant.template get<std::unique_ptr<google::protobuf::Message>>();
-            return fromProtobufValue(proto_message, arena);
+            return fromProtobufValue(proto_variant, arena);
         }
         default:
             return google::api::expr::runtime::CelValue::CreateNull();
@@ -249,9 +245,6 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
         case SerdeFormat::Protobuf: {
             auto &proto_variant =
                 srclient::serdes::protobuf::asProtobuf(original);
-            if (proto_variant.type_ != srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
-                return nullptr;
-            }
             auto converted_proto_variant = toProtobufValue(proto_variant, cel_value);
             return srclient::serdes::protobuf::makeProtobufValue(std::move(converted_proto_variant));
         }
@@ -735,64 +728,168 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
 
 
 google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(
-    const google::protobuf::Message &protobuf, google::protobuf::Arena *arena) {
-    const auto *descriptor = protobuf.GetDescriptor();
-    if (!descriptor) return google::api::expr::runtime::CelValue::CreateNull();
-    const auto *reflection = protobuf.GetReflection();
-    if (!reflection) return google::api::expr::runtime::CelValue::CreateNull();
+    const srclient::serdes::protobuf::ProtobufVariant &variant, google::protobuf::Arena *arena) {
+    using namespace srclient::serdes::protobuf;
+    
+    switch (variant.type_) {
+        case ProtobufVariant::ValueType::Bool:
+            return google::api::expr::runtime::CelValue::CreateBool(
+                variant.get<bool>());
+                
+        case ProtobufVariant::ValueType::I32:
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                static_cast<int64_t>(variant.get<int32_t>()));
+                
+        case ProtobufVariant::ValueType::I64:
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                variant.get<int64_t>());
+                
+        case ProtobufVariant::ValueType::U32:
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                static_cast<int64_t>(variant.get<uint32_t>()));
+                
+        case ProtobufVariant::ValueType::U64:
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                static_cast<int64_t>(variant.get<uint64_t>()));
+                
+        case ProtobufVariant::ValueType::F32:
+            return google::api::expr::runtime::CelValue::CreateDouble(
+                static_cast<double>(variant.get<float>()));
+                
+        case ProtobufVariant::ValueType::F64:
+            return google::api::expr::runtime::CelValue::CreateDouble(
+                variant.get<double>());
+                
+        case ProtobufVariant::ValueType::String: {
+            const auto &str = variant.get<std::string>();
+            auto *arena_str = google::protobuf::Arena::Create<std::string>(arena, str);
+            return google::api::expr::runtime::CelValue::CreateString(arena_str);
+        }
+        
+        case ProtobufVariant::ValueType::Bytes: {
+            const auto &bytes = variant.get<std::vector<uint8_t>>();
+            auto *arena_bytes = google::protobuf::Arena::Create<std::string>(arena);
+            arena_bytes->assign(bytes.begin(), bytes.end());
+            return google::api::expr::runtime::CelValue::CreateBytes(arena_bytes);
+        }
+        
+        case ProtobufVariant::ValueType::EnumNumber:
+            return google::api::expr::runtime::CelValue::CreateInt64(
+                static_cast<int64_t>(variant.get<int32_t>()));
+                
+        case ProtobufVariant::ValueType::Message: {
+            const auto &msg = variant.get<std::unique_ptr<google::protobuf::Message>>();
+            if (!msg) {
+                return google::api::expr::runtime::CelValue::CreateNull();
+            }
+            
+            const auto *descriptor = msg->GetDescriptor();
+            if (!descriptor) return google::api::expr::runtime::CelValue::CreateNull();
+            const auto *reflection = msg->GetReflection();
+            if (!reflection) return google::api::expr::runtime::CelValue::CreateNull();
 
-    // Create a map to represent the protobuf message
-    auto *map_impl = google::protobuf::Arena::Create<
-        google::api::expr::runtime::CelMapBuilder>(arena);
+            // Create a map to represent the protobuf message
+            auto *map_impl = google::protobuf::Arena::Create<
+                google::api::expr::runtime::CelMapBuilder>(arena);
 
-    // Get all fields that have values set
-    std::vector<const google::protobuf::FieldDescriptor *> fields;
-    reflection->ListFields(protobuf, &fields);
+            // Get all fields that have values set
+            std::vector<const google::protobuf::FieldDescriptor *> fields;
+            reflection->ListFields(*msg, &fields);
 
-    for (const auto *field : fields) {
-        // Create key for the field name
-        auto *arena_field_name =
-            google::protobuf::Arena::Create<std::string>(arena, field->name());
-        auto cel_key = google::api::expr::runtime::CelValue::CreateString(
-            arena_field_name);
+            for (const auto *field : fields) {
+                // Create key for the field name
+                auto *arena_field_name =
+                    google::protobuf::Arena::Create<std::string>(arena, field->name());
+                auto cel_key = google::api::expr::runtime::CelValue::CreateString(
+                    arena_field_name);
 
-        google::api::expr::runtime::CelValue cel_value =
-            google::api::expr::runtime::CelValue::CreateNull();
+                google::api::expr::runtime::CelValue cel_value =
+                    google::api::expr::runtime::CelValue::CreateNull();
 
-        if (field->is_repeated()) {
-            // Handle repeated fields as lists
-            std::vector<google::api::expr::runtime::CelValue> vec;
-            int field_size = reflection->FieldSize(protobuf, field);
+                if (field->is_repeated()) {
+                    // Handle repeated fields as lists
+                    std::vector<google::api::expr::runtime::CelValue> vec;
+                    int field_size = reflection->FieldSize(*msg, field);
 
-            for (int i = 0; i < field_size; ++i) {
-                cel_value = convertProtobufFieldToCel(protobuf, field,
-                                                      reflection, arena, i);
+                    for (int i = 0; i < field_size; ++i) {
+                        cel_value = convertProtobufFieldToCel(*msg, field,
+                                                              reflection, arena, i);
+                        if (!cel_value.IsError()) {
+                            vec.push_back(cel_value);
+                        }
+                    }
+
+                    auto *list_impl = google::protobuf::Arena::Create<
+                        google::api::expr::runtime::ContainerBackedListImpl>(arena,
+                                                                             vec);
+                    cel_value =
+                        google::api::expr::runtime::CelValue::CreateList(list_impl);
+                } else {
+                    // Handle single value fields
+                    cel_value = convertProtobufFieldToCel(*msg, field, reflection,
+                                                          arena, -1);
+                }
+
+                // Add to map if conversion was successful
                 if (!cel_value.IsError()) {
-                    vec.push_back(cel_value);
+                    auto status = map_impl->Add(cel_key, cel_value);
+                    if (!status.ok()) {
+                        // Log error but continue processing other fields
+                    }
                 }
             }
 
-            auto *list_impl = google::protobuf::Arena::Create<
-                google::api::expr::runtime::ContainerBackedListImpl>(arena,
-                                                                     vec);
-            cel_value =
-                google::api::expr::runtime::CelValue::CreateList(list_impl);
-        } else {
-            // Handle single value fields
-            cel_value = convertProtobufFieldToCel(protobuf, field, reflection,
-                                                  arena, -1);
+            return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
-
-        // Add to map if conversion was successful
-        if (!cel_value.IsError()) {
-            auto status = map_impl->Add(cel_key, cel_value);
-            if (!status.ok()) {
-                // Log error but continue processing other fields
+        
+        case ProtobufVariant::ValueType::List: {
+            const auto &list = variant.get<std::vector<ProtobufVariant>>();
+            std::vector<google::api::expr::runtime::CelValue> vec;
+            
+            for (const auto &item : list) {
+                vec.push_back(fromProtobufValue(item, arena));
             }
+            
+            auto *list_impl = google::protobuf::Arena::Create<
+                google::api::expr::runtime::ContainerBackedListImpl>(arena, vec);
+            return google::api::expr::runtime::CelValue::CreateList(list_impl);
         }
+        
+        case ProtobufVariant::ValueType::Map: {
+            const auto &map = variant.get<std::map<MapKey, ProtobufVariant>>();
+            auto *map_impl = google::protobuf::Arena::Create<
+                google::api::expr::runtime::CelMapBuilder>(arena);
+                
+            for (const auto &[key, value] : map) {
+                // Convert MapKey to CEL value
+                google::api::expr::runtime::CelValue cel_key;
+                std::visit([&](const auto &k) {
+                    using T = std::decay_t<decltype(k)>;
+                    if constexpr (std::is_same_v<T, std::string>) {
+                        auto *arena_str = google::protobuf::Arena::Create<std::string>(arena, k);
+                        cel_key = google::api::expr::runtime::CelValue::CreateString(arena_str);
+                    } else if constexpr (std::is_same_v<T, bool>) {
+                        cel_key = google::api::expr::runtime::CelValue::CreateBool(k);
+                    } else {
+                        // For all integer types, convert to int64
+                        cel_key = google::api::expr::runtime::CelValue::CreateInt64(
+                            static_cast<int64_t>(k));
+                    }
+                }, key);
+                
+                auto cel_value = fromProtobufValue(value, arena);
+                auto status = map_impl->Add(cel_key, cel_value);
+                if (!status.ok()) {
+                    // Log error but continue processing other entries
+                }
+            }
+            
+            return google::api::expr::runtime::CelValue::CreateMap(map_impl);
+        }
+        
+        default:
+            return google::api::expr::runtime::CelValue::CreateNull();
     }
-
-    return google::api::expr::runtime::CelValue::CreateMap(map_impl);
 }
 
 google::api::expr::runtime::CelValue CelExecutor::convertProtobufFieldToCel(
@@ -896,7 +993,11 @@ google::api::expr::runtime::CelValue CelExecutor::convertProtobufFieldToCel(
                 return convertProtobufMapToCel(nested_message, field, arena);
             } else {
                 // Recursively convert nested message
-                return fromProtobufValue(nested_message, arena);
+                // Create a copy of the message and wrap it in a ProtobufVariant
+                auto message_copy = std::unique_ptr<google::protobuf::Message>(nested_message.New());
+                message_copy->CopyFrom(nested_message);
+                srclient::serdes::protobuf::ProtobufVariant variant(std::move(message_copy));
+                return fromProtobufValue(variant, arena);
             }
         }
 

@@ -71,7 +71,7 @@ class CelExecutor : public RuleExecutor {
     google::api::expr::runtime::CelValue fromAvroValue(
         const ::avro::GenericDatum &avro, google::protobuf::Arena *arena);
     google::api::expr::runtime::CelValue fromProtobufValue(
-        const google::protobuf::Message &msg, google::protobuf::Arena *arena);
+        const srclient::serdes::protobuf::ProtobufVariant &variant, google::protobuf::Arena *arena);
 
     nlohmann::json toJsonValue(
         const nlohmann::json &original,
