@@ -34,7 +34,7 @@ using srclient::serdes::protobuf::ProtobufVariant;
  * Ported from Rust async implementation
  */
 std::unique_ptr<SerdeValue> transformFields(
-    RuleContext &ctx, const std::string &field_executor_type,
+    RuleContext &ctx,
     const google::protobuf::Descriptor *descriptor, const SerdeValue &value);
 
 /**
@@ -43,7 +43,7 @@ std::unique_ptr<SerdeValue> transformFields(
  */
 ProtobufVariant transformRecursive(
     RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
-    const ProtobufVariant &message, const std::string &field_executor_type);
+    const ProtobufVariant &message);
 
 /**
  * Transform field with rule context (synchronous version)
@@ -52,8 +52,7 @@ ProtobufVariant transformRecursive(
 std::optional<ProtobufVariant> transformFieldWithContext(
     RuleContext &ctx, const google::protobuf::FieldDescriptor *fd,
     const google::protobuf::Descriptor *desc,
-    const google::protobuf::Message *message,
-    const std::string &field_executor_type);
+    const google::protobuf::Message *message);
 
 /**
  * Extract field value from protobuf message

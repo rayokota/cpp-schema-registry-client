@@ -302,7 +302,7 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
         auto field_tf = [descriptor](RuleContext &rctx,
                                      const std::string &rule_type,
                                      const SerdeValue &val) {
-            return utils::transformFields(rctx, rule_type, descriptor, val);
+            return utils::transformFields(rctx, descriptor, val);
         };
 
         google::protobuf::DynamicMessageFactory msg_factory;

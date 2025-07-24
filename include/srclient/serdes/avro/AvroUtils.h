@@ -33,13 +33,13 @@ namespace utils {
 /**
  * Apply field transformation rules
  * @param ctx Rule context
- * @param datum Avro datum to transform
  * @param schema Schema for the datum
+ * @param datum Avro datum to transform
  * @return Transformed datum
  */
 ::avro::GenericDatum transformFields(RuleContext &ctx,
-                                     const ::avro::GenericDatum &datum,
-                                     const ::avro::ValidSchema &schema);
+                                     const ::avro::ValidSchema &schema,
+const ::avro::GenericDatum &datum);
 
 /**
  * Transform individual field with context handling

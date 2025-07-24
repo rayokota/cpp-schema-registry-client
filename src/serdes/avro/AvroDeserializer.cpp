@@ -158,8 +158,8 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
                 const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
             if (msg.getFormat() == SerdeFormat::Avro) {
                 auto avro_datum = asAvro(msg);
-                auto transformed = utils::transformFields(ctx, avro_datum,
-                                                          parsed_schema.first);
+                auto transformed = utils::transformFields(ctx,
+                                                          parsed_schema.first, avro_datum);
                 return makeAvroValue(transformed);
             }
             return msg.clone();

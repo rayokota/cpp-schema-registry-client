@@ -14,8 +14,8 @@ namespace srclient::serdes::avro {
 namespace utils {
 
 ::avro::GenericDatum transformFields(RuleContext &ctx,
-                                     const ::avro::GenericDatum &datum,
-                                     const ::avro::ValidSchema &schema) {
+                                     const ::avro::ValidSchema &schema,
+    const ::avro::GenericDatum &datum) {
     switch (schema.root()->type()) {
         case ::avro::AVRO_RECORD: {
             auto record = datum.value<::avro::GenericRecord>();
@@ -48,7 +48,7 @@ namespace utils {
 
             for (size_t i = 0; i < array.value().size(); ++i) {
                 auto transformed =
-                    transformFields(ctx, array.value()[i], item_schema);
+                    transformFields(ctx, item_schema, array.value()[i]);
                 result.value().push_back(transformed);
             }
 
@@ -62,7 +62,7 @@ namespace utils {
             for (const auto &[key, value] : map.value()) {
                 auto value_schema_node = schema.root()->leafAt(0);
                 ::avro::ValidSchema value_schema(value_schema_node);
-                auto transformed = transformFields(ctx, value, value_schema);
+                auto transformed = transformFields(ctx, value_schema, value);
                 result.value().emplace_back(key, transformed);
             }
             return result_datum;
@@ -72,7 +72,7 @@ namespace utils {
             auto union_val = datum.value<::avro::GenericUnion>();
             auto [branch_idx, branch_schema] = resolveUnion(schema, datum);
             auto transformed =
-                transformFields(ctx, union_val.datum(), branch_schema);
+                transformFields(ctx, branch_schema, union_val.datum());
 
             ::avro::GenericDatum result_datum(schema);
             auto &result = result_datum.value<::avro::GenericUnion>();
@@ -178,7 +178,7 @@ namespace utils {
     try {
         // Transform the field value (synchronous call)
         ::avro::GenericDatum new_value =
-            transformFields(ctx, field_datum, field_schema);
+            transformFields(ctx, field_schema, field_datum);
 
         // Check for condition rules
         auto rule_kind = ctx.getRule().getKind();

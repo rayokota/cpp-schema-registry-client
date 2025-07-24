@@ -78,24 +78,21 @@ std::vector<srclient::rest::model::SchemaReference> buildDependencies(
 namespace value_transform {
 
 nlohmann::json transformFields(RuleContext &ctx, const nlohmann::json &schema,
-                               const nlohmann::json &value,
-                               const std::string &field_executor_type) {
-    return transformRecursive(ctx, schema, "$", value, field_executor_type);
+                               const nlohmann::json &value) {
+    return transformRecursive(ctx, schema, "$", value);
 }
 
 nlohmann::json transformRecursive(RuleContext &ctx,
                                   const nlohmann::json &schema,
                                   const std::string &path,
-                                  const nlohmann::json &value,
-                                  const std::string &field_executor_type) {
+                                  const nlohmann::json &value) {
     // Handle allOf, anyOf, oneOf
     if (schema.contains("allOf")) {
         // validate subschemas
         auto subschemas = schema["allOf"];
         auto subschema = validateSubschemas(subschemas, value);
         if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value,
-                                      field_executor_type);
+            return transformRecursive(ctx, *subschema, path, value);
         }
     }
     if (schema.contains("anyOf")) {
@@ -103,8 +100,7 @@ nlohmann::json transformRecursive(RuleContext &ctx,
         auto subschemas = schema["anyOf"];
         auto subschema = validateSubschemas(subschemas, value);
         if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value,
-                                      field_executor_type);
+            return transformRecursive(ctx, *subschema, path, value);
         }
     }
     if (schema.contains("oneOf")) {
@@ -112,8 +108,7 @@ nlohmann::json transformRecursive(RuleContext &ctx,
         auto subschemas = schema["oneOf"];
         auto subschema = validateSubschemas(subschemas, value);
         if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value,
-                                      field_executor_type);
+            return transformRecursive(ctx, *subschema, path, value);
         }
     }
 
@@ -127,7 +122,7 @@ nlohmann::json transformRecursive(RuleContext &ctx,
                 std::string field_path = path_utils::appendToPath(path, key);
                 result[key] =
                     transformFieldWithContext(ctx, properties[key], field_path,
-                                              field_value, field_executor_type);
+                                              field_value);
             }
         }
 
@@ -144,7 +139,7 @@ nlohmann::json transformRecursive(RuleContext &ctx,
                 std::string item_path =
                     path_utils::appendToPath(path, std::to_string(i));
                 result[i] = transformRecursive(ctx, items_schema, item_path,
-                                               result[i], field_executor_type);
+                                               result[i]);
             }
         }
 
@@ -216,7 +211,7 @@ nlohmann::json transformRecursive(RuleContext &ctx,
 
 nlohmann::json transformFieldWithContext(
     RuleContext &ctx, const nlohmann::json &schema, const std::string &path,
-    const nlohmann::json &value, const std::string &field_executor_type) {
+    const nlohmann::json &value) {
     // Get field type from schema
     FieldType field_type = schema_navigation::getFieldType(schema);
 
@@ -236,7 +231,7 @@ nlohmann::json transformFieldWithContext(
     try {
         // Transform the field value (synchronous call)
         nlohmann::json new_value =
-            transformRecursive(ctx, schema, path, value, field_executor_type);
+            transformRecursive(ctx, schema, path, value);
 
         // Check for condition rules
         auto rule_kind = ctx.getRule().getKind();

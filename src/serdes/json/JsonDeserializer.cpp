@@ -131,7 +131,7 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
         if (msg.getFormat() == SerdeFormat::Json) {
             auto json = asJson(msg);
             auto transformed = utils::value_transform::transformFields(
-                ctx, reader_schema, json, rule_type);
+                ctx, reader_schema, json );
             return makeJsonValue(transformed);
         }
         return msg.clone();

@@ -255,7 +255,7 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
     auto field_tf = [reader_desc](RuleContext &rctx,
                                   const std::string &rule_type,
                                   const SerdeValue &val) {
-        return utils::transformFields(rctx, rule_type, reader_desc, val);
+        return utils::transformFields(rctx, reader_desc, val);
     };
 
     auto msg_copy = std::unique_ptr<google::protobuf::Message>(msg->New());

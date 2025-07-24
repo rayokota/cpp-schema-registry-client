@@ -32,7 +32,7 @@ std::vector<uint8_t> base64_decode(const std::string& encoded_string) {
 }  // namespace
 
 std::unique_ptr<SerdeValue> transformFields(
-    RuleContext& ctx, const std::string& field_executor_type,
+    RuleContext& ctx,
     const google::protobuf::Descriptor* descriptor, const SerdeValue& value) {
     // Check if we have a protobuf schema and value
     if (value.getFormat() == SerdeFormat::Protobuf) {
@@ -58,7 +58,7 @@ std::unique_ptr<SerdeValue> transformFields(
             message_ptr_copy->CopyFrom(*message_ptr);
             ProtobufVariant message_variant(std::move(message_ptr_copy));
             auto transformed_message = transformRecursive(
-                ctx, descriptor, message_variant, field_executor_type);
+                ctx, descriptor, message_variant);
 
             // Extract the transformed message and create SerdeValue
             if (transformed_message.type ==
@@ -81,7 +81,7 @@ std::unique_ptr<SerdeValue> transformFields(
 
 ProtobufVariant transformRecursive(
     RuleContext& ctx, const google::protobuf::Descriptor* descriptor,
-    const ProtobufVariant& message, const std::string& field_executor_type) {
+    const ProtobufVariant& message) {
     switch (message.type) {
         case ProtobufVariant::ValueType::List: {
             // Handle List
@@ -90,8 +90,7 @@ ProtobufVariant transformRecursive(
             std::vector<ProtobufVariant> result;
             result.reserve(list.size());
             for (const auto& item : list) {
-                result.push_back(transformRecursive(ctx, descriptor, item,
-                                                    field_executor_type));
+                result.push_back(transformRecursive(ctx, descriptor, item));
             }
             return ProtobufVariant(result);
         }
@@ -101,8 +100,7 @@ ProtobufVariant transformRecursive(
                 std::get<std::map<MapKey, ProtobufVariant>>(message.value);
             std::map<MapKey, ProtobufVariant> result;
             for (const auto& [key, value] : map) {
-                result.emplace(key, transformRecursive(ctx, descriptor, value,
-                                                       field_executor_type));
+                result.emplace(key, transformRecursive(ctx, descriptor, value));
             }
             return ProtobufVariant(result);
         }
@@ -123,7 +121,7 @@ ProtobufVariant transformRecursive(
                 const google::protobuf::FieldDescriptor* fd =
                     descriptor->field(i);
                 auto field = transformFieldWithContext(
-                    ctx, fd, descriptor, result.get(), field_executor_type);
+                    ctx, fd, descriptor, result.get());
                 if (field.has_value()) {
                     // Set the field in the message based on the transformed
                     // value
@@ -162,6 +160,10 @@ ProtobufVariant transformRecursive(
                 if (should_apply) {
                     // Create a SerdeValue from the current ProtobufVariant
                     auto message_value = convertVariantToSerdeValue(message);
+
+                    // Get field executor type from the rule
+                    auto field_executor_type =
+                        ctx.getRule().getType().value_or("");
 
                     // Try to get executor from context's rule registry first,
                     // then global
@@ -202,8 +204,7 @@ ProtobufVariant transformRecursive(
 std::optional<ProtobufVariant> transformFieldWithContext(
     RuleContext& ctx, const google::protobuf::FieldDescriptor* fd,
     const google::protobuf::Descriptor* desc,
-    const google::protobuf::Message* message,
-    const std::string& field_executor_type) {
+    const google::protobuf::Message* message) {
     auto temp_message =
         std::unique_ptr<google::protobuf::Message>(message->New());
     temp_message->CopyFrom(*message);
@@ -223,7 +224,7 @@ std::optional<ProtobufVariant> transformFieldWithContext(
     try {
         ProtobufVariant value = getMessageFieldValue(message, fd);
         ProtobufVariant new_value =
-            transformRecursive(ctx, desc, value, field_executor_type);
+            transformRecursive(ctx, desc, value );
 
         // Check for condition rules
         auto rule_kind = ctx.getRule().getKind();

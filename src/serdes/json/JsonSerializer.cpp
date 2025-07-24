@@ -149,7 +149,7 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
             if (msg.getFormat() == SerdeFormat::Json) {
                 auto json = asJson(msg);
                 auto transformed = utils::value_transform::transformFields(
-                    ctx, parsed_schema, json, rule_type);
+                    ctx, parsed_schema, json );
                 return makeJsonValue(transformed);
             }
             return msg.clone();
