@@ -245,8 +245,10 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
         case SerdeFormat::Protobuf: {
             auto &proto_variant =
                 srclient::serdes::protobuf::asProtobuf(original);
-            auto converted_proto_variant = toProtobufValue(proto_variant, cel_value);
-            return srclient::serdes::protobuf::makeProtobufValue(std::move(converted_proto_variant));
+            auto converted_proto_variant =
+                toProtobufValue(proto_variant, cel_value);
+            return srclient::serdes::protobuf::makeProtobufValue(
+                std::move(converted_proto_variant));
         }
         default:
             // For unknown formats, return a copy of the original
@@ -597,14 +599,15 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
     const srclient::serdes::protobuf::ProtobufVariant &original,
     const google::api::expr::runtime::CelValue &cel_value) {
     using namespace srclient::serdes::protobuf;
-    
+
     if (cel_value.IsBool()) {
         return ProtobufVariant(cel_value.BoolOrDie());
     } else if (cel_value.IsInt64()) {
         int64_t value = cel_value.Int64OrDie();
         switch (original.type_) {
             case ProtobufVariant::ValueType::I32:
-                return ProtobufVariant(static_cast<int32_t>(value), ProtobufVariant::ValueType::I32);
+                return ProtobufVariant(static_cast<int32_t>(value),
+                                       ProtobufVariant::ValueType::I32);
             case ProtobufVariant::ValueType::I64:
                 return ProtobufVariant(value);
             case ProtobufVariant::ValueType::U32:
@@ -620,7 +623,8 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
         uint64_t value = cel_value.Uint64OrDie();
         switch (original.type_) {
             case ProtobufVariant::ValueType::I32:
-                return ProtobufVariant(static_cast<int32_t>(value), ProtobufVariant::ValueType::I32);
+                return ProtobufVariant(static_cast<int32_t>(value),
+                                       ProtobufVariant::ValueType::I32);
             case ProtobufVariant::ValueType::I64:
                 return ProtobufVariant(static_cast<int64_t>(value));
             case ProtobufVariant::ValueType::U32:
@@ -644,21 +648,23 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
         return ProtobufVariant(value);
     } else if (cel_value.IsBytes()) {
         auto bytes_view = cel_value.BytesOrDie();
-        std::vector<uint8_t> bytes(bytes_view.value().begin(), bytes_view.value().end());
+        std::vector<uint8_t> bytes(bytes_view.value().begin(),
+                                   bytes_view.value().end());
         return ProtobufVariant(bytes);
     } else if (cel_value.IsList()) {
         const auto *cel_list = cel_value.ListOrDie();
         std::vector<ProtobufVariant> result_list;
-        
+
         // Get element template from original if available
-        ProtobufVariant element_template(false); // Default template
+        ProtobufVariant element_template(false);  // Default template
         if (original.type_ == ProtobufVariant::ValueType::List) {
-            const auto &orig_list = original.get<std::vector<ProtobufVariant>>();
+            const auto &orig_list =
+                original.get<std::vector<ProtobufVariant>>();
             if (!orig_list.empty()) {
                 element_template = orig_list[0];
             }
         }
-        
+
         // Convert each list element recursively
         for (int i = 0; i < cel_list->size(); ++i) {
             auto item = cel_list->Get(nullptr, i);
@@ -666,21 +672,22 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
                 result_list.push_back(toProtobufValue(element_template, item));
             }
         }
-        
+
         return ProtobufVariant(result_list);
     } else if (cel_value.IsMap()) {
         const auto *cel_map = cel_value.MapOrDie();
         std::map<MapKey, ProtobufVariant> result_map;
-        
+
         // Get value template from original if available
-        ProtobufVariant value_template(false); // Default template
+        ProtobufVariant value_template(false);  // Default template
         if (original.type_ == ProtobufVariant::ValueType::Map) {
-            const auto &orig_map = original.get<std::map<MapKey, ProtobufVariant>>();
+            const auto &orig_map =
+                original.get<std::map<MapKey, ProtobufVariant>>();
             if (!orig_map.empty()) {
                 value_template = orig_map.begin()->second;
             }
         }
-        
+
         // Iterate through map entries
         auto map_keys = cel_map->ListKeys(nullptr);
         if (map_keys.ok()) {
@@ -699,21 +706,21 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
                         } else if (key_val.IsUint64()) {
                             map_key = key_val.Uint64OrDie();
                         } else if (key_val.IsString()) {
-                            map_key = std::string(key_val.StringOrDie().value());
+                            map_key =
+                                std::string(key_val.StringOrDie().value());
                         } else {
                             // Default to string representation
                             map_key = std::string("unknown");
                         }
-                        
+
                         result_map.emplace(
-                            map_key, 
-                            toProtobufValue(value_template, value_lookup.value())
-                        );
+                            map_key, toProtobufValue(value_template,
+                                                     value_lookup.value()));
                     }
                 }
             }
         }
-        
+
         return ProtobufVariant(result_map);
     } else if (cel_value.IsNull()) {
         // Return empty bytes for null values
@@ -724,69 +731,74 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
     }
 }
 
-
-
-
 google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(
-    const srclient::serdes::protobuf::ProtobufVariant &variant, google::protobuf::Arena *arena) {
+    const srclient::serdes::protobuf::ProtobufVariant &variant,
+    google::protobuf::Arena *arena) {
     using namespace srclient::serdes::protobuf;
-    
+
     switch (variant.type_) {
         case ProtobufVariant::ValueType::Bool:
             return google::api::expr::runtime::CelValue::CreateBool(
                 variant.get<bool>());
-                
+
         case ProtobufVariant::ValueType::I32:
             return google::api::expr::runtime::CelValue::CreateInt64(
                 static_cast<int64_t>(variant.get<int32_t>()));
-                
+
         case ProtobufVariant::ValueType::I64:
             return google::api::expr::runtime::CelValue::CreateInt64(
                 variant.get<int64_t>());
-                
+
         case ProtobufVariant::ValueType::U32:
             return google::api::expr::runtime::CelValue::CreateInt64(
                 static_cast<int64_t>(variant.get<uint32_t>()));
-                
+
         case ProtobufVariant::ValueType::U64:
             return google::api::expr::runtime::CelValue::CreateInt64(
                 static_cast<int64_t>(variant.get<uint64_t>()));
-                
+
         case ProtobufVariant::ValueType::F32:
             return google::api::expr::runtime::CelValue::CreateDouble(
                 static_cast<double>(variant.get<float>()));
-                
+
         case ProtobufVariant::ValueType::F64:
             return google::api::expr::runtime::CelValue::CreateDouble(
                 variant.get<double>());
-                
+
         case ProtobufVariant::ValueType::String: {
             const auto &str = variant.get<std::string>();
-            auto *arena_str = google::protobuf::Arena::Create<std::string>(arena, str);
-            return google::api::expr::runtime::CelValue::CreateString(arena_str);
+            auto *arena_str =
+                google::protobuf::Arena::Create<std::string>(arena, str);
+            return google::api::expr::runtime::CelValue::CreateString(
+                arena_str);
         }
-        
+
         case ProtobufVariant::ValueType::Bytes: {
             const auto &bytes = variant.get<std::vector<uint8_t>>();
-            auto *arena_bytes = google::protobuf::Arena::Create<std::string>(arena);
+            auto *arena_bytes =
+                google::protobuf::Arena::Create<std::string>(arena);
             arena_bytes->assign(bytes.begin(), bytes.end());
-            return google::api::expr::runtime::CelValue::CreateBytes(arena_bytes);
+            return google::api::expr::runtime::CelValue::CreateBytes(
+                arena_bytes);
         }
-        
+
         case ProtobufVariant::ValueType::EnumNumber:
             return google::api::expr::runtime::CelValue::CreateInt64(
                 static_cast<int64_t>(variant.get<int32_t>()));
-                
+
         case ProtobufVariant::ValueType::Message: {
-            const auto &msg = variant.get<std::unique_ptr<google::protobuf::Message>>();
+            const auto &msg =
+                variant.get<std::unique_ptr<google::protobuf::Message>>();
             if (!msg) {
                 return google::api::expr::runtime::CelValue::CreateNull();
             }
-            
+
             const auto *descriptor = msg->GetDescriptor();
-            if (!descriptor) return google::api::expr::runtime::CelValue::CreateNull();
+            if (!descriptor)
+                return google::api::expr::runtime::CelValue::CreateNull();
             const auto *reflection = msg->GetReflection();
-            if (!reflection) return google::api::expr::runtime::CelValue::CreateNull();
+            if (!reflection)
+                return google::api::expr::runtime::CelValue::CreateNull();
 
             // Create a map to represent the protobuf message
             auto *map_impl = google::protobuf::Arena::Create<
@@ -799,9 +811,11 @@ google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(
             for (const auto *field : fields) {
                 // Create key for the field name
                 auto *arena_field_name =
-                    google::protobuf::Arena::Create<std::string>(arena, field->name());
-                auto cel_key = google::api::expr::runtime::CelValue::CreateString(
-                    arena_field_name);
+                    google::protobuf::Arena::Create<std::string>(arena,
+                                                                 field->name());
+                auto cel_key =
+                    google::api::expr::runtime::CelValue::CreateString(
+                        arena_field_name);
 
                 google::api::expr::runtime::CelValue cel_value =
                     google::api::expr::runtime::CelValue::CreateNull();
@@ -812,22 +826,23 @@ google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(
                     int field_size = reflection->FieldSize(*msg, field);
 
                     for (int i = 0; i < field_size; ++i) {
-                        cel_value = convertProtobufFieldToCel(*msg, field,
-                                                              reflection, arena, i);
+                        cel_value = convertProtobufFieldToCel(
+                            *msg, field, reflection, arena, i);
                         if (!cel_value.IsError()) {
                             vec.push_back(cel_value);
                         }
                     }
 
                     auto *list_impl = google::protobuf::Arena::Create<
-                        google::api::expr::runtime::ContainerBackedListImpl>(arena,
-                                                                             vec);
+                        google::api::expr::runtime::ContainerBackedListImpl>(
+                        arena, vec);
                     cel_value =
-                        google::api::expr::runtime::CelValue::CreateList(list_impl);
+                        google::api::expr::runtime::CelValue::CreateList(
+                            list_impl);
                 } else {
                     // Handle single value fields
-                    cel_value = convertProtobufFieldToCel(*msg, field, reflection,
-                                                          arena, -1);
+                    cel_value = convertProtobufFieldToCel(
+                        *msg, field, reflection, arena, -1);
                 }
 
                 // Add to map if conversion was successful
@@ -841,52 +856,59 @@ google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(
 
             return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
-        
+
         case ProtobufVariant::ValueType::List: {
             const auto &list = variant.get<std::vector<ProtobufVariant>>();
             std::vector<google::api::expr::runtime::CelValue> vec;
-            
+
             for (const auto &item : list) {
                 vec.push_back(fromProtobufValue(item, arena));
             }
-            
+
             auto *list_impl = google::protobuf::Arena::Create<
-                google::api::expr::runtime::ContainerBackedListImpl>(arena, vec);
+                google::api::expr::runtime::ContainerBackedListImpl>(arena,
+                                                                     vec);
             return google::api::expr::runtime::CelValue::CreateList(list_impl);
         }
-        
+
         case ProtobufVariant::ValueType::Map: {
             const auto &map = variant.get<std::map<MapKey, ProtobufVariant>>();
             auto *map_impl = google::protobuf::Arena::Create<
                 google::api::expr::runtime::CelMapBuilder>(arena);
-                
+
             for (const auto &[key, value] : map) {
                 // Convert MapKey to CEL value
                 google::api::expr::runtime::CelValue cel_key;
-                std::visit([&](const auto &k) {
-                    using T = std::decay_t<decltype(k)>;
-                    if constexpr (std::is_same_v<T, std::string>) {
-                        auto *arena_str = google::protobuf::Arena::Create<std::string>(arena, k);
-                        cel_key = google::api::expr::runtime::CelValue::CreateString(arena_str);
-                    } else if constexpr (std::is_same_v<T, bool>) {
-                        cel_key = google::api::expr::runtime::CelValue::CreateBool(k);
-                    } else {
-                        // For all integer types, convert to int64
-                        cel_key = google::api::expr::runtime::CelValue::CreateInt64(
-                            static_cast<int64_t>(k));
-                    }
-                }, key);
-                
+                std::visit(
+                    [&](const auto &k) {
+                        using T = std::decay_t<decltype(k)>;
+                        if constexpr (std::is_same_v<T, std::string>) {
+                            auto *arena_str =
+                                google::protobuf::Arena::Create<std::string>(
+                                    arena, k);
+                            cel_key = google::api::expr::runtime::CelValue::
+                                CreateString(arena_str);
+                        } else if constexpr (std::is_same_v<T, bool>) {
+                            cel_key = google::api::expr::runtime::CelValue::
+                                CreateBool(k);
+                        } else {
+                            // For all integer types, convert to int64
+                            cel_key = google::api::expr::runtime::CelValue::
+                                CreateInt64(static_cast<int64_t>(k));
+                        }
+                    },
+                    key);
+
                 auto cel_value = fromProtobufValue(value, arena);
                 auto status = map_impl->Add(cel_key, cel_value);
                 if (!status.ok()) {
                     // Log error but continue processing other entries
                 }
             }
-            
+
             return google::api::expr::runtime::CelValue::CreateMap(map_impl);
         }
-        
+
         default:
             return google::api::expr::runtime::CelValue::CreateNull();
     }
@@ -994,9 +1016,11 @@ google::api::expr::runtime::CelValue CelExecutor::convertProtobufFieldToCel(
             } else {
                 // Recursively convert nested message
                 // Create a copy of the message and wrap it in a ProtobufVariant
-                auto message_copy = std::unique_ptr<google::protobuf::Message>(nested_message.New());
+                auto message_copy = std::unique_ptr<google::protobuf::Message>(
+                    nested_message.New());
                 message_copy->CopyFrom(nested_message);
-                srclient::serdes::protobuf::ProtobufVariant variant(std::move(message_copy));
+                srclient::serdes::protobuf::ProtobufVariant variant(
+                    std::move(message_copy));
                 return fromProtobufValue(variant, arena);
             }
         }

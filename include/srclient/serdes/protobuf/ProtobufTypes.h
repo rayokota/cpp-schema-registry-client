@@ -25,7 +25,8 @@ namespace srclient::serdes::protobuf {
 struct ProtobufVariant;
 
 // C++ variant representing protobuf values - type alias for map keys
-using MapKey = std::variant<std::string, int32_t, int64_t, uint32_t, uint64_t, bool>;
+using MapKey =
+    std::variant<std::string, int32_t, int64_t, uint32_t, uint64_t, bool>;
 
 /**
  * C++ variant-based structure representing protobuf values
@@ -33,63 +34,87 @@ using MapKey = std::variant<std::string, int32_t, int64_t, uint32_t, uint64_t, b
  */
 struct ProtobufVariant {
     enum class ValueType {
-        Bool, I32, I64, U32, U64, F32, F64, String, Bytes, EnumNumber, Message, List, Map
+        Bool,
+        I32,
+        I64,
+        U32,
+        U64,
+        F32,
+        F64,
+        String,
+        Bytes,
+        EnumNumber,
+        Message,
+        List,
+        Map
     };
-    
-    using ValueVariant = std::variant<
-        bool,                                                    // Bool
-        int32_t,                                                // I32
-        int64_t,                                                // I64
-        uint32_t,                                               // U32
-        uint64_t,                                               // U64
-        float,                                                  // F32
-        double,                                                 // F64
-        std::string,                                            // String
-        std::vector<uint8_t>,                                   // Bytes
-        std::unique_ptr<google::protobuf::Message>,             // Message
-        std::vector<ProtobufVariant>,                             // List
-        std::map<MapKey, ProtobufVariant>                         // Map
-    >;
-    
+
+    using ValueVariant =
+        std::variant<bool,                                        // Bool
+                     int32_t,                                     // I32
+                     int64_t,                                     // I64
+                     uint32_t,                                    // U32
+                     uint64_t,                                    // U64
+                     float,                                       // F32
+                     double,                                      // F64
+                     std::string,                                 // String
+                     std::vector<uint8_t>,                        // Bytes
+                     std::unique_ptr<google::protobuf::Message>,  // Message
+                     std::vector<ProtobufVariant>,                // List
+                     std::map<MapKey, ProtobufVariant>            // Map
+                     >;
+
     ValueVariant value;
     ValueType type_;
-    
+
     // Constructors for each type
     ProtobufVariant(bool v) : value(v), type_(ValueType::Bool) {}
-    ProtobufVariant(int32_t v, ValueType type = ValueType::I32) : value(v), type_(type) {}
+    ProtobufVariant(int32_t v, ValueType type = ValueType::I32)
+        : value(v), type_(type) {}
     ProtobufVariant(int64_t v) : value(v), type_(ValueType::I64) {}
     ProtobufVariant(uint32_t v) : value(v), type_(ValueType::U32) {}
     ProtobufVariant(uint64_t v) : value(v), type_(ValueType::U64) {}
     ProtobufVariant(float v) : value(v), type_(ValueType::F32) {}
     ProtobufVariant(double v) : value(v), type_(ValueType::F64) {}
-    ProtobufVariant(const std::string& v) : value(v), type_(ValueType::String) {}
-    ProtobufVariant(const std::vector<uint8_t>& v) : value(v), type_(ValueType::Bytes) {}
-    ProtobufVariant(std::unique_ptr<google::protobuf::Message> v) : value(std::move(v)), type_(ValueType::Message) {}
-    ProtobufVariant(const std::vector<ProtobufVariant>& v) : value(v), type_(ValueType::List) {}
-    ProtobufVariant(const std::map<MapKey, ProtobufVariant>& v) : value(v), type_(ValueType::Map) {}
-    
+    ProtobufVariant(const std::string &v)
+        : value(v), type_(ValueType::String) {}
+    ProtobufVariant(const std::vector<uint8_t> &v)
+        : value(v), type_(ValueType::Bytes) {}
+    ProtobufVariant(std::unique_ptr<google::protobuf::Message> v)
+        : value(std::move(v)), type_(ValueType::Message) {}
+    ProtobufVariant(const std::vector<ProtobufVariant> &v)
+        : value(v), type_(ValueType::List) {}
+    ProtobufVariant(const std::map<MapKey, ProtobufVariant> &v)
+        : value(v), type_(ValueType::Map) {}
+
     // Special constructor for enum values
     static ProtobufVariant createEnum(int32_t value) {
         return ProtobufVariant(value, ValueType::EnumNumber);
     }
-    
+
     // Copy constructor and assignment operator
-    ProtobufVariant(const ProtobufVariant& other);
-    ProtobufVariant& operator=(const ProtobufVariant& other);
-    
+    ProtobufVariant(const ProtobufVariant &other);
+    ProtobufVariant &operator=(const ProtobufVariant &other);
+
     // Move constructor and assignment operator
-    ProtobufVariant(ProtobufVariant&& other) = default;
-    ProtobufVariant& operator=(ProtobufVariant&& other) = default;
-    
+    ProtobufVariant(ProtobufVariant &&other) = default;
+    ProtobufVariant &operator=(ProtobufVariant &&other) = default;
+
     // Visitor helper methods
-    template<typename T>
-    bool is() const { return std::holds_alternative<T>(value); }
-    
-    template<typename T>
-    const T& get() const { return std::get<T>(value); }
-    
-    template<typename T>
-    T& get() { return std::get<T>(value); }
+    template <typename T>
+    bool is() const {
+        return std::holds_alternative<T>(value);
+    }
+
+    template <typename T>
+    const T &get() const {
+        return std::get<T>(value);
+    }
+
+    template <typename T>
+    T &get() {
+        return std::get<T>(value);
+    }
 };
 
 /**
@@ -135,8 +160,8 @@ class ProtobufValue : public SerdeValue {
     std::vector<uint8_t> asBytes() const override;
 
     // Direct access to ProtobufVariant
-    const ProtobufVariant& getProtobufVariant() const;
-    ProtobufVariant& getMutableProtobufVariant();
+    const ProtobufVariant &getProtobufVariant() const;
+    ProtobufVariant &getMutableProtobufVariant();
 };
 
 /**

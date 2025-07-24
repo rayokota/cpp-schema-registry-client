@@ -252,8 +252,9 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
     }
 
     // Execute field-level rules
-    auto field_tf = [reader_desc](RuleContext &rctx, const std::string &rule_type,
-                       const SerdeValue &val) {
+    auto field_tf = [reader_desc](RuleContext &rctx,
+                                  const std::string &rule_type,
+                                  const SerdeValue &val) {
         return utils::transformFields(rctx, rule_type, reader_desc, val);
     };
 
@@ -277,7 +278,9 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
     if (proto_variant.type_ != ProtobufVariant::ValueType::Message) {
         throw ProtobufError("Expected message variant but got different type");
     }
-    google::protobuf::Message &final_msg = *proto_variant.template get<std::unique_ptr<google::protobuf::Message>>();
+    google::protobuf::Message &final_msg =
+        *proto_variant
+             .template get<std::unique_ptr<google::protobuf::Message>>();
     auto out_msg = std::make_unique<T>();
 
     // Don't use CopyFrom, as the descriptors are from different pools

@@ -141,7 +141,6 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
         // Get parsed schema
         std::tie(parsed_schema, schema_str) = getParsedSchema(target_schema);
 
-
         // Create field transformer lambda
         auto field_transformer =
             [this, &parsed_schema](
@@ -149,8 +148,8 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
                 const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
             if (msg.getFormat() == SerdeFormat::Json) {
                 auto json = asJson(msg);
-                auto transformed = utils::value_transform::transformFields(ctx, parsed_schema, json,
-                                                          rule_type);
+                auto transformed = utils::value_transform::transformFields(
+                    ctx, parsed_schema, json, rule_type);
                 return makeJsonValue(transformed);
             }
             return msg.clone();
@@ -162,8 +161,7 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
         // Execute rules on the serde value
         auto transformed_value = base_->getSerde().executeRules(
             ctx, subject, Mode::Write, std::nullopt, target_schema,
-            std::nullopt, *json_value,
-            {},
+            std::nullopt, *json_value, {},
             std::make_shared<FieldTransformer>(field_transformer));
 
         // Extract Json value from result

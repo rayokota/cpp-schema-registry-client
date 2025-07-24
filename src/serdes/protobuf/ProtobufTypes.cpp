@@ -5,25 +5,32 @@ namespace srclient::serdes::protobuf {
 // Implementation of ProtobufVariant methods
 
 // Copy constructor implementation
-ProtobufVariant::ProtobufVariant(const ProtobufVariant& other) : type_(other.type_) {
+ProtobufVariant::ProtobufVariant(const ProtobufVariant &other)
+    : type_(other.type_) {
     switch (other.type_) {
         case ValueType::Message: {
-            const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(other.value);
+            const auto &msg_ptr =
+                std::get<std::unique_ptr<google::protobuf::Message>>(
+                    other.value);
             if (msg_ptr) {
-                value = std::unique_ptr<google::protobuf::Message>(msg_ptr->New());
-                std::get<std::unique_ptr<google::protobuf::Message>>(value)->CopyFrom(*msg_ptr);
+                value =
+                    std::unique_ptr<google::protobuf::Message>(msg_ptr->New());
+                std::get<std::unique_ptr<google::protobuf::Message>>(value)
+                    ->CopyFrom(*msg_ptr);
             } else {
                 value = std::unique_ptr<google::protobuf::Message>();
             }
             break;
         }
         case ValueType::List: {
-            const auto& list = std::get<std::vector<ProtobufVariant>>(other.value);
+            const auto &list =
+                std::get<std::vector<ProtobufVariant>>(other.value);
             value = std::vector<ProtobufVariant>(list);
             break;
         }
         case ValueType::Map: {
-            const auto& map = std::get<std::map<MapKey, ProtobufVariant>>(other.value);
+            const auto &map =
+                std::get<std::map<MapKey, ProtobufVariant>>(other.value);
             value = std::map<MapKey, ProtobufVariant>(map);
             break;
         }
@@ -68,27 +75,33 @@ ProtobufVariant::ProtobufVariant(const ProtobufVariant& other) : type_(other.typ
 }
 
 // Assignment operator implementation
-ProtobufVariant& ProtobufVariant::operator=(const ProtobufVariant& other) {
+ProtobufVariant &ProtobufVariant::operator=(const ProtobufVariant &other) {
     if (this != &other) {
         type_ = other.type_;
         switch (other.type_) {
             case ValueType::Message: {
-                const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(other.value);
+                const auto &msg_ptr =
+                    std::get<std::unique_ptr<google::protobuf::Message>>(
+                        other.value);
                 if (msg_ptr) {
-                    value = std::unique_ptr<google::protobuf::Message>(msg_ptr->New());
-                    std::get<std::unique_ptr<google::protobuf::Message>>(value)->CopyFrom(*msg_ptr);
+                    value = std::unique_ptr<google::protobuf::Message>(
+                        msg_ptr->New());
+                    std::get<std::unique_ptr<google::protobuf::Message>>(value)
+                        ->CopyFrom(*msg_ptr);
                 } else {
                     value = std::unique_ptr<google::protobuf::Message>();
                 }
                 break;
             }
             case ValueType::List: {
-                const auto& list = std::get<std::vector<ProtobufVariant>>(other.value);
+                const auto &list =
+                    std::get<std::vector<ProtobufVariant>>(other.value);
                 value = std::vector<ProtobufVariant>(list);
                 break;
             }
             case ValueType::Map: {
-                const auto& map = std::get<std::map<MapKey, ProtobufVariant>>(other.value);
+                const auto &map =
+                    std::get<std::map<MapKey, ProtobufVariant>>(other.value);
                 value = std::map<MapKey, ProtobufVariant>(map);
                 break;
             }
@@ -136,7 +149,8 @@ ProtobufVariant& ProtobufVariant::operator=(const ProtobufVariant& other) {
 
 // ProtobufValue implementation
 
-ProtobufValue::ProtobufValue(ProtobufVariant value) : value_(std::move(value)) {}
+ProtobufValue::ProtobufValue(ProtobufVariant value)
+    : value_(std::move(value)) {}
 
 const void *ProtobufValue::getRawObject() const {
     if (value_.type_ == ProtobufVariant::ValueType::Message) {
@@ -152,13 +166,12 @@ void *ProtobufValue::getMutableRawObject() {
     return &value_;
 }
 
-SerdeFormat ProtobufValue::getFormat() const {
-    return SerdeFormat::Protobuf;
-}
+SerdeFormat ProtobufValue::getFormat() const { return SerdeFormat::Protobuf; }
 
 const std::type_info &ProtobufValue::getType() const {
     if (value_.type_ == ProtobufVariant::ValueType::Message) {
-        auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
+        auto &msg_ptr =
+            value_.get<std::unique_ptr<google::protobuf::Message>>();
         if (msg_ptr) {
             return typeid(*msg_ptr);
         }
@@ -190,7 +203,8 @@ std::string ProtobufValue::asString() const {
         case ProtobufVariant::ValueType::String:
             return value_.get<std::string>();
         case ProtobufVariant::ValueType::Message: {
-            auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
+            auto &msg_ptr =
+                value_.get<std::unique_ptr<google::protobuf::Message>>();
             if (msg_ptr) {
                 std::string output;
                 google::protobuf::util::MessageToJsonString(*msg_ptr, &output)
@@ -210,7 +224,8 @@ std::vector<uint8_t> ProtobufValue::asBytes() const {
         case ProtobufVariant::ValueType::Bytes:
             return value_.get<std::vector<uint8_t>>();
         case ProtobufVariant::ValueType::Message: {
-            auto& msg_ptr = value_.get<std::unique_ptr<google::protobuf::Message>>();
+            auto &msg_ptr =
+                value_.get<std::unique_ptr<google::protobuf::Message>>();
             if (msg_ptr) {
                 std::string binary;
                 if (!msg_ptr->SerializeToString(&binary)) {
@@ -227,29 +242,24 @@ std::vector<uint8_t> ProtobufValue::asBytes() const {
     throw ProtobufError("Protobuf SerdeValue cannot be converted to bytes");
 }
 
-const ProtobufVariant& ProtobufValue::getProtobufVariant() const {
+const ProtobufVariant &ProtobufValue::getProtobufVariant() const {
     return value_;
 }
 
-ProtobufVariant& ProtobufValue::getMutableProtobufVariant() {
-    return value_;
-}
+ProtobufVariant &ProtobufValue::getMutableProtobufVariant() { return value_; }
 
 // ProtobufSchema implementation
 
-ProtobufSchema::ProtobufSchema(const google::protobuf::FileDescriptor *schema) : schema_(schema) {}
+ProtobufSchema::ProtobufSchema(const google::protobuf::FileDescriptor *schema)
+    : schema_(schema) {}
 
-const void *ProtobufSchema::getRawObject() const {
-    return &schema_;
-}
+const void *ProtobufSchema::getRawObject() const { return &schema_; }
 
 void *ProtobufSchema::getMutableRawObject() {
     return const_cast<void *>(static_cast<const void *>(&schema_));
 }
 
-SerdeFormat ProtobufSchema::getFormat() const {
-    return SerdeFormat::Protobuf;
-}
+SerdeFormat ProtobufSchema::getFormat() const { return SerdeFormat::Protobuf; }
 
 const std::type_info &ProtobufSchema::getType() const {
     return typeid(const google::protobuf::FileDescriptor *);
@@ -267,7 +277,8 @@ std::unique_ptr<SerdeSchema> ProtobufSchema::clone() const {
     return std::make_unique<ProtobufSchema>(schema_);
 }
 
-const google::protobuf::FileDescriptor *ProtobufSchema::getProtobufSchema() const {
+const google::protobuf::FileDescriptor *ProtobufSchema::getProtobufSchema()
+    const {
     return schema_;
 }
 
@@ -277,8 +288,8 @@ ProtobufVariant &asProtobuf(const SerdeValue &value) {
         throw std::invalid_argument("SerdeValue is not Protobuf");
     }
     // Cast to ProtobufValue and return its internal ProtobufVariant
-    auto& protobuf_value = static_cast<const ProtobufValue&>(value);
-    return const_cast<ProtobufVariant&>(protobuf_value.getProtobufVariant());
+    auto &protobuf_value = static_cast<const ProtobufValue &>(value);
+    return const_cast<ProtobufVariant &>(protobuf_value.getProtobufVariant());
 }
 
 }  // namespace srclient::serdes::protobuf

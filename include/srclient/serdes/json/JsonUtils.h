@@ -64,10 +64,10 @@ nlohmann::json transformFields(RuleContext &ctx, const nlohmann::json &schema,
  * @return Transformed JSON value
  */
 nlohmann::json transformRecursive(RuleContext &ctx,
-                                   const nlohmann::json &schema,
-                                   const std::string &path,
-                                   const nlohmann::json &value,
-                                   const std::string &field_executor_type);
+                                  const nlohmann::json &schema,
+                                  const std::string &path,
+                                  const nlohmann::json &value,
+                                  const std::string &field_executor_type);
 
 /**
  * Transform a JSON value according to field rules
@@ -78,10 +78,9 @@ nlohmann::json transformRecursive(RuleContext &ctx,
  * @param field_executor_type Type of field executor to use
  * @return Transformed JSON value
  */
-nlohmann::json transformFieldWithContext(RuleContext &ctx, const nlohmann::json &schema,
-                                         const std::string &path,
-                                         const nlohmann::json &value,
-                                         const std::string &field_executor_type);
+nlohmann::json transformFieldWithContext(
+    RuleContext &ctx, const nlohmann::json &schema, const std::string &path,
+    const nlohmann::json &value, const std::string &field_executor_type);
 
 /**
  * Validate subschemas (for allOf, anyOf, oneOf)

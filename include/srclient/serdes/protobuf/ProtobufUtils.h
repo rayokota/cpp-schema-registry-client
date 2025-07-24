@@ -26,8 +26,8 @@
 namespace srclient::serdes::protobuf::utils {
 
 // Import types from ProtobufTypes.h for convenience
-using srclient::serdes::protobuf::ProtobufVariant;
 using srclient::serdes::protobuf::MapKey;
+using srclient::serdes::protobuf::ProtobufVariant;
 
 /**
  * Transform protobuf fields using field execution context (synchronous version)
@@ -35,52 +35,50 @@ using srclient::serdes::protobuf::MapKey;
  */
 std::unique_ptr<SerdeValue> transformFields(
     RuleContext &ctx, const std::string &field_executor_type,
-    const google::protobuf::Descriptor *descriptor,
-    const SerdeValue &value);
+    const google::protobuf::Descriptor *descriptor, const SerdeValue &value);
 
 /**
  * Transform protobuf values recursively (synchronous version)
  * Ported from Rust async implementation
  */
 ProtobufVariant transformRecursive(
-    RuleContext& ctx,
-    const google::protobuf::Descriptor* descriptor,
-    const ProtobufVariant& message,
-    const std::string& field_executor_type);
+    RuleContext &ctx, const google::protobuf::Descriptor *descriptor,
+    const ProtobufVariant &message, const std::string &field_executor_type);
 
 /**
  * Transform field with rule context (synchronous version)
  * Ported from Rust async implementation
  */
 std::optional<ProtobufVariant> transformFieldWithContext(
-    RuleContext& ctx,
-    const google::protobuf::FieldDescriptor* fd,
-    const google::protobuf::Descriptor* desc,
-    const google::protobuf::Message* message,
-    const std::string& field_executor_type);
+    RuleContext &ctx, const google::protobuf::FieldDescriptor *fd,
+    const google::protobuf::Descriptor *desc,
+    const google::protobuf::Message *message,
+    const std::string &field_executor_type);
 
 /**
  * Extract field value from protobuf message
  */
-ProtobufVariant getMessageFieldValue(const google::protobuf::Message* message, 
-                                   const google::protobuf::FieldDescriptor* fd);
+ProtobufVariant getMessageFieldValue(
+    const google::protobuf::Message *message,
+    const google::protobuf::FieldDescriptor *fd);
 
 /**
  * Set field value in protobuf message
  */
-void setMessageField(google::protobuf::Message* message, 
-                     const google::protobuf::FieldDescriptor* fd, 
-                     const ProtobufVariant& value);
+void setMessageField(google::protobuf::Message *message,
+                     const google::protobuf::FieldDescriptor *fd,
+                     const ProtobufVariant &value);
 
 /**
  * Convert ProtobufVariant to SerdeValue
  */
-std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariant& variant);
+std::unique_ptr<SerdeValue> convertVariantToSerdeValue(
+    const ProtobufVariant &variant);
 
 /**
  * Convert SerdeValue back to ProtobufVariant
  */
-ProtobufVariant convertSerdeValueToProtobufValue(const SerdeValue& serde_value);
+ProtobufVariant convertSerdeValueToProtobufValue(const SerdeValue &serde_value);
 
 /**
  * Convert a FileDescriptor to base64-encoded string

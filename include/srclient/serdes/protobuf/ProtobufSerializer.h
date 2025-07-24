@@ -299,8 +299,9 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
         auto [fd, pool] =
             serde_->getParsedSchema(schema, base_->getSerde().getClient());
 
-        auto field_tf = [descriptor](RuleContext &rctx, const std::string &rule_type,
-                           const SerdeValue &val) {
+        auto field_tf = [descriptor](RuleContext &rctx,
+                                     const std::string &rule_type,
+                                     const SerdeValue &val) {
             return utils::transformFields(rctx, rule_type, descriptor, val);
         };
 
@@ -310,9 +311,11 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
             std::unique_ptr<google::protobuf::Message>(dynamic_proto->New());
         dynamic_msg->CopyFrom(message);
 
-        auto dynamic_msg_copy = std::unique_ptr<google::protobuf::Message>(dynamic_msg->New());
+        auto dynamic_msg_copy =
+            std::unique_ptr<google::protobuf::Message>(dynamic_msg->New());
         dynamic_msg_copy->CopyFrom(*dynamic_msg);
-        auto protobuf_value = protobuf::makeProtobufValue(ProtobufVariant(std::move(dynamic_msg_copy)));
+        auto protobuf_value = protobuf::makeProtobufValue(
+            ProtobufVariant(std::move(dynamic_msg_copy)));
         auto protobuf_schema = protobuf::makeProtobufSchema(fd);
 
         auto serde_value = base_->getSerde().executeRules(
@@ -327,7 +330,9 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
 
         // Convert the serde_value to a Protobuf message
         auto &proto_variant = asProtobuf(*serde_value);
-        auto &transformed_msg = *proto_variant.template get<std::unique_ptr<google::protobuf::Message>>();
+        auto &transformed_msg =
+            *proto_variant
+                 .template get<std::unique_ptr<google::protobuf::Message>>();
         encoded_bytes.resize(
             static_cast<size_t>(transformed_msg.ByteSizeLong()));
         if (!transformed_msg.SerializeToArray(

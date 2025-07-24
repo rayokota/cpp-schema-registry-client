@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <sstream>
+
 #include "srclient/serdes/RuleRegistry.h"  // For global_registry functions
 
 namespace srclient::serdes::json::utils {
@@ -83,17 +84,18 @@ nlohmann::json transformFields(RuleContext &ctx, const nlohmann::json &schema,
 }
 
 nlohmann::json transformRecursive(RuleContext &ctx,
-                                   const nlohmann::json &schema,
-                                   const std::string &path,
-                                   const nlohmann::json &value,
-                                   const std::string &field_executor_type) {
+                                  const nlohmann::json &schema,
+                                  const std::string &path,
+                                  const nlohmann::json &value,
+                                  const std::string &field_executor_type) {
     // Handle allOf, anyOf, oneOf
     if (schema.contains("allOf")) {
         // validate subschemas
         auto subschemas = schema["allOf"];
         auto subschema = validateSubschemas(subschemas, value);
         if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value, field_executor_type);
+            return transformRecursive(ctx, *subschema, path, value,
+                                      field_executor_type);
         }
     }
     if (schema.contains("anyOf")) {
@@ -101,7 +103,8 @@ nlohmann::json transformRecursive(RuleContext &ctx,
         auto subschemas = schema["anyOf"];
         auto subschema = validateSubschemas(subschemas, value);
         if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value, field_executor_type);
+            return transformRecursive(ctx, *subschema, path, value,
+                                      field_executor_type);
         }
     }
     if (schema.contains("oneOf")) {
@@ -109,7 +112,8 @@ nlohmann::json transformRecursive(RuleContext &ctx,
         auto subschemas = schema["oneOf"];
         auto subschema = validateSubschemas(subschemas, value);
         if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value, field_executor_type);
+            return transformRecursive(ctx, *subschema, path, value,
+                                      field_executor_type);
         }
     }
 
@@ -123,7 +127,7 @@ nlohmann::json transformRecursive(RuleContext &ctx,
                 std::string field_path = path_utils::appendToPath(path, key);
                 result[key] =
                     transformFieldWithContext(ctx, properties[key], field_path,
-                                        field_value, field_executor_type);
+                                              field_value, field_executor_type);
             }
         }
 
@@ -140,7 +144,7 @@ nlohmann::json transformRecursive(RuleContext &ctx,
                 std::string item_path =
                     path_utils::appendToPath(path, std::to_string(i));
                 result[i] = transformRecursive(ctx, items_schema, item_path,
-                                                result[i], field_executor_type);
+                                               result[i], field_executor_type);
             }
         }
 
@@ -155,19 +159,17 @@ nlohmann::json transformRecursive(RuleContext &ctx,
         auto rule_tags = ctx.getRule().getTags();
         std::unordered_set<std::string> rule_tags_set;
         if (rule_tags.has_value()) {
-            rule_tags_set = std::unordered_set<std::string>(
-                rule_tags->begin(), rule_tags->end());
+            rule_tags_set = std::unordered_set<std::string>(rule_tags->begin(),
+                                                            rule_tags->end());
         }
 
         // Check if rule tags overlap with field context tags (empty
         // rule_tags means apply to all)
-        bool should_apply =
-            !rule_tags.has_value() || rule_tags_set.empty();
+        bool should_apply = !rule_tags.has_value() || rule_tags_set.empty();
         if (!should_apply) {
             const auto &field_tags = field_ctx->getTags();
             for (const auto &field_tag : field_tags) {
-                if (rule_tags_set.find(field_tag) !=
-                    rule_tags_set.end()) {
+                if (rule_tags_set.find(field_tag) != rule_tags_set.end()) {
                     should_apply = true;
                     break;
                 }
@@ -178,25 +180,23 @@ nlohmann::json transformRecursive(RuleContext &ctx,
             auto message_value = makeJsonValue(value);
 
             // Get field executor type from the rule
-            auto field_executor_type =
-                ctx.getRule().getType().value_or("");
+            auto field_executor_type = ctx.getRule().getType().value_or("");
 
             // Try to get executor from context's rule registry first,
             // then global
             std::shared_ptr<RuleExecutor> executor;
             if (ctx.getRuleRegistry()) {
-                executor = ctx.getRuleRegistry()->getExecutor(
-                    field_executor_type);
+                executor =
+                    ctx.getRuleRegistry()->getExecutor(field_executor_type);
             }
             if (!executor) {
-                executor = global_registry::getRuleExecutor(
-                    field_executor_type);
+                executor =
+                    global_registry::getRuleExecutor(field_executor_type);
             }
 
             if (executor) {
                 auto field_executor =
-                    std::dynamic_pointer_cast<FieldRuleExecutor>(
-                        executor);
+                    std::dynamic_pointer_cast<FieldRuleExecutor>(executor);
                 if (!field_executor) {
                     throw JsonError("executor " + field_executor_type +
                                     " is not a field rule executor");
@@ -204,40 +204,40 @@ nlohmann::json transformRecursive(RuleContext &ctx,
 
                 auto new_value =
                     field_executor->transformField(ctx, *message_value);
-                if (new_value &&
-                    new_value->getFormat() == SerdeFormat::Json) {
+                if (new_value && new_value->getFormat() == SerdeFormat::Json) {
                     return asJson(*new_value);
                 }
             }
         }
     }
-    
+
     return value;
 }
 
-nlohmann::json transformFieldWithContext(RuleContext &ctx, const nlohmann::json &schema,
-                              const std::string &path,
-                              const nlohmann::json &value,
-                              const std::string &field_executor_type) {
+nlohmann::json transformFieldWithContext(
+    RuleContext &ctx, const nlohmann::json &schema, const std::string &path,
+    const nlohmann::json &value, const std::string &field_executor_type) {
     // Get field type from schema
     FieldType field_type = schema_navigation::getFieldType(schema);
-    
+
     // Get field name from path
     std::string field_name = path_utils::getFieldName(path);
 
     // Create message value from the JSON value
     auto message_value = makeJsonValue(value);
-    
+
     // Get inline tags from schema
-    std::unordered_set<std::string> inline_tags = schema_navigation::getConfluentTags(schema);
-    
+    std::unordered_set<std::string> inline_tags =
+        schema_navigation::getConfluentTags(schema);
+
     // Enter field context
     ctx.enterField(*message_value, path, field_name, field_type, inline_tags);
-    
+
     try {
         // Transform the field value (synchronous call)
-        nlohmann::json new_value = transformRecursive(ctx, schema, path, value, field_executor_type);
-        
+        nlohmann::json new_value =
+            transformRecursive(ctx, schema, path, value, field_executor_type);
+
         // Check for condition rules
         auto rule_kind = ctx.getRule().getKind();
         if (rule_kind.has_value() && rule_kind.value() == Kind::Condition) {
@@ -245,14 +245,15 @@ nlohmann::json transformFieldWithContext(RuleContext &ctx, const nlohmann::json 
                 bool condition_result = new_value.get<bool>();
                 if (!condition_result) {
                     ctx.exitField();
-                    throw JsonError("Rule condition failed for field: " + field_name);
+                    throw JsonError("Rule condition failed for field: " +
+                                    field_name);
                 }
             }
         }
-        
+
         ctx.exitField();
         return new_value;
-        
+
     } catch (const std::exception &e) {
         ctx.exitField();
         throw;
