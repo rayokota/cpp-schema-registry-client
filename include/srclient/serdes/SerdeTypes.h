@@ -35,7 +35,6 @@ namespace json {
 class JsonValue;
 }
 namespace protobuf {
-template <typename T>
 class ProtobufValue;
 }
 
