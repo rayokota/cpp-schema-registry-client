@@ -351,9 +351,6 @@ namespace validation_utils {
 bool validateJsonAgainstSchema(const nlohmann::json &value,
                                const nlohmann::json &schema) {
     try {
-        // For now, just try to create the schema document
-        // Full validation can be implemented later with the correct jsoncons
-        // API
         auto jsoncons_value = nlohmannToJsoncons(value);
         auto jsoncons_schema = nlohmannToJsoncons(schema);
         auto compiled_schema =

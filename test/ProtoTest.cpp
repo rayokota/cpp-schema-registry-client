@@ -110,3 +110,108 @@ TEST(ProtobufTest, BasicSerialization) {
     }
     EXPECT_EQ(obj2->oneof_string(), obj.oneof_string());
 }
+
+TEST(ProtobufTest, CelFieldTransformation) {
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = std::make_shared<MockSchemaRegistryClient>(client_config);
+    
+    // Create serializer configuration
+    std::unordered_map<std::string, std::string> rule_config;
+    auto ser_conf = SerializerConfig(
+        false,  // auto_register_schemas
+        std::make_optional(SchemaSelectorData::createLatestVersion()),  // use_schema
+        false,  // normalize_schemas
+        false,  // validate
+        rule_config  // rule_config
+    );
+    
+    // Create Author object with test data
+    test::Author obj;
+    obj.set_name("Kafka");
+    obj.set_id(123);
+    obj.set_picture(std::string({1, 2, 3})); // bytes field
+    obj.add_works("Metamorphosis");
+    obj.add_works("The Trial");
+    obj.set_oneof_string("oneof");
+    
+    // Create CEL field transformation rule
+    Rule rule;
+    rule.setName("test-cel");
+    rule.setKind(Kind::Transform);
+    rule.setMode(Mode::Write);
+    rule.setType("CEL_FIELD");
+    rule.setExpr("typeName == 'STRING' ; value + '-suffix'");
+    
+    // Create rule set with the domain rule
+    RuleSet rule_set;
+    std::vector<Rule> domain_rules = {rule};
+    rule_set.setDomainRules(domain_rules);
+    
+    // Create schema with rule set
+    Schema schema;
+    schema.setSchemaType("PROTOBUF");
+    schema.setRuleSet(rule_set);
+    
+    // Get the protobuf schema string from the test::Author descriptor
+    std::string schema_str = protobuf::utils::schemaToString(obj.GetDescriptor()->file());
+    schema.setSchema(schema_str);
+    
+    // Register the schema
+    client->registerSchema("test-value", schema, false);
+    
+    // Create rule registry and register CEL field executor
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    rule_registry->registerExecutor(std::make_shared<CelFieldExecutor>());
+    
+    // Create protobuf serializer with rule registry
+    ProtobufSerializer<test::Author> ser(
+        client,
+        std::nullopt, // schema
+        rule_registry,
+        ser_conf
+    );
+    
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Protobuf;
+    ser_ctx.headers = std::nullopt;
+
+    // Serialize the Author object (CEL transformation will be applied)
+    auto bytes = ser.serialize(ser_ctx, obj);
+    
+    // Create protobuf deserializer with rule registry
+    ProtobufDeserializer<test::Author> deser(
+        client,
+        rule_registry,
+        DeserializerConfig::createDefault()
+    );
+    
+    // Deserialize the bytes back to Author object
+    auto obj2_ptr = deser.deserialize(ser_ctx, bytes);
+    auto obj2 = dynamic_cast<const test::Author*>(obj2_ptr.get());
+    ASSERT_NE(obj2, nullptr);
+    
+    // Create expected object with transformed string fields (should have "-suffix" appended)
+    test::Author expected_obj;
+    expected_obj.set_name("Kafka-suffix");
+    expected_obj.set_id(123);
+    expected_obj.set_picture(std::string({1, 2, 3}));
+    expected_obj.add_works("Metamorphosis-suffix");
+    expected_obj.add_works("The Trial-suffix");
+    expected_obj.set_oneof_string("oneof-suffix");
+    
+    // Assert the transformed object matches expected values
+    EXPECT_EQ(obj2->name(), expected_obj.name());
+    EXPECT_EQ(obj2->id(), expected_obj.id());
+    EXPECT_EQ(obj2->picture(), expected_obj.picture());
+    EXPECT_EQ(obj2->works_size(), expected_obj.works_size());
+    for (int i = 0; i < expected_obj.works_size(); ++i) {
+        EXPECT_EQ(obj2->works(i), expected_obj.works(i));
+    }
+    EXPECT_EQ(obj2->oneof_string(), expected_obj.oneof_string());
+}
+
