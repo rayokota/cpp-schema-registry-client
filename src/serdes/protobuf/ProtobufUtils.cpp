@@ -31,10 +31,10 @@ std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
 }
 }  // namespace
 
-// Implementation of ProtobufVariantValue methods (declaration is in header)
+// Implementation of ProtobufVariant methods (declaration is in header)
 
 // Copy constructor implementation
-ProtobufVariantValue::ProtobufVariantValue(const ProtobufVariantValue& other) : type_(other.type_) {
+ProtobufVariant::ProtobufVariant(const ProtobufVariant& other) : type_(other.type_) {
     switch (other.type_) {
         case ValueType::Message: {
             const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(other.value);
@@ -47,13 +47,13 @@ ProtobufVariantValue::ProtobufVariantValue(const ProtobufVariantValue& other) : 
             break;
         }
         case ValueType::List: {
-            const auto& list = std::get<std::vector<ProtobufVariantValue>>(other.value);
-            value = std::vector<ProtobufVariantValue>(list);
+            const auto& list = std::get<std::vector<ProtobufVariant>>(other.value);
+            value = std::vector<ProtobufVariant>(list);
             break;
         }
         case ValueType::Map: {
-            const auto& map = std::get<std::map<MapKey, ProtobufVariantValue>>(other.value);
-            value = std::map<MapKey, ProtobufVariantValue>(map);
+            const auto& map = std::get<std::map<MapKey, ProtobufVariant>>(other.value);
+            value = std::map<MapKey, ProtobufVariant>(map);
             break;
         }
         case ValueType::Bool: {
@@ -97,7 +97,7 @@ ProtobufVariantValue::ProtobufVariantValue(const ProtobufVariantValue& other) : 
 }
 
 // Assignment operator implementation
-ProtobufVariantValue& ProtobufVariantValue::operator=(const ProtobufVariantValue& other) {
+ProtobufVariant& ProtobufVariant::operator=(const ProtobufVariant& other) {
     if (this != &other) {
         type_ = other.type_;
         switch (other.type_) {
@@ -112,13 +112,13 @@ ProtobufVariantValue& ProtobufVariantValue::operator=(const ProtobufVariantValue
                 break;
             }
             case ValueType::List: {
-                const auto& list = std::get<std::vector<ProtobufVariantValue>>(other.value);
-                value = std::vector<ProtobufVariantValue>(list);
+                const auto& list = std::get<std::vector<ProtobufVariant>>(other.value);
+                value = std::vector<ProtobufVariant>(list);
                 break;
             }
             case ValueType::Map: {
-                const auto& map = std::get<std::map<MapKey, ProtobufVariantValue>>(other.value);
-                value = std::map<MapKey, ProtobufVariantValue>(map);
+                const auto& map = std::get<std::map<MapKey, ProtobufVariant>>(other.value);
+                value = std::map<MapKey, ProtobufVariant>(map);
                 break;
             }
             case ValueType::Bool: {
@@ -181,12 +181,12 @@ std::unique_ptr<SerdeValue> transformFields(
                 // Transform the message using the synchronous method
                 auto message_ptr_copy = std::unique_ptr<google::protobuf::Message>(message_ptr->New());
                 message_ptr_copy->CopyFrom(*message_ptr);
-                ProtobufVariantValue message_variant(std::move(message_ptr_copy));
+                ProtobufVariant message_variant(std::move(message_ptr_copy));
                 auto transformed_message = transformRecursive(
                     ctx, descriptor, message_variant, field_executor_type);
 
                 // Extract the transformed message and create SerdeValue
-                if (transformed_message.type_ == ProtobufVariantValue::ValueType::Message &&
+                if (transformed_message.type_ == ProtobufVariant::ValueType::Message &&
                     transformed_message.is<std::unique_ptr<google::protobuf::Message>>()) {
                     auto& msg_ptr = transformed_message.get<std::unique_ptr<google::protobuf::Message>>();
                     return protobuf::makeProtobufValue(*msg_ptr);
@@ -199,33 +199,33 @@ std::unique_ptr<SerdeValue> transformFields(
     return value.clone();
 }
 
-ProtobufVariantValue transformRecursive(
+ProtobufVariant transformRecursive(
     RuleContext& ctx,
     const google::protobuf::Descriptor* descriptor,
-    const ProtobufVariantValue& message,
+    const ProtobufVariant& message,
     const std::string& field_executor_type) {
     
     switch (message.type_) {
-        case ProtobufVariantValue::ValueType::List: {
+        case ProtobufVariant::ValueType::List: {
             // Handle List
-            const auto& list = std::get<std::vector<ProtobufVariantValue>>(message.value);
-            std::vector<ProtobufVariantValue> result;
+            const auto& list = std::get<std::vector<ProtobufVariant>>(message.value);
+            std::vector<ProtobufVariant> result;
             result.reserve(list.size());
             for (const auto& item : list) {
                 result.push_back(transformRecursive(ctx, descriptor, item, field_executor_type));
             }
-            return ProtobufVariantValue(result);
+            return ProtobufVariant(result);
         }
-        case ProtobufVariantValue::ValueType::Map: {
+        case ProtobufVariant::ValueType::Map: {
             // Handle Map
-            const auto& map = std::get<std::map<MapKey, ProtobufVariantValue>>(message.value);
-            std::map<MapKey, ProtobufVariantValue> result;
+            const auto& map = std::get<std::map<MapKey, ProtobufVariant>>(message.value);
+            std::map<MapKey, ProtobufVariant> result;
             for (const auto& [key, value] : map) {
                 result.emplace(key, transformRecursive(ctx, descriptor, value, field_executor_type));
             }
-            return ProtobufVariantValue(result);
+            return ProtobufVariant(result);
         }
-        case ProtobufVariantValue::ValueType::Message: {
+        case ProtobufVariant::ValueType::Message: {
             // Handle Message
             const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(message.value);
             if (!msg_ptr) {
@@ -243,7 +243,7 @@ ProtobufVariantValue transformRecursive(
                     setMessageField(result.get(), fd, field.value());
                 }
             }
-            return ProtobufVariantValue(std::move(result));
+            return ProtobufVariant(std::move(result));
         }
         default: {
             // Handle primitive types (Bool, I32, I64, U32, U64, F32, F64, String, Bytes, EnumNumber)
@@ -270,7 +270,7 @@ ProtobufVariantValue transformRecursive(
                 }
 
                 if (should_apply) {
-                    // Create a SerdeValue from the current ProtobufVariantValue
+                    // Create a SerdeValue from the current ProtobufVariant
                     auto message_value = convertVariantToSerdeValue(message);
 
                     // Try to get executor from context's rule registry first, then global
@@ -301,7 +301,7 @@ ProtobufVariantValue transformRecursive(
     }
 }
 
-std::optional<ProtobufVariantValue> transformFieldWithContext(
+std::optional<ProtobufVariant> transformFieldWithContext(
     RuleContext& ctx,
     const google::protobuf::FieldDescriptor* fd,
     const google::protobuf::Descriptor* desc,
@@ -327,11 +327,11 @@ std::optional<ProtobufVariantValue> transformFieldWithContext(
         return std::nullopt;
     }
     
-    ProtobufVariantValue value = getMessageFieldValue(message, fd);
-    ProtobufVariantValue new_value = transformRecursive(ctx, desc, value, field_executor_type);
+    ProtobufVariant value = getMessageFieldValue(message, fd);
+    ProtobufVariant new_value = transformRecursive(ctx, desc, value, field_executor_type);
     
     // Check if this is a condition rule - simplified check
-    if (new_value.type_ == ProtobufVariantValue::ValueType::Bool && new_value.is<bool>() && !new_value.get<bool>()) {
+    if (new_value.type_ == ProtobufVariant::ValueType::Bool && new_value.is<bool>() && !new_value.get<bool>()) {
         ctx.exitField();
         // Simplified error for now - would need proper SerdeError construction
         throw std::runtime_error("Rule condition failed");
@@ -342,12 +342,12 @@ std::optional<ProtobufVariantValue> transformFieldWithContext(
 }
 
 // Helper function to extract field value from protobuf message
-ProtobufVariantValue getMessageFieldValue(const google::protobuf::Message* message, 
+ProtobufVariant getMessageFieldValue(const google::protobuf::Message* message, 
                                    const google::protobuf::FieldDescriptor* fd) {
     const google::protobuf::Reflection* reflection = message->GetReflection();
     
     if (fd->is_repeated()) {
-        std::vector<ProtobufVariantValue> list_values;
+        std::vector<ProtobufVariant> list_values;
         int field_size = reflection->FieldSize(*message, fd);
         
         for (int i = 0; i < field_size; ++i) {
@@ -389,7 +389,7 @@ ProtobufVariantValue getMessageFieldValue(const google::protobuf::Message* messa
                     break;
                 }
                 case google::protobuf::FieldDescriptor::TYPE_ENUM:
-                    list_values.emplace_back(ProtobufVariantValue::createEnum(reflection->GetRepeatedEnumValue(*message, fd, i)));
+                    list_values.emplace_back(ProtobufVariant::createEnum(reflection->GetRepeatedEnumValue(*message, fd, i)));
                     break;
                 case google::protobuf::FieldDescriptor::TYPE_MESSAGE: {
                     const google::protobuf::Message& sub_message = reflection->GetRepeatedMessage(*message, fd, i);
@@ -408,44 +408,44 @@ ProtobufVariantValue getMessageFieldValue(const google::protobuf::Message* messa
                 }
             }
         }
-        return ProtobufVariantValue(list_values);
+        return ProtobufVariant(list_values);
     } else {
         // Handle singular fields
         switch (fd->type()) {
             case google::protobuf::FieldDescriptor::TYPE_BOOL:
-                return ProtobufVariantValue(reflection->GetBool(*message, fd));
+                return ProtobufVariant(reflection->GetBool(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_INT32:
             case google::protobuf::FieldDescriptor::TYPE_SINT32:
             case google::protobuf::FieldDescriptor::TYPE_SFIXED32:
-                return ProtobufVariantValue(reflection->GetInt32(*message, fd));
+                return ProtobufVariant(reflection->GetInt32(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_INT64:
             case google::protobuf::FieldDescriptor::TYPE_SINT64:
             case google::protobuf::FieldDescriptor::TYPE_SFIXED64:
-                return ProtobufVariantValue(reflection->GetInt64(*message, fd));
+                return ProtobufVariant(reflection->GetInt64(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_UINT32:
             case google::protobuf::FieldDescriptor::TYPE_FIXED32:
-                return ProtobufVariantValue(reflection->GetUInt32(*message, fd));
+                return ProtobufVariant(reflection->GetUInt32(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_UINT64:
             case google::protobuf::FieldDescriptor::TYPE_FIXED64:
-                return ProtobufVariantValue(reflection->GetUInt64(*message, fd));
+                return ProtobufVariant(reflection->GetUInt64(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_FLOAT:
-                return ProtobufVariantValue(reflection->GetFloat(*message, fd));
+                return ProtobufVariant(reflection->GetFloat(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
-                return ProtobufVariantValue(reflection->GetDouble(*message, fd));
+                return ProtobufVariant(reflection->GetDouble(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_STRING:
-                return ProtobufVariantValue(reflection->GetString(*message, fd));
+                return ProtobufVariant(reflection->GetString(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_BYTES: {
                 std::string bytes_str = reflection->GetString(*message, fd);
                 std::vector<uint8_t> bytes(bytes_str.begin(), bytes_str.end());
-                return ProtobufVariantValue(bytes);
+                return ProtobufVariant(bytes);
             }
             case google::protobuf::FieldDescriptor::TYPE_ENUM:
-                return ProtobufVariantValue::createEnum(reflection->GetEnumValue(*message, fd));
+                return ProtobufVariant::createEnum(reflection->GetEnumValue(*message, fd));
             case google::protobuf::FieldDescriptor::TYPE_MESSAGE: {
                 const google::protobuf::Message& sub_message = reflection->GetMessage(*message, fd);
                 auto msg_copy = std::unique_ptr<google::protobuf::Message>(sub_message.New());
                 msg_copy->CopyFrom(sub_message);
-                return ProtobufVariantValue(std::move(msg_copy));
+                return ProtobufVariant(std::move(msg_copy));
             }
             case google::protobuf::FieldDescriptor::TYPE_GROUP:
                 // Handle deprecated GROUP type as message
@@ -453,10 +453,10 @@ ProtobufVariantValue getMessageFieldValue(const google::protobuf::Message* messa
                     const google::protobuf::Message& sub_message = reflection->GetMessage(*message, fd);
                     auto msg_copy = std::unique_ptr<google::protobuf::Message>(sub_message.New());
                     msg_copy->CopyFrom(sub_message);
-                    return ProtobufVariantValue(std::move(msg_copy));
+                    return ProtobufVariant(std::move(msg_copy));
                 }
             default:
-                return ProtobufVariantValue(std::string("")); // Default fallback
+                return ProtobufVariant(std::string("")); // Default fallback
         }
     }
 }
@@ -464,62 +464,62 @@ ProtobufVariantValue getMessageFieldValue(const google::protobuf::Message* messa
 // Helper function to set field value in protobuf message
 void setMessageField(google::protobuf::Message* message, 
                      const google::protobuf::FieldDescriptor* fd, 
-                     const ProtobufVariantValue& value) {
+                     const ProtobufVariant& value) {
     const google::protobuf::Reflection* reflection = message->GetReflection();
     
     switch (value.type_) {
-        case ProtobufVariantValue::ValueType::Bool: {
+        case ProtobufVariant::ValueType::Bool: {
             const auto& v = std::get<bool>(value.value);
             reflection->SetBool(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::I32: {
+        case ProtobufVariant::ValueType::I32: {
             const auto& v = std::get<int32_t>(value.value);
             reflection->SetInt32(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::EnumNumber: {
+        case ProtobufVariant::ValueType::EnumNumber: {
             const auto& v = std::get<int32_t>(value.value);
             reflection->SetEnumValue(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::I64: {
+        case ProtobufVariant::ValueType::I64: {
             const auto& v = std::get<int64_t>(value.value);
             reflection->SetInt64(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::U32: {
+        case ProtobufVariant::ValueType::U32: {
             const auto& v = std::get<uint32_t>(value.value);
             reflection->SetUInt32(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::U64: {
+        case ProtobufVariant::ValueType::U64: {
             const auto& v = std::get<uint64_t>(value.value);
             reflection->SetUInt64(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::F32: {
+        case ProtobufVariant::ValueType::F32: {
             const auto& v = std::get<float>(value.value);
             reflection->SetFloat(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::F64: {
+        case ProtobufVariant::ValueType::F64: {
             const auto& v = std::get<double>(value.value);
             reflection->SetDouble(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::String: {
+        case ProtobufVariant::ValueType::String: {
             const auto& v = std::get<std::string>(value.value);
             reflection->SetString(message, fd, v);
             break;
         }
-        case ProtobufVariantValue::ValueType::Bytes: {
+        case ProtobufVariant::ValueType::Bytes: {
             const auto& v = std::get<std::vector<uint8_t>>(value.value);
             std::string bytes_str(v.begin(), v.end());
             reflection->SetString(message, fd, bytes_str);
             break;
         }
-        case ProtobufVariantValue::ValueType::Message: {
+        case ProtobufVariant::ValueType::Message: {
             const auto& v = std::get<std::unique_ptr<google::protobuf::Message>>(value.value);
             if (v) {
                 google::protobuf::Message* mutable_msg = reflection->MutableMessage(message, fd);
@@ -527,18 +527,18 @@ void setMessageField(google::protobuf::Message* message,
             }
             break;
         }
-        case ProtobufVariantValue::ValueType::List:
-        case ProtobufVariantValue::ValueType::Map:
+        case ProtobufVariant::ValueType::List:
+        case ProtobufVariant::ValueType::Map:
             // Note: List and Map handling would require more complex logic
             // for repeated and map fields, which is not implemented here for brevity
             break;
     }
 }
 
-// Helper function to convert ProtobufVariantValue to SerdeValue
-std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariantValue& variant) {
+// Helper function to convert ProtobufVariant to SerdeValue
+std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariant& variant) {
     switch (variant.type_) {
-        case ProtobufVariantValue::ValueType::Message: {
+        case ProtobufVariant::ValueType::Message: {
             const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(variant.value);
             if (msg_ptr) {
                 return protobuf::makeProtobufValue(*msg_ptr);
@@ -557,16 +557,16 @@ std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariantValu
     return protobuf::makeProtobufValue(*dummy_message);
 }
 
-// Helper function to convert SerdeValue back to ProtobufVariantValue if needed
-ProtobufVariantValue convertSerdeValueToProtobufValue(const SerdeValue& serde_value) {
+// Helper function to convert SerdeValue back to ProtobufVariant if needed
+ProtobufVariant convertSerdeValueToProtobufValue(const SerdeValue& serde_value) {
     if (serde_value.getFormat() == SerdeFormat::Protobuf) {
         const auto& message = asProtobuf(serde_value);
         auto msg_copy = std::unique_ptr<google::protobuf::Message>(message.New());
         msg_copy->CopyFrom(message);
-        return ProtobufVariantValue(std::move(msg_copy));
+        return ProtobufVariant(std::move(msg_copy));
     }
     // Fallback for non-protobuf values
-    return ProtobufVariantValue(std::string(""));
+    return ProtobufVariant(std::string(""));
 }
 
 

@@ -26,7 +26,7 @@
 namespace srclient::serdes::protobuf::utils {
 
 // Forward declaration
-struct ProtobufVariantValue;
+struct ProtobufVariant;
 
 // C++ variant representing protobuf values - type alias for map keys
 using MapKey = std::variant<std::string, int32_t, int64_t, uint32_t, uint64_t, bool>;
@@ -35,7 +35,7 @@ using MapKey = std::variant<std::string, int32_t, int64_t, uint32_t, uint64_t, b
  * C++ variant-based structure representing protobuf values
  * Ported from Rust Value enum to use std::variant
  */
-struct ProtobufVariantValue {
+struct ProtobufVariant {
     enum class ValueType {
         Bool, I32, I64, U32, U64, F32, F64, String, Bytes, EnumNumber, Message, List, Map
     };
@@ -51,39 +51,39 @@ struct ProtobufVariantValue {
         std::string,                                            // String
         std::vector<uint8_t>,                                   // Bytes
         std::unique_ptr<google::protobuf::Message>,             // Message
-        std::vector<ProtobufVariantValue>,                             // List
-        std::map<MapKey, ProtobufVariantValue>                         // Map
+        std::vector<ProtobufVariant>,                             // List
+        std::map<MapKey, ProtobufVariant>                         // Map
     >;
     
     ValueVariant value;
     ValueType type_;
     
     // Constructors for each type
-    ProtobufVariantValue(bool v) : value(v), type_(ValueType::Bool) {}
-    ProtobufVariantValue(int32_t v, ValueType type = ValueType::I32) : value(v), type_(type) {}
-    ProtobufVariantValue(int64_t v) : value(v), type_(ValueType::I64) {}
-    ProtobufVariantValue(uint32_t v) : value(v), type_(ValueType::U32) {}
-    ProtobufVariantValue(uint64_t v) : value(v), type_(ValueType::U64) {}
-    ProtobufVariantValue(float v) : value(v), type_(ValueType::F32) {}
-    ProtobufVariantValue(double v) : value(v), type_(ValueType::F64) {}
-    ProtobufVariantValue(const std::string& v) : value(v), type_(ValueType::String) {}
-    ProtobufVariantValue(const std::vector<uint8_t>& v) : value(v), type_(ValueType::Bytes) {}
-    ProtobufVariantValue(std::unique_ptr<google::protobuf::Message> v) : value(std::move(v)), type_(ValueType::Message) {}
-    ProtobufVariantValue(const std::vector<ProtobufVariantValue>& v) : value(v), type_(ValueType::List) {}
-    ProtobufVariantValue(const std::map<MapKey, ProtobufVariantValue>& v) : value(v), type_(ValueType::Map) {}
+    ProtobufVariant(bool v) : value(v), type_(ValueType::Bool) {}
+    ProtobufVariant(int32_t v, ValueType type = ValueType::I32) : value(v), type_(type) {}
+    ProtobufVariant(int64_t v) : value(v), type_(ValueType::I64) {}
+    ProtobufVariant(uint32_t v) : value(v), type_(ValueType::U32) {}
+    ProtobufVariant(uint64_t v) : value(v), type_(ValueType::U64) {}
+    ProtobufVariant(float v) : value(v), type_(ValueType::F32) {}
+    ProtobufVariant(double v) : value(v), type_(ValueType::F64) {}
+    ProtobufVariant(const std::string& v) : value(v), type_(ValueType::String) {}
+    ProtobufVariant(const std::vector<uint8_t>& v) : value(v), type_(ValueType::Bytes) {}
+    ProtobufVariant(std::unique_ptr<google::protobuf::Message> v) : value(std::move(v)), type_(ValueType::Message) {}
+    ProtobufVariant(const std::vector<ProtobufVariant>& v) : value(v), type_(ValueType::List) {}
+    ProtobufVariant(const std::map<MapKey, ProtobufVariant>& v) : value(v), type_(ValueType::Map) {}
     
     // Special constructor for enum values
-    static ProtobufVariantValue createEnum(int32_t value) {
-        return ProtobufVariantValue(value, ValueType::EnumNumber);
+    static ProtobufVariant createEnum(int32_t value) {
+        return ProtobufVariant(value, ValueType::EnumNumber);
     }
     
     // Copy constructor and assignment operator
-    ProtobufVariantValue(const ProtobufVariantValue& other);
-    ProtobufVariantValue& operator=(const ProtobufVariantValue& other);
+    ProtobufVariant(const ProtobufVariant& other);
+    ProtobufVariant& operator=(const ProtobufVariant& other);
     
     // Move constructor and assignment operator
-    ProtobufVariantValue(ProtobufVariantValue&& other) = default;
-    ProtobufVariantValue& operator=(ProtobufVariantValue&& other) = default;
+    ProtobufVariant(ProtobufVariant&& other) = default;
+    ProtobufVariant& operator=(ProtobufVariant&& other) = default;
     
     // Visitor helper methods
     template<typename T>
@@ -109,17 +109,17 @@ std::unique_ptr<SerdeValue> transformFields(
  * Transform protobuf values recursively (synchronous version)
  * Ported from Rust async implementation
  */
-ProtobufVariantValue transformRecursive(
+ProtobufVariant transformRecursive(
     RuleContext& ctx,
     const google::protobuf::Descriptor* descriptor,
-    const ProtobufVariantValue& message,
+    const ProtobufVariant& message,
     const std::string& field_executor_type);
 
 /**
  * Transform field with rule context (synchronous version)
  * Ported from Rust async implementation
  */
-std::optional<ProtobufVariantValue> transformFieldWithContext(
+std::optional<ProtobufVariant> transformFieldWithContext(
     RuleContext& ctx,
     const google::protobuf::FieldDescriptor* fd,
     const google::protobuf::Descriptor* desc,
@@ -129,7 +129,7 @@ std::optional<ProtobufVariantValue> transformFieldWithContext(
 /**
  * Extract field value from protobuf message
  */
-ProtobufVariantValue getMessageFieldValue(const google::protobuf::Message* message, 
+ProtobufVariant getMessageFieldValue(const google::protobuf::Message* message, 
                                    const google::protobuf::FieldDescriptor* fd);
 
 /**
@@ -137,17 +137,17 @@ ProtobufVariantValue getMessageFieldValue(const google::protobuf::Message* messa
  */
 void setMessageField(google::protobuf::Message* message, 
                      const google::protobuf::FieldDescriptor* fd, 
-                     const ProtobufVariantValue& value);
+                     const ProtobufVariant& value);
 
 /**
- * Convert ProtobufVariantValue to SerdeValue
+ * Convert ProtobufVariant to SerdeValue
  */
-std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariantValue& variant);
+std::unique_ptr<SerdeValue> convertVariantToSerdeValue(const ProtobufVariant& variant);
 
 /**
- * Convert SerdeValue back to ProtobufVariantValue
+ * Convert SerdeValue back to ProtobufVariant
  */
-ProtobufVariantValue convertSerdeValueToProtobufValue(const SerdeValue& serde_value);
+ProtobufVariant convertSerdeValueToProtobufValue(const SerdeValue& serde_value);
 
 /**
  * Convert a FileDescriptor to base64-encoded string
