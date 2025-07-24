@@ -402,11 +402,179 @@ void setMessageField(google::protobuf::Message* message,
             }
             break;
         }
-        case ProtobufVariant::ValueType::List:
-        case ProtobufVariant::ValueType::Map:
-            // Note: List and Map handling would require more complex logic
-            // for repeated and map fields, which is not implemented here for brevity
+        case ProtobufVariant::ValueType::List: {
+            const auto& list = std::get<std::vector<ProtobufVariant>>(value.value);
+            
+            // Clear the repeated field first
+            reflection->ClearField(message, fd);
+            
+            // Add each element to the repeated field
+            for (const auto& item : list) {
+                switch (fd->type()) {
+                    case google::protobuf::FieldDescriptor::TYPE_BOOL:
+                        if (item.type_ == ProtobufVariant::ValueType::Bool) {
+                            reflection->AddBool(message, fd, std::get<bool>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_INT32:
+                    case google::protobuf::FieldDescriptor::TYPE_SINT32:
+                    case google::protobuf::FieldDescriptor::TYPE_SFIXED32:
+                        if (item.type_ == ProtobufVariant::ValueType::I32) {
+                            reflection->AddInt32(message, fd, std::get<int32_t>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_INT64:
+                    case google::protobuf::FieldDescriptor::TYPE_SINT64:
+                    case google::protobuf::FieldDescriptor::TYPE_SFIXED64:
+                        if (item.type_ == ProtobufVariant::ValueType::I64) {
+                            reflection->AddInt64(message, fd, std::get<int64_t>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_UINT32:
+                    case google::protobuf::FieldDescriptor::TYPE_FIXED32:
+                        if (item.type_ == ProtobufVariant::ValueType::U32) {
+                            reflection->AddUInt32(message, fd, std::get<uint32_t>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_UINT64:
+                    case google::protobuf::FieldDescriptor::TYPE_FIXED64:
+                        if (item.type_ == ProtobufVariant::ValueType::U64) {
+                            reflection->AddUInt64(message, fd, std::get<uint64_t>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_FLOAT:
+                        if (item.type_ == ProtobufVariant::ValueType::F32) {
+                            reflection->AddFloat(message, fd, std::get<float>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
+                        if (item.type_ == ProtobufVariant::ValueType::F64) {
+                            reflection->AddDouble(message, fd, std::get<double>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_STRING:
+                        if (item.type_ == ProtobufVariant::ValueType::String) {
+                            reflection->AddString(message, fd, std::get<std::string>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_BYTES:
+                        if (item.type_ == ProtobufVariant::ValueType::Bytes) {
+                            const auto& bytes = std::get<std::vector<uint8_t>>(item.value);
+                            std::string bytes_str(bytes.begin(), bytes.end());
+                            reflection->AddString(message, fd, bytes_str);
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_ENUM:
+                        if (item.type_ == ProtobufVariant::ValueType::EnumNumber) {
+                            reflection->AddEnumValue(message, fd, std::get<int32_t>(item.value));
+                        }
+                        break;
+                    case google::protobuf::FieldDescriptor::TYPE_MESSAGE:
+                    case google::protobuf::FieldDescriptor::TYPE_GROUP:
+                        if (item.type_ == ProtobufVariant::ValueType::Message) {
+                            const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(item.value);
+                            if (msg_ptr) {
+                                google::protobuf::Message* added_msg = reflection->AddMessage(message, fd);
+                                added_msg->CopyFrom(*msg_ptr);
+                            }
+                        }
+                        break;
+                }
+            }
             break;
+        }
+        case ProtobufVariant::ValueType::Map: {
+            const auto& map = std::get<std::map<MapKey, ProtobufVariant>>(value.value);
+            
+            // Clear the map field first
+            reflection->ClearField(message, fd);
+            
+            // Map fields in protobuf are implemented as repeated fields with a synthetic message type
+            // that has 'key' and 'value' fields
+            const google::protobuf::Descriptor* map_entry_descriptor = fd->message_type();
+            const google::protobuf::FieldDescriptor* key_field = map_entry_descriptor->FindFieldByName("key");
+            const google::protobuf::FieldDescriptor* value_field = map_entry_descriptor->FindFieldByName("value");
+            
+            if (!key_field || !value_field) {
+                throw ProtobufError("Map field does not have proper key/value structure");
+            }
+            
+            for (const auto& [map_key, map_value] : map) {
+                // Add a new map entry message
+                google::protobuf::Message* entry_msg = reflection->AddMessage(message, fd);
+                const google::protobuf::Reflection* entry_reflection = entry_msg->GetReflection();
+                
+                // Set the key field
+                std::visit([&](const auto& key_val) {
+                    using KeyType = std::decay_t<decltype(key_val)>;
+                    if constexpr (std::is_same_v<KeyType, std::string>) {
+                        entry_reflection->SetString(entry_msg, key_field, key_val);
+                    } else if constexpr (std::is_same_v<KeyType, int32_t>) {
+                        entry_reflection->SetInt32(entry_msg, key_field, key_val);
+                    } else if constexpr (std::is_same_v<KeyType, int64_t>) {
+                        entry_reflection->SetInt64(entry_msg, key_field, key_val);
+                    } else if constexpr (std::is_same_v<KeyType, uint32_t>) {
+                        entry_reflection->SetUInt32(entry_msg, key_field, key_val);
+                    } else if constexpr (std::is_same_v<KeyType, uint64_t>) {
+                        entry_reflection->SetUInt64(entry_msg, key_field, key_val);
+                    } else if constexpr (std::is_same_v<KeyType, bool>) {
+                        entry_reflection->SetBool(entry_msg, key_field, key_val);
+                    }
+                }, map_key);
+                
+                // Set the value field based on the ProtobufVariant type
+                switch (map_value.type_) {
+                    case ProtobufVariant::ValueType::Bool:
+                        entry_reflection->SetBool(entry_msg, value_field, std::get<bool>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::I32:
+                        entry_reflection->SetInt32(entry_msg, value_field, std::get<int32_t>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::EnumNumber:
+                        entry_reflection->SetEnumValue(entry_msg, value_field, std::get<int32_t>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::I64:
+                        entry_reflection->SetInt64(entry_msg, value_field, std::get<int64_t>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::U32:
+                        entry_reflection->SetUInt32(entry_msg, value_field, std::get<uint32_t>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::U64:
+                        entry_reflection->SetUInt64(entry_msg, value_field, std::get<uint64_t>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::F32:
+                        entry_reflection->SetFloat(entry_msg, value_field, std::get<float>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::F64:
+                        entry_reflection->SetDouble(entry_msg, value_field, std::get<double>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::String:
+                        entry_reflection->SetString(entry_msg, value_field, std::get<std::string>(map_value.value));
+                        break;
+                    case ProtobufVariant::ValueType::Bytes: {
+                        const auto& bytes = std::get<std::vector<uint8_t>>(map_value.value);
+                        std::string bytes_str(bytes.begin(), bytes.end());
+                        entry_reflection->SetString(entry_msg, value_field, bytes_str);
+                        break;
+                    }
+                    case ProtobufVariant::ValueType::Message: {
+                        const auto& msg_ptr = std::get<std::unique_ptr<google::protobuf::Message>>(map_value.value);
+                        if (msg_ptr) {
+                            google::protobuf::Message* mutable_value_msg = entry_reflection->MutableMessage(entry_msg, value_field);
+                            mutable_value_msg->CopyFrom(*msg_ptr);
+                        }
+                        break;
+                    }
+                    case ProtobufVariant::ValueType::List:
+                    case ProtobufVariant::ValueType::Map:
+                        // Nested lists and maps in map values would require recursive handling
+                        // For now, this is not supported
+                        throw ProtobufError("Nested lists and maps in map values are not supported");
+                        break;
+                }
+            }
+            break;
+        }
     }
 }
 
