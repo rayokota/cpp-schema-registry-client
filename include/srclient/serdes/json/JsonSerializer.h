@@ -2,6 +2,7 @@
 
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -23,6 +24,8 @@ class JsonSerializer;
 
 class JsonSerde;
 
+using Resolver = std::function<jsoncons::ojson(const jsoncons::uri &)>;
+
 /**
  * JSON schema caching and validation class
  * Based on JsonSerde struct from json.rs (converted to synchronous)
@@ -33,7 +36,7 @@ class JsonSerde {
     ~JsonSerde() = default;
 
     // Schema parsing and caching
-    std::pair<nlohmann::json, std::optional<std::string>> getParsedSchema(
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> getParsedSchema(
         const srclient::rest::model::Schema &schema,
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client);
 
@@ -41,8 +44,8 @@ class JsonSerde {
     void clear();
 
   private:
-    // Cache for parsed schemas: Schema -> (parsed_json, schema_string)
-    std::unordered_map<std::string, std::pair<nlohmann::json, std::string>>
+    // Cache for parsed schemas: Schema -> json_schema
+    std::unordered_map<std::string, std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>>
         parsed_schemas_cache_;
 
     mutable std::mutex cache_mutex_;
@@ -50,7 +53,8 @@ class JsonSerde {
     // Helper methods
     void resolveNamedSchema(
         const srclient::rest::model::Schema &schema,
-        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client);
+        std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+        std::unordered_map<std::string, std::string> references);
 };
 
 /**
@@ -88,7 +92,7 @@ class JsonSerializer {
     std::unique_ptr<JsonSerde> serde_;
 
     // Helper methods
-    std::pair<nlohmann::json, std::optional<std::string>> getParsedSchema(
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> getParsedSchema(
         const srclient::rest::model::Schema &schema);
 
     void validateSchema(const srclient::rest::model::Schema &schema);

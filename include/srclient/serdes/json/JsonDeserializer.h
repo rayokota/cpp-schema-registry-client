@@ -55,7 +55,7 @@ class JsonDeserializer {
     std::unique_ptr<JsonSerde> serde_;
 
     // Helper methods
-    std::pair<nlohmann::json, std::optional<std::string>> getParsedSchema(
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> getParsedSchema(
         const srclient::rest::model::Schema &schema);
 
     nlohmann::json executeFieldTransformations(

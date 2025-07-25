@@ -77,7 +77,13 @@ std::vector<srclient::rest::model::SchemaReference> buildDependencies(
 // Value transformation implementations
 namespace value_transform {
 
-nlohmann::json transformFields(RuleContext &ctx, const nlohmann::json &schema,
+nlohmann::json transformFields(RuleContext &ctx,
+                               std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
+                               const nlohmann::json &value) {
+    return nullptr;
+}
+
+nlohmann::json transformFieldsOld(RuleContext &ctx, const nlohmann::json &schema,
                                const nlohmann::json &value) {
     return transformRecursive(ctx, schema, "$", value);
 }
@@ -260,11 +266,13 @@ const nlohmann::json *validateSubschemas(const nlohmann::json &subschemas,
     }
 
     // Iterate over subschemas and find the best matching one
+    /* TODO
     for (const auto &subschema : subschemas) {
         if (validation_utils::validateJson(value, subschema)) {
             return &subschema;
         }
     }
+    */
 
     return nullptr;
 }
@@ -342,26 +350,17 @@ std::unordered_set<std::string> getConfluentTags(const nlohmann::json &schema) {
 // Validation utilities implementations
 namespace validation_utils {
 
-bool validateJson(const nlohmann::json &value,
-                               const nlohmann::json &schema) {
+bool validateJson(
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
+    const nlohmann::json &value) {
     try {
         auto jsoncons_value = nlohmannToJsoncons(value);
-        auto jsoncons_schema = nlohmannToJsoncons(schema);
-        auto compiled_schema =
-            jsoncons::jsonschema::make_json_schema(jsoncons_schema);
-
-        compiled_schema.validate(jsoncons_value);
+        schema->validate(jsoncons_value);
 
         return true;
     } catch (const std::exception &e) {
         return false;
     }
-}
-
-std::string getValidationErrorDetails(const nlohmann::json &value,
-                                      const nlohmann::json &schema) {
-    // Simplified error details for now
-    return "JSON validation failed against schema";
 }
 
 }  // namespace validation_utils
@@ -385,20 +384,20 @@ std::string getFieldName(const std::string &path) {
 }  // namespace path_utils
 
 // General utility functions
-jsoncons::json nlohmannToJsoncons(const nlohmann::json &nlohmann_json) {
+jsoncons::ojson nlohmannToJsoncons(const nlohmann::json &nlohmann_json) {
     try {
         // Convert nlohmann::json to string and parse with jsoncons
         std::string json_str = nlohmann_json.dump();
-        return jsoncons::json::parse(json_str);
+        return jsoncons::ojson::parse(json_str);
     } catch (const std::exception &e) {
         throw JsonError("Failed to convert nlohmann to jsoncons: " +
                         std::string(e.what()));
     }
 }
 
-nlohmann::json jsonconsToNlohmann(const jsoncons::json &jsoncons_json) {
+nlohmann::json jsonconsToNlohmann(const jsoncons::ojson &jsoncons_json) {
     try {
-        // Convert jsoncons::json to string and parse with nlohmann
+        // Convert jsoncons::ojson to string and parse with nlohmann
         std::string json_str = jsoncons_json.to_string();
         return nlohmann::json::parse(json_str);
     } catch (const std::exception &e) {

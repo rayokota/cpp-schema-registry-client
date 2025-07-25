@@ -56,8 +56,7 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
     // Get writer schema
     auto writer_schema_raw =
         base_->getWriterSchema(schema_id, subject_opt, std::nullopt);
-    auto [writer_schema, writer_schema_doc] =
-        getParsedSchema(writer_schema_raw);
+    auto writer_schema = getParsedSchema(writer_schema_raw);
 
     // Re-determine subject if needed
     if (!has_subject) {
@@ -88,24 +87,19 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
     // Schema evolution handling
     std::vector<Migration> migrations;
     srclient::rest::model::Schema reader_schema_raw;
-    nlohmann::json reader_schema;
-    std::optional<std::string> reader_schema_str;
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> reader_schema;
 
     if (latest_schema.has_value()) {
         // Schema evolution path
         migrations = base_->getSerde().getMigrations(
             subject, writer_schema_raw, latest_schema.value(), std::nullopt);
         reader_schema_raw = latest_schema->toSchema();
-        auto [parsed_reader_schema, parsed_reader_schema_str] =
-            getParsedSchema(reader_schema_raw);
-        reader_schema = parsed_reader_schema;
-        reader_schema_str = parsed_reader_schema_str;
+        reader_schema = getParsedSchema(reader_schema_raw);
     } else {
         // No evolution - writer and reader schemas are the same
         migrations = {};
         reader_schema_raw = writer_schema_raw;
         reader_schema = writer_schema;
-        reader_schema_str = writer_schema_doc;
     }
 
     // Parse JSON from bytes
@@ -155,7 +149,7 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
     // Validate JSON against reader schema if validation is enabled
     if (base_->getConfig().validate) {
         try {
-            validation_utils::validateJson(value, reader_schema);
+            validation_utils::validateJson(reader_schema, value);
         } catch (const std::exception &e) {
             throw JsonValidationError("JSON validation failed: " +
                                       std::string(e.what()));
@@ -171,7 +165,7 @@ void JsonDeserializer::close() {
 }
 
 // Helper method implementations
-std::pair<nlohmann::json, std::optional<std::string>>
+std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
 JsonDeserializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
@@ -193,16 +187,6 @@ nlohmann::json JsonDeserializer::executeMigrations(
 
     // Convert back to nlohmann::json
     return asJson(*migrated_value);
-}
-
-bool JsonDeserializer::isEvolutionRequired(
-    const srclient::rest::model::Schema &writer_schema,
-    const srclient::rest::model::Schema &reader_schema) {
-    // Compare schema content to determine if evolution is needed
-    auto writer_schema_str = writer_schema.getSchema();
-    auto reader_schema_str = reader_schema.getSchema();
-
-    return writer_schema_str != reader_schema_str;
 }
 
 }  // namespace srclient::serdes::json

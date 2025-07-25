@@ -49,9 +49,14 @@ namespace value_transform {
  * @param value JSON object to transform
  * @return Transformed JSON object
  */
-nlohmann::json transformFields(RuleContext &ctx, const nlohmann::json &schema,
-                               const nlohmann::json &value);
+nlohmann::json transformFields(
+    RuleContext &ctx,
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
+    const nlohmann::json &value);
 
+nlohmann::json transformFieldsOld(RuleContext &ctx,
+                                  const nlohmann::json &schema,
+                                  const nlohmann::json &value);
 /**
  * Transform a JSON object
  * @param ctx Rule execution context
@@ -145,21 +150,13 @@ namespace validation_utils {
 
 /**
  * Validate JSON value against schema
- * @param value JSON value to validate
  * @param schema JSON schema for validation
+ * @param value JSON value to validate
  * @return True if validation passes, false otherwise
  */
-bool validateJson(const nlohmann::json &value,
-                               const nlohmann::json &schema);
-
-/**
- * Get validation error details
- * @param value JSON value that failed validation
- * @param schema JSON schema used for validation
- * @return Human-readable error message
- */
-std::string getValidationErrorDetails(const nlohmann::json &value,
-                                      const nlohmann::json &schema);
+bool validateJson(
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
+    const nlohmann::json &value);
 
 }  // namespace validation_utils
 
@@ -191,17 +188,17 @@ std::string getFieldName(const std::string &path);
  */
 
 /**
- * Convert nlohmann::json to jsoncons::json for validation
+ * Convert nlohmann::json to jsoncons::ojson for validation
  * @param nlohmann_json nlohmann::json object
- * @return jsoncons::json object
+ * @return jsoncons::ojson object
  */
-jsoncons::json nlohmannToJsoncons(const nlohmann::json &nlohmann_json);
+jsoncons::ojson nlohmannToJsoncons(const nlohmann::json &nlohmann_json);
 
 /**
- * Convert jsoncons::json to nlohmann::json
- * @param jsoncons_json jsoncons::json object
+ * Convert jsoncons::ojson to nlohmann::json
+ * @param jsoncons_json jsoncons::ojson object
  * @return nlohmann::json object
  */
-nlohmann::json jsonconsToNlohmann(const jsoncons::json &jsoncons_json);
+nlohmann::json jsonconsToNlohmann(const jsoncons::ojson &jsoncons_json);
 
 }  // namespace srclient::serdes::json::utils

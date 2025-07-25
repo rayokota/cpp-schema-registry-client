@@ -9,7 +9,7 @@ using namespace utils;
 // JsonSerde implementation
 JsonSerde::JsonSerde() {}
 
-std::pair<nlohmann::json, std::optional<std::string>>
+std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
 JsonSerde::getParsedSchema(
     const srclient::rest::model::Schema &schema,
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
@@ -21,8 +21,12 @@ JsonSerde::getParsedSchema(
 
     auto it = parsed_schemas_cache_.find(cache_key);
     if (it != parsed_schemas_cache_.end()) {
-        return {it->second.first, it->second.second};
+        return it->second;
     }
+
+    // Parse schema with references
+    std::unordered_map<std::string, std::string> references;
+    resolveNamedSchema(schema, client, references);
 
     // Parse new schema
     nlohmann::json parsed_schema;
@@ -33,13 +37,15 @@ JsonSerde::getParsedSchema(
                         std::string(e.what()));
     }
 
-    // TODO: Resolve named schemas/references
-    resolveNamedSchema(schema, client);
+    auto jsoncons_schema = nlohmannToJsoncons(parsed_schema);
+    auto compiled_schema =
+        std::make_shared<jsoncons::jsonschema::json_schema<jsoncons::ojson>>(
+            jsoncons::jsonschema::make_json_schema(jsoncons_schema));
 
     // Store in cache
-    parsed_schemas_cache_[cache_key] = {parsed_schema, cache_key};
+    parsed_schemas_cache_[cache_key] = compiled_schema;
 
-    return {parsed_schema, cache_key};
+    return compiled_schema;
 }
 
 void JsonSerde::clear() {
@@ -49,7 +55,8 @@ void JsonSerde::clear() {
 
 void JsonSerde::resolveNamedSchema(
     const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
+    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+    std::unordered_map<std::string, std::string> references) {
     // Use the schema resolution utilities
     // TODO: Implement reference resolution for JSON schemas
 }
@@ -105,8 +112,7 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
     }
 
     srclient::rest::model::Schema target_schema;
-    nlohmann::json parsed_schema;
-    std::optional<std::string> schema_str;
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> parsed_schema;
 
     if (latest_schema.has_value()) {
         target_schema = latest_schema->toSchema();
@@ -120,7 +126,7 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
         }
 
         // Get parsed schema
-        std::tie(parsed_schema, schema_str) = getParsedSchema(target_schema);
+        parsed_schema = getParsedSchema(target_schema);
 
         // Create field transformer lambda
         auto field_transformer =
@@ -185,22 +191,16 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
             }
         }
 
-        std::tie(parsed_schema, schema_str) = getParsedSchema(target_schema);
+        parsed_schema = getParsedSchema(target_schema);
     }
 
     // Validate JSON against schema if validation is enabled
     if (base_->getConfig().validate) {
-        if (schema_str.has_value()) {
-            try {
-                validation_utils::validateJson(mutable_value, parsed_schema);
-            } catch (const std::exception &e) {
-                throw JsonValidationError("JSON validation failed: " +
-                                          std::string(e.what()));
-            }
-        } else {
-            // If schema string is not available, we cannot validate
-            // This case might need a different error handling strategy
-            // For now, we'll just serialize without validation
+        try {
+            validation_utils::validateJson(parsed_schema, mutable_value);
+        } catch (const std::exception &e) {
+            throw JsonValidationError("JSON validation failed: " +
+                                      std::string(e.what()));
         }
     }
 
@@ -225,7 +225,7 @@ void JsonSerializer::close() {
 }
 
 // Helper method implementations
-std::pair<nlohmann::json, std::optional<std::string>>
+std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
 JsonSerializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
