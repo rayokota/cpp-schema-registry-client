@@ -149,7 +149,7 @@ namespace validation_utils {
  * @param schema JSON schema for validation
  * @return True if validation passes, false otherwise
  */
-bool validateJsonAgainstSchema(const nlohmann::json &value,
+bool validateJson(const nlohmann::json &value,
                                const nlohmann::json &schema);
 
 /**

@@ -37,10 +37,6 @@ class JsonSerde {
         const srclient::rest::model::Schema &schema,
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client);
 
-    // Validator caching
-    bool validateJson(const nlohmann::json &value,
-                      const nlohmann::json &schema);
-
     // Clear caches
     void clear();
 
@@ -94,9 +90,6 @@ class JsonSerializer {
     // Helper methods
     std::pair<nlohmann::json, std::optional<std::string>> getParsedSchema(
         const srclient::rest::model::Schema &schema);
-
-    bool validateJson(const nlohmann::json &value,
-                      const nlohmann::json &schema);
 
     void validateSchema(const srclient::rest::model::Schema &schema);
 

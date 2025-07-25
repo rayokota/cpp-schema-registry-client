@@ -114,6 +114,119 @@ TEST(JsonTest, BasicSerialization) {
     ASSERT_EQ(obj2, obj);
 }
 
+TEST(JsonTest, SerializeReferences) {
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = SchemaRegistryClient::newClient(client_config);
+    
+    // Create serializer configuration
+    auto ser_conf = SerializerConfig(
+        false,  // auto_register_schemas
+        std::make_optional(SchemaSelectorData::createLatestVersion()),  // use_schema
+        true,   // normalize_schemas  
+        true,  // validate
+        {}      // rule_config
+    );
+    
+    // Define reference schema string
+    std::string ref_schema_str = R"(
+    {
+        "type": "object",
+        "properties": {
+            "intField": {"type": "integer"},
+            "doubleField": {"type": "number"},
+            "stringField": {
+                "type": "string",
+                "confluent:tags": ["PII"]
+            },
+            "booleanField": {"type": "boolean"},
+            "bytesField": {
+                "type": "string",
+                "contentEncoding": "base64",
+                "confluent:tags": ["PII"]
+            }
+        }
+    }
+    )";
+    
+    // Create reference schema object
+    Schema ref_schema;
+    ref_schema.setSchemaType(std::make_optional<std::string>("JSON"));
+    ref_schema.setSchema(std::make_optional<std::string>(ref_schema_str));
+    
+    // Register the reference schema
+    auto registered_ref_schema = client->registerSchema("ref", ref_schema, false);
+    
+    // Define main schema string that references the "ref" schema
+    std::string schema_str = R"(
+    {
+        "type": "object",
+        "properties": {
+            "otherField": {"$ref": "ref"}
+        }
+    }
+    )";
+    
+    // Create schema reference
+    SchemaReference schema_ref;
+    schema_ref.setName(std::make_optional<std::string>("ref"));
+    schema_ref.setSubject(std::make_optional<std::string>("ref"));
+    schema_ref.setVersion(std::make_optional<int32_t>(1));
+    
+    // Create vector of references
+    std::vector<SchemaReference> refs = {schema_ref};
+    
+    // Create main schema object with references
+    Schema schema;
+    schema.setSchemaType(std::make_optional<std::string>("JSON"));
+    schema.setReferences(std::make_optional<std::vector<SchemaReference>>(refs));
+    schema.setSchema(std::make_optional<std::string>(schema_str));
+    
+    // Register the main schema
+    auto registered_schema = client->registerSchema("test-value", schema, false);
+    
+    // Create test JSON object
+    std::string obj_str = R"(
+    {
+        "otherField": {
+            "intField": 123,
+            "doubleField": 45.67,
+            "stringField": "hi",
+            "booleanField": true,
+            "bytesField": "Zm9vYmFy"
+        }
+    }
+    )";
+    
+    nlohmann::json obj = nlohmann::json::parse(obj_str);
+    
+    // Create rule registry
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    
+    // Create JsonSerializer with no specific schema (uses latest from registry)
+    JsonSerializer serializer(client, std::nullopt, rule_registry, ser_conf);
+    
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Json;
+    
+    // Serialize the JSON object
+    std::vector<uint8_t> bytes = serializer.serialize(ser_ctx, obj);
+    
+    // Create JsonDeserializer
+    auto deser_conf = DeserializerConfig::createDefault();
+    JsonDeserializer deserializer(client, rule_registry, deser_conf);
+    
+    // Deserialize back to JSON object
+    nlohmann::json obj2 = deserializer.deserialize(ser_ctx, bytes);
+    
+    // Assert that the original and deserialized objects are equal
+    ASSERT_EQ(obj2, obj);
+}
+
 TEST(JsonTest, CelField) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
@@ -125,7 +238,7 @@ TEST(JsonTest, CelField) {
         false,  // auto_register_schemas
         std::make_optional(SchemaSelectorData::createLatestVersion()),  // use_schema
         false,  // normalize_schemas
-        false,  // validate
+        true,  // validate
         {}  // rule_config
     );
     

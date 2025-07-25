@@ -155,7 +155,7 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
     // Validate JSON against reader schema if validation is enabled
     if (base_->getConfig().validate) {
         try {
-            validateJson(value, reader_schema);
+            validation_utils::validateJson(value, reader_schema);
         } catch (const std::exception &e) {
             throw JsonValidationError("JSON validation failed: " +
                                       std::string(e.what()));
@@ -174,11 +174,6 @@ void JsonDeserializer::close() {
 std::pair<nlohmann::json, std::optional<std::string>>
 JsonDeserializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
-}
-
-bool JsonDeserializer::validateJson(const nlohmann::json &value,
-                                    const nlohmann::json &schema) {
-    return serde_->validateJson(value, schema);
 }
 
 nlohmann::json JsonDeserializer::executeFieldTransformations(

@@ -58,9 +58,6 @@ class JsonDeserializer {
     std::pair<nlohmann::json, std::optional<std::string>> getParsedSchema(
         const srclient::rest::model::Schema &schema);
 
-    bool validateJson(const nlohmann::json &value,
-                      const nlohmann::json &schema);
-
     nlohmann::json executeFieldTransformations(
         const nlohmann::json &value, const nlohmann::json &schema,
         const RuleContext &context, const std::string &field_executor_type);

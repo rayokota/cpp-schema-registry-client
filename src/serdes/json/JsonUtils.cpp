@@ -261,7 +261,7 @@ const nlohmann::json *validateSubschemas(const nlohmann::json &subschemas,
 
     // Iterate over subschemas and find the best matching one
     for (const auto &subschema : subschemas) {
-        if (validation_utils::validateJsonAgainstSchema(value, subschema)) {
+        if (validation_utils::validateJson(value, subschema)) {
             return &subschema;
         }
     }
@@ -342,7 +342,7 @@ std::unordered_set<std::string> getConfluentTags(const nlohmann::json &schema) {
 // Validation utilities implementations
 namespace validation_utils {
 
-bool validateJsonAgainstSchema(const nlohmann::json &value,
+bool validateJson(const nlohmann::json &value,
                                const nlohmann::json &schema) {
     try {
         auto jsoncons_value = nlohmannToJsoncons(value);

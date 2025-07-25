@@ -42,25 +42,6 @@ JsonSerde::getParsedSchema(
     return {parsed_schema, cache_key};
 }
 
-bool JsonSerde::validateJson(const nlohmann::json &value,
-                             const nlohmann::json &schema) {
-    try {
-        // For now, just try to create the schema document
-        // Full validation can be implemented later with the correct jsoncons
-        // API
-        auto jsoncons_schema = nlohmannToJsoncons(schema);
-        auto compiled_schema =
-            jsoncons::jsonschema::make_json_schema(jsoncons_schema);
-
-        // If we can create the schema successfully, consider validation passed
-        // TODO: Implement actual value validation when the jsoncons API is
-        // available
-        return true;
-    } catch (const std::exception &e) {
-        return false;
-    }
-}
-
 void JsonSerde::clear() {
     std::lock_guard<std::mutex> lock(cache_mutex_);
     parsed_schemas_cache_.clear();
@@ -211,7 +192,7 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
     if (base_->getConfig().validate) {
         if (schema_str.has_value()) {
             try {
-                validateJson(mutable_value, parsed_schema);
+                validation_utils::validateJson(mutable_value, parsed_schema);
             } catch (const std::exception &e) {
                 throw JsonValidationError("JSON validation failed: " +
                                           std::string(e.what()));
@@ -247,11 +228,6 @@ void JsonSerializer::close() {
 std::pair<nlohmann::json, std::optional<std::string>>
 JsonSerializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
-}
-
-bool JsonSerializer::validateJson(const nlohmann::json &value,
-                                  const nlohmann::json &schema) {
-    return serde_->validateJson(value, schema);
 }
 
 void JsonSerializer::validateSchema(

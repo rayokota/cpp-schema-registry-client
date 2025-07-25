@@ -111,6 +111,99 @@ TEST(ProtobufTest, BasicSerialization) {
     EXPECT_EQ(obj2->oneof_string(), obj.oneof_string());
 }
 
+TEST(ProtobufTest, SerializeReference) {
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = std::make_shared<MockSchemaRegistryClient>(client_config);
+    
+    // Create serializer configuration
+    auto ser_conf = SerializerConfig::createDefault();
+    
+    // Create TestMessage object with test data
+    test::TestMessage msg;
+    msg.set_test_string("hi");
+    msg.set_test_bool(true);
+    msg.set_test_bytes(std::string({1, 2, 3})); // bytes field
+    msg.set_test_double(1.23);
+    msg.set_test_float(3.45f);
+    msg.set_test_fixed32(67);
+    msg.set_test_fixed64(89);
+    msg.set_test_int32(100);
+    msg.set_test_int64(200);
+    msg.set_test_sfixed32(300);
+    msg.set_test_sfixed64(400);
+    msg.set_test_sint32(500);
+    msg.set_test_sint64(600);
+    msg.set_test_uint32(700);
+    msg.set_test_uint64(800);
+    
+    // Create DependencyMessage object with TestMessage
+    test::DependencyMessage obj;
+    obj.set_is_active(true);
+    obj.mutable_test_message()->CopyFrom(msg);
+    
+    // Create rule registry
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    
+    // Create protobuf serializer with reference subject name strategy
+    ProtobufSerializer<test::DependencyMessage> ser(
+        client,
+        std::nullopt, // schema
+        rule_registry,
+        ser_conf,
+        defaultReferenceSubjectNameStrategy
+    );
+    
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Protobuf;
+    ser_ctx.headers = std::nullopt;
+
+    // Serialize the DependencyMessage object
+    auto bytes = ser.serialize(ser_ctx, obj);
+    
+    // Create protobuf deserializer
+    ProtobufDeserializer<test::DependencyMessage> deser(
+        client,
+        rule_registry,
+        DeserializerConfig::createDefault()
+    );
+    
+    // Deserialize the bytes back to DependencyMessage object
+    auto obj2_ptr = deser.deserialize(ser_ctx, bytes);
+    
+    // Cast to the specific message type
+    auto obj2 = dynamic_cast<const test::DependencyMessage*>(obj2_ptr.get());
+    ASSERT_NE(obj2, nullptr);
+    
+    // Assert objects are equal
+    EXPECT_EQ(obj2->is_active(), obj.is_active());
+    ASSERT_TRUE(obj2->has_test_message());
+    ASSERT_TRUE(obj.has_test_message());
+    
+    const auto& test_msg2 = obj2->test_message();
+    const auto& test_msg1 = obj.test_message();
+    
+    EXPECT_EQ(test_msg2.test_string(), test_msg1.test_string());
+    EXPECT_EQ(test_msg2.test_bool(), test_msg1.test_bool());
+    EXPECT_EQ(test_msg2.test_bytes(), test_msg1.test_bytes());
+    EXPECT_DOUBLE_EQ(test_msg2.test_double(), test_msg1.test_double());
+    EXPECT_FLOAT_EQ(test_msg2.test_float(), test_msg1.test_float());
+    EXPECT_EQ(test_msg2.test_fixed32(), test_msg1.test_fixed32());
+    EXPECT_EQ(test_msg2.test_fixed64(), test_msg1.test_fixed64());
+    EXPECT_EQ(test_msg2.test_int32(), test_msg1.test_int32());
+    EXPECT_EQ(test_msg2.test_int64(), test_msg1.test_int64());
+    EXPECT_EQ(test_msg2.test_sfixed32(), test_msg1.test_sfixed32());
+    EXPECT_EQ(test_msg2.test_sfixed64(), test_msg1.test_sfixed64());
+    EXPECT_EQ(test_msg2.test_sint32(), test_msg1.test_sint32());
+    EXPECT_EQ(test_msg2.test_sint64(), test_msg1.test_sint64());
+    EXPECT_EQ(test_msg2.test_uint32(), test_msg1.test_uint32());
+    EXPECT_EQ(test_msg2.test_uint64(), test_msg1.test_uint64());
+}
+
 TEST(ProtobufTest, CelFieldTransformation) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
@@ -214,8 +307,6 @@ TEST(ProtobufTest, CelFieldTransformation) {
     }
     EXPECT_EQ(obj2->oneof_string(), expected_obj.oneof_string());
 }
-
-
 
 TEST(ProtobufTest, FieldEncryption) {
     // Register LocalKmsDriver
@@ -345,97 +436,4 @@ TEST(ProtobufTest, FieldEncryption) {
         EXPECT_EQ(obj2->works(i), expected_obj.works(i));
     }
     EXPECT_EQ(obj2->oneof_string(), expected_obj.oneof_string());
-}
-
-TEST(ProtobufTest, SerializeReference) {
-    // Create client configuration with mock URL
-    std::vector<std::string> urls = {"mock://"};
-    auto client_config = std::make_shared<const ClientConfiguration>(urls);
-    auto client = std::make_shared<MockSchemaRegistryClient>(client_config);
-    
-    // Create serializer configuration
-    auto ser_conf = SerializerConfig::createDefault();
-    
-    // Create TestMessage object with test data
-    test::TestMessage msg;
-    msg.set_test_string("hi");
-    msg.set_test_bool(true);
-    msg.set_test_bytes(std::string({1, 2, 3})); // bytes field
-    msg.set_test_double(1.23);
-    msg.set_test_float(3.45f);
-    msg.set_test_fixed32(67);
-    msg.set_test_fixed64(89);
-    msg.set_test_int32(100);
-    msg.set_test_int64(200);
-    msg.set_test_sfixed32(300);
-    msg.set_test_sfixed64(400);
-    msg.set_test_sint32(500);
-    msg.set_test_sint64(600);
-    msg.set_test_uint32(700);
-    msg.set_test_uint64(800);
-    
-    // Create DependencyMessage object with TestMessage
-    test::DependencyMessage obj;
-    obj.set_is_active(true);
-    obj.mutable_test_message()->CopyFrom(msg);
-    
-    // Create rule registry
-    auto rule_registry = std::make_shared<RuleRegistry>();
-    
-    // Create protobuf serializer with reference subject name strategy
-    ProtobufSerializer<test::DependencyMessage> ser(
-        client,
-        std::nullopt, // schema
-        rule_registry,
-        ser_conf,
-        defaultReferenceSubjectNameStrategy
-    );
-    
-    // Create serialization context
-    SerializationContext ser_ctx;
-    ser_ctx.topic = "test";
-    ser_ctx.serde_type = SerdeType::Value;
-    ser_ctx.serde_format = SerdeFormat::Protobuf;
-    ser_ctx.headers = std::nullopt;
-
-    // Serialize the DependencyMessage object
-    auto bytes = ser.serialize(ser_ctx, obj);
-    
-    // Create protobuf deserializer
-    ProtobufDeserializer<test::DependencyMessage> deser(
-        client,
-        rule_registry,
-        DeserializerConfig::createDefault()
-    );
-    
-    // Deserialize the bytes back to DependencyMessage object
-    auto obj2_ptr = deser.deserialize(ser_ctx, bytes);
-    
-    // Cast to the specific message type
-    auto obj2 = dynamic_cast<const test::DependencyMessage*>(obj2_ptr.get());
-    ASSERT_NE(obj2, nullptr);
-    
-    // Assert objects are equal
-    EXPECT_EQ(obj2->is_active(), obj.is_active());
-    ASSERT_TRUE(obj2->has_test_message());
-    ASSERT_TRUE(obj.has_test_message());
-    
-    const auto& test_msg2 = obj2->test_message();
-    const auto& test_msg1 = obj.test_message();
-    
-    EXPECT_EQ(test_msg2.test_string(), test_msg1.test_string());
-    EXPECT_EQ(test_msg2.test_bool(), test_msg1.test_bool());
-    EXPECT_EQ(test_msg2.test_bytes(), test_msg1.test_bytes());
-    EXPECT_DOUBLE_EQ(test_msg2.test_double(), test_msg1.test_double());
-    EXPECT_FLOAT_EQ(test_msg2.test_float(), test_msg1.test_float());
-    EXPECT_EQ(test_msg2.test_fixed32(), test_msg1.test_fixed32());
-    EXPECT_EQ(test_msg2.test_fixed64(), test_msg1.test_fixed64());
-    EXPECT_EQ(test_msg2.test_int32(), test_msg1.test_int32());
-    EXPECT_EQ(test_msg2.test_int64(), test_msg1.test_int64());
-    EXPECT_EQ(test_msg2.test_sfixed32(), test_msg1.test_sfixed32());
-    EXPECT_EQ(test_msg2.test_sfixed64(), test_msg1.test_sfixed64());
-    EXPECT_EQ(test_msg2.test_sint32(), test_msg1.test_sint32());
-    EXPECT_EQ(test_msg2.test_sint64(), test_msg1.test_sint64());
-    EXPECT_EQ(test_msg2.test_uint32(), test_msg1.test_uint32());
-    EXPECT_EQ(test_msg2.test_uint64(), test_msg1.test_uint64());
 }
