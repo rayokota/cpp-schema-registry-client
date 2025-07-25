@@ -80,17 +80,19 @@ CelExecutor::newRuleBuilder(google::protobuf::Arena *arena) {
 
 std::unique_ptr<SerdeValue> CelExecutor::transform(
     srclient::serdes::RuleContext &ctx, const SerdeValue &msg) {
-    absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
-    args.emplace("msg", fromSerdeValue(msg, &arena_));
+    google::protobuf::Arena arena;
 
-    return execute(ctx, msg, args);
+    absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
+    args.emplace("msg", fromSerdeValue(msg, &arena));
+
+    return execute(ctx, msg, args, &arena);
 }
 
 std::unique_ptr<SerdeValue> CelExecutor::execute(
     srclient::serdes::RuleContext &ctx, const SerdeValue &msg,
     const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>
-        &args) {
-    google::protobuf::Arena arena;
+        &args,
+    google::protobuf::Arena *arena) {
 
     // Get the expression from the rule context
     const Rule &rule = ctx.getRule();
@@ -114,7 +116,7 @@ std::unique_ptr<SerdeValue> CelExecutor::execute(
         absl::string_view guard = parts[0];
         if (!guard.empty()) {
             auto guard_result =
-                executeRule(ctx, msg, std::string(guard), args, &arena);
+                executeRule(ctx, msg, std::string(guard), args, arena);
             if (guard_result) {
                 // Check if guard evaluates to false - if so, return copy of
                 // original message
@@ -129,7 +131,7 @@ std::unique_ptr<SerdeValue> CelExecutor::execute(
     }
 
     // Execute the main expression
-    auto result = executeRule(ctx, msg, expr, args, &arena);
+    auto result = executeRule(ctx, msg, expr, args, arena);
     if (result) {
         return toSerdeValue(msg, *result);
     }

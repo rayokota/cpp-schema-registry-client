@@ -33,7 +33,8 @@ class CelExecutor : public RuleExecutor {
     std::unique_ptr<SerdeValue> execute(
         srclient::serdes::RuleContext &ctx, const SerdeValue &msg,
         const absl::flat_hash_map<std::string,
-                                  google::api::expr::runtime::CelValue> &args);
+                                  google::api::expr::runtime::CelValue> &args,
+        google::protobuf::Arena *arena);
 
     google::api::expr::runtime::CelValue fromSerdeValue(
         const SerdeValue &value, google::protobuf::Arena *arena);

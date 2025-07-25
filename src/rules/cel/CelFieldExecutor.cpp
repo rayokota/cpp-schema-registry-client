@@ -76,7 +76,7 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(
                                 field_ctx->getContainingMessage(), &arena));
 
     // Execute the CEL expression using the shared executor
-    auto result = executor_->execute(ctx, field_value, args);
+    auto result = executor_->execute(ctx, field_value, args, &arena);
     if (result) {
         return result;
     }
