@@ -37,7 +37,7 @@ JsonSerde::getParsedSchema(
                         std::string(e.what()));
     }
 
-    auto jsoncons_schema = nlohmannToJsoncons(parsed_schema);
+    auto jsoncons_schema = jsonToOJson(parsed_schema);
     auto compiled_schema =
         std::make_shared<jsoncons::jsonschema::json_schema<jsoncons::ojson>>(
             jsoncons::jsonschema::make_json_schema(jsoncons_schema));

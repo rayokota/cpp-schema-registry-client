@@ -80,20 +80,17 @@ class JsonValue : public SerdeValue {
 };
 
 // Helper functions for creating JSON SerdeValue instances
-inline std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value) {
-    return std::make_unique<JsonValue>(value);
-}
+std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value);
 
-inline std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value) {
-    return std::make_unique<JsonValue>(std::move(value));
-}
+std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value);
 
-std::unique_ptr<SerdeValue> makeJsonValueNew(const jsoncons::ojson &value);
+std::unique_ptr<SerdeValue> makeJsonValue(const jsoncons::ojson &value);
 
-std::unique_ptr<SerdeValue> makeJsonValueNew(jsoncons::ojson &&value);
+std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value);
 
 // Utility functions for JSON value and schema extraction
 nlohmann::json asJson(const SerdeValue &value);
-jsoncons::ojson asJsonNew(const SerdeValue &value);
+
+jsoncons::ojson asOJson(const SerdeValue &value);
 
 }  // namespace srclient::serdes::json

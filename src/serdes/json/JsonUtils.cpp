@@ -81,7 +81,7 @@ nlohmann::json transformFields(RuleContext &ctx,
                                std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
                                const nlohmann::json &value) {
     // Convert nlohmann::json to jsoncons::ojson for processing
-    auto jsoncons_value = nlohmannToJsoncons(value);
+    auto jsoncons_value = jsonToOJson(value);
     
     // Create a mutable copy for transformation
     auto mutable_value = jsoncons_value;
@@ -122,7 +122,7 @@ nlohmann::json transformFields(RuleContext &ctx,
 
                             std::string input = field_value.is_string() ? field_value.as_string() : "";
                             std::string field_path = path_utils::appendToPath(instance_location.to_string(), key);
-                            auto transformed_value = transformFieldWithCtx(
+                            auto transformed_value = transformFieldWithContext(
                                 ctx, properties[key], field_path, field_value);
 
                             std::string output = transformed_value.is_string() ? transformed_value.as_string() : "";
@@ -145,7 +145,7 @@ nlohmann::json transformFields(RuleContext &ctx,
         });
         
         // Convert back to nlohmann::json and return
-        return jsonconsToNlohmann(mutable_value);
+        return ojsonToJson(mutable_value);
         
     } catch (const std::exception& e) {
         // If walk fails, fall back to the original value
@@ -153,74 +153,55 @@ nlohmann::json transformFields(RuleContext &ctx,
     }
 }
 
-nlohmann::json transformFieldsOld(RuleContext &ctx, const nlohmann::json &schema,
-                               const nlohmann::json &value) {
-    return transformRecursive(ctx, schema, "$", value);
+jsoncons::ojson transformFieldWithContext(RuleContext &ctx,
+                                         const jsoncons::ojson &schema,
+                                         const std::string &path,
+                                         const jsoncons::ojson &value) {
+    // Get field type from schema
+    FieldType field_type = schema_navigation::getFieldType(schema);
+
+    // Get field name from path
+    std::string field_name = path_utils::getFieldName(path);
+
+    // Create message value from the JSON value
+    auto message_value = makeJsonValue(value);
+
+    // Get inline tags from schema
+    std::unordered_set<std::string> inline_tags =
+        schema_navigation::getConfluentTags(schema);
+
+    // Enter field context
+    ctx.enterField(*message_value, path, field_name, field_type, inline_tags);
+
+    try {
+        // Transform the field value (synchronous call)
+        jsoncons::ojson new_value = transform(ctx, schema, path, value);
+
+        // Check for condition rules
+        auto rule_kind = ctx.getRule().getKind();
+        if (rule_kind.has_value() && rule_kind.value() == Kind::Condition) {
+            if (new_value.is_bool()) {
+                bool condition_result = new_value.as<bool>();
+                if (!condition_result) {
+                    throw JsonError("Rule condition failed for field: " +
+                                    field_name);
+                }
+            }
+        }
+
+        ctx.exitField();
+        return new_value;
+
+    } catch (const std::exception &e) {
+        ctx.exitField();
+        throw;
+    }
 }
 
-nlohmann::json transformRecursive(RuleContext &ctx,
-                                  const nlohmann::json &schema,
+jsoncons::ojson transform(RuleContext &ctx,
+                                  const jsoncons::ojson &schema,
                                   const std::string &path,
-                                  const nlohmann::json &value) {
-    // Handle allOf, anyOf, oneOf
-    if (schema.contains("allOf")) {
-        // validate subschemas
-        auto subschemas = schema["allOf"];
-        auto subschema = validateSubschemas(subschemas, value);
-        if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value);
-        }
-    }
-    if (schema.contains("anyOf")) {
-        // validate subschemas
-        auto subschemas = schema["anyOf"];
-        auto subschema = validateSubschemas(subschemas, value);
-        if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value);
-        }
-    }
-    if (schema.contains("oneOf")) {
-        // validate subschemas
-        auto subschemas = schema["oneOf"];
-        auto subschema = validateSubschemas(subschemas, value);
-        if (subschema) {
-            return transformRecursive(ctx, *subschema, path, value);
-        }
-    }
-
-    // Handle object schemas
-    if (schema_navigation::isObjectSchema(schema) && value.is_object()) {
-        auto result = value;
-        auto properties = schema_navigation::getSchemaProperties(schema);
-
-        for (auto &[key, field_value] : result.items()) {
-            if (properties.contains(key)) {
-                std::string field_path = path_utils::appendToPath(path, key);
-                result[key] = transformFieldWithContext(
-                    ctx, properties[key], field_path, field_value);
-            }
-        }
-
-        return result;
-    }
-
-    // Handle array schemas
-    if (schema_navigation::isArraySchema(schema) && value.is_array()) {
-        auto result = value;
-        auto items_schema = schema_navigation::getArrayItemsSchema(schema);
-
-        if (!items_schema.is_null()) {
-            for (size_t i = 0; i < result.size(); ++i) {
-                std::string item_path =
-                    path_utils::appendToPath(path, std::to_string(i));
-                result[i] =
-                    transformRecursive(ctx, items_schema, item_path, result[i]);
-            }
-        }
-
-        return result;
-    }
-
+                                  const jsoncons::ojson &value) {
     // Field-level transformation logic
     auto field_ctx = ctx.currentField();
     if (field_ctx.has_value()) {
@@ -230,7 +211,7 @@ nlohmann::json transformRecursive(RuleContext &ctx,
         std::unordered_set<std::string> rule_tags_set;
         if (rule_tags.has_value()) {
             rule_tags_set = std::unordered_set<std::string>(rule_tags->begin(),
-                                                            rule_tags->end());
+                rule_tags->end());
         }
 
         // Check if rule tags overlap with field context tags (empty
@@ -275,188 +256,13 @@ nlohmann::json transformRecursive(RuleContext &ctx,
                 auto new_value =
                     field_executor->transformField(ctx, *message_value);
                 if (new_value && new_value->getFormat() == SerdeFormat::Json) {
-                    return asJson(*new_value);
+                    return asOJson(*new_value);
                 }
             }
         }
     }
 
     return value;
-}
-
-jsoncons::ojson transformNotrecursive(RuleContext &ctx,
-                                  const jsoncons::ojson &schema,
-                                  const std::string &path,
-                                  const jsoncons::ojson &value) {
-    // Field-level transformation logic
-    auto field_ctx = ctx.currentField();
-    if (field_ctx.has_value()) {
-        field_ctx->setFieldType(schema_navigation::getFieldTypeNew(schema));
-
-        auto rule_tags = ctx.getRule().getTags();
-        std::unordered_set<std::string> rule_tags_set;
-        if (rule_tags.has_value()) {
-            rule_tags_set = std::unordered_set<std::string>(rule_tags->begin(),
-                rule_tags->end());
-        }
-
-        // Check if rule tags overlap with field context tags (empty
-        // rule_tags means apply to all)
-        bool should_apply = !rule_tags.has_value() || rule_tags_set.empty();
-        if (!should_apply) {
-            const auto &field_tags = field_ctx->getTags();
-            for (const auto &field_tag : field_tags) {
-                if (rule_tags_set.find(field_tag) != rule_tags_set.end()) {
-                    should_apply = true;
-                    break;
-                }
-            }
-        }
-
-        if (should_apply) {
-            auto message_value = makeJsonValueNew(value);
-
-            // Get field executor type from the rule
-            auto field_executor_type = ctx.getRule().getType().value_or("");
-
-            // Try to get executor from context's rule registry first,
-            // then global
-            std::shared_ptr<RuleExecutor> executor;
-            if (ctx.getRuleRegistry()) {
-                executor =
-                    ctx.getRuleRegistry()->getExecutor(field_executor_type);
-            }
-            if (!executor) {
-                executor =
-                    global_registry::getRuleExecutor(field_executor_type);
-            }
-
-            if (executor) {
-                auto field_executor =
-                    std::dynamic_pointer_cast<FieldRuleExecutor>(executor);
-                if (!field_executor) {
-                    throw JsonError("executor " + field_executor_type +
-                                    " is not a field rule executor");
-                }
-
-                auto new_value =
-                    field_executor->transformField(ctx, *message_value);
-                if (new_value && new_value->getFormat() == SerdeFormat::Json) {
-                    return asJsonNew(*new_value);
-                }
-            }
-        }
-    }
-
-    return value;
-}
-
-nlohmann::json transformFieldWithContext(RuleContext &ctx,
-                                         const nlohmann::json &schema,
-                                         const std::string &path,
-                                         const nlohmann::json &value) {
-    // Get field type from schema
-    FieldType field_type = schema_navigation::getFieldType(schema);
-
-    // Get field name from path
-    std::string field_name = path_utils::getFieldName(path);
-
-    // Create message value from the JSON value
-    auto message_value = makeJsonValue(value);
-
-    // Get inline tags from schema
-    std::unordered_set<std::string> inline_tags =
-        schema_navigation::getConfluentTags(schema);
-
-    // Enter field context
-    ctx.enterField(*message_value, path, field_name, field_type, inline_tags);
-
-    try {
-        // Transform the field value (synchronous call)
-        nlohmann::json new_value = transformRecursive(ctx, schema, path, value);
-
-        // Check for condition rules
-        auto rule_kind = ctx.getRule().getKind();
-        if (rule_kind.has_value() && rule_kind.value() == Kind::Condition) {
-            if (new_value.is_boolean()) {
-                bool condition_result = new_value.get<bool>();
-                if (!condition_result) {
-                    throw JsonError("Rule condition failed for field: " +
-                                    field_name);
-                }
-            }
-        }
-
-        ctx.exitField();
-        return new_value;
-
-    } catch (const std::exception &e) {
-        ctx.exitField();
-        throw;
-    }
-}
-
-jsoncons::ojson transformFieldWithCtx(RuleContext &ctx,
-                                         const jsoncons::ojson &schema,
-                                         const std::string &path,
-                                         const jsoncons::ojson &value) {
-    // Get field type from schema
-    FieldType field_type = schema_navigation::getFieldTypeNew(schema);
-
-    // Get field name from path
-    std::string field_name = path_utils::getFieldName(path);
-
-    // Create message value from the JSON value
-    auto message_value = makeJsonValueNew(value);
-
-    // Get inline tags from schema
-    std::unordered_set<std::string> inline_tags =
-        schema_navigation::getConfluentTags(schema);
-
-    // Enter field context
-    ctx.enterField(*message_value, path, field_name, field_type, inline_tags);
-
-    try {
-        // Transform the field value (synchronous call)
-        jsoncons::ojson new_value = transformNotrecursive(ctx, schema, path, value);
-
-        // Check for condition rules
-        auto rule_kind = ctx.getRule().getKind();
-        if (rule_kind.has_value() && rule_kind.value() == Kind::Condition) {
-            if (new_value.is_bool()) {
-                bool condition_result = new_value.as<bool>();
-                if (!condition_result) {
-                    throw JsonError("Rule condition failed for field: " +
-                                    field_name);
-                }
-            }
-        }
-
-        ctx.exitField();
-        return new_value;
-
-    } catch (const std::exception &e) {
-        ctx.exitField();
-        throw;
-    }
-}
-
-const nlohmann::json *validateSubschemas(const nlohmann::json &subschemas,
-                                         const nlohmann::json &value) {
-    if (!subschemas.is_array()) {
-        return nullptr;
-    }
-
-    // Iterate over subschemas and find the best matching one
-    /* TODO
-    for (const auto &subschema : subschemas) {
-        if (validation_utils::validateJson(value, subschema)) {
-            return &subschema;
-        }
-    }
-    */
-
-    return nullptr;
 }
 
 }  // namespace value_transform
@@ -464,33 +270,7 @@ const nlohmann::json *validateSubschemas(const nlohmann::json &subschemas,
 // Schema navigation implementations
 namespace schema_navigation {
 
-FieldType getFieldType(const nlohmann::json &schema) {
-    if (!schema.contains("type")) {
-        return FieldType::String;  // Default fallback
-    }
-
-    std::string type = schema["type"];
-
-    if (type == "object") {
-        return FieldType::Record;
-    } else if (type == "array") {
-        return FieldType::Array;
-    } else if (type == "string") {
-        return FieldType::String;
-    } else if (type == "integer") {
-        return FieldType::Int;
-    } else if (type == "number") {
-        return FieldType::Double;
-    } else if (type == "boolean") {
-        return FieldType::Boolean;
-    } else if (type == "null") {
-        return FieldType::Null;
-    }
-
-    return FieldType::String;  // Default fallback
-}
-
-FieldType getFieldTypeNew(const jsoncons::ojson &schema) {
+FieldType getFieldType(const jsoncons::ojson &schema) {
     if (!schema.contains("type")) {
         return FieldType::String;  // Default fallback
     }
@@ -555,44 +335,6 @@ std::unordered_set<std::string> getConfluentTags(const jsoncons::ojson &schema) 
     return tags;
 }
 
-// nlohmann::json versions of schema navigation functions for transformRecursive
-bool isObjectSchema(const nlohmann::json &schema) {
-    return schema.contains("type") && schema["type"] == "object";
-}
-
-bool isArraySchema(const nlohmann::json &schema) {
-    return schema.contains("type") && schema["type"] == "array";
-}
-
-nlohmann::json getSchemaProperties(const nlohmann::json &schema) {
-    if (schema.contains("properties") && schema["properties"].is_object()) {
-        return schema["properties"];
-    }
-    return nlohmann::json::object();
-}
-
-nlohmann::json getArrayItemsSchema(const nlohmann::json &schema) {
-    if (schema.contains("items")) {
-        return schema["items"];
-    }
-    return nlohmann::json::object();
-}
-
-std::unordered_set<std::string> getConfluentTags(const nlohmann::json &schema) {
-    std::unordered_set<std::string> tags;
-
-    if (schema.contains("confluent:tags") &&
-        schema["confluent:tags"].is_array()) {
-        for (const auto &tag : schema["confluent:tags"]) {
-            if (tag.is_string()) {
-                tags.insert(tag.get<std::string>());
-            }
-        }
-    }
-
-    return tags;
-}
-
 }  // namespace schema_navigation
 
 // Validation utilities implementations
@@ -602,7 +344,7 @@ bool validateJson(
     std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
     const nlohmann::json &value) {
     try {
-        auto jsoncons_value = nlohmannToJsoncons(value);
+        auto jsoncons_value = jsonToOJson(value);
         schema->validate(jsoncons_value);
 
         return true;
@@ -632,7 +374,7 @@ std::string getFieldName(const std::string &path) {
 }  // namespace path_utils
 
 // General utility functions
-jsoncons::ojson nlohmannToJsoncons(const nlohmann::json &nlohmann_json) {
+jsoncons::ojson jsonToOJson(const nlohmann::json &nlohmann_json) {
     try {
         // Convert nlohmann::json to string and parse with jsoncons
         std::string json_str = nlohmann_json.dump();
@@ -643,7 +385,7 @@ jsoncons::ojson nlohmannToJsoncons(const nlohmann::json &nlohmann_json) {
     }
 }
 
-nlohmann::json jsonconsToNlohmann(const jsoncons::ojson &jsoncons_json) {
+nlohmann::json ojsonToJson(const jsoncons::ojson &jsoncons_json) {
     try {
         // Convert jsoncons::ojson to string and parse with nlohmann
         std::string json_str = jsoncons_json.to_string();

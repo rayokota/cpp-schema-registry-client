@@ -50,23 +50,31 @@ std::vector<uint8_t> JsonValue::asBytes() const {
     return std::vector<uint8_t>();
 }
 
-std::unique_ptr<SerdeValue> makeJsonValueNew(const jsoncons::ojson &value) {
+std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value) {
+    return std::make_unique<JsonValue>(value);
+}
+
+std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value) {
+    return std::make_unique<JsonValue>(std::move(value));
+}
+
+std::unique_ptr<SerdeValue> makeJsonValue(const jsoncons::ojson &value) {
         return std::make_unique<JsonValue>(nlohmann::json::parse(value.to_string()));
 
 }
 
-std::unique_ptr<SerdeValue> makeJsonValueNew(jsoncons::ojson &&value) {
+std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value) {
         return std::make_unique<JsonValue>(nlohmann::json::parse(value.to_string()));
 }
 
 // Utility functions for JSON value and schema extraction
-jsoncons::ojson asJsonNew(const SerdeValue &value) {
+jsoncons::ojson asOJson(const SerdeValue &value) {
         if (value.getFormat() != SerdeFormat::Json) {
                 throw std::invalid_argument("SerdeValue is not JSON");
         }
         return jsoncons::ojson::parse(value.getValue<nlohmann::json>().dump());
 }
-// Utility function implementation
+
 nlohmann::json asJson(const SerdeValue &value) {
     if (value.getFormat() != SerdeFormat::Json) {
         throw std::invalid_argument("SerdeValue is not JSON");
