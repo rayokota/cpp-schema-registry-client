@@ -10,6 +10,7 @@
 #include "absl/strings/escaping.h"
 #include "confluent/meta.pb.h"
 #include "srclient/serdes/RuleRegistry.h"  // For global_registry functions
+#include "srclient/serdes/Serde.h"  // For RuleContext
 
 namespace srclient::serdes::protobuf::utils {
 
@@ -764,7 +765,7 @@ bool isBuiltin(const std::string& name) {
            name.find("google/type/") == 0;
 }
 
-nlohmann::json messageToJson(const google::protobuf::Message& message) {
+jsoncons::ojson messageToJson(const google::protobuf::Message& message) {
     std::string json_string;
     auto status =
         google::protobuf::util::MessageToJsonString(message, &json_string);
@@ -772,12 +773,12 @@ nlohmann::json messageToJson(const google::protobuf::Message& message) {
         throw ProtobufError("Failed to convert message to JSON: " +
                             status.ToString());
     }
-    return nlohmann::json::parse(json_string);
+    return jsoncons::ojson::parse(json_string);
 }
 
-void jsonToMessage(const nlohmann::json& json_value,
+void jsonToMessage(const jsoncons::ojson& json_value,
                    google::protobuf::Message* message) {
-    std::string json_string = json_value.dump();
+    std::string json_string = json_value.to_string();
     google::protobuf::util::JsonParseOptions options;
     auto status = google::protobuf::util::JsonStringToMessage(json_string,
                                                               message, options);

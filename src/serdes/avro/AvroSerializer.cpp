@@ -174,7 +174,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
             ctx, subject, Mode::Write, std::nullopt, std::make_optional(schema),
             *avro_value,
             utils::getInlineTags(
-                nlohmann::json::parse(schema.getSchema().value())),
+                jsoncons::ojson::parse(schema.getSchema().value())),
             std::make_shared<FieldTransformer>(field_transformer));
 
         // Extract Avro value from result
@@ -236,7 +236,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
 }
 
 std::vector<uint8_t> AvroSerializer::serializeJson(
-    const SerializationContext &ctx, const nlohmann::json &json_value) {
+    const SerializationContext &ctx, const jsoncons::ojson &json_value) {
     if (!schema_.has_value()) {
         throw AvroError("Schema required for JSON to Avro conversion");
     }

@@ -5,7 +5,6 @@
 #include <google/protobuf/util/json_util.h>
 
 #include <functional>
-#include <nlohmann/json.hpp>
 #include <optional>
 
 #include "srclient/serdes/json/JsonTypes.h"

@@ -8,7 +8,7 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <nlohmann/json.hpp>
+#include <jsoncons/json.hpp>
 #include <optional>
 #include <string>
 #include <type_traits>

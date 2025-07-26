@@ -66,27 +66,4 @@ jsoncons::ojson asJson(const SerdeValue &value) {
     return value.getValue<jsoncons::ojson>();
 }
 
-// Conversion utilities for compatibility with nlohmann-based code
-nlohmann::json toNlohmann(const jsoncons::ojson &value) {
-    try {
-        // Convert jsoncons::ojson to string and parse with nlohmann
-        std::string json_str = value.to_string();
-        return nlohmann::json::parse(json_str);
-    } catch (const std::exception &e) {
-        throw JsonError("Failed to convert jsoncons to nlohmann: " +
-                        std::string(e.what()));
-    }
-}
-
-jsoncons::ojson fromNlohmann(const nlohmann::json &value) {
-    try {
-        // Convert nlohmann::json to string and parse with jsoncons
-        std::string json_str = value.dump();
-        return jsoncons::ojson::parse(json_str);
-    } catch (const std::exception &e) {
-        throw JsonError("Failed to convert nlohmann to jsoncons: " +
-                        std::string(e.what()));
-    }
-}
-
 }  // namespace srclient::serdes::json
