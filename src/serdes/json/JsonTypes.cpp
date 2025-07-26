@@ -50,14 +50,6 @@ std::vector<uint8_t> JsonValue::asBytes() const {
     return std::vector<uint8_t>();
 }
 
-std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value) {
-    return std::make_unique<JsonValue>(jsoncons::ojson::parse(value.dump()));
-}
-
-std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value) {
-    return std::make_unique<JsonValue>(jsoncons::ojson::parse(value.dump()));
-}
-
 std::unique_ptr<SerdeValue> makeJsonValue(const jsoncons::ojson &value) {
     return std::make_unique<JsonValue>(value);
 }
@@ -67,18 +59,34 @@ std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value) {
 }
 
 // Utility functions for JSON value and schema extraction
-jsoncons::ojson asOJson(const SerdeValue &value) {
+jsoncons::ojson asJson(const SerdeValue &value) {
     if (value.getFormat() != SerdeFormat::Json) {
         throw std::invalid_argument("SerdeValue is not JSON");
     }
     return value.getValue<jsoncons::ojson>();
 }
 
-nlohmann::json asJson(const SerdeValue &value) {
-    if (value.getFormat() != SerdeFormat::Json) {
-        throw std::invalid_argument("SerdeValue is not JSON");
+// Conversion utilities for compatibility with nlohmann-based code
+nlohmann::json toNlohmann(const jsoncons::ojson &value) {
+    try {
+        // Convert jsoncons::ojson to string and parse with nlohmann
+        std::string json_str = value.to_string();
+        return nlohmann::json::parse(json_str);
+    } catch (const std::exception &e) {
+        throw JsonError("Failed to convert jsoncons to nlohmann: " +
+                        std::string(e.what()));
     }
-    return nlohmann::json::parse(value.getValue<jsoncons::ojson>().to_string());
+}
+
+jsoncons::ojson fromNlohmann(const nlohmann::json &value) {
+    try {
+        // Convert nlohmann::json to string and parse with jsoncons
+        std::string json_str = value.dump();
+        return jsoncons::ojson::parse(json_str);
+    } catch (const std::exception &e) {
+        throw JsonError("Failed to convert nlohmann to jsoncons: " +
+                        std::string(e.what()));
+    }
 }
 
 }  // namespace srclient::serdes::json

@@ -3,7 +3,6 @@
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -30,7 +29,7 @@ namespace schema_resolution {
  * @param visited Set of already visited schema names to prevent cycles
  * @return Map of resolved schema references
  */
-std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
+std::unordered_map<std::string, jsoncons::ojson> resolveNamedSchema(
     const srclient::rest::model::Schema &schema,
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::unordered_set<std::string> &visited);
@@ -49,10 +48,10 @@ namespace value_transform {
  * @param value JSON object to transform
  * @return Transformed JSON object
  */
-nlohmann::json transformFields(
+jsoncons::ojson transformFields(
     RuleContext &ctx,
     std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
-    const nlohmann::json &value);
+    const jsoncons::ojson &value);
 
 /**
  * Transform a JSON value according to field rules
@@ -143,7 +142,7 @@ namespace validation_utils {
  */
 bool validateJson(
     std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
-    const nlohmann::json &value);
+    const jsoncons::ojson &value);
 
 }  // namespace validation_utils
 
@@ -169,23 +168,5 @@ std::string appendToPath(const std::string &base_path,
 std::string getFieldName(const std::string &path);
 
 }  // namespace path_utils
-
-/**
- * Utility functions for JSON schema and value manipulation
- */
-
-/**
- * Convert nlohmann::json to jsoncons::ojson for validation
- * @param nlohmann_json nlohmann::json object
- * @return jsoncons::ojson object
- */
-jsoncons::ojson jsonToOJson(const nlohmann::json &nlohmann_json);
-
-/**
- * Convert jsoncons::ojson to nlohmann::json
- * @param jsoncons_json jsoncons::ojson object
- * @return nlohmann::json object
- */
-nlohmann::json ojsonToJson(const jsoncons::ojson &jsoncons_json);
 
 }  // namespace srclient::serdes::json::utils

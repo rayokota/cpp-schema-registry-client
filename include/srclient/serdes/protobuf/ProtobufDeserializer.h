@@ -227,7 +227,7 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
             throw ProtobufError("Expected JSON value after migrations");
         }
         std::string migrated_json =
-            srclient::serdes::json::asJson(*migrated_val).dump();
+            srclient::serdes::json::asJson(*migrated_val).to_string();
 
         // Parse back to reader message type
         const auto *reader_prototype = factory.GetPrototype(reader_desc);

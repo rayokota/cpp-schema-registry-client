@@ -10,11 +10,11 @@ namespace srclient::serdes::json::utils {
 // Schema resolution implementations
 namespace schema_resolution {
 
-std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
+std::unordered_map<std::string, jsoncons::ojson> resolveNamedSchema(
     const srclient::rest::model::Schema &schema,
     std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
     std::unordered_set<std::string> &visited) {
-    std::unordered_map<std::string, nlohmann::json> resolved_schemas;
+    std::unordered_map<std::string, jsoncons::ojson> resolved_schemas;
 
     auto references = schema.getReferences();
     if (!references.has_value()) {
@@ -45,8 +45,8 @@ std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
             auto ref_schema_str = ref_schema.getSchema();
 
             if (ref_schema_str.has_value()) {
-                nlohmann::json parsed_ref_schema =
-                    nlohmann::json::parse(ref_schema_str.value());
+                jsoncons::ojson parsed_ref_schema =
+                    jsoncons::ojson::parse(ref_schema_str.value());
                 resolved_schemas[name] = parsed_ref_schema;
 
                 // Recursively resolve dependencies
@@ -63,7 +63,7 @@ std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
 }
 
 std::vector<srclient::rest::model::SchemaReference> buildDependencies(
-    const nlohmann::json &schema, const std::string &subject_prefix) {
+    const jsoncons::ojson &schema, const std::string &subject_prefix) {
     std::vector<srclient::rest::model::SchemaReference> dependencies;
 
     // TODO: Implement JSON schema analysis to find $ref dependencies
@@ -77,14 +77,11 @@ std::vector<srclient::rest::model::SchemaReference> buildDependencies(
 // Value transformation implementations
 namespace value_transform {
 
-nlohmann::json transformFields(RuleContext &ctx,
+jsoncons::ojson transformFields(RuleContext &ctx,
                                std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
-                               const nlohmann::json &value) {
-    // Convert nlohmann::json to jsoncons::ojson for processing
-    auto jsoncons_value = jsonToOJson(value);
-    
+                               const jsoncons::ojson &value) {
     // Create a mutable copy for transformation
-    auto mutable_value = jsoncons_value;
+    auto mutable_value = value;
     
     // Track visited locations to avoid duplicate transformations
     std::unordered_set<std::string> visited_locations;
@@ -144,8 +141,8 @@ nlohmann::json transformFields(RuleContext &ctx,
             return jsoncons::jsonschema::walk_result::advance;
         });
         
-        // Convert back to nlohmann::json and return
-        return ojsonToJson(mutable_value);
+        // Return the transformed value
+        return mutable_value;
         
     } catch (const std::exception& e) {
         // If walk fails, fall back to the original value
@@ -199,9 +196,9 @@ jsoncons::ojson transformFieldWithContext(RuleContext &ctx,
 }
 
 jsoncons::ojson transform(RuleContext &ctx,
-                                  const jsoncons::ojson &schema,
-                                  const std::string &path,
-                                  const jsoncons::ojson &value) {
+                          const jsoncons::ojson &schema,
+                          const std::string &path,
+                          const jsoncons::ojson &value) {
     // Field-level transformation logic
     auto field_ctx = ctx.currentField();
     if (field_ctx.has_value()) {
@@ -256,7 +253,7 @@ jsoncons::ojson transform(RuleContext &ctx,
                 auto new_value =
                     field_executor->transformField(ctx, *message_value);
                 if (new_value && new_value->getFormat() == SerdeFormat::Json) {
-                    return asOJson(*new_value);
+                    return asJson(*new_value);
                 }
             }
         }
@@ -342,11 +339,9 @@ namespace validation_utils {
 
 bool validateJson(
     std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
-    const nlohmann::json &value) {
+    const jsoncons::ojson &value) {
     try {
-        auto jsoncons_value = jsonToOJson(value);
-        schema->validate(jsoncons_value);
-
+        schema->validate(value);
         return true;
     } catch (const std::exception &e) {
         return false;
@@ -372,28 +367,5 @@ std::string getFieldName(const std::string &path) {
 }
 
 }  // namespace path_utils
-
-// General utility functions
-jsoncons::ojson jsonToOJson(const nlohmann::json &nlohmann_json) {
-    try {
-        // Convert nlohmann::json to string and parse with jsoncons
-        std::string json_str = nlohmann_json.dump();
-        return jsoncons::ojson::parse(json_str);
-    } catch (const std::exception &e) {
-        throw JsonError("Failed to convert nlohmann to jsoncons: " +
-                        std::string(e.what()));
-    }
-}
-
-nlohmann::json ojsonToJson(const jsoncons::ojson &jsoncons_json) {
-    try {
-        // Convert jsoncons::ojson to string and parse with nlohmann
-        std::string json_str = jsoncons_json.to_string();
-        return nlohmann::json::parse(json_str);
-    } catch (const std::exception &e) {
-        throw JsonError("Failed to convert jsoncons to nlohmann: " +
-                        std::string(e.what()));
-    }
-}
 
 }  // namespace srclient::serdes::json::utils

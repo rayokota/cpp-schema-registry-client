@@ -3,7 +3,6 @@
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -42,7 +41,7 @@ class JsonDeserializer {
      * @param data Serialized bytes with schema ID header
      * @return Deserialized JSON object
      */
-    nlohmann::json deserialize(const SerializationContext &ctx,
+    jsoncons::ojson deserialize(const SerializationContext &ctx,
                                const std::vector<uint8_t> &data);
 
     /**
@@ -58,14 +57,14 @@ class JsonDeserializer {
     std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> getParsedSchema(
         const srclient::rest::model::Schema &schema);
 
-    nlohmann::json executeFieldTransformations(
-        const nlohmann::json &value, const nlohmann::json &schema,
+    jsoncons::ojson executeFieldTransformations(
+        const jsoncons::ojson &value, const jsoncons::ojson &schema,
         const RuleContext &context, const std::string &field_executor_type);
 
-    nlohmann::json executeMigrations(const SerializationContext &ctx,
+    jsoncons::ojson executeMigrations(const SerializationContext &ctx,
                                      const std::string &subject,
                                      const std::vector<Migration> &migrations,
-                                     const nlohmann::json &value);
+                                     const jsoncons::ojson &value);
 
     bool isEvolutionRequired(
         const srclient::rest::model::Schema &writer_schema,

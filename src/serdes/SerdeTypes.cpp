@@ -142,7 +142,7 @@ std::unique_ptr<SerdeValue> SerdeValue::newString(SerdeFormat format,
             return std::make_unique<avro::AvroValue>(datum);
         }
         case SerdeFormat::Json: {
-            nlohmann::json json_value = value;
+            jsoncons::ojson json_value = value;
             return std::make_unique<json::JsonValue>(json_value);
         }
         case SerdeFormat::Protobuf: {
@@ -167,7 +167,7 @@ std::unique_ptr<SerdeValue> SerdeValue::newBytes(
         case SerdeFormat::Json: {
             // For JSON, encode bytes as base64 string
             std::string base64_value = base64_encode(value);
-            nlohmann::json json_value = base64_value;
+            jsoncons::ojson json_value = base64_value;
             return std::make_unique<json::JsonValue>(json_value);
         }
         case SerdeFormat::Protobuf: {

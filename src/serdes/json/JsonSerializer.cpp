@@ -29,18 +29,17 @@ JsonSerde::getParsedSchema(
     resolveNamedSchema(schema, client, references);
 
     // Parse new schema
-    nlohmann::json parsed_schema;
+    jsoncons::ojson parsed_schema;
     try {
-        parsed_schema = nlohmann::json::parse(cache_key);
-    } catch (const nlohmann::json::parse_error &e) {
+        parsed_schema = jsoncons::ojson::parse(cache_key);
+    } catch (const jsoncons::json_exception &e) {
         throw JsonError("Failed to parse JSON schema: " +
                         std::string(e.what()));
     }
 
-    auto jsoncons_schema = jsonToOJson(parsed_schema);
     auto compiled_schema =
         std::make_shared<jsoncons::jsonschema::json_schema<jsoncons::ojson>>(
-            jsoncons::jsonschema::make_json_schema(jsoncons_schema));
+            jsoncons::jsonschema::make_json_schema(parsed_schema));
 
     // Store in cache
     parsed_schemas_cache_[cache_key] = compiled_schema;
@@ -89,7 +88,7 @@ JsonSerializer::JsonSerializer(
 }
 
 std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
-                                               const nlohmann::json &value) {
+                                               const jsoncons::ojson &value) {
     auto mutable_value = value;  // Copy for potential transformation
 
     // Get subject using strategy
@@ -205,7 +204,7 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
     }
 
     // Serialize JSON to bytes
-    std::string json_string = mutable_value.dump();
+    std::string json_string = mutable_value.to_string();
     std::vector<uint8_t> encoded_bytes(json_string.begin(), json_string.end());
 
     // Apply encoding rules if present
@@ -251,8 +250,8 @@ std::unique_ptr<SerdeValue> JsonSerializer::transformValue(
     return value.clone();
 }
 
-nlohmann::json JsonSerializer::executeFieldTransformations(
-    const nlohmann::json &value, const nlohmann::json &schema,
+jsoncons::ojson JsonSerializer::executeFieldTransformations(
+    const jsoncons::ojson &value, const jsoncons::ojson &schema,
     const RuleContext &context, const std::string &field_executor_type) {
     // TODO: Implement field-level transformations
     return value;
