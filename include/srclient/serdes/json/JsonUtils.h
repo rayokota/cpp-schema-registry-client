@@ -69,6 +69,10 @@ nlohmann::json transformRecursive(RuleContext &ctx,
                                   const nlohmann::json &schema,
                                   const std::string &path,
                                   const nlohmann::json &value);
+jsoncons::ojson transformNotrecursive(RuleContext &ctx,
+                                  const jsoncons::ojson &schema,
+                                  const std::string &path,
+                                  const jsoncons::ojson &value);
 
 /**
  * Transform a JSON value according to field rules
@@ -82,6 +86,10 @@ nlohmann::json transformFieldWithContext(RuleContext &ctx,
                                          const nlohmann::json &schema,
                                          const std::string &path,
                                          const nlohmann::json &value);
+jsoncons::ojson transformFieldWithCtx(RuleContext &ctx,
+                                         const jsoncons::ojson &schema,
+                                         const std::string &path,
+                                         const jsoncons::ojson &value);
 
 /**
  * Validate subschemas (for allOf, anyOf, oneOf)
@@ -107,11 +115,25 @@ namespace schema_navigation {
 FieldType getFieldType(const nlohmann::json &schema);
 
 /**
+ * Get field type from JSON schema
+ * @param schema JSON schema object
+ * @return Corresponding FieldType
+ */
+FieldType getFieldTypeNew(const jsoncons::ojson &schema);
+
+/**
  * Check if a schema defines an object type
  * @param schema JSON schema object
  * @return True if schema defines an object
  */
 bool isObjectSchema(const nlohmann::json &schema);
+
+/**
+ * Check if a schema defines an object type
+ * @param schema JSON schema object
+ * @return True if schema defines an object
+ */
+bool isObjectSchema(const jsoncons::ojson &schema);
 
 /**
  * Check if a schema defines an array type
@@ -121,11 +143,25 @@ bool isObjectSchema(const nlohmann::json &schema);
 bool isArraySchema(const nlohmann::json &schema);
 
 /**
+ * Check if a schema defines an array type
+ * @param schema JSON schema object
+ * @return True if schema defines an array
+ */
+bool isArraySchema(const jsoncons::ojson &schema);
+
+/**
  * Get properties from an object schema
  * @param schema JSON object schema
  * @return Properties map or empty map if not an object schema
  */
 nlohmann::json getSchemaProperties(const nlohmann::json &schema);
+
+/**
+ * Get properties from an object schema
+ * @param schema JSON object schema
+ * @return Properties map or empty map if not an object schema
+ */
+jsoncons::ojson getSchemaProperties(const jsoncons::ojson &schema);
 
 /**
  * Get items schema from an array schema
@@ -135,11 +171,25 @@ nlohmann::json getSchemaProperties(const nlohmann::json &schema);
 nlohmann::json getArrayItemsSchema(const nlohmann::json &schema);
 
 /**
+ * Get items schema from an array schema
+ * @param schema JSON array schema
+ * @return Items schema or null if not an array schema
+ */
+jsoncons::ojson getArrayItemsSchema(const jsoncons::ojson &schema);
+
+/**
  * Get confluent tags from a schema
  * @param schema JSON schema object
  * @return Set of confluent tags
  */
 std::unordered_set<std::string> getConfluentTags(const nlohmann::json &schema);
+
+/**
+ * Get confluent tags from a schema
+ * @param schema JSON schema object
+ * @return Set of confluent tags
+ */
+std::unordered_set<std::string> getConfluentTags(const jsoncons::ojson &schema);
 
 }  // namespace schema_navigation
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <any>
+#include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -87,7 +88,12 @@ inline std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value) {
     return std::make_unique<JsonValue>(std::move(value));
 }
 
+std::unique_ptr<SerdeValue> makeJsonValueNew(const jsoncons::ojson &value);
+
+std::unique_ptr<SerdeValue> makeJsonValueNew(jsoncons::ojson &&value);
+
 // Utility functions for JSON value and schema extraction
 nlohmann::json asJson(const SerdeValue &value);
+jsoncons::ojson asJsonNew(const SerdeValue &value);
 
 }  // namespace srclient::serdes::json
