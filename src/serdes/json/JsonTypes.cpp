@@ -20,8 +20,8 @@ std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
 
 // Implementation for JsonValue methods
 bool JsonValue::asBool() const {
-    if (value_.is_boolean()) {
-        return value_.get<bool>();
+    if (value_.is_bool()) {
+        return value_.as<bool>();
     }
     // Default to true for non-boolean types (matching Rust behavior)
     return true;
@@ -29,7 +29,7 @@ bool JsonValue::asBool() const {
 
 std::string JsonValue::asString() const {
     if (value_.is_string()) {
-        return value_.get<std::string>();
+        return value_.as<std::string>();
     }
     // Return empty string for non-string types (matching Rust behavior)
     return "";
@@ -37,7 +37,7 @@ std::string JsonValue::asString() const {
 
 std::vector<uint8_t> JsonValue::asBytes() const {
     if (value_.is_string()) {
-        std::string str_value = value_.get<std::string>();
+        std::string str_value = value_.as<std::string>();
         // Attempt to decode as base64
         try {
             return base64_decode(str_value);
@@ -51,35 +51,34 @@ std::vector<uint8_t> JsonValue::asBytes() const {
 }
 
 std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value) {
-    return std::make_unique<JsonValue>(value);
+    return std::make_unique<JsonValue>(jsoncons::ojson::parse(value.dump()));
 }
 
 std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value) {
-    return std::make_unique<JsonValue>(std::move(value));
+    return std::make_unique<JsonValue>(jsoncons::ojson::parse(value.dump()));
 }
 
 std::unique_ptr<SerdeValue> makeJsonValue(const jsoncons::ojson &value) {
-        return std::make_unique<JsonValue>(nlohmann::json::parse(value.to_string()));
-
+    return std::make_unique<JsonValue>(value);
 }
 
 std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value) {
-        return std::make_unique<JsonValue>(nlohmann::json::parse(value.to_string()));
+    return std::make_unique<JsonValue>(std::move(value));
 }
 
 // Utility functions for JSON value and schema extraction
 jsoncons::ojson asOJson(const SerdeValue &value) {
-        if (value.getFormat() != SerdeFormat::Json) {
-                throw std::invalid_argument("SerdeValue is not JSON");
-        }
-        return jsoncons::ojson::parse(value.getValue<nlohmann::json>().dump());
+    if (value.getFormat() != SerdeFormat::Json) {
+        throw std::invalid_argument("SerdeValue is not JSON");
+    }
+    return value.getValue<jsoncons::ojson>();
 }
 
 nlohmann::json asJson(const SerdeValue &value) {
     if (value.getFormat() != SerdeFormat::Json) {
         throw std::invalid_argument("SerdeValue is not JSON");
     }
-    return value.getValue<nlohmann::json>();
+    return nlohmann::json::parse(value.getValue<jsoncons::ojson>().to_string());
 }
 
 }  // namespace srclient::serdes::json
