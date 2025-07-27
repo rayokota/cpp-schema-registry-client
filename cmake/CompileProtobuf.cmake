@@ -30,15 +30,21 @@ function(CompileProtobuf directory)
 
             # Add custom command to generate C++ files from .proto
             add_custom_command(
-                    OUTPUT ${PROTO_SRCS} ${PROTO_HDRS}
-                    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-                    ARGS --cpp_out=${PROTO_GEN_DIR}
+                OUTPUT 
+                    ${PROTO_SRCS} 
+                    ${PROTO_HDRS}
+                COMMAND 
+                    ${Protobuf_PROTOC_EXECUTABLE}
+                ARGS 
+                    --cpp_out=${PROTO_GEN_DIR}
                     --proto_path=${CMAKE_CURRENT_SOURCE_DIR}/proto
                     ${extra_proto_path}
                     ${PROTO_FILE}
-                    DEPENDS ${PROTO_FILE}
-                    COMMENT "Generating C++ code from proto/${PROTO_REL_PATH}"
-                    VERBATIM
+                DEPENDS 
+                    ${PROTO_FILE}
+                COMMENT 
+                    "Generating C++ code from proto/${PROTO_REL_PATH}"
+                VERBATIM
             )
 
             # Add generated files to the list
