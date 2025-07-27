@@ -111,7 +111,8 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
     }
 
     srclient::rest::model::Schema target_schema;
-    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> parsed_schema;
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
+        parsed_schema;
 
     if (latest_schema.has_value()) {
         target_schema = latest_schema->toSchema();

@@ -42,7 +42,7 @@ class JsonDeserializer {
      * @return Deserialized JSON object
      */
     jsoncons::ojson deserialize(const SerializationContext &ctx,
-                               const std::vector<uint8_t> &data);
+                                const std::vector<uint8_t> &data);
 
     /**
      * Close the deserializer and cleanup resources
@@ -54,17 +54,17 @@ class JsonDeserializer {
     std::unique_ptr<JsonSerde> serde_;
 
     // Helper methods
-    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> getParsedSchema(
-        const srclient::rest::model::Schema &schema);
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
+    getParsedSchema(const srclient::rest::model::Schema &schema);
 
     jsoncons::ojson executeFieldTransformations(
         const jsoncons::ojson &value, const jsoncons::ojson &schema,
         const RuleContext &context, const std::string &field_executor_type);
 
     jsoncons::ojson executeMigrations(const SerializationContext &ctx,
-                                     const std::string &subject,
-                                     const std::vector<Migration> &migrations,
-                                     const jsoncons::ojson &value);
+                                      const std::string &subject,
+                                      const std::vector<Migration> &migrations,
+                                      const jsoncons::ojson &value);
 
     bool isEvolutionRequired(
         const srclient::rest::model::Schema &writer_schema,

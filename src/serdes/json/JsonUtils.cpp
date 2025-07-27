@@ -77,83 +77,108 @@ std::vector<srclient::rest::model::SchemaReference> buildDependencies(
 // Value transformation implementations
 namespace value_transform {
 
-jsoncons::ojson transformFields(RuleContext &ctx,
-                               std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
-                               const jsoncons::ojson &value) {
+jsoncons::ojson transformFields(
+    RuleContext &ctx,
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
+    const jsoncons::ojson &value) {
     // Create a mutable copy for transformation
     auto mutable_value = value;
-    
+
     // Track visited locations to avoid duplicate transformations
     std::unordered_set<std::string> visited_locations;
-    
+
     // Use the schema's walk method to traverse and transform the JSON structure
     try {
-        schema->walk(mutable_value,
-                    [&ctx, &mutable_value, &visited_locations](const std::string& keyword,
-                           const jsoncons::ojson& schema_node, 
-                           const jsoncons::uri& schema_location,
-                           const jsoncons::ojson& instance_node,
-                           const jsoncons::jsonpointer::json_pointer& instance_location) -> jsoncons::jsonschema::walk_result {
-            
-            try {
-                std::string schema_location_str = schema_location.string();
-                std::string instance_location_str = instance_location.to_string();
-                
-                if (schema_navigation::isObjectSchema(schema_node) && instance_node.is_object()) {
-                    auto properties = schema_navigation::getSchemaProperties(schema_node);
+        schema->walk(
+            mutable_value,
+            [&ctx, &mutable_value, &visited_locations](
+                const std::string &keyword, const jsoncons::ojson &schema_node,
+                const jsoncons::uri &schema_location,
+                const jsoncons::ojson &instance_node,
+                const jsoncons::jsonpointer::json_pointer &instance_location)
+                -> jsoncons::jsonschema::walk_result {
+                try {
+                    std::string schema_location_str = schema_location.string();
+                    std::string instance_location_str =
+                        instance_location.to_string();
 
-                    for (const auto& [key, field_value] : instance_node.object_range()) {
-                        if (properties.contains(key)) {
-                            // Create unique location identifier for this field
-                            auto field_location = instance_location;
-                            field_location /= key;
-                            std::string field_location_str = field_location.to_string();
-                            
-                            // Skip if we've already processed this location
-                            if (visited_locations.find(field_location_str) != visited_locations.end()) {
-                                continue;
-                            }
-                            
-                            // Mark this location as visited
-                            visited_locations.insert(field_location_str);
+                    if (schema_navigation::isObjectSchema(schema_node) &&
+                        instance_node.is_object()) {
+                        auto properties =
+                            schema_navigation::getSchemaProperties(schema_node);
 
-                            std::string input = field_value.is_string() ? field_value.as_string() : "";
-                            std::string field_path = path_utils::appendToPath(instance_location.to_string(), key);
-                            auto transformed_value = transformFieldWithContext(
-                                ctx, properties[key], field_path, field_value);
+                        for (const auto &[key, field_value] :
+                             instance_node.object_range()) {
+                            if (properties.contains(key)) {
+                                // Create unique location identifier for this
+                                // field
+                                auto field_location = instance_location;
+                                field_location /= key;
+                                std::string field_location_str =
+                                    field_location.to_string();
 
-                            std::string output = transformed_value.is_string() ? transformed_value.as_string() : "";
+                                // Skip if we've already processed this location
+                                if (visited_locations.find(
+                                        field_location_str) !=
+                                    visited_locations.end()) {
+                                    continue;
+                                }
 
-                            // Update the mutable_value using the JSON pointer
-                            try {
-                                jsoncons::jsonpointer::replace(mutable_value, field_location, transformed_value);
-                            } catch (const std::exception& e) {
-                                // If pointer access fails, continue with next field
+                                // Mark this location as visited
+                                visited_locations.insert(field_location_str);
+
+                                std::string input =
+                                    field_value.is_string()
+                                        ? field_value.as_string()
+                                        : "";
+                                std::string field_path =
+                                    path_utils::appendToPath(
+                                        instance_location.to_string(), key);
+                                auto transformed_value =
+                                    transformFieldWithContext(
+                                        ctx, properties[key], field_path,
+                                        field_value);
+
+                                std::string output =
+                                    transformed_value.is_string()
+                                        ? transformed_value.as_string()
+                                        : "";
+
+                                // Update the mutable_value using the JSON
+                                // pointer
+                                try {
+                                    jsoncons::jsonpointer::replace(
+                                        mutable_value, field_location,
+                                        transformed_value);
+                                } catch (const std::exception &e) {
+                                    // If pointer access fails, continue with
+                                    // next field
+                                }
                             }
                         }
                     }
+                } catch (const std::exception &e) {
+                    // Continue processing even if a single field transformation
+                    // fails This maintains consistency with the recursive
+                    // approach
                 }
-            } catch (const std::exception& e) {
-                // Continue processing even if a single field transformation fails
-                // This maintains consistency with the recursive approach
-            }
-            
-            return jsoncons::jsonschema::walk_result::advance;
-        });
-        
+
+                return jsoncons::jsonschema::walk_result::advance;
+            });
+
         // Return the transformed value
         return mutable_value;
-        
-    } catch (const std::exception& e) {
+
+    } catch (const std::exception &e) {
         // If walk fails, fall back to the original value
         return value;
     }
 }
 
 jsoncons::ojson transformFieldWithContext(RuleContext &ctx,
-                                         const jsoncons::ojson &schema,
-                                         const std::string &path,
-                                         const jsoncons::ojson &value) {
+                                          const jsoncons::ojson &schema,
+                                          const std::string &path,
+                                          const jsoncons::ojson &value) {
     // Get field type from schema
     FieldType field_type = schema_navigation::getFieldType(schema);
 
@@ -195,8 +220,7 @@ jsoncons::ojson transformFieldWithContext(RuleContext &ctx,
     }
 }
 
-jsoncons::ojson transform(RuleContext &ctx,
-                          const jsoncons::ojson &schema,
+jsoncons::ojson transform(RuleContext &ctx, const jsoncons::ojson &schema,
                           const std::string &path,
                           const jsoncons::ojson &value) {
     // Field-level transformation logic
@@ -208,7 +232,7 @@ jsoncons::ojson transform(RuleContext &ctx,
         std::unordered_set<std::string> rule_tags_set;
         if (rule_tags.has_value()) {
             rule_tags_set = std::unordered_set<std::string>(rule_tags->begin(),
-                rule_tags->end());
+                                                            rule_tags->end());
         }
 
         // Check if rule tags overlap with field context tags (empty
@@ -293,7 +317,7 @@ FieldType getFieldType(const jsoncons::ojson &schema) {
     return FieldType::String;  // Default fallback
 }
 
-bool isObjectSchema(const jsoncons::ojson& schema) {
+bool isObjectSchema(const jsoncons::ojson &schema) {
     return schema.contains("type") && schema["type"] == "object";
 }
 
@@ -315,7 +339,8 @@ jsoncons::ojson getArrayItemsSchema(const jsoncons::ojson &schema) {
     return jsoncons::ojson::object();
 }
 
-std::unordered_set<std::string> getConfluentTags(const jsoncons::ojson &schema) {
+std::unordered_set<std::string> getConfluentTags(
+    const jsoncons::ojson &schema) {
     std::unordered_set<std::string> tags;
 
     // schema as str

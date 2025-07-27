@@ -1,8 +1,8 @@
 #pragma once
 
+#include <functional>
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
-#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -35,7 +35,8 @@ class JsonSerde {
     ~JsonSerde() = default;
 
     // Schema parsing and caching
-    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> getParsedSchema(
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
+    getParsedSchema(
         const srclient::rest::model::Schema &schema,
         std::shared_ptr<srclient::rest::ISchemaRegistryClient> client);
 
@@ -44,7 +45,9 @@ class JsonSerde {
 
   private:
     // Cache for parsed schemas: Schema -> json_schema
-    std::unordered_map<std::string, std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>>
+    std::unordered_map<
+        std::string,
+        std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>>
         parsed_schemas_cache_;
 
     mutable std::mutex cache_mutex_;
@@ -91,8 +94,8 @@ class JsonSerializer {
     std::unique_ptr<JsonSerde> serde_;
 
     // Helper methods
-    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> getParsedSchema(
-        const srclient::rest::model::Schema &schema);
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
+    getParsedSchema(const srclient::rest::model::Schema &schema);
 
     void validateSchema(const srclient::rest::model::Schema &schema);
 

@@ -93,7 +93,6 @@ std::unique_ptr<SerdeValue> CelExecutor::execute(
     const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>
         &args,
     google::protobuf::Arena *arena) {
-
     // Get the expression from the rule context
     const Rule &rule = ctx.getRule();
 
@@ -348,8 +347,8 @@ jsoncons::ojson CelExecutor::toJsonValue(
                         std::string(key_val.StringOrDie().value());
                     auto value_lookup = cel_map->Get(nullptr, key_val);
                     if (value_lookup.has_value()) {
-                        json_object[key] =
-                            toJsonValue(jsoncons::ojson(), value_lookup.value());
+                        json_object[key] = toJsonValue(jsoncons::ojson(),
+                                                       value_lookup.value());
                     }
                 }
             }

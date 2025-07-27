@@ -32,8 +32,8 @@ JsonDeserializer::JsonDeserializer(
     }
 }
 
-jsoncons::ojson JsonDeserializer::deserialize(const SerializationContext &ctx,
-                                             const std::vector<uint8_t> &data) {
+jsoncons::ojson JsonDeserializer::deserialize(
+    const SerializationContext &ctx, const std::vector<uint8_t> &data) {
     // Determine subject
     auto strategy = base_->getConfig().subject_name_strategy;
     auto subject_opt = strategy(ctx.topic, ctx.serde_type, std::nullopt);
@@ -87,7 +87,8 @@ jsoncons::ojson JsonDeserializer::deserialize(const SerializationContext &ctx,
     // Schema evolution handling
     std::vector<Migration> migrations;
     srclient::rest::model::Schema reader_schema_raw;
-    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> reader_schema;
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
+        reader_schema;
 
     if (latest_schema.has_value()) {
         // Schema evolution path

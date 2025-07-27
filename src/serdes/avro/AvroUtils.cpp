@@ -415,7 +415,8 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
 
             for (const auto &member : json_value.object_range()) {
                 map.value().push_back(
-                    {member.key(), jsonToAvro(member.value(), value_valid_schema)});
+                    {member.key(),
+                     jsonToAvro(member.value(), value_valid_schema)});
             }
             return datum;
         }
@@ -432,8 +433,8 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
                 if (json_value.contains(field_name)) {
                     auto field_schema = schema.root()->leafAt(i);
                     ::avro::ValidSchema field_valid_schema(field_schema);
-                    record.setFieldAt(
-                        i, jsonToAvro(json_value[field_name], field_valid_schema));
+                    record.setFieldAt(i, jsonToAvro(json_value[field_name],
+                                                    field_valid_schema));
                 }
             }
             return datum;
@@ -573,9 +574,8 @@ void getInlineTagsRecursively(
             return;
         }
 
-        std::string schema_type = schema["type"].is_string()
-                                      ? schema["type"].as<std::string>()
-                                      : "";
+        std::string schema_type =
+            schema["type"].is_string() ? schema["type"].as<std::string>() : "";
 
         if (schema_type == "array") {
             if (schema.contains("items")) {
@@ -589,7 +589,8 @@ void getInlineTagsRecursively(
             std::string record_ns;
             std::string record_name;
 
-            if (schema.contains("namespace") && schema["namespace"].is_string()) {
+            if (schema.contains("namespace") &&
+                schema["namespace"].is_string()) {
                 record_ns = schema["namespace"].as<std::string>();
             } else {
                 record_ns = impliedNamespace(name);
@@ -620,7 +621,8 @@ void getInlineTagsRecursively(
                         std::string full_field_name =
                             record_name + "." + field_name;
 
-                        for (const auto &tag : field["confluent:tags"].array_range()) {
+                        for (const auto &tag :
+                             field["confluent:tags"].array_range()) {
                             if (tag.is_string()) {
                                 tags[full_field_name].insert(
                                     tag.as<std::string>());
@@ -651,12 +653,12 @@ void removeConfluentTags(jsoncons::ojson &schema) {
 
         // Recursively process all values in the object
         for (auto &member : schema.object_range()) {
-            removeConfluentTags(const_cast<jsoncons::ojson&>(member.value()));
+            removeConfluentTags(const_cast<jsoncons::ojson &>(member.value()));
         }
     } else if (schema.is_array()) {
         // Recursively process all elements in the array
         for (auto &element : schema.array_range()) {
-            removeConfluentTags(const_cast<jsoncons::ojson&>(element));
+            removeConfluentTags(const_cast<jsoncons::ojson &>(element));
         }
     }
 }

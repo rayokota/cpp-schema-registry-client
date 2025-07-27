@@ -1,11 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
 #include <avro/Compiler.hh>
 #include <avro/Decoder.hh>
 #include <avro/Encoder.hh>
@@ -13,6 +7,11 @@
 #include <avro/Specific.hh>
 #include <avro/ValidSchema.hh>
 #include <jsoncons/json.hpp>
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/serdes/Serde.h"

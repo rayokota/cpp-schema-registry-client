@@ -62,9 +62,9 @@ jsoncons::ojson transformFields(
  * @return Transformed JSON value
  */
 jsoncons::ojson transformFieldWithContext(RuleContext &ctx,
-                                         const jsoncons::ojson &schema,
-                                         const std::string &path,
-                                         const jsoncons::ojson &value);
+                                          const jsoncons::ojson &schema,
+                                          const std::string &path,
+                                          const jsoncons::ojson &value);
 /**
  * Transform a JSON object
  * @param ctx Rule execution context
@@ -73,8 +73,7 @@ jsoncons::ojson transformFieldWithContext(RuleContext &ctx,
  * @param value JSON value at current level
  * @return Transformed JSON value
  */
-jsoncons::ojson transform(RuleContext &ctx,
-                          const jsoncons::ojson &schema,
+jsoncons::ojson transform(RuleContext &ctx, const jsoncons::ojson &schema,
                           const std::string &path,
                           const jsoncons::ojson &value);
 

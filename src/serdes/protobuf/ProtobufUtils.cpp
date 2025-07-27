@@ -10,7 +10,7 @@
 #include "absl/strings/escaping.h"
 #include "confluent/meta.pb.h"
 #include "srclient/serdes/RuleRegistry.h"  // For global_registry functions
-#include "srclient/serdes/Serde.h"  // For RuleContext
+#include "srclient/serdes/Serde.h"         // For RuleContext
 
 namespace srclient::serdes::protobuf::utils {
 
