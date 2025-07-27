@@ -67,6 +67,7 @@ FetchContent_MakeAvailable(protovalidate_cc)
 
 # Import Tink as an in-tree dependency.
 # See https://developers.google.com/tink/setup/cc
+# Note: absl is provided by Tink, so we don't find_package it separately
 FetchContent_Declare(
         tink
         URL       https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.4.0.zip
@@ -78,9 +79,25 @@ if(NOT googletest_POPULATED)
     add_subdirectory(${tink_SOURCE_DIR} ${tink_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-# Note: absl is provided by Tink, so we don't find_package it separately
-find_package(nlohmann_json 3.12.0 REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(httplib QUIET)
+if(NOT httplib_FOUND)
+    FetchContent_Declare(
+            httplib
+            GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+            GIT_TAG v0.23.1
+    )
+    FetchContent_MakeAvailable(httplib)
+endif()
+
+find_package(nlohmann_json QUIET)
+if (NOT nlohmann_json_FOUND)
+    FetchContent_Declare(
+            nlohmann_json
+            GIT_REPOSITORY https://github.com/nlohmann/json.git
+            GIT_TAG v3.12.0
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
 
 # Function to compile protobuf files in the proto/ directory
 function(compile_project_proto_files)
