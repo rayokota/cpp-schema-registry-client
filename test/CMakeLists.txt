@@ -3,9 +3,9 @@ include(FetchContent)
 # Download GoogleTest if not already present
 # See https://google.github.io/googletest/quickstart-cmake.html
 FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
-        DOWNLOAD_EXTRACT_TIMESTAMP true
+    googletest
+    URL                    https://github.com/google/googletest/archive/refs/tags/v1.17.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP true
 )
 FetchContent_MakeAvailable(googletest)
 
@@ -13,14 +13,16 @@ FetchContent_MakeAvailable(googletest)
 include(../cmake/CompileProtobuf.cmake)
 CompileProtobuf(generated_test_proto ${CMAKE_SOURCE_DIR}/proto)
 
+# Collect test source files
 file(GLOB TEST_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 # Add the test executable
 add_executable(schemaregistry-test
-        ${TEST_SOURCE_FILES}
-        ${PROTO_SOURCES}
+    ${TEST_SOURCE_FILES}
+    ${PROTO_SOURCES}
 )
 
+# Include directories for the test executable
 target_include_directories(schemaregistry-test
     PRIVATE
         ${Protobuf_INCLUDE_DIRS}
@@ -28,7 +30,9 @@ target_include_directories(schemaregistry-test
         ${CMAKE_BINARY_DIR}/generated_proto  # Include main project's generated protos
 )
 
+# Link libraries for the test executable
 target_link_libraries(schemaregistry-test
+    PRIVATE
         GTest::gtest_main
         schemaregistry
         ${Protobuf_LIBRARIES}
@@ -40,5 +44,6 @@ target_link_libraries(schemaregistry-test
         tink::static
 )
 
+# Discover and register tests
 include(GoogleTest)
 gtest_discover_tests(schemaregistry-test)

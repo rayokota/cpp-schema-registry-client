@@ -9,25 +9,25 @@ project(SchemaRegistryClient CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED ON)
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
+# Fetch Apache Avro C++
 FetchContent_Declare(
-        avrocpp
-        GIT_REPOSITORY https://github.com/apache/avro.git
-        GIT_TAG release-1.12.0
-        EXCLUDE_FROM_ALL
-        SOURCE_SUBDIR lang/c++
+    avrocpp
+    GIT_REPOSITORY https://github.com/apache/avro.git
+    GIT_TAG        release-1.12.0
+    EXCLUDE_FROM_ALL
+    SOURCE_SUBDIR  lang/c++
 )
-
 FetchContent_MakeAvailable(avrocpp)
 
+# Fetch jsoncons
 FetchContent_Declare(
-        jsoncons
-        GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
-        GIT_TAG        v1.3.2
+    jsoncons
+    GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
+    GIT_TAG        v1.3.2
 )
 # Disable jsoncons unit tests
 set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
@@ -37,8 +37,8 @@ FetchContent_MakeAvailable(jsoncons)
 # so we build protovalidate_cc as an in-tree dependency to get cel-cpp.
 FetchContent_Declare(
     protovalidate_cc
-    GIT_REPOSITORY "https://github.com/bufbuild/protovalidate-cc.git"
-    GIT_TAG "v0.5.0"
+    GIT_REPOSITORY https://github.com/bufbuild/protovalidate-cc.git
+    GIT_TAG        v0.5.0
 )
 FetchContent_MakeAvailable(protovalidate_cc)
 
@@ -46,9 +46,9 @@ FetchContent_MakeAvailable(protovalidate_cc)
 # See https://developers.google.com/tink/setup/cc
 # Note: absl is provided by Tink, so we don't find_package it separately
 FetchContent_Declare(
-        tink
-        URL       https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.4.0.zip
-        URL_HASH  SHA256=06c4d49b0b1357f0b8c3abc77a7d920130dc868e4597d432a9ce1cda4f65e382
+    tink
+    URL      https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.4.0.zip
+    URL_HASH SHA256=06c4d49b0b1357f0b8c3abc77a7d920130dc868e4597d432a9ce1cda4f65e382
 )
 FetchContent_GetProperties(tink)
 if(NOT googletest_POPULATED)
@@ -56,22 +56,24 @@ if(NOT googletest_POPULATED)
     add_subdirectory(${tink_SOURCE_DIR} ${tink_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+# Find httplib or fetch if not found
 find_package(httplib QUIET)
 if(NOT httplib_FOUND)
     FetchContent_Declare(
-            httplib
-            GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-            GIT_TAG v0.23.1
+        httplib
+        GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+        GIT_TAG        v0.23.1
     )
     FetchContent_MakeAvailable(httplib)
 endif()
 
+# Find nlohmann_json or fetch if not found
 find_package(nlohmann_json QUIET)
-if (NOT nlohmann_json_FOUND)
+if(NOT nlohmann_json_FOUND)
     FetchContent_Declare(
-            nlohmann_json
-            GIT_REPOSITORY https://github.com/nlohmann/json.git
-            GIT_TAG v3.12.0
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG        v3.12.0
     )
     FetchContent_MakeAvailable(nlohmann_json)
 endif()
@@ -83,6 +85,7 @@ CompileProtobuf(generated_proto)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
+# Collect source files
 file(GLOB_RECURSE HEADER_FILES "include/*.h")
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
 
@@ -91,18 +94,22 @@ if(PROTO_SOURCES)
     list(APPEND SOURCE_FILES ${PROTO_SOURCES})
 endif()
 
+# Create the main library
 add_library(schemaregistry ${HEADER_FILES} ${SOURCE_FILES})
 
+# Setup formatting
 include(cmake/Format.cmake)
 Format(schemaregistry include)
 Format(schemaregistry src)
 
+# Compiler options
 target_compile_options(schemaregistry
     PRIVATE
         $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
             -Wall -Wno-unused-variable -Wno-unused-lambda-capture>
 )
 
+# Include directories
 target_include_directories(schemaregistry
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -112,6 +119,7 @@ target_include_directories(schemaregistry
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
 )
 
+# Link libraries
 target_link_libraries(schemaregistry
     PUBLIC 
         avrocpp
@@ -129,7 +137,9 @@ target_link_libraries(schemaregistry
         tink::static
 )
 
-configure_package_config_file("cmake/${PROJECT_NAME}Config.cmake.in"
+# Package configuration
+configure_package_config_file(
+    "cmake/${PROJECT_NAME}Config.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
     INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )
