@@ -15,7 +15,7 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)  # Set timestamp policy for URL downloads
 endif()
 
-project(srclient CXX)
+project(SchemaRegistryClient CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED ON)
@@ -144,16 +144,16 @@ if(PROJECT_PROTO_SOURCES)
     list(APPEND SOURCE_FILES ${PROJECT_PROTO_SOURCES})
 endif()
 
-add_library(${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
-#enable_clang_tidy(${PROJECT_NAME})
+add_library(schemaregistry ${HEADER_FILES} ${SOURCE_FILES})
+#enable_clang_tidy(schemaregistry)
 
-target_compile_options(${PROJECT_NAME}
+target_compile_options(schemaregistry
     PRIVATE
         $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
             -Wall -Wno-unused-variable -Wno-unused-lambda-capture>
 )
 
-target_include_directories(${PROJECT_NAME}
+target_include_directories(schemaregistry
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -162,7 +162,7 @@ target_include_directories(${PROJECT_NAME}
         $<$<BOOL:${PROJECT_PROTO_INCLUDE_DIR}>:${PROJECT_PROTO_INCLUDE_DIR}>
 )
 
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(schemaregistry
     PUBLIC 
         avrocpp
         cel_cpp
@@ -179,7 +179,7 @@ target_link_libraries(${PROJECT_NAME}
         tink::static
 )
 
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+configure_package_config_file("cmake/${PROJECT_NAME}Config.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
     INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )

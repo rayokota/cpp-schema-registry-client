@@ -64,21 +64,21 @@ compile_test_proto_files()
 file(GLOB TEST_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 # Add the test executable
-add_executable(srclient-test
+add_executable(schemaregistry-test
         ${TEST_SOURCE_FILES}
         ${TEST_PROTO_SOURCES}
 )
 
-target_include_directories(srclient-test
+target_include_directories(schemaregistry-test
     PRIVATE
         ${Protobuf_INCLUDE_DIRS}
         $<$<BOOL:${TEST_PROTO_INCLUDE_DIR}>:${TEST_PROTO_INCLUDE_DIR}>
         ${CMAKE_BINARY_DIR}/generated_proto  # Include main project's generated protos
 )
 
-target_link_libraries(srclient-test
+target_link_libraries(schemaregistry-test
         GTest::gtest_main
-        srclient
+        schemaregistry
         ${Protobuf_LIBRARIES}
         absl::log_internal_log_sink_set
         absl::log_internal_proto
@@ -89,4 +89,4 @@ target_link_libraries(srclient-test
 )
 
 include(GoogleTest)
-gtest_discover_tests(srclient-test)
+gtest_discover_tests(schemaregistry-test)
