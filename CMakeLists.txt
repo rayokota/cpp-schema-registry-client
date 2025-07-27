@@ -78,6 +78,9 @@ if(NOT nlohmann_json_FOUND)
     FetchContent_MakeAvailable(nlohmann_json)
 endif()
 
+# Find Protobuf for protoc executable and libraries
+find_package(Protobuf REQUIRED)
+
 # Compile project protobuf files
 include(cmake/CompileProtobuf.cmake)
 CompileProtobuf(generated_proto)
