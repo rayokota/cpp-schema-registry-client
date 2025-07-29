@@ -5,10 +5,8 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)  # Set timestamp policy for URL downloads
 endif()
 
-project(SchemaRegistryClient CXX)
+project(SchemaRegistryClient VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
@@ -104,6 +102,9 @@ add_library(schemaregistry ${HEADER_FILES} ${SOURCE_FILES})
 include(cmake/Format.cmake)
 Format(schemaregistry include)
 Format(schemaregistry src)
+
+# Compiler features
+target_compile_features(schemaregistry PUBLIC cxx_std_17)
 
 # Compiler options
 target_compile_options(schemaregistry
