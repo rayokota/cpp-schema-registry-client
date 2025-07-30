@@ -149,10 +149,58 @@ endif()
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-# Package configuration
+# 1. Install the library itself (shared or static)
+install(TARGETS schemaregistry
+        EXPORT schemaregistryTargets  # This creates a target file for find_package()
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} # For static libraries (.a, .lib)
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} # For shared libraries (.so, .dylib)
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} # For module libraries or if you want shared libs in bin (less common for pure libs)
+)
+
+# 2. Install public header files
+# Assuming your public headers are in the 'include' directory at the top level
+install(DIRECTORY include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.h"
+)
+
+# Install generated Protobuf headers
+if(PROTO_INCLUDE_DIR AND EXISTS ${PROTO_INCLUDE_DIR})
+    install(DIRECTORY ${PROTO_INCLUDE_DIR}/
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            FILES_MATCHING PATTERN "*.h"
+    )
+endif()
+
+# 3. Generate and install the CMake package configuration files
+#    These files allow other projects to find your library using find_package(schemaregistry)
+
+# Configure the package config file
 configure_package_config_file(
-        "cmake/${PROJECT_NAME}Config.cmake.in"
+        "cmake/${PROJECT_NAME}Config.cmake.in" # Your input template
         "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
         INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+)
+
+# Generate the version file
+write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
+)
+
+# Install the generated config and version files
+install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+)
+
+# Install the export file for targets. This should be done AFTER all targets are defined.
+# This file is used by the Config file to import your library targets.
+install(EXPORT schemaregistryTargets
+        FILE ${PROJECT_NAME}Targets.cmake
+        NAMESPACE schemaregistry:: # Adds a namespace like schemaregistry::MyLibrary
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )
 
