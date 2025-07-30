@@ -83,9 +83,6 @@ find_package(Protobuf REQUIRED)
 include(cmake/CompileProtobuf.cmake)
 CompileProtobuf(generated_proto)
 
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
-
 # Collect source files
 file(GLOB_RECURSE HEADER_FILES "include/*.h")
 file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
@@ -141,13 +138,21 @@ target_link_libraries(schemaregistry
         tink::static
 )
 
+OPTION(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
+
+if(SCHEMAREGISTRY_BUILD_TESTS)
+    include(CTest)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
 # Package configuration
 configure_package_config_file(
-    "cmake/${PROJECT_NAME}Config.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        "cmake/${PROJECT_NAME}Config.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )
 
-# Enable testing
-enable_testing()
-add_subdirectory(test)
