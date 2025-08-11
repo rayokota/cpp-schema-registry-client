@@ -14,11 +14,11 @@ include(../cmake/CompileProtobuf.cmake)
 CompileProtobuf(generated_test_proto ${CMAKE_SOURCE_DIR}/proto)
 
 # Collect test source files
-file(GLOB TEST_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+file(GLOB TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 # Add the test executable
 add_executable(schemaregistry-test
-    ${TEST_SOURCE_FILES}
+    ${TEST_SOURCES}
     ${PROTO_SOURCES}
 )
 

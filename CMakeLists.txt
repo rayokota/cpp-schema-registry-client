@@ -84,16 +84,16 @@ include(cmake/CompileProtobuf.cmake)
 CompileProtobuf(generated_proto)
 
 # Collect source files
-file(GLOB_RECURSE HEADER_FILES "include/*.h")
-file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h")
+file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 # Add generated protobuf files to the source list
 if(PROTO_SOURCES)
-    list(APPEND SOURCE_FILES ${PROTO_SOURCES})
+    list(APPEND SOURCES ${PROTO_SOURCES})
 endif()
 
 # Create the main library
-add_library(schemaregistry ${HEADER_FILES} ${SOURCE_FILES})
+add_library(schemaregistry ${HEADERS} ${SOURCES})
 
 # Setup formatting
 include(cmake/Format.cmake)
@@ -121,21 +121,13 @@ target_include_directories(schemaregistry
 )
 
 # Link libraries
+# Use BUILD_INTERFACE so install(EXPORT ...) does not reference non-exported
+# in-tree dependency targets (avoids CMake install errors).
 target_link_libraries(schemaregistry
-    PUBLIC 
-        avrocpp
-        cel_cpp
-        cel_cpp_parser
-        cel_cpp_minimal_descriptor_set
-        jsoncons
-        ${Protobuf_LIBRARIES}
+    PUBLIC
+        $<BUILD_INTERFACE:avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;${Protobuf_LIBRARIES}>
     PRIVATE
-        absl::log_internal_log_sink_set
-        absl::log_internal_proto
-        absl::absl_log
-        absl::log_internal_message
-        absl::hash
-        tink::static
+        $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;tink::static>
 )
 
 OPTION(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
