@@ -49,7 +49,7 @@ FetchContent_Declare(
     URL_HASH SHA256=06c4d49b0b1357f0b8c3abc77a7d920130dc868e4597d432a9ce1cda4f65e382
 )
 FetchContent_GetProperties(tink)
-if(NOT googletest_POPULATED)
+if(NOT tink_POPULATED)
     FetchContent_Populate(tink)
     add_subdirectory(${tink_SOURCE_DIR} ${tink_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
@@ -94,6 +94,16 @@ endif()
 
 # Create the main library
 add_library(schemaregistry ${HEADERS} ${SOURCES})
+
+# Provide a namespaced ALIAS for consumers (and internal consistency)
+# Build-tree alias matching the installed namespace
+add_library(schemaregistry::schemaregistry ALIAS schemaregistry)
+
+# Set library version metadata for shared library consumers/package managers
+set_target_properties(schemaregistry PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
 
 # Setup formatting
 include(cmake/Format.cmake)
@@ -167,32 +177,32 @@ endif()
 # 3. Generate and install the CMake package configuration files
 #    These files allow other projects to find your library using find_package(schemaregistry)
 
-# Configure the package config file
+# Configure the package config file for package name 'schemaregistry'
 configure_package_config_file(
-        "cmake/${PROJECT_NAME}Config.cmake.in" # Your input template
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        "cmake/schemaregistryConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/schemaregistryConfig.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/schemaregistry"
 )
 
 # Generate the version file
 write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/schemaregistryConfigVersion.cmake"
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY AnyNewerVersion
 )
 
 # Install the generated config and version files
 install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        "${CMAKE_CURRENT_BINARY_DIR}/schemaregistryConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/schemaregistryConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/schemaregistry"
 )
 
 # Install the export file for targets. This should be done AFTER all targets are defined.
 # This file is used by the Config file to import your library targets.
 install(EXPORT schemaregistryTargets
-        FILE ${PROJECT_NAME}Targets.cmake
-        NAMESPACE schemaregistry:: # Adds a namespace like schemaregistry::MyLibrary
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        FILE schemaregistryTargets.cmake
+        NAMESPACE schemaregistry::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/schemaregistry"
 )
 
