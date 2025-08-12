@@ -5,7 +5,7 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)  # Set timestamp policy for URL downloads
 endif()
 
-project(SchemaRegistryClient VERSION 0.1.0 LANGUAGES CXX)
+project(schemaregistry VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
