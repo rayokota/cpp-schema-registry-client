@@ -138,7 +138,9 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
         auto migrated_json = srclient::serdes::json::asJson(*migrated);
 
         // 4. Convert back to Avro with reader schema
-        value = utils::jsonToAvro(srclient::serdes::json::toNlohmann(migrated_json), reader_parsed.first);
+        value =
+            utils::jsonToAvro(srclient::serdes::json::toNlohmann(migrated_json),
+                              reader_parsed.first);
     } else {
         // Direct deserialization without evolution
         value = utils::deserializeAvroData(payload_data, writer_parsed.first,
