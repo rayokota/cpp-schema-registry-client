@@ -214,7 +214,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(
     switch (value.getFormat()) {
         case SerdeFormat::Json: {
             auto json_value = srclient::serdes::json::asJson(value);
-            return fromJsonValue(json_value, arena);
+            return fromJsonValue(srclient::serdes::json::toNlohmann(json_value), arena);
         }
         case SerdeFormat::Avro: {
             auto avro_value = srclient::serdes::avro::asAvro(value);
@@ -235,8 +235,8 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
     switch (original.getFormat()) {
         case SerdeFormat::Json: {
             auto original_json = srclient::serdes::json::asJson(original);
-            auto converted_json = toJsonValue(original_json, cel_value);
-            return srclient::serdes::json::makeJsonValue(converted_json);
+            auto converted_json = toJsonValue(srclient::serdes::json::toNlohmann(original_json), cel_value);
+            return srclient::serdes::json::makeJsonValue(srclient::serdes::json::fromNlohmann(converted_json));
         }
         case SerdeFormat::Avro: {
             auto original_avro = srclient::serdes::avro::asAvro(original);
@@ -258,24 +258,24 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
 }
 
 google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(
-    const jsoncons::ojson &json, google::protobuf::Arena *arena) {
+    const nlohmann::json &json, google::protobuf::Arena *arena) {
     if (json.is_null())
         return google::api::expr::runtime::CelValue::CreateNull();
-    if (json.is_bool())
+    if (json.is_boolean())
         return google::api::expr::runtime::CelValue::CreateBool(
-            json.as<bool>());
-    if (json.is_int64())
+            json.get<bool>());
+    if (json.is_number_integer())
         return google::api::expr::runtime::CelValue::CreateInt64(
-            json.as<int64_t>());
-    if (json.is_uint64())
+            json.get<int64_t>());
+    if (json.is_number_unsigned())
         return google::api::expr::runtime::CelValue::CreateUint64(
-            json.as<uint64_t>());
-    if (json.is_double())
+            json.get<uint64_t>());
+    if (json.is_number_float())
         return google::api::expr::runtime::CelValue::CreateDouble(
-            json.as<double>());
+            json.get<double>());
     // Use arena allocation for string storage
     if (json.is_string()) {
-        auto str_value = json.as<std::string>();
+        auto str_value = json.get<std::string>();
         // Allocate string in arena to ensure proper lifetime
         auto *arena_str =
             google::protobuf::Arena::Create<std::string>(arena, str_value);
@@ -283,7 +283,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(
     }
     if (json.is_array()) {
         std::vector<google::api::expr::runtime::CelValue> vec;
-        for (const auto &item : json.array_range()) {
+        for (const auto &item : json) {
             vec.push_back(fromJsonValue(item, arena));
         }
         auto *list_impl = google::protobuf::Arena::Create<
@@ -293,10 +293,9 @@ google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(
     if (json.is_object()) {
         auto *map_impl = google::protobuf::Arena::Create<
             google::api::expr::runtime::CelMapBuilder>(arena);
-        for (const auto &member : json.object_range()) {
-            auto key_json = jsoncons::ojson(member.key());
-            auto status = map_impl->Add(fromJsonValue(key_json, arena),
-                                        fromJsonValue(member.value(), arena));
+        for (const auto &[key, value] : json.items()) {
+            auto status = map_impl->Add(fromJsonValue(key, arena),
+                                        fromJsonValue(value, arena));
             if (!status.ok()) {
                 // Log error or handle as needed, but continue processing
             }
@@ -306,34 +305,34 @@ google::api::expr::runtime::CelValue CelExecutor::fromJsonValue(
     return google::api::expr::runtime::CelValue::CreateNull();
 }
 
-jsoncons::ojson CelExecutor::toJsonValue(
-    const jsoncons::ojson &original,
+nlohmann::json CelExecutor::toJsonValue(
+    const nlohmann::json &original,
     const google::api::expr::runtime::CelValue &cel_value) {
     // Convert CEL values back to JSON
     if (cel_value.IsBool()) {
-        return jsoncons::ojson(cel_value.BoolOrDie());
+        return nlohmann::json(cel_value.BoolOrDie());
     } else if (cel_value.IsInt64()) {
-        return jsoncons::ojson(cel_value.Int64OrDie());
+        return nlohmann::json(cel_value.Int64OrDie());
     } else if (cel_value.IsUint64()) {
-        return jsoncons::ojson(cel_value.Uint64OrDie());
+        return nlohmann::json(cel_value.Uint64OrDie());
     } else if (cel_value.IsDouble()) {
-        return jsoncons::ojson(cel_value.DoubleOrDie());
+        return nlohmann::json(cel_value.DoubleOrDie());
     } else if (cel_value.IsString()) {
-        return jsoncons::ojson(std::string(cel_value.StringOrDie().value()));
+        return nlohmann::json(std::string(cel_value.StringOrDie().value()));
     } else if (cel_value.IsNull()) {
-        return jsoncons::ojson::null();
+        return nlohmann::json(nullptr);
     } else if (cel_value.IsList()) {
         // Handle array/list conversion
-        jsoncons::ojson json_array = jsoncons::ojson::array();
+        nlohmann::json json_array = nlohmann::json::array();
         const auto *cel_list = cel_value.ListOrDie();
         for (int i = 0; i < cel_list->size(); ++i) {
             auto item = cel_list->Get(nullptr, i);
-            json_array.push_back(toJsonValue(jsoncons::ojson(), item));
+            json_array.push_back(toJsonValue(nlohmann::json(), item));
         }
         return json_array;
     } else if (cel_value.IsMap()) {
         // Handle object/map conversion
-        jsoncons::ojson json_object = jsoncons::ojson::object();
+        nlohmann::json json_object = nlohmann::json::object();
         const auto *cel_map = cel_value.MapOrDie();
 
         // Iterate through map entries
@@ -347,8 +346,8 @@ jsoncons::ojson CelExecutor::toJsonValue(
                         std::string(key_val.StringOrDie().value());
                     auto value_lookup = cel_map->Get(nullptr, key_val);
                     if (value_lookup.has_value()) {
-                        json_object[key] = toJsonValue(jsoncons::ojson(),
-                                                       value_lookup.value());
+                        json_object[key] =
+                            toJsonValue(nlohmann::json(), value_lookup.value());
                     }
                 }
             }

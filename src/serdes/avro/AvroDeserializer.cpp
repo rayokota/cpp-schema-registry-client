@@ -138,7 +138,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
         auto migrated_json = srclient::serdes::json::asJson(*migrated);
 
         // 4. Convert back to Avro with reader schema
-        value = utils::jsonToAvro(migrated_json, reader_parsed.first);
+        value = utils::jsonToAvro(srclient::serdes::json::toNlohmann(migrated_json), reader_parsed.first);
     } else {
         // Direct deserialization without evolution
         value = utils::deserializeAvroData(payload_data, writer_parsed.first,
@@ -170,7 +170,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
             ctx, subject, Mode::Read, std::nullopt,
             std::make_optional(reader_schema_raw), *serde_value,
             utils::getInlineTags(
-                jsoncons::ojson::parse(reader_schema_raw.getSchema().value())),
+                nlohmann::json::parse(reader_schema_raw.getSchema().value())),
             std::make_shared<FieldTransformer>(field_transformer));
         if (transformed->getFormat() == SerdeFormat::Avro) {
             value = asAvro(*transformed);
@@ -180,7 +180,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
     return NamedValue{getName(reader_parsed.first), std::move(value)};
 }
 
-jsoncons::ojson AvroDeserializer::deserializeToJson(
+nlohmann::json AvroDeserializer::deserializeToJson(
     const SerializationContext &ctx, const std::vector<uint8_t> &data) {
     auto named_value = deserialize(ctx, data);
     return utils::avroToJson(named_value.value);

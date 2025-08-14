@@ -1,26 +1,24 @@
 #pragma once
 
+#include <google/protobuf/descriptor.h>
+#include <google/protobuf/descriptor.pb.h>
+#include <google/protobuf/dynamic_message.h>
+#include <google/protobuf/message.h>
+#include <google/protobuf/util/json_util.h>
+
+#include <map>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
 #include <vector>
-
-// Google Protobuf includes
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/descriptor.pb.h>
-#include <google/protobuf/descriptor_database.h>
-#include <google/protobuf/dynamic_message.h>
-#include <google/protobuf/message.h>
-#include <google/protobuf/util/json_util.h>
-#include <google/protobuf/util/message_differencer.h>
-
-// Project includes
-#include <jsoncons/json.hpp>
 
 #include "srclient/rest/ISchemaRegistryClient.h"
 #include "srclient/rest/model/Schema.h"
+#include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
@@ -108,13 +106,13 @@ std::unordered_set<std::string> getInlineTags(
 /**
  * Protobuf Message to JSON conversion
  */
-jsoncons::ojson messageToJson(const google::protobuf::Message &message);
+nlohmann::json messageToJson(const google::protobuf::Message &message);
 
 /**
  * JSON to Protobuf Message conversion
  */
 std::unique_ptr<google::protobuf::Message> jsonToMessage(
-    const jsoncons::ojson &json, const google::protobuf::Descriptor *descriptor,
+    const nlohmann::json &json, const google::protobuf::Descriptor *descriptor,
     const google::protobuf::DescriptorPool *pool);
 
 /**

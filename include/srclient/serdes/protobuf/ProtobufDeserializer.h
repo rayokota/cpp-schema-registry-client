@@ -7,6 +7,7 @@
 #include <google/protobuf/util/json_util.h>
 
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -217,10 +218,10 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
             throw ProtobufError(
                 "Failed to convert message to JSON during migration");
         }
-        auto json_val = srclient::serdes::json::makeJsonValue(
-            jsoncons::ojson::parse(json_str));
+        auto json_val = nlohmann::json::parse(json_str);
+        auto serde_json = srclient::serdes::json::makeJsonValue(json_val);
         auto migrated_val = base_->getSerde().executeMigrations(
-            ctx, subject, migrations, *json_val);
+            ctx, subject, migrations, *serde_json);
 
         if (migrated_val->getFormat() != SerdeFormat::Json) {
             throw ProtobufError("Expected JSON value after migrations");

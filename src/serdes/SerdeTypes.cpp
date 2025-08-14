@@ -105,7 +105,7 @@ void ParsedSchemaCache<T>::clear() {
 
 template <typename T>
 std::string ParsedSchemaCache<T>::getSchemaKey(const Schema &schema) const {
-    // Use the JSON representation of the schema to create a hash
+    // Us the JSON representation of the schema to create a hash
     nlohmann::json j;
     to_json(j, schema);
     return j.dump();

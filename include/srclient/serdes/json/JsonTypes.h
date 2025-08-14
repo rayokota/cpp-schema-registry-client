@@ -4,6 +4,7 @@
 #include <jsoncons/json.hpp>
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 
 #include "srclient/serdes/SerdeError.h"
@@ -85,5 +86,9 @@ std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value);
 
 // Utility functions for JSON value and schema extraction
 jsoncons::ojson asJson(const SerdeValue &value);
+
+// Conversion utilities for compatibility with nlohmann-based code
+nlohmann::json toNlohmann(const jsoncons::ojson &value);
+jsoncons::ojson fromNlohmann(const nlohmann::json &value);
 
 }  // namespace srclient::serdes::json

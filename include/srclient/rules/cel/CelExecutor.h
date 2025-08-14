@@ -10,7 +10,7 @@
 #include "avro/Generic.hh"
 #include "eval/public/cel_expression.h"
 #include "google/protobuf/arena.h"
-#include "jsoncons/json.hpp"
+#include "nlohmann/json.hpp"
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/protobuf/ProtobufTypes.h"
@@ -68,15 +68,15 @@ class CelExecutor : public RuleExecutor {
     getOrCompileExpression(const std::string &expr);
 
     google::api::expr::runtime::CelValue fromJsonValue(
-        const jsoncons::ojson &json, google::protobuf::Arena *arena);
+        const nlohmann::json &json, google::protobuf::Arena *arena);
     google::api::expr::runtime::CelValue fromAvroValue(
         const ::avro::GenericDatum &avro, google::protobuf::Arena *arena);
     google::api::expr::runtime::CelValue fromProtobufValue(
         const srclient::serdes::protobuf::ProtobufVariant &variant,
         google::protobuf::Arena *arena);
 
-    jsoncons::ojson toJsonValue(
-        const jsoncons::ojson &original,
+    nlohmann::json toJsonValue(
+        const nlohmann::json &original,
         const google::api::expr::runtime::CelValue &cel_value);
     ::avro::GenericDatum toAvroValue(
         const ::avro::GenericDatum &original,

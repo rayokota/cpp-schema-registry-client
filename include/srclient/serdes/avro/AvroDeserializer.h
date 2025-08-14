@@ -1,26 +1,26 @@
 #pragma once
 
+#include <memory>
+#include <optional>
+#include <vector>
+
+// Avro C++ includes
 #include <avro/Compiler.hh>
 #include <avro/Decoder.hh>
 #include <avro/Encoder.hh>
 #include <avro/Generic.hh>
 #include <avro/Specific.hh>
 #include <avro/ValidSchema.hh>
-#include <jsoncons/json.hpp>
-#include <memory>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
-#include "srclient/rest/ISchemaRegistryClient.h"
+// Project includes
+#include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/rest/model/Schema.h"
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/avro/AvroSerializer.h"  // For AvroSerde
+#include "srclient/serdes/avro/AvroSerializer.h"  // For AvroSerde and NamedValue
 #include "srclient/serdes/avro/AvroTypes.h"
-#include "srclient/serdes/avro/AvroUtils.h"
 
 namespace srclient::serdes::avro {
 
@@ -66,8 +66,8 @@ class AvroDeserializer {
      * @param data Serialized bytes with schema ID header
      * @return JSON representation of the deserialized data
      */
-    jsoncons::ojson deserializeToJson(const SerializationContext &ctx,
-                                      const std::vector<uint8_t> &data);
+    nlohmann::json deserializeToJson(const SerializationContext &ctx,
+                                     const std::vector<uint8_t> &data);
 
     /**
      * Close the deserializer and cleanup resources

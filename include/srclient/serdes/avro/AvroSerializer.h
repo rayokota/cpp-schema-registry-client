@@ -1,25 +1,28 @@
 #pragma once
 
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+// Avro C++ includes
 #include <avro/Compiler.hh>
 #include <avro/Decoder.hh>
 #include <avro/Encoder.hh>
 #include <avro/Generic.hh>
 #include <avro/Specific.hh>
 #include <avro/ValidSchema.hh>
-#include <jsoncons/json.hpp>
-#include <memory>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
-#include "srclient/rest/ISchemaRegistryClient.h"
+// Project includes
+#include "srclient/rest/SchemaRegistryClient.h"
+#include "srclient/rest/model/Schema.h"
 #include "srclient/serdes/Serde.h"
 #include "srclient/serdes/SerdeConfig.h"
 #include "srclient/serdes/SerdeError.h"
 #include "srclient/serdes/SerdeTypes.h"
 #include "srclient/serdes/avro/AvroTypes.h"
-#include "srclient/serdes/avro/AvroUtils.h"
 
 namespace srclient::serdes::avro {
 
@@ -62,14 +65,14 @@ class AvroSerializer {
                                    const ::avro::GenericDatum &datum);
 
     /**
-     * Serialize JSON value to bytes
-     * Converts JSON to Avro datum and then serializes
+     * Serialize a JSON value to Avro bytes
+     * Uses the JSON to Avro conversion before serialization
      * @param ctx Serialization context
      * @param json_value JSON value to convert and serialize
      * @return Serialized bytes with schema ID header
      */
     std::vector<uint8_t> serializeJson(const SerializationContext &ctx,
-                                       const jsoncons::ojson &json_value);
+                                       const nlohmann::json &json_value);
 
     /**
      * Close the serializer and cleanup resources
@@ -95,7 +98,7 @@ class AvroSerializer {
      * @param schema Avro schema for the conversion
      * @return Converted Avro datum
      */
-    ::avro::GenericDatum jsonToAvro(const jsoncons::ojson &json_value,
+    ::avro::GenericDatum jsonToAvro(const nlohmann::json &json_value,
                                     const ::avro::ValidSchema &schema);
 };
 

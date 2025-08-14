@@ -238,32 +238,32 @@ FieldType avroSchemaToFieldType(const ::avro::ValidSchema &schema) {
     }
 }
 
-jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
+nlohmann::json avroToJson(const ::avro::GenericDatum &datum) {
     switch (datum.type()) {
         case ::avro::AVRO_NULL:
-            return jsoncons::ojson::null();
+            return nlohmann::json(nullptr);
 
         case ::avro::AVRO_BOOL:
-            return jsoncons::ojson(datum.value<bool>());
+            return nlohmann::json(datum.value<bool>());
 
         case ::avro::AVRO_INT:
-            return jsoncons::ojson(datum.value<int32_t>());
+            return nlohmann::json(datum.value<int32_t>());
 
         case ::avro::AVRO_LONG:
-            return jsoncons::ojson(datum.value<int64_t>());
+            return nlohmann::json(datum.value<int64_t>());
 
         case ::avro::AVRO_FLOAT:
-            return jsoncons::ojson(datum.value<float>());
+            return nlohmann::json(datum.value<float>());
 
         case ::avro::AVRO_DOUBLE:
-            return jsoncons::ojson(datum.value<double>());
+            return nlohmann::json(datum.value<double>());
 
         case ::avro::AVRO_STRING:
-            return jsoncons::ojson(datum.value<std::string>());
+            return nlohmann::json(datum.value<std::string>());
 
         case ::avro::AVRO_BYTES: {
             const auto &bytes = datum.value<std::vector<uint8_t>>();
-            jsoncons::ojson array = jsoncons::ojson::array();
+            nlohmann::json array = nlohmann::json::array();
             for (uint8_t byte : bytes) {
                 array.push_back(static_cast<unsigned int>(byte));
             }
@@ -272,7 +272,7 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
 
         case ::avro::AVRO_FIXED: {
             const auto &fixed = datum.value<::avro::GenericFixed>();
-            jsoncons::ojson array = jsoncons::ojson::array();
+            nlohmann::json array = nlohmann::json::array();
             for (size_t i = 0; i < fixed.value().size(); ++i) {
                 array.push_back(static_cast<unsigned int>(fixed.value()[i]));
             }
@@ -281,12 +281,12 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
 
         case ::avro::AVRO_ENUM: {
             const auto &enum_val = datum.value<::avro::GenericEnum>();
-            return jsoncons::ojson(enum_val.symbol());
+            return nlohmann::json(enum_val.symbol());
         }
 
         case ::avro::AVRO_ARRAY: {
             const auto &array = datum.value<::avro::GenericArray>();
-            jsoncons::ojson json_array = jsoncons::ojson::array();
+            nlohmann::json json_array = nlohmann::json::array();
             for (size_t i = 0; i < array.value().size(); ++i) {
                 json_array.push_back(avroToJson(array.value()[i]));
             }
@@ -295,7 +295,7 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
 
         case ::avro::AVRO_MAP: {
             const auto &map = datum.value<::avro::GenericMap>();
-            jsoncons::ojson json_obj = jsoncons::ojson::object();
+            nlohmann::json json_obj = nlohmann::json::object();
             for (const auto &pair : map.value()) {
                 json_obj[pair.first] = avroToJson(pair.second);
             }
@@ -304,7 +304,7 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
 
         case ::avro::AVRO_RECORD: {
             const auto &record = datum.value<::avro::GenericRecord>();
-            jsoncons::ojson json_obj = jsoncons::ojson::object();
+            nlohmann::json json_obj = nlohmann::json::object();
             for (size_t i = 0; i < record.fieldCount(); ++i) {
                 json_obj[record.schema()->nameAt(i)] =
                     avroToJson(record.fieldAt(i));
@@ -322,59 +322,59 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
     }
 }
 
-::avro::GenericDatum jsonToAvro(const jsoncons::ojson &json_value,
+::avro::GenericDatum jsonToAvro(const nlohmann::json &json_value,
                                 const ::avro::ValidSchema &schema) {
     switch (schema.root()->type()) {
         case ::avro::AVRO_NULL:
             return ::avro::GenericDatum();
 
         case ::avro::AVRO_BOOL:
-            if (!json_value.is_bool()) {
+            if (!json_value.is_boolean()) {
                 throw AvroError("Expected boolean value");
             }
-            return ::avro::GenericDatum(json_value.as<bool>());
+            return ::avro::GenericDatum(json_value.get<bool>());
 
         case ::avro::AVRO_INT:
-            if (!json_value.is_int64()) {
+            if (!json_value.is_number_integer()) {
                 throw AvroError("Expected integer value");
             }
-            return ::avro::GenericDatum(json_value.as<int32_t>());
+            return ::avro::GenericDatum(json_value.get<int32_t>());
 
         case ::avro::AVRO_LONG:
             if (!json_value.is_number()) {
                 throw AvroError("Expected number value for long");
             }
-            return ::avro::GenericDatum(json_value.as<int64_t>());
+            return ::avro::GenericDatum(json_value.get<int64_t>());
 
         case ::avro::AVRO_FLOAT:
             if (!json_value.is_number()) {
                 throw AvroError("Expected number value for float");
             }
-            return ::avro::GenericDatum(json_value.as<float>());
+            return ::avro::GenericDatum(json_value.get<float>());
 
         case ::avro::AVRO_DOUBLE:
             if (!json_value.is_number()) {
                 throw AvroError("Expected number value for double");
             }
-            return ::avro::GenericDatum(json_value.as<double>());
+            return ::avro::GenericDatum(json_value.get<double>());
 
         case ::avro::AVRO_STRING:
             if (!json_value.is_string()) {
                 throw AvroError("Expected string value");
             }
-            return ::avro::GenericDatum(json_value.as<std::string>());
+            return ::avro::GenericDatum(json_value.get<std::string>());
 
         case ::avro::AVRO_BYTES: {
             if (!json_value.is_array()) {
                 throw AvroError("Expected array for bytes");
             }
             std::vector<uint8_t> bytes;
-            for (const auto &elem : json_value.array_range()) {
-                if (!elem.is_uint64()) {
+            for (const auto &elem : json_value) {
+                if (!elem.is_number_unsigned()) {
                     throw AvroError(
                         "Expected unsigned integers in bytes array");
                 }
-                bytes.push_back(elem.as<uint8_t>());
+                bytes.push_back(elem.get<uint8_t>());
             }
             return ::avro::GenericDatum(bytes);
         }
@@ -385,7 +385,7 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
             }
             ::avro::GenericDatum datum(schema);
             auto &enum_val = datum.value<::avro::GenericEnum>();
-            enum_val.set(json_value.as<std::string>());
+            enum_val.set(json_value.get<std::string>());
             return datum;
         }
 
@@ -398,7 +398,7 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
             auto item_schema = schema.root()->leafAt(0);
             ::avro::ValidSchema item_valid_schema(item_schema);
 
-            for (const auto &item : json_value.array_range()) {
+            for (const auto &item : json_value) {
                 array.value().push_back(jsonToAvro(item, item_valid_schema));
             }
             return datum;
@@ -413,10 +413,9 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
             auto value_schema = schema.root()->leafAt(0);
             ::avro::ValidSchema value_valid_schema(value_schema);
 
-            for (const auto &member : json_value.object_range()) {
+            for (const auto &[key, value] : json_value.items()) {
                 map.value().push_back(
-                    {member.key(),
-                     jsonToAvro(member.value(), value_valid_schema)});
+                    {key, jsonToAvro(value, value_valid_schema)});
             }
             return datum;
         }
@@ -430,11 +429,12 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum) {
 
             for (size_t i = 0; i < schema.root()->leaves(); ++i) {
                 const std::string &field_name = schema.root()->nameAt(i);
-                if (json_value.contains(field_name)) {
+                auto field_it = json_value.find(field_name);
+                if (field_it != json_value.end()) {
                     auto field_schema = schema.root()->leafAt(i);
                     ::avro::ValidSchema field_valid_schema(field_schema);
-                    record.setFieldAt(i, jsonToAvro(json_value[field_name],
-                                                    field_valid_schema));
+                    record.setFieldAt(
+                        i, jsonToAvro(*field_it, field_valid_schema));
                 }
             }
             return datum;
@@ -546,7 +546,7 @@ std::string impliedNamespace(const std::string &name) {
 }
 
 std::unordered_map<std::string, std::unordered_set<std::string>> getInlineTags(
-    const jsoncons::ojson &schema) {
+    const nlohmann::json &schema) {
     std::unordered_map<std::string, std::unordered_set<std::string>>
         inline_tags;
     getInlineTagsRecursively("", "", schema, inline_tags);
@@ -555,14 +555,14 @@ std::unordered_map<std::string, std::unordered_set<std::string>> getInlineTags(
 
 void getInlineTagsRecursively(
     const std::string &ns, const std::string &name,
-    const jsoncons::ojson &schema,
+    const nlohmann::json &schema,
     std::unordered_map<std::string, std::unordered_set<std::string>> &tags) {
     if (schema.is_null()) {
         return;
     }
 
     if (schema.is_array()) {
-        for (const auto &subschema : schema.array_range()) {
+        for (const auto &subschema : schema) {
             getInlineTagsRecursively(ns, name, subschema, tags);
         }
     } else if (!schema.is_object()) {
@@ -570,28 +570,32 @@ void getInlineTagsRecursively(
         // type
         return;
     } else {
-        if (!schema.contains("type")) {
+        auto schema_type_it = schema.find("type");
+        if (schema_type_it == schema.end()) {
             return;
         }
 
-        std::string schema_type =
-            schema["type"].is_string() ? schema["type"].as<std::string>() : "";
+        std::string schema_type = schema_type_it->is_string()
+                                      ? schema_type_it->get<std::string>()
+                                      : "";
 
         if (schema_type == "array") {
-            if (schema.contains("items")) {
-                getInlineTagsRecursively(ns, name, schema["items"], tags);
+            auto items_it = schema.find("items");
+            if (items_it != schema.end()) {
+                getInlineTagsRecursively(ns, name, *items_it, tags);
             }
         } else if (schema_type == "map") {
-            if (schema.contains("values")) {
-                getInlineTagsRecursively(ns, name, schema["values"], tags);
+            auto values_it = schema.find("values");
+            if (values_it != schema.end()) {
+                getInlineTagsRecursively(ns, name, *values_it, tags);
             }
         } else if (schema_type == "record") {
             std::string record_ns;
             std::string record_name;
 
-            if (schema.contains("namespace") &&
-                schema["namespace"].is_string()) {
-                record_ns = schema["namespace"].as<std::string>();
+            auto ns_it = schema.find("namespace");
+            if (ns_it != schema.end() && ns_it->is_string()) {
+                record_ns = ns_it->get<std::string>();
             } else {
                 record_ns = impliedNamespace(name);
                 if (record_ns.empty()) {
@@ -599,8 +603,9 @@ void getInlineTagsRecursively(
                 }
             }
 
-            if (schema.contains("name") && schema["name"].is_string()) {
-                record_name = schema["name"].as<std::string>();
+            auto name_it = schema.find("name");
+            if (name_it != schema.end() && name_it->is_string()) {
+                record_name = name_it->get<std::string>();
 
                 // Add namespace prefix if needed
                 if (!record_ns.empty() && record_name.find(record_ns) != 0) {
@@ -608,31 +613,35 @@ void getInlineTagsRecursively(
                 }
             }
 
-            if (schema.contains("fields") && schema["fields"].is_array()) {
-                for (const auto &field : schema["fields"].array_range()) {
+            auto fields_it = schema.find("fields");
+            if (fields_it != schema.end() && fields_it->is_array()) {
+                for (const auto &field : *fields_it) {
                     if (!field.is_object()) continue;
 
-                    if (field.contains("confluent:tags") &&
-                        field.contains("name") &&
-                        field["confluent:tags"].is_array() &&
-                        field["name"].is_string()) {
+                    auto field_tags_it = field.find("confluent:tags");
+                    auto field_name_it = field.find("name");
+                    auto field_type_it = field.find("type");
+
+                    if (field_tags_it != field.end() &&
+                        field_name_it != field.end() &&
+                        field_tags_it->is_array() &&
+                        field_name_it->is_string()) {
                         std::string field_name =
-                            field["name"].as<std::string>();
+                            field_name_it->get<std::string>();
                         std::string full_field_name =
                             record_name + "." + field_name;
 
-                        for (const auto &tag :
-                             field["confluent:tags"].array_range()) {
+                        for (const auto &tag : *field_tags_it) {
                             if (tag.is_string()) {
                                 tags[full_field_name].insert(
-                                    tag.as<std::string>());
+                                    tag.get<std::string>());
                             }
                         }
                     }
 
-                    if (field.contains("type")) {
+                    if (field_type_it != field.end()) {
                         getInlineTagsRecursively(record_ns, record_name,
-                                                 field["type"], tags);
+                                                 *field_type_it, tags);
                     }
                 }
             }
@@ -644,21 +653,22 @@ void getInlineTagsRecursively(
  * Recursively remove "confluent:tags" properties from a JSON schema
  * @param schema JSON schema object to clean
  */
-void removeConfluentTags(jsoncons::ojson &schema) {
+void removeConfluentTags(nlohmann::json &schema) {
     if (schema.is_object()) {
         // Remove confluent:tags if it exists
-        if (schema.contains("confluent:tags")) {
-            schema.erase("confluent:tags");
+        auto tags_it = schema.find("confluent:tags");
+        if (tags_it != schema.end()) {
+            schema.erase(tags_it);
         }
 
         // Recursively process all values in the object
-        for (auto &member : schema.object_range()) {
-            removeConfluentTags(const_cast<jsoncons::ojson &>(member.value()));
+        for (auto &[key, value] : schema.items()) {
+            removeConfluentTags(value);
         }
     } else if (schema.is_array()) {
         // Recursively process all elements in the array
-        for (auto &element : schema.array_range()) {
-            removeConfluentTags(const_cast<jsoncons::ojson &>(element));
+        for (auto &element : schema) {
+            removeConfluentTags(element);
         }
     }
 }
@@ -666,13 +676,13 @@ void removeConfluentTags(jsoncons::ojson &schema) {
 ::avro::ValidSchema compileJsonSchema(const std::string &schema_str) {
     try {
         // Parse the schema string as JSON
-        jsoncons::ojson schema_json = jsoncons::ojson::parse(schema_str);
+        nlohmann::json schema_json = nlohmann::json::parse(schema_str);
 
         // Remove confluent:tags properties recursively
         removeConfluentTags(schema_json);
 
         // Convert back to string
-        std::string cleaned_schema_str = schema_json.to_string();
+        std::string cleaned_schema_str = schema_json.dump();
 
         // Create istringstream and compile the schema
         std::istringstream schema_stream(cleaned_schema_str);
@@ -680,7 +690,7 @@ void removeConfluentTags(jsoncons::ojson &schema) {
         ::avro::compileJsonSchema(schema_stream, avro_schema);
 
         return avro_schema;
-    } catch (const std::exception &e) {
+    } catch (const nlohmann::json::parse_error &e) {
         throw AvroError("Failed to parse schema JSON: " +
                         std::string(e.what()));
     } catch (const ::avro::Exception &e) {

@@ -9,6 +9,7 @@
 #include <avro/Specific.hh>
 #include <avro/ValidSchema.hh>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 
 #include "srclient/serdes/SerdeError.h"

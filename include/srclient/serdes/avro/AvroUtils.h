@@ -16,7 +16,7 @@
 #include <avro/ValidSchema.hh>
 
 // Project includes
-#include <jsoncons/json.hpp>
+#include <nlohmann/json.hpp>
 
 #include "srclient/rest/model/Schema.h"
 #include "srclient/serdes/SerdeError.h"
@@ -67,7 +67,7 @@ FieldType avroSchemaToFieldType(const ::avro::ValidSchema &schema);
  * @param datum Avro datum to convert
  * @return JSON representation
  */
-jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum);
+nlohmann::json avroToJson(const ::avro::GenericDatum &datum);
 
 /**
  * Convert JSON to Avro GenericDatum
@@ -75,7 +75,7 @@ jsoncons::ojson avroToJson(const ::avro::GenericDatum &datum);
  * @param schema Avro schema to guide conversion
  * @return Converted Avro datum
  */
-::avro::GenericDatum jsonToAvro(const jsoncons::ojson &json_value,
+::avro::GenericDatum jsonToAvro(const nlohmann::json &json_value,
                                 const ::avro::ValidSchema &schema);
 
 /**
@@ -151,7 +151,7 @@ std::string impliedNamespace(const std::string &name);
  * @return Map of field paths to their tag sets
  */
 std::unordered_map<std::string, std::unordered_set<std::string>> getInlineTags(
-    const jsoncons::ojson &schema);
+    const nlohmann::json &schema);
 
 /**
  * Recursively extract inline tags from Avro schema
@@ -162,7 +162,7 @@ std::unordered_map<std::string, std::unordered_set<std::string>> getInlineTags(
  */
 void getInlineTagsRecursively(
     const std::string &ns, const std::string &name,
-    const jsoncons::ojson &schema,
+    const nlohmann::json &schema,
     std::unordered_map<std::string, std::unordered_set<std::string>> &tags);
 
 /**
