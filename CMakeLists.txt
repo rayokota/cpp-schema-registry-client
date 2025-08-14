@@ -7,6 +7,11 @@ endif()
 
 project(schemaregistry VERSION 0.1.0 LANGUAGES CXX)
 
+# Enforce C++17 globally so all fetched dependencies (e.g., ANTLR4 runtime)
+# are built with C++17 features available (std::any, std::shared_mutex, etc.).
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
@@ -135,7 +140,7 @@ target_include_directories(schemaregistry
 # in-tree dependency targets (avoids CMake install errors).
 target_link_libraries(schemaregistry
     PUBLIC
-        $<BUILD_INTERFACE:avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;${Protobuf_LIBRARIES}>
+        $<BUILD_INTERFACE:avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;jsoncons;${Protobuf_LIBRARIES}>
     PRIVATE
         $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;tink::static>
 )
