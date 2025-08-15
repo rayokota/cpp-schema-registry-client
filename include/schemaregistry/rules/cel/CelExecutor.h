@@ -67,36 +67,6 @@ class CelExecutor : public RuleExecutor {
 
     absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>>
     getOrCompileExpression(const std::string &expr);
-
-    google::api::expr::runtime::CelValue fromJsonValue(
-        const nlohmann::json &json, google::protobuf::Arena *arena);
-    google::api::expr::runtime::CelValue fromAvroValue(
-        const ::avro::GenericDatum &avro, google::protobuf::Arena *arena);
-    google::api::expr::runtime::CelValue fromProtobufValue(
-        const schemaregistry::serdes::protobuf::ProtobufVariant &variant,
-        google::protobuf::Arena *arena);
-
-    nlohmann::json toJsonValue(
-        const nlohmann::json &original,
-        const google::api::expr::runtime::CelValue &cel_value);
-    ::avro::GenericDatum toAvroValue(
-        const ::avro::GenericDatum &original,
-        const google::api::expr::runtime::CelValue &cel_value);
-    schemaregistry::serdes::protobuf::ProtobufVariant toProtobufValue(
-        const schemaregistry::serdes::protobuf::ProtobufVariant &original,
-        const google::api::expr::runtime::CelValue &cel_value);
-
-    // Helper methods for protobuf conversion
-    google::api::expr::runtime::CelValue convertProtobufFieldToCel(
-        const google::protobuf::Message &message,
-        const google::protobuf::FieldDescriptor *field,
-        const google::protobuf::Reflection *reflection,
-        google::protobuf::Arena *arena, int index);
-
-    google::api::expr::runtime::CelValue convertProtobufMapToCel(
-        const google::protobuf::Message &map_entry,
-        const google::protobuf::FieldDescriptor *map_field,
-        google::protobuf::Arena *arena);
 };
 
 }  // namespace schemaregistry::rules::cel
