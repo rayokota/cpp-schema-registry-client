@@ -5,6 +5,7 @@
 #include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -81,7 +82,7 @@ class JsonSerializer {
      * @return Serialized bytes with schema ID header
      */
     std::vector<uint8_t> serialize(const SerializationContext &ctx,
-                                   const jsoncons::ojson &value);
+                                   const nlohmann::json &value);
 
     /**
      * Close the serializer and cleanup resources
@@ -103,8 +104,8 @@ class JsonSerializer {
                                                const Schema &schema,
                                                const std::string &subject);
 
-    jsoncons::ojson executeFieldTransformations(
-        const jsoncons::ojson &value, const jsoncons::ojson &schema,
+    nlohmann::json executeFieldTransformations(
+        const nlohmann::json &value, const nlohmann::json &schema,
         const RuleContext &context, const std::string &field_executor_type);
 };
 

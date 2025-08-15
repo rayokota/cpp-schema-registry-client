@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include <jsoncons/json.hpp>
+#include <nlohmann/json.hpp>
 
 // Project includes
 #include "srclient/rest/MockSchemaRegistryClient.h"
@@ -86,7 +86,7 @@ TEST(JsonTest, BasicSerialization) {
     }
     )";
     
-    jsoncons::ojson obj = jsoncons::ojson::parse(obj_str);
+    nlohmann::json obj = nlohmann::json::parse(obj_str);
     
     // Create rule registry
     auto rule_registry = std::make_shared<RuleRegistry>();
@@ -108,7 +108,7 @@ TEST(JsonTest, BasicSerialization) {
     JsonDeserializer deserializer(client, rule_registry, deser_conf);
     
     // Deserialize back to JSON object
-    jsoncons::ojson obj2 = deserializer.deserialize(ser_ctx, bytes);
+    nlohmann::json obj2 = deserializer.deserialize(ser_ctx, bytes);
     
     // Assert that the original and deserialized objects are equal
     ASSERT_EQ(obj2, obj);
@@ -199,7 +199,7 @@ TEST(JsonTest, SerializeReferences) {
     }
     )";
     
-    jsoncons::ojson obj = jsoncons::ojson::parse(obj_str);
+    nlohmann::json obj = nlohmann::json::parse(obj_str);
     
     // Create rule registry
     auto rule_registry = std::make_shared<RuleRegistry>();
@@ -221,7 +221,7 @@ TEST(JsonTest, SerializeReferences) {
     JsonDeserializer deserializer(client, rule_registry, deser_conf);
     
     // Deserialize back to JSON object
-    jsoncons::ojson obj2 = deserializer.deserialize(ser_ctx, bytes);
+    nlohmann::json obj2 = deserializer.deserialize(ser_ctx, bytes);
     
     // Assert that the original and deserialized objects are equal
     ASSERT_EQ(obj2, obj);
@@ -296,7 +296,7 @@ TEST(JsonTest, CelField) {
     }
     )";
     
-    jsoncons::ojson obj = jsoncons::ojson::parse(obj_str);
+    nlohmann::json obj = nlohmann::json::parse(obj_str);
     
     // Create rule registry and register CEL field executor
     auto rule_registry = std::make_shared<RuleRegistry>();
@@ -330,10 +330,10 @@ TEST(JsonTest, CelField) {
     }
     )";
     
-    jsoncons::ojson expected_obj = jsoncons::ojson::parse(expected_obj_str);
+    nlohmann::json expected_obj = nlohmann::json::parse(expected_obj_str);
     
     // Deserialize back to JSON object
-    jsoncons::ojson obj2 = deserializer.deserialize(ser_ctx, bytes);
+    nlohmann::json obj2 = deserializer.deserialize(ser_ctx, bytes);
     
     // Assert that the deserialized object matches the expected object (with suffix)
     ASSERT_EQ(obj2, expected_obj);
@@ -429,7 +429,7 @@ TEST(JsonTest, Encryption) {
     }
     )";
     
-    jsoncons::ojson obj = jsoncons::ojson::parse(obj_str);
+    nlohmann::json obj = nlohmann::json::parse(obj_str);
     
     // Create rule registry and register field encryption executor
     auto rule_registry = std::make_shared<RuleRegistry>();
@@ -454,7 +454,7 @@ TEST(JsonTest, Encryption) {
     JsonDeserializer deserializer(client, rule_registry, deser_conf);
     
     // Deserialize back to JSON object
-    jsoncons::ojson obj2 = deserializer.deserialize(ser_ctx, bytes);
+    nlohmann::json obj2 = deserializer.deserialize(ser_ctx, bytes);
     
     // Assert that the original and deserialized objects are equal
     ASSERT_EQ(obj2, obj);

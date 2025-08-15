@@ -32,8 +32,8 @@ JsonDeserializer::JsonDeserializer(
     }
 }
 
-jsoncons::ojson JsonDeserializer::deserialize(
-    const SerializationContext &ctx, const std::vector<uint8_t> &data) {
+nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
+                                             const std::vector<uint8_t> &data) {
     // Determine subject
     auto strategy = base_->getConfig().subject_name_strategy;
     auto subject_opt = strategy(ctx.topic, ctx.serde_type, std::nullopt);
@@ -106,10 +106,10 @@ jsoncons::ojson JsonDeserializer::deserialize(
     // Parse JSON from bytes
     std::string json_string(reinterpret_cast<const char *>(message_data),
                             message_size);
-    jsoncons::ojson value;
+    nlohmann::json value;
     try {
-        value = jsoncons::ojson::parse(json_string);
-    } catch (const jsoncons::json_exception &e) {
+        value = nlohmann::json::parse(json_string);
+    } catch (const nlohmann::json::parse_error &e) {
         throw JsonError("Failed to parse JSON: " + std::string(e.what()));
     }
 
@@ -171,22 +171,22 @@ JsonDeserializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-jsoncons::ojson JsonDeserializer::executeFieldTransformations(
-    const jsoncons::ojson &value, const jsoncons::ojson &schema,
+nlohmann::json JsonDeserializer::executeFieldTransformations(
+    const nlohmann::json &value, const nlohmann::json &schema,
     const RuleContext &context, const std::string &field_executor_type) {
     // TODO: Implement field-level transformations
     return value;
 }
 
-jsoncons::ojson JsonDeserializer::executeMigrations(
+nlohmann::json JsonDeserializer::executeMigrations(
     const SerializationContext &ctx, const std::string &subject,
-    const std::vector<Migration> &migrations, const jsoncons::ojson &value) {
+    const std::vector<Migration> &migrations, const nlohmann::json &value) {
     // Convert to SerdeValue for migration execution
     auto serde_value = makeJsonValue(value);
     auto migrated_value = base_->getSerde().executeMigrations(
         ctx, subject, migrations, *serde_value);
 
-    // Convert back to jsoncons::ojson
+    // Convert back to nlohmann::json
     return asJson(*migrated_value);
 }
 

@@ -214,8 +214,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(
     switch (value.getFormat()) {
         case SerdeFormat::Json: {
             auto json_value = srclient::serdes::json::asJson(value);
-            return fromJsonValue(srclient::serdes::json::toNlohmann(json_value),
-                                 arena);
+            return fromJsonValue(json_value, arena);
         }
         case SerdeFormat::Avro: {
             auto avro_value = srclient::serdes::avro::asAvro(value);
@@ -236,10 +235,8 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
     switch (original.getFormat()) {
         case SerdeFormat::Json: {
             auto original_json = srclient::serdes::json::asJson(original);
-            auto converted_json = toJsonValue(
-                srclient::serdes::json::toNlohmann(original_json), cel_value);
-            return srclient::serdes::json::makeJsonValue(
-                srclient::serdes::json::fromNlohmann(converted_json));
+            auto converted_json = toJsonValue(original_json, cel_value);
+            return srclient::serdes::json::makeJsonValue(converted_json);
         }
         case SerdeFormat::Avro: {
             auto original_avro = srclient::serdes::avro::asAvro(original);
