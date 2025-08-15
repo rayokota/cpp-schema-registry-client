@@ -1,7 +1,5 @@
 #pragma once
 
-#include <jsoncons/json.hpp>
-#include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -36,6 +34,8 @@ class JsonDeserializer {
         std::shared_ptr<RuleRegistry> rule_registry,
         const DeserializerConfig &config);
 
+    ~JsonDeserializer();
+
     /**
      * Deserialize bytes to JSON object with schema validation and migration
      * @param ctx Serialization context (topic, serde type, etc.)
@@ -51,25 +51,8 @@ class JsonDeserializer {
     void close();
 
   private:
-    std::shared_ptr<BaseDeserializer> base_;
-    std::unique_ptr<JsonSerde> serde_;
-
-    // Helper methods
-    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
-    getParsedSchema(const schemaregistry::rest::model::Schema &schema);
-
-    nlohmann::json executeFieldTransformations(
-        const nlohmann::json &value, const nlohmann::json &schema,
-        const RuleContext &context, const std::string &field_executor_type);
-
-    nlohmann::json executeMigrations(const SerializationContext &ctx,
-                                     const std::string &subject,
-                                     const std::vector<Migration> &migrations,
-                                     const nlohmann::json &value);
-
-    bool isEvolutionRequired(
-        const schemaregistry::rest::model::Schema &writer_schema,
-        const schemaregistry::rest::model::Schema &reader_schema);
+    class Impl;
+    std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace schemaregistry::serdes::json

@@ -19,8 +19,6 @@
 #include "schemaregistry/serdes/SerdeConfig.h"
 #include "schemaregistry/serdes/SerdeError.h"
 #include "schemaregistry/serdes/SerdeTypes.h"
-#include "schemaregistry/serdes/avro/AvroSerializer.h"  // For AvroSerde and NamedValue
-#include "schemaregistry/serdes/avro/AvroTypes.h"
 
 namespace schemaregistry::serdes::avro {
 
@@ -37,7 +35,7 @@ struct NamedValue {
 
     NamedValue() = default;
     NamedValue(std::optional<std::string> n, ::avro::GenericDatum v)
-            : name(std::move(n)), value(std::move(v)) {}
+        : name(std::move(n)), value(std::move(v)) {}
 };
 
 /**
@@ -60,7 +58,7 @@ class AvroDeserializer {
     /**
      * Destructor
      */
-    ~AvroDeserializer() = default;
+    ~AvroDeserializer();
 
     /**
      * Deserialize bytes to a named Avro value
@@ -87,39 +85,8 @@ class AvroDeserializer {
     void close();
 
   private:
-    std::shared_ptr<BaseDeserializer> base_;
-    std::shared_ptr<AvroSerde> serde_;
-
-    /**
-     * Get the schema name from an Avro schema
-     * @param schema Avro schema to extract name from
-     * @return Optional schema name
-     */
-    std::optional<std::string> getName(const ::avro::ValidSchema &schema);
-
-    /**
-     * Get parsed Avro schema with caching
-     * @param schema Schema to parse
-     * @return Tuple of main schema and named schemas
-     */
-    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
-    getParsedSchema(const schemaregistry::rest::model::Schema &schema);
-
-    /**
-     * Resolve union schema for a given datum
-     * @param schema Union schema
-     * @param datum Datum to resolve against
-     * @return Index and schema of the matching union branch
-     */
-    std::pair<size_t, ::avro::ValidSchema> resolveUnion(
-        const ::avro::ValidSchema &schema, const ::avro::GenericDatum &datum);
-
-    /**
-     * Get field type from Avro schema
-     * @param schema Avro schema
-     * @return Corresponding FieldType
-     */
-    FieldType getFieldType(const ::avro::ValidSchema &schema);
+    class Impl;
+    std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace schemaregistry::serdes::avro

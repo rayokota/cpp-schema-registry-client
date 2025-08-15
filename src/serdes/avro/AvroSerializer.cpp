@@ -93,171 +93,203 @@ void AvroSerde::clear() {
     parsed_schemas_.clear();
 }
 
-// AvroSerializer implementation
+// AvroSerializer implementation (PIMPL)
+
+class AvroSerializer::Impl {
+  public:
+    Impl(std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
+         std::optional<schemaregistry::rest::model::Schema> schema,
+         std::shared_ptr<RuleRegistry> rule_registry,
+         const SerializerConfig &config)
+        : schema_(std::move(schema)),
+          base_(std::make_shared<BaseSerializer>(
+              Serde(std::move(client), rule_registry), config)),
+          serde_(std::make_shared<AvroSerde>()) {
+        if (rule_registry) {
+            auto executors = rule_registry->getExecutors();
+            for (const auto &executor : executors) {
+                try {
+                    auto cfg =
+                        base_->getSerde().getClient()->getConfiguration();
+                    executor->configure(cfg, config.rule_config);
+                } catch (const std::exception &e) {
+                    throw AvroError("Failed to configure rule executor: " +
+                                    std::string(e.what()));
+                }
+            }
+        }
+    }
+
+    std::vector<uint8_t> serialize(const SerializationContext &ctx,
+                                   const ::avro::GenericDatum &datum) {
+        auto value = datum;  // Copy for potential transformation
+
+        // Get subject using strategy
+        auto strategy = base_->getConfig().subject_name_strategy;
+        auto subject_opt =
+            strategy(ctx.topic, ctx.serde_type,
+                     schema_.has_value() ? std::make_optional(schema_.value())
+                                         : std::nullopt);
+        if (!subject_opt.has_value()) {
+            throw AvroError("Subject name strategy returned no subject");
+        }
+        std::string subject = subject_opt.value();
+
+        // Get or register schema
+        SchemaId schema_id(SerdeFormat::Avro);
+        std::optional<schemaregistry::rest::model::RegisteredSchema>
+            latest_schema;
+
+        try {
+            latest_schema = base_->getSerde().getReaderSchema(
+                subject, std::nullopt, base_->getConfig().use_schema);
+        } catch (const std::exception &e) {
+            // Schema not found - will use provided schema
+        }
+
+        if (latest_schema.has_value()) {
+            // Use latest schema from registry
+            schema_id = SchemaId(SerdeFormat::Avro, latest_schema->getId(),
+                                 latest_schema->getGuid(), std::nullopt);
+
+            auto schema = latest_schema->toSchema();
+            auto parsed_schema =
+                serde_->getParsedSchema(schema, base_->getSerde().getClient());
+
+            // Create field transformer lambda
+            auto field_transformer =
+                [this, &parsed_schema](
+                    RuleContext &ctx, const std::string &rule_type,
+                    const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
+                if (msg.getFormat() == SerdeFormat::Avro) {
+                    auto avro_datum = asAvro(msg);
+                    auto transformed = utils::transformFields(
+                        ctx, parsed_schema.first, avro_datum);
+                    return makeAvroValue(transformed);
+                }
+                return msg.clone();
+            };
+
+            auto avro_value = makeAvroValue(value);
+
+            // Execute rules on the serde value
+            auto transformed_value = base_->getSerde().executeRules(
+                ctx, subject, Mode::Write, std::nullopt,
+                std::make_optional(schema), *avro_value,
+                utils::getInlineTags(
+                    nlohmann::json::parse(schema.getSchema().value())),
+                std::make_shared<FieldTransformer>(field_transformer));
+
+            // Extract Avro value from result
+            if (transformed_value->getFormat() == SerdeFormat::Avro) {
+                value = asAvro(*transformed_value);
+            } else {
+                throw AvroError(
+                    "Unexpected serde value type returned from rule execution");
+            }
+        } else {
+            // Use provided schema and register/lookup
+            if (!schema_.has_value()) {
+                throw AvroError(
+                    "No schema provided and none found in registry");
+            }
+
+            schemaregistry::rest::model::RegisteredSchema registered_schema;
+            if (base_->getConfig().auto_register_schemas) {
+                registered_schema =
+                    base_->getSerde().getClient()->registerSchema(
+                        subject, schema_.value(),
+                        base_->getConfig().normalize_schemas);
+            } else {
+                registered_schema = base_->getSerde().getClient()->getBySchema(
+                    subject, schema_.value(),
+                    base_->getConfig().normalize_schemas, false);
+            }
+
+            schema_id = SchemaId(SerdeFormat::Avro, registered_schema.getId(),
+                                 registered_schema.getGuid(), std::nullopt);
+        }
+
+        // Parse schema for serialization
+        auto schema_to_use = latest_schema.has_value()
+                                 ? latest_schema->toSchema()
+                                 : schema_.value();
+        auto parsed_schema = serde_->getParsedSchema(
+            schema_to_use, base_->getSerde().getClient());
+
+        // Serialize Avro data
+        auto avro_bytes = utils::serializeAvroData(value, parsed_schema.first,
+                                                   parsed_schema.second);
+
+        // Apply encoding rules if present
+        if (latest_schema.has_value()) {
+            auto schema = latest_schema->toSchema();
+            if (schema.getRuleSet().has_value()) {
+                auto rule_set = schema.getRuleSet().value();
+                if (rule_set.getEncodingRules().has_value()) {
+                    auto bytes_value =
+                        SerdeValue::newBytes(SerdeFormat::Avro, avro_bytes);
+                    auto result = base_->getSerde().executeRulesWithPhase(
+                        ctx, subject, Phase::Encoding, Mode::Write,
+                        std::nullopt, std::make_optional(schema), *bytes_value,
+                        {});
+                    avro_bytes = result->getValue<std::vector<uint8_t>>();
+                }
+            }
+        }
+
+        // Add schema ID header
+        auto id_serializer = base_->getConfig().schema_id_serializer;
+        return id_serializer(avro_bytes, ctx, schema_id);
+    }
+
+    std::vector<uint8_t> serializeJson(const SerializationContext &ctx,
+                                       const nlohmann::json &json_value) {
+        if (!schema_.has_value()) {
+            throw AvroError("Schema required for JSON to Avro conversion");
+        }
+        auto parsed_schema = serde_->getParsedSchema(
+            schema_.value(), base_->getSerde().getClient());
+        auto datum = utils::jsonToAvro(json_value, parsed_schema.first);
+        return serialize(ctx, datum);
+    }
+
+    void close() {
+        if (serde_) {
+            serde_->clear();
+        }
+    }
+
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
+    getParsedSchema(const schemaregistry::rest::model::Schema &schema) {
+        return serde_->getParsedSchema(schema, base_->getSerde().getClient());
+    }
+
+  private:
+    std::optional<schemaregistry::rest::model::Schema> schema_;
+    std::shared_ptr<BaseSerializer> base_;
+    std::shared_ptr<AvroSerde> serde_;
+};
 
 AvroSerializer::AvroSerializer(
     std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
     std::optional<schemaregistry::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry, const SerializerConfig &config)
-    : schema_(std::move(schema)),
-      base_(std::make_shared<BaseSerializer>(Serde(client, rule_registry),
-                                             config)),
-      serde_(std::make_shared<AvroSerde>()) {
-    // Configure rule executors
-    if (rule_registry) {
-        auto executors = rule_registry->getExecutors();
-        for (const auto &executor : executors) {
-            try {
-                executor->configure(client->getConfiguration(),
-                                    config.rule_config);
-            } catch (const std::exception &e) {
-                throw AvroError("Failed to configure rule executor: " +
-                                std::string(e.what()));
-            }
-        }
-    }
-}
+    : impl_(std::make_unique<Impl>(std::move(client), std::move(schema),
+                                   std::move(rule_registry), config)) {}
+
+AvroSerializer::~AvroSerializer() = default;
 
 std::vector<uint8_t> AvroSerializer::serialize(
     const SerializationContext &ctx, const ::avro::GenericDatum &datum) {
-    auto value = datum;  // Copy for potential transformation
-
-    // Get subject using strategy
-    auto strategy = base_->getConfig().subject_name_strategy;
-    auto subject_opt =
-        strategy(ctx.topic, ctx.serde_type,
-                 schema_.has_value() ? std::make_optional(schema_.value())
-                                     : std::nullopt);
-    if (!subject_opt.has_value()) {
-        throw AvroError("Subject name strategy returned no subject");
-    }
-    std::string subject = subject_opt.value();
-
-    // Get or register schema
-    SchemaId schema_id(SerdeFormat::Avro);
-    std::optional<schemaregistry::rest::model::RegisteredSchema> latest_schema;
-
-    try {
-        latest_schema = base_->getSerde().getReaderSchema(
-            subject, std::nullopt, base_->getConfig().use_schema);
-    } catch (const std::exception &e) {
-        // Schema not found - will use provided schema
-    }
-
-    if (latest_schema.has_value()) {
-        // Use latest schema from registry
-        schema_id = SchemaId(SerdeFormat::Avro, latest_schema->getId(),
-                             latest_schema->getGuid(), std::nullopt);
-
-        auto schema = latest_schema->toSchema();
-        auto parsed_schema =
-            serde_->getParsedSchema(schema, base_->getSerde().getClient());
-
-        // Create field transformer lambda
-        auto field_transformer =
-            [this, &parsed_schema](
-                RuleContext &ctx, const std::string &rule_type,
-                const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
-            if (msg.getFormat() == SerdeFormat::Avro) {
-                auto avro_datum = asAvro(msg);
-                auto transformed = utils::transformFields(
-                    ctx, parsed_schema.first, avro_datum);
-                return makeAvroValue(transformed);
-            }
-            return msg.clone();
-        };
-
-        auto avro_value = makeAvroValue(value);
-
-        // Execute rules on the serde value
-        auto transformed_value = base_->getSerde().executeRules(
-            ctx, subject, Mode::Write, std::nullopt, std::make_optional(schema),
-            *avro_value,
-            utils::getInlineTags(
-                nlohmann::json::parse(schema.getSchema().value())),
-            std::make_shared<FieldTransformer>(field_transformer));
-
-        // Extract Avro value from result
-        if (transformed_value->getFormat() == SerdeFormat::Avro) {
-            value = asAvro(*transformed_value);
-        } else {
-            throw AvroError(
-                "Unexpected serde value type returned from rule execution");
-        }
-    } else {
-        // Use provided schema and register/lookup
-        if (!schema_.has_value()) {
-            throw AvroError("No schema provided and none found in registry");
-        }
-
-        schemaregistry::rest::model::RegisteredSchema registered_schema;
-        if (base_->getConfig().auto_register_schemas) {
-            registered_schema = base_->getSerde().getClient()->registerSchema(
-                subject, schema_.value(), base_->getConfig().normalize_schemas);
-        } else {
-            registered_schema = base_->getSerde().getClient()->getBySchema(
-                subject, schema_.value(), base_->getConfig().normalize_schemas,
-                false);
-        }
-
-        schema_id = SchemaId(SerdeFormat::Avro, registered_schema.getId(),
-                             registered_schema.getGuid(), std::nullopt);
-    }
-
-    // Parse schema for serialization
-    auto schema_to_use =
-        latest_schema.has_value() ? latest_schema->toSchema() : schema_.value();
-    auto parsed_schema =
-        serde_->getParsedSchema(schema_to_use, base_->getSerde().getClient());
-
-    // Serialize Avro data
-    auto avro_bytes = utils::serializeAvroData(value, parsed_schema.first,
-                                               parsed_schema.second);
-
-    // Apply encoding rules if present
-    if (latest_schema.has_value()) {
-        auto schema = latest_schema->toSchema();
-        if (schema.getRuleSet().has_value()) {
-            auto rule_set = schema.getRuleSet().value();
-            if (rule_set.getEncodingRules().has_value()) {
-                auto bytes_value =
-                    SerdeValue::newBytes(SerdeFormat::Avro, avro_bytes);
-                auto result = base_->getSerde().executeRulesWithPhase(
-                    ctx, subject, Phase::Encoding, Mode::Write, std::nullopt,
-                    std::make_optional(schema), *bytes_value, {});
-                avro_bytes = result->getValue<std::vector<uint8_t>>();
-            }
-        }
-    }
-
-    // Add schema ID header
-    auto id_serializer = base_->getConfig().schema_id_serializer;
-    return id_serializer(avro_bytes, ctx, schema_id);
+    return impl_->serialize(ctx, datum);
 }
 
 std::vector<uint8_t> AvroSerializer::serializeJson(
     const SerializationContext &ctx, const nlohmann::json &json_value) {
-    if (!schema_.has_value()) {
-        throw AvroError("Schema required for JSON to Avro conversion");
-    }
-
-    auto parsed_schema =
-        serde_->getParsedSchema(schema_.value(), base_->getSerde().getClient());
-    auto datum = utils::jsonToAvro(json_value, parsed_schema.first);
-
-    return serialize(ctx, datum);
+    return impl_->serializeJson(ctx, json_value);
 }
 
-void AvroSerializer::close() {
-    if (serde_) {
-        serde_->clear();
-    }
-}
-
-std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
-AvroSerializer::getParsedSchema(
-    const schemaregistry::rest::model::Schema &schema) {
-    return serde_->getParsedSchema(schema, base_->getSerde().getClient());
-}
+void AvroSerializer::close() { impl_->close(); }
 
 }  // namespace schemaregistry::serdes::avro

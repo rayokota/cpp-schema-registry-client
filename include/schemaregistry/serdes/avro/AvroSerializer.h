@@ -20,7 +20,6 @@
 #include "schemaregistry/serdes/SerdeConfig.h"
 #include "schemaregistry/serdes/SerdeError.h"
 #include "schemaregistry/serdes/SerdeTypes.h"
-#include "schemaregistry/serdes/avro/AvroTypes.h"
 
 namespace schemaregistry::serdes::avro {
 
@@ -51,7 +50,7 @@ class AvroSerializer {
     /**
      * Destructor
      */
-    ~AvroSerializer() = default;
+    ~AvroSerializer();
 
     /**
      * Serialize a generic Avro datum to bytes
@@ -78,26 +77,8 @@ class AvroSerializer {
     void close();
 
   private:
-    std::optional<schemaregistry::rest::model::Schema> schema_;
-    std::shared_ptr<BaseSerializer> base_;
-    std::shared_ptr<AvroSerde> serde_;
-
-    /**
-     * Get parsed Avro schema with caching
-     * @param schema Schema to parse
-     * @return Tuple of main schema and named schemas
-     */
-    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
-    getParsedSchema(const schemaregistry::rest::model::Schema &schema);
-
-    /**
-     * Convert JSON value to Avro GenericDatum
-     * @param json_value JSON value to convert
-     * @param schema Avro schema for the conversion
-     * @return Converted Avro datum
-     */
-    ::avro::GenericDatum jsonToAvro(const nlohmann::json &json_value,
-                                    const ::avro::ValidSchema &schema);
+    class Impl;
+    std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace schemaregistry::serdes::avro

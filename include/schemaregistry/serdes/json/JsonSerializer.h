@@ -1,8 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <jsoncons/json.hpp>
-#include <jsoncons_ext/jsonschema/jsonschema.hpp>
 #include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -38,6 +36,8 @@ class JsonSerializer {
         std::shared_ptr<RuleRegistry> rule_registry,
         const SerializerConfig &config);
 
+    ~JsonSerializer();
+
     /**
      * Serialize a JSON value to bytes with schema validation
      * @param ctx Serialization context (topic, serde type, etc.)
@@ -53,23 +53,8 @@ class JsonSerializer {
     void close();
 
   private:
-    std::optional<schemaregistry::rest::model::Schema> schema_;
-    std::shared_ptr<BaseSerializer> base_;
-    std::unique_ptr<JsonSerde> serde_;
-
-    // Helper methods
-    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
-    getParsedSchema(const schemaregistry::rest::model::Schema &schema);
-
-    void validateSchema(const schemaregistry::rest::model::Schema &schema);
-
-    std::unique_ptr<SerdeValue> transformValue(const SerdeValue &value,
-                                               const Schema &schema,
-                                               const std::string &subject);
-
-    nlohmann::json executeFieldTransformations(
-        const nlohmann::json &value, const nlohmann::json &schema,
-        const RuleContext &context, const std::string &field_executor_type);
+    class Impl;
+    std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace schemaregistry::serdes::json
