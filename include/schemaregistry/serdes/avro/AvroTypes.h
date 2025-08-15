@@ -66,18 +66,6 @@ class AvroSerde {
 };
 
 /**
- * Named value container for Avro deserialization results
- */
-struct NamedValue {
-    std::optional<std::string> name;
-    ::avro::GenericDatum value;
-
-    NamedValue() = default;
-    NamedValue(std::optional<std::string> n, ::avro::GenericDatum v)
-        : name(std::move(n)), value(std::move(v)) {}
-};
-
-/**
  * Avro-specific serialization errors
  */
 class AvroError : public SerdeError {

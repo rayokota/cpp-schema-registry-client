@@ -29,6 +29,18 @@ using SerializationContext = schemaregistry::serdes::SerializationContext;
 using BaseDeserializer = schemaregistry::serdes::BaseDeserializer;
 
 /**
+ * Named value container for Avro deserialization results
+ */
+struct NamedValue {
+    std::optional<std::string> name;
+    ::avro::GenericDatum value;
+
+    NamedValue() = default;
+    NamedValue(std::optional<std::string> n, ::avro::GenericDatum v)
+            : name(std::move(n)), value(std::move(v)) {}
+};
+
+/**
  * Avro-specific deserializer implementation
  * Converts Avro binary format to objects with schema registry integration
  */
