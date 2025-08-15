@@ -242,6 +242,10 @@ std::vector<uint8_t> ProtobufValue::asBytes() const {
     throw ProtobufError("Protobuf SerdeValue cannot be converted to bytes");
 }
 
+nlohmann::json ProtobufValue::asJson() const {
+    throw ProtobufError("Protobuf SerdeValue cannot be converted to json");
+}
+
 const ProtobufVariant &ProtobufValue::getProtobufVariant() const {
     return value_;
 }

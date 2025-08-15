@@ -73,6 +73,12 @@ if(NOT httplib_FOUND)
     FetchContent_MakeAvailable(httplib)
 endif()
 
+FetchContent_Declare(
+  jsonata
+  GIT_REPOSITORY https://github.com/rayokota/jsonata-cpp.git
+  GIT_TAG 5b39c37142246ddc7ee9e7ef7a444f8b2942fbb7
+)
+
 # Find nlohmann_json or fetch if not found
 find_package(nlohmann_json QUIET)
 if(NOT nlohmann_json_FOUND)

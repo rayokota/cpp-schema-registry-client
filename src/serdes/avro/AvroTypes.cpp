@@ -27,6 +27,10 @@ std::vector<uint8_t> AvroValue::asBytes() const {
     return std::vector<uint8_t>();
 }
 
+nlohmann::json AvroValue::asJson() const {
+    throw AvroError("Avro SerdeValue cannot be converted to json");
+}
+
 // Utility function implementation
 ::avro::GenericDatum asAvro(const SerdeValue &value) {
     if (value.getFormat() != SerdeFormat::Avro) {

@@ -199,6 +199,7 @@ class ProtobufValue : public SerdeValue {
     bool asBool() const override;
     std::string asString() const override;
     std::vector<uint8_t> asBytes() const override;
+    nlohmann::json asJson() const override;
 
     // Direct access to ProtobufVariant
     const ProtobufVariant &getProtobufVariant() const;

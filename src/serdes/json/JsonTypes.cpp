@@ -50,6 +50,8 @@ std::vector<uint8_t> JsonValue::asBytes() const {
     return std::vector<uint8_t>();
 }
 
+nlohmann::json JsonValue::asJson() const { return value_; }
+
 std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value) {
     return std::make_unique<JsonValue>(value);
 }

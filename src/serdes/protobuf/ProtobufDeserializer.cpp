@@ -8,7 +8,6 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 
-#include "schemaregistry/serdes/json/JsonTypes.h"
 #include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
 #include "schemaregistry/serdes/protobuf/ProtobufUtils.h"
 

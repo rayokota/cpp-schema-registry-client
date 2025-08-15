@@ -109,11 +109,14 @@ class SerdeValue {
                                                  const std::string &value);
     static std::unique_ptr<SerdeValue> newBytes(
         SerdeFormat format, const std::vector<uint8_t> &value);
+    static std::unique_ptr<SerdeValue> newJson(SerdeFormat format,
+                                               const nlohmann::json &value);
 
     // Value extraction methods
     virtual bool asBool() const = 0;
     virtual std::string asString() const = 0;
     virtual std::vector<uint8_t> asBytes() const = 0;
+    virtual nlohmann::json asJson() const = 0;
 };
 
 // Magic bytes for schema ID encoding (from serde.rs)

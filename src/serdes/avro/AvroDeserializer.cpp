@@ -5,7 +5,6 @@
 
 #include "schemaregistry/serdes/SerdeTypes.h"
 #include "schemaregistry/serdes/avro/AvroUtils.h"
-#include "schemaregistry/serdes/json/JsonTypes.h"
 
 namespace schemaregistry::serdes::avro {
 
@@ -130,7 +129,7 @@ class AvroDeserializer::Impl {
             // 2. Convert to JSON for migration
             auto json_value = utils::avroToJson(intermediate);
             auto json_serde_value =
-                schemaregistry::serdes::json::makeJsonValue(json_value);
+                SerdeValue::newJson(SerdeFormat::Json, json_value);
 
             // 3. Apply migrations
             auto migrated = base_->getSerde().executeMigrations(
@@ -139,8 +138,7 @@ class AvroDeserializer::Impl {
             if (migrated->getFormat() != SerdeFormat::Json) {
                 throw AvroError("Expected JSON value after migrations");
             }
-            auto migrated_json =
-                schemaregistry::serdes::json::asJson(*migrated);
+            auto migrated_json = migrated->asJson().dump();
 
             // 4. Convert back to Avro with reader schema
             value = utils::jsonToAvro(migrated_json, reader_parsed.first);

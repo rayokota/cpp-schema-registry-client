@@ -182,6 +182,23 @@ std::unique_ptr<SerdeValue> SerdeValue::newBytes(
     }
 }
 
+std::unique_ptr<SerdeValue> SerdeValue::newJson(SerdeFormat format,
+                                                const nlohmann::json &value) {
+    switch (format) {
+        case SerdeFormat::Avro: {
+            throw SerdeError("TODO");
+        }
+        case SerdeFormat::Json: {
+            return std::make_unique<json::JsonValue>(value);
+        }
+        case SerdeFormat::Protobuf: {
+            throw SerdeError("TODO");
+        }
+        default:
+            throw SerdeError("Unsupported SerdeFormat");
+    }
+}
+
 namespace type_utils {
 
 std::string formatToString(SerdeFormat format) {

@@ -23,17 +23,6 @@
 
 using SerializationContext = schemaregistry::serdes::SerializationContext;
 
-// Forward declarations for JSON helpers moved to internal headers
-namespace schemaregistry {
-namespace serdes {
-class SerdeValue;
-namespace json {
-std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value);
-nlohmann::json asJson(const SerdeValue &value);
-}  // namespace json
-}  // namespace serdes
-}  // namespace schemaregistry
-
 namespace schemaregistry::serdes::protobuf {
 
 // Forward declaration of templated deserializer
@@ -230,15 +219,14 @@ inline std::unique_ptr<T> ProtobufDeserializer<T>::deserialize(
                 "Failed to convert message to JSON during migration");
         }
         auto json_val = nlohmann::json::parse(json_str);
-        auto serde_json = schemaregistry::serdes::json::makeJsonValue(json_val);
+        auto serde_json = SerdeValue::newJson(SerdeFormat::Json, json_val);
         auto migrated_val = base_->getSerde().executeMigrations(
             ctx, subject, migrations, *serde_json);
 
         if (migrated_val->getFormat() != SerdeFormat::Json) {
             throw ProtobufError("Expected JSON value after migrations");
         }
-        std::string migrated_json =
-            schemaregistry::serdes::json::asJson(*migrated_val).dump();
+        std::string migrated_json = migrated_val->asJson().dump();
 
         // Parse back to reader message type
         const auto *reader_prototype = factory.GetPrototype(reader_desc);
