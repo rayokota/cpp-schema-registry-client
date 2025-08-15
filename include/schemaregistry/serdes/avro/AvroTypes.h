@@ -9,13 +9,73 @@
 #include <avro/Specific.hh>
 #include <avro/ValidSchema.hh>
 #include <memory>
+#include <mutex>
 #include <nlohmann/json.hpp>
+#include <shared_mutex>
 #include <string>
 
+#include "schemaregistry/rest/SchemaRegistryClient.h"
 #include "schemaregistry/serdes/SerdeError.h"
 #include "schemaregistry/serdes/SerdeTypes.h"
 
 namespace schemaregistry::serdes::avro {
+
+/**
+ * Shared cache for parsed Avro schemas
+ * Thread-safe storage of compiled schemas
+ */
+class AvroSerde {
+  public:
+    AvroSerde() = default;
+    ~AvroSerde() = default;
+
+    /**
+     * Get cached parsed schema or parse and cache it
+     * @param schema Schema to parse
+     * @param client Client for resolving references
+     * @return Tuple of main schema and named schemas
+     */
+    std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
+    getParsedSchema(
+        const schemaregistry::rest::model::Schema &schema,
+        std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client);
+
+    /**
+     * Clear all cached schemas
+     */
+    void clear();
+
+  private:
+    mutable std::shared_mutex mutex_;
+    std::unordered_map<std::string, std::pair<::avro::ValidSchema,
+                                              std::vector<::avro::ValidSchema>>>
+        parsed_schemas_;
+
+    /**
+     * Resolve schema references recursively
+     * @param schema Schema to resolve references for
+     * @param client Client for fetching referenced schemas
+     * @param schemas Output vector for resolved schema strings
+     * @param visited Set of already visited schemas to prevent cycles
+     */
+    void resolveNamedSchema(
+        const schemaregistry::rest::model::Schema &schema,
+        std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
+        std::vector<std::string> &schemas,
+        std::unordered_set<std::string> &visited);
+};
+
+/**
+ * Named value container for Avro deserialization results
+ */
+struct NamedValue {
+    std::optional<std::string> name;
+    ::avro::GenericDatum value;
+
+    NamedValue() = default;
+    NamedValue(std::optional<std::string> n, ::avro::GenericDatum v)
+        : name(std::move(n)), value(std::move(v)) {}
+};
 
 /**
  * Avro-specific serialization errors

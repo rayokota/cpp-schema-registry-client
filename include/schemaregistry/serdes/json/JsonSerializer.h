@@ -10,7 +10,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "schemaregistry/rest/ISchemaRegistryClient.h"
 #include "schemaregistry/serdes/Serde.h"
 #include "schemaregistry/serdes/SerdeConfig.h"
 #include "schemaregistry/serdes/SerdeError.h"
@@ -23,42 +22,6 @@ namespace schemaregistry::serdes::json {
 class JsonSerializer;
 
 class JsonSerde;
-
-using Resolver = std::function<jsoncons::ojson(const jsoncons::uri &)>;
-
-/**
- * JSON schema caching and validation class
- * Based on JsonSerde struct from json.rs (converted to synchronous)
- */
-class JsonSerde {
-  public:
-    JsonSerde();
-    ~JsonSerde() = default;
-
-    // Schema parsing and caching
-    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
-    getParsedSchema(
-        const schemaregistry::rest::model::Schema &schema,
-        std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client);
-
-    // Clear caches
-    void clear();
-
-  private:
-    // Cache for parsed schemas: Schema -> json_schema
-    std::unordered_map<
-        std::string,
-        std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>>
-        parsed_schemas_cache_;
-
-    mutable std::mutex cache_mutex_;
-
-    // Helper methods
-    void resolveNamedSchema(
-        const schemaregistry::rest::model::Schema &schema,
-        std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
-        std::unordered_map<std::string, std::string> references);
-};
 
 /**
  * JSON serializer class template

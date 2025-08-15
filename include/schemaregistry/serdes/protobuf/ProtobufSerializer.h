@@ -21,7 +21,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "schemaregistry/rest/ISchemaRegistryClient.h"
 #include "schemaregistry/serdes/Serde.h"
 #include "schemaregistry/serdes/SerdeConfig.h"
 #include "schemaregistry/serdes/SerdeError.h"
@@ -45,50 +44,6 @@ using ReferenceSubjectNameStrategy = std::function<std::string(
  */
 std::string defaultReferenceSubjectNameStrategy(const std::string &ref_name,
                                                 SerdeType serde_type);
-
-/**
- * Protobuf schema caching and parsing class
- * Based on ProtobufSerde struct from protobuf.rs (converted to synchronous)
- */
-class ProtobufSerde {
-  public:
-    ProtobufSerde();
-    ~ProtobufSerde() = default;
-
-    // Schema parsing and caching
-    std::pair<const google::protobuf::FileDescriptor *,
-              const google::protobuf::DescriptorPool *>
-    getParsedSchema(
-        const schemaregistry::rest::model::Schema &schema,
-        std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client);
-
-    // Clear cache
-    void clear();
-
-  private:
-    // Cache for parsed schemas: Schema -> (FileDescriptor*, DescriptorPool)
-    std::unordered_map<
-        std::string,
-        std::pair<const google::protobuf::FileDescriptor *,
-                  std::unique_ptr<google::protobuf::DescriptorPool>>>
-        parsed_schemas_cache_;
-
-    mutable std::mutex cache_mutex_;
-
-    // Helper methods
-    void resolveNamedSchema(
-        const schemaregistry::rest::model::Schema &schema,
-        std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
-        google::protobuf::DescriptorPool *pool,
-        std::unordered_set<std::string> &visited);
-
-    // Initialize descriptor pool with well-known types
-    void initPool(google::protobuf::DescriptorPool *pool);
-
-    // Add file descriptor to pool
-    void addFileToPool(google::protobuf::DescriptorPool *pool,
-                       const google::protobuf::FileDescriptor *file_descriptor);
-};
 
 /**
  * Protobuf serializer class template
