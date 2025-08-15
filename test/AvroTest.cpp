@@ -13,34 +13,34 @@
 #include <avro/Generic.hh>
 
 // Project includes
-#include "srclient/rest/MockSchemaRegistryClient.h"
-#include "srclient/rest/ClientConfiguration.h"
-#include "srclient/serdes/avro/AvroSerializer.h"
-#include "srclient/serdes/avro/AvroDeserializer.h"
-#include "srclient/serdes/avro/AvroUtils.h"
-#include "srclient/serdes/SerdeConfig.h"
-#include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/rest/model/Schema.h"
-#include "srclient/rest/model/Rule.h"
-#include "srclient/rest/model/RuleSet.h"
-#include "srclient/rules/cel/CelFieldExecutor.h"
-#include "srclient/rules/encryption/FieldEncryptionExecutor.h"
-#include "srclient/rules/encryption/EncryptionExecutor.h"
-#include "srclient/rules/encryption/localkms/LocalKmsDriver.h"
-#include "srclient/rest/MockDekRegistryClient.h"
+#include "schemaregistry/rest/MockSchemaRegistryClient.h"
+#include "schemaregistry/rest/ClientConfiguration.h"
+#include "schemaregistry/serdes/avro/AvroSerializer.h"
+#include "schemaregistry/serdes/avro/AvroDeserializer.h"
+#include "schemaregistry/serdes/avro/AvroUtils.h"
+#include "schemaregistry/serdes/SerdeConfig.h"
+#include "schemaregistry/serdes/SerdeTypes.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
+#include "schemaregistry/rest/model/Schema.h"
+#include "schemaregistry/rest/model/Rule.h"
+#include "schemaregistry/rest/model/RuleSet.h"
+#include "schemaregistry/rules/cel/CelFieldExecutor.h"
+#include "schemaregistry/rules/encryption/FieldEncryptionExecutor.h"
+#include "schemaregistry/rules/encryption/EncryptionExecutor.h"
+#include "schemaregistry/rules/encryption/localkms/LocalKmsDriver.h"
+#include "schemaregistry/rest/MockDekRegistryClient.h"
 
 // Additional includes needed for proper compilation
-#include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/Serde.h"
+#include "schemaregistry/serdes/SerdeError.h"
+#include "schemaregistry/serdes/Serde.h"
 
-using namespace srclient::serdes;
-using namespace srclient::serdes::avro;
-using namespace srclient::rest;
-using namespace srclient::rest::model;
-using namespace srclient::rules::cel;
-using namespace srclient::rules::encryption;
-using namespace srclient::rules::encryption::localkms;
+using namespace schemaregistry::serdes;
+using namespace schemaregistry::serdes::avro;
+using namespace schemaregistry::rest;
+using namespace schemaregistry::rest::model;
+using namespace schemaregistry::rules::cel;
+using namespace schemaregistry::rules::encryption;
+using namespace schemaregistry::rules::encryption::localkms;
 
 TEST(AvroTest, BasicSerialization) {
     // Create client configuration with mock URL
@@ -66,12 +66,12 @@ TEST(AvroTest, BasicSerialization) {
     })";
     
     // Create schema object
-    srclient::rest::model::Schema schema;
+    schemaregistry::rest::model::Schema schema;
     schema.setSchemaType(std::make_optional<std::string>("AVRO"));
     schema.setSchema(std::make_optional<std::string>(schema_str));
     
     // Parse the Avro schema
-    ::avro::ValidSchema avro_schema = srclient::serdes::avro::utils::compileJsonSchema(schema_str);
+    ::avro::ValidSchema avro_schema = schemaregistry::serdes::avro::utils::compileJsonSchema(schema_str);
     
     // Create the Avro record
     ::avro::GenericDatum datum(avro_schema);
@@ -174,7 +174,7 @@ TEST(AvroTest, CelFieldTransformation) {
     auto registered_schema = client->registerSchema("test-value", schema, false);
     
     // Parse the Avro schema
-    ::avro::ValidSchema avro_schema = srclient::serdes::avro::utils::compileJsonSchema(schema_str);
+    ::avro::ValidSchema avro_schema = schemaregistry::serdes::avro::utils::compileJsonSchema(schema_str);
     
     // Create the Avro record with test data
     ::avro::GenericDatum datum(avro_schema);
@@ -302,7 +302,7 @@ TEST(AvroTest, FieldEncryption) {
     auto registered_schema = client->registerSchema("test-value", schema, false);
     
     // Parse the Avro schema
-    ::avro::ValidSchema avro_schema = srclient::serdes::avro::utils::compileJsonSchema(schema_str);
+    ::avro::ValidSchema avro_schema = schemaregistry::serdes::avro::utils::compileJsonSchema(schema_str);
     
     // Create the Avro record with test data
     ::avro::GenericDatum datum(avro_schema);

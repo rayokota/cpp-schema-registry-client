@@ -15,7 +15,7 @@ _deps
 .cmake
 
 # Executables and libraries
-srclient-test
+schemaregistry-test
 
 # IDE specific files (e.g., CLion, VS Code)
 .idea

@@ -10,9 +10,9 @@
  * Do not edit the class manually.
  */
 
-#include "srclient/rest/ClientConfiguration.h"
+#include "schemaregistry/rest/ClientConfiguration.h"
 
-namespace srclient::rest {
+namespace schemaregistry::rest {
 
 ClientConfiguration::ClientConfiguration(
     const std::vector<std::string> &base_urls)
@@ -108,4 +108,4 @@ bool ClientConfiguration::operator!=(const ClientConfiguration &other) const {
     return !(*this == other);
 }
 
-}  // namespace srclient::rest
+}  // namespace schemaregistry::rest

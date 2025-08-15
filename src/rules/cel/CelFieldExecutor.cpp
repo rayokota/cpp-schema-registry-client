@@ -1,12 +1,12 @@
-#include "srclient/rules/cel/CelFieldExecutor.h"
+#include "schemaregistry/rules/cel/CelFieldExecutor.h"
 
 #include "eval/public/containers/container_backed_list_impl.h"
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/avro/AvroTypes.h"
-#include "srclient/serdes/json/JsonTypes.h"
-#include "srclient/serdes/protobuf/ProtobufTypes.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
+#include "schemaregistry/serdes/avro/AvroTypes.h"
+#include "schemaregistry/serdes/json/JsonTypes.h"
+#include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
 
-namespace srclient::rules::cel {
+namespace schemaregistry::rules::cel {
 
 CelFieldExecutor::CelFieldExecutor() {
     // Create a proper CelExecutor instance like Rust version
@@ -51,7 +51,8 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(
     // Convert FieldType to string representation for typeName using existing
     // function
     auto *type_name_str = google::protobuf::Arena::Create<std::string>(
-        &arena, srclient::serdes::fieldTypeToString(field_ctx->getFieldType()));
+        &arena,
+        schemaregistry::serdes::fieldTypeToString(field_ctx->getFieldType()));
     args.emplace("typeName", google::api::expr::runtime::CelValue::CreateString(
                                  type_name_str));
 
@@ -91,4 +92,4 @@ void CelFieldExecutor::registerExecutor() {
     global_registry::registerRuleExecutor(std::make_shared<CelFieldExecutor>());
 }
 
-}  // namespace srclient::rules::cel
+}  // namespace schemaregistry::rules::cel

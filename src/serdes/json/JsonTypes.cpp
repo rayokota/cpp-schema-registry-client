@@ -1,10 +1,10 @@
-#include "srclient/serdes/json/JsonTypes.h"
+#include "schemaregistry/serdes/json/JsonTypes.h"
 
 #include <algorithm>
 
 #include "absl/strings/escaping.h"
 
-namespace srclient::serdes::json {
+namespace schemaregistry::serdes::json {
 
 // Base64 decoding utilities for JSON using absl
 namespace {
@@ -83,4 +83,4 @@ nlohmann::json asJson(const SerdeValue &value) {
     return value.getValue<nlohmann::json>();
 }
 
-}  // namespace srclient::serdes::json
+}  // namespace schemaregistry::serdes::json

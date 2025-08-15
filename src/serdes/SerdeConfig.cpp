@@ -1,11 +1,11 @@
-#include "srclient/serdes/SerdeConfig.h"
+#include "schemaregistry/serdes/SerdeConfig.h"
 
 #include <algorithm>
 
-#include "srclient/serdes/Serde.h"
-#include "srclient/serdes/SerdeError.h"
+#include "schemaregistry/serdes/Serde.h"
+#include "schemaregistry/serdes/SerdeError.h"
 
-namespace srclient::serdes {
+namespace schemaregistry::serdes {
 
 // SerializerConfig implementation
 SerializerConfig::SerializerConfig()
@@ -169,4 +169,4 @@ size_t prefixSchemaIdDeserializer(const std::vector<uint8_t> &payload,
     }
 }
 
-}  // namespace srclient::serdes
+}  // namespace schemaregistry::serdes

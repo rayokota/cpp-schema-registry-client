@@ -1,18 +1,18 @@
-#include "srclient/serdes/avro/AvroSerializer.h"
+#include "schemaregistry/serdes/avro/AvroSerializer.h"
 
 #include <algorithm>
 #include <sstream>
 
-#include "srclient/serdes/avro/AvroUtils.h"
+#include "schemaregistry/serdes/avro/AvroUtils.h"
 
-namespace srclient::serdes::avro {
+namespace schemaregistry::serdes::avro {
 
 // AvroSerde implementation
 
 std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
 AvroSerde::getParsedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
+    const schemaregistry::rest::model::Schema &schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client) {
     // Generate cache key (reuse the updated SerdeTypes cache key generation)
     nlohmann::json j;
     to_json(j, schema);
@@ -50,8 +50,8 @@ AvroSerde::getParsedSchema(
 }
 
 void AvroSerde::resolveNamedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+    const schemaregistry::rest::model::Schema &schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
     std::vector<std::string> &schemas,
     std::unordered_set<std::string> &visited) {
     if (!schema.getReferences().has_value()) {
@@ -96,8 +96,8 @@ void AvroSerde::clear() {
 // AvroSerializer implementation
 
 AvroSerializer::AvroSerializer(
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
-    std::optional<srclient::rest::model::Schema> schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
+    std::optional<schemaregistry::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry, const SerializerConfig &config)
     : schema_(std::move(schema)),
       base_(std::make_shared<BaseSerializer>(Serde(client, rule_registry),
@@ -135,7 +135,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
 
     // Get or register schema
     SchemaId schema_id(SerdeFormat::Avro);
-    std::optional<srclient::rest::model::RegisteredSchema> latest_schema;
+    std::optional<schemaregistry::rest::model::RegisteredSchema> latest_schema;
 
     try {
         latest_schema = base_->getSerde().getReaderSchema(
@@ -190,7 +190,7 @@ std::vector<uint8_t> AvroSerializer::serialize(
             throw AvroError("No schema provided and none found in registry");
         }
 
-        srclient::rest::model::RegisteredSchema registered_schema;
+        schemaregistry::rest::model::RegisteredSchema registered_schema;
         if (base_->getConfig().auto_register_schemas) {
             registered_schema = base_->getSerde().getClient()->registerSchema(
                 subject, schema_.value(), base_->getConfig().normalize_schemas);
@@ -255,8 +255,9 @@ void AvroSerializer::close() {
 }
 
 std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
-AvroSerializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
+AvroSerializer::getParsedSchema(
+    const schemaregistry::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
-}  // namespace srclient::serdes::avro
+}  // namespace schemaregistry::serdes::avro

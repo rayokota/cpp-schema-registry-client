@@ -11,11 +11,11 @@
  * the class manually.
  */
 
-#include "srclient/rest/model/RegisteredSchema.h"
+#include "schemaregistry/rest/model/RegisteredSchema.h"
 
 #include <sstream>
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 RegisteredSchema::RegisteredSchema() {
     // Optional members are initialized to std::nullopt by default
@@ -87,17 +87,17 @@ void from_json(const nlohmann::json &j, RegisteredSchema &o) {
         o.schemaType_ = temp;
     }
     if (j.find("references") != j.end()) {
-        std::vector<srclient::rest::model::SchemaReference> temp;
+        std::vector<schemaregistry::rest::model::SchemaReference> temp;
         j.at("references").get_to(temp);
         o.references_ = temp;
     }
     if (j.find("metadata") != j.end()) {
-        srclient::rest::model::Metadata temp;
+        schemaregistry::rest::model::Metadata temp;
         j.at("metadata").get_to(temp);
         o.metadata_ = temp;
     }
     if (j.find("ruleSet") != j.end()) {
-        srclient::rest::model::RuleSet temp;
+        schemaregistry::rest::model::RuleSet temp;
         j.at("ruleSet").get_to(temp);
         o.ruleSet_ = temp;
     }
@@ -142,34 +142,34 @@ void RegisteredSchema::setSchemaType(const std::optional<std::string> &value) {
     schemaType_ = value;
 }
 
-std::optional<std::vector<srclient::rest::model::SchemaReference>>
+std::optional<std::vector<schemaregistry::rest::model::SchemaReference>>
 RegisteredSchema::getReferences() const {
     return references_;
 }
 
 void RegisteredSchema::setReferences(
-    const std::optional<std::vector<srclient::rest::model::SchemaReference>>
-        &value) {
+    const std::optional<
+        std::vector<schemaregistry::rest::model::SchemaReference>> &value) {
     references_ = value;
 }
 
-std::optional<srclient::rest::model::Metadata> RegisteredSchema::getMetadata()
-    const {
+std::optional<schemaregistry::rest::model::Metadata>
+RegisteredSchema::getMetadata() const {
     return metadata_;
 }
 
 void RegisteredSchema::setMetadata(
-    const std::optional<srclient::rest::model::Metadata> &value) {
+    const std::optional<schemaregistry::rest::model::Metadata> &value) {
     metadata_ = value;
 }
 
-std::optional<srclient::rest::model::RuleSet> RegisteredSchema::getRuleSet()
-    const {
+std::optional<schemaregistry::rest::model::RuleSet>
+RegisteredSchema::getRuleSet() const {
     return ruleSet_;
 }
 
 void RegisteredSchema::setRuleSet(
-    const std::optional<srclient::rest::model::RuleSet> &value) {
+    const std::optional<schemaregistry::rest::model::RuleSet> &value) {
     ruleSet_ = value;
 }
 
@@ -191,4 +191,4 @@ Schema RegisteredSchema::toSchema() const {
     return schema;
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

@@ -1,4 +1,4 @@
-#include "srclient/rules/cel/CelExecutor.h"
+#include "schemaregistry/rules/cel/CelExecutor.h"
 
 #include <regex>
 
@@ -13,16 +13,16 @@
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
 #include "parser/parser.h"
-#include "srclient/rules/cel/ExtraFunc.h"
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/Serde.h"
-#include "srclient/serdes/avro/AvroTypes.h"
-#include "srclient/serdes/json/JsonTypes.h"
-#include "srclient/serdes/protobuf/ProtobufTypes.h"
+#include "schemaregistry/rules/cel/ExtraFunc.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
+#include "schemaregistry/serdes/Serde.h"
+#include "schemaregistry/serdes/avro/AvroTypes.h"
+#include "schemaregistry/serdes/json/JsonTypes.h"
+#include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
 
-namespace srclient::rules::cel {
+namespace schemaregistry::rules::cel {
 
-using namespace srclient::serdes;
+using namespace schemaregistry::serdes;
 
 CelExecutor::CelExecutor() {
     // Try to initialize the CEL runtime
@@ -79,7 +79,7 @@ CelExecutor::newRuleBuilder(google::protobuf::Arena *arena) {
 }
 
 std::unique_ptr<SerdeValue> CelExecutor::transform(
-    srclient::serdes::RuleContext &ctx, const SerdeValue &msg) {
+    schemaregistry::serdes::RuleContext &ctx, const SerdeValue &msg) {
     google::protobuf::Arena arena;
 
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
@@ -89,7 +89,7 @@ std::unique_ptr<SerdeValue> CelExecutor::transform(
 }
 
 std::unique_ptr<SerdeValue> CelExecutor::execute(
-    srclient::serdes::RuleContext &ctx, const SerdeValue &msg,
+    schemaregistry::serdes::RuleContext &ctx, const SerdeValue &msg,
     const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>
         &args,
     google::protobuf::Arena *arena) {
@@ -213,15 +213,16 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(
     const SerdeValue &value, google::protobuf::Arena *arena) {
     switch (value.getFormat()) {
         case SerdeFormat::Json: {
-            auto json_value = srclient::serdes::json::asJson(value);
+            auto json_value = schemaregistry::serdes::json::asJson(value);
             return fromJsonValue(json_value, arena);
         }
         case SerdeFormat::Avro: {
-            auto avro_value = srclient::serdes::avro::asAvro(value);
+            auto avro_value = schemaregistry::serdes::avro::asAvro(value);
             return fromAvroValue(avro_value, arena);
         }
         case SerdeFormat::Protobuf: {
-            auto &proto_variant = srclient::serdes::protobuf::asProtobuf(value);
+            auto &proto_variant =
+                schemaregistry::serdes::protobuf::asProtobuf(value);
             return fromProtobufValue(proto_variant, arena);
         }
         default:
@@ -234,21 +235,21 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
     const google::api::expr::runtime::CelValue &cel_value) {
     switch (original.getFormat()) {
         case SerdeFormat::Json: {
-            auto original_json = srclient::serdes::json::asJson(original);
+            auto original_json = schemaregistry::serdes::json::asJson(original);
             auto converted_json = toJsonValue(original_json, cel_value);
-            return srclient::serdes::json::makeJsonValue(converted_json);
+            return schemaregistry::serdes::json::makeJsonValue(converted_json);
         }
         case SerdeFormat::Avro: {
-            auto original_avro = srclient::serdes::avro::asAvro(original);
+            auto original_avro = schemaregistry::serdes::avro::asAvro(original);
             auto converted_avro = toAvroValue(original_avro, cel_value);
-            return srclient::serdes::avro::makeAvroValue(converted_avro);
+            return schemaregistry::serdes::avro::makeAvroValue(converted_avro);
         }
         case SerdeFormat::Protobuf: {
             auto &proto_variant =
-                srclient::serdes::protobuf::asProtobuf(original);
+                schemaregistry::serdes::protobuf::asProtobuf(original);
             auto converted_proto_variant =
                 toProtobufValue(proto_variant, cel_value);
-            return srclient::serdes::protobuf::makeProtobufValue(
+            return schemaregistry::serdes::protobuf::makeProtobufValue(
                 std::move(converted_proto_variant));
         }
         default:
@@ -596,10 +597,10 @@ google::api::expr::runtime::CelValue CelExecutor::fromAvroValue(
     return original;
 }
 
-srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
-    const srclient::serdes::protobuf::ProtobufVariant &original,
+schemaregistry::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
+    const schemaregistry::serdes::protobuf::ProtobufVariant &original,
     const google::api::expr::runtime::CelValue &cel_value) {
-    using namespace srclient::serdes::protobuf;
+    using namespace schemaregistry::serdes::protobuf;
 
     if (cel_value.IsBool()) {
         return ProtobufVariant(cel_value.BoolOrDie());
@@ -733,9 +734,9 @@ srclient::serdes::protobuf::ProtobufVariant CelExecutor::toProtobufValue(
 }
 
 google::api::expr::runtime::CelValue CelExecutor::fromProtobufValue(
-    const srclient::serdes::protobuf::ProtobufVariant &variant,
+    const schemaregistry::serdes::protobuf::ProtobufVariant &variant,
     google::protobuf::Arena *arena) {
-    using namespace srclient::serdes::protobuf;
+    using namespace schemaregistry::serdes::protobuf;
 
     switch (variant.type) {
         case ProtobufVariant::ValueType::Bool:
@@ -1020,7 +1021,7 @@ google::api::expr::runtime::CelValue CelExecutor::convertProtobufFieldToCel(
                 auto message_copy = std::unique_ptr<google::protobuf::Message>(
                     nested_message.New());
                 message_copy->CopyFrom(nested_message);
-                srclient::serdes::protobuf::ProtobufVariant variant(
+                schemaregistry::serdes::protobuf::ProtobufVariant variant(
                     std::move(message_copy));
                 return fromProtobufValue(variant, arena);
             }
@@ -1079,4 +1080,4 @@ void CelExecutor::registerExecutor() {
     global_registry::registerRuleExecutor(std::make_shared<CelExecutor>());
 }
 
-}  // namespace srclient::rules::cel
+}  // namespace schemaregistry::rules::cel

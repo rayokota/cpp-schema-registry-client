@@ -11,11 +11,11 @@
  * the class manually.
  */
 
-#include "srclient/rest/model/ServerConfig.h"
+#include "schemaregistry/rest/model/ServerConfig.h"
 
 #include <sstream>
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
     CompatibilityLevel,
@@ -109,22 +109,22 @@ void from_json(const nlohmann::json &j, ServerConfig &o) {
         o.compatibilityGroup_ = temp;
     }
     if (j.find("defaultMetadata") != j.end()) {
-        srclient::rest::model::Metadata temp;
+        schemaregistry::rest::model::Metadata temp;
         j.at("defaultMetadata").get_to(temp);
         o.defaultMetadata_ = temp;
     }
     if (j.find("overrideMetadata") != j.end()) {
-        srclient::rest::model::Metadata temp;
+        schemaregistry::rest::model::Metadata temp;
         j.at("overrideMetadata").get_to(temp);
         o.overrideMetadata_ = temp;
     }
     if (j.find("defaultRuleSet") != j.end()) {
-        srclient::rest::model::RuleSet temp;
+        schemaregistry::rest::model::RuleSet temp;
         j.at("defaultRuleSet").get_to(temp);
         o.defaultRuleSet_ = temp;
     }
     if (j.find("overrideRuleSet") != j.end()) {
-        srclient::rest::model::RuleSet temp;
+        schemaregistry::rest::model::RuleSet temp;
         j.at("overrideRuleSet").get_to(temp);
         o.overrideRuleSet_ = temp;
     }
@@ -185,44 +185,44 @@ void ServerConfig::setCompatibilityGroup(
     compatibilityGroup_ = value;
 }
 
-std::optional<srclient::rest::model::Metadata>
+std::optional<schemaregistry::rest::model::Metadata>
 ServerConfig::getDefaultMetadata() const {
     return defaultMetadata_;
 }
 
 void ServerConfig::setDefaultMetadata(
-    const std::optional<srclient::rest::model::Metadata> &value) {
+    const std::optional<schemaregistry::rest::model::Metadata> &value) {
     defaultMetadata_ = value;
 }
 
-std::optional<srclient::rest::model::Metadata>
+std::optional<schemaregistry::rest::model::Metadata>
 ServerConfig::getOverrideMetadata() const {
     return overrideMetadata_;
 }
 
 void ServerConfig::setOverrideMetadata(
-    const std::optional<srclient::rest::model::Metadata> &value) {
+    const std::optional<schemaregistry::rest::model::Metadata> &value) {
     overrideMetadata_ = value;
 }
 
-std::optional<srclient::rest::model::RuleSet> ServerConfig::getDefaultRuleSet()
-    const {
+std::optional<schemaregistry::rest::model::RuleSet>
+ServerConfig::getDefaultRuleSet() const {
     return defaultRuleSet_;
 }
 
 void ServerConfig::setDefaultRuleSet(
-    const std::optional<srclient::rest::model::RuleSet> &value) {
+    const std::optional<schemaregistry::rest::model::RuleSet> &value) {
     defaultRuleSet_ = value;
 }
 
-std::optional<srclient::rest::model::RuleSet> ServerConfig::getOverrideRuleSet()
-    const {
+std::optional<schemaregistry::rest::model::RuleSet>
+ServerConfig::getOverrideRuleSet() const {
     return overrideRuleSet_;
 }
 
 void ServerConfig::setOverrideRuleSet(
-    const std::optional<srclient::rest::model::RuleSet> &value) {
+    const std::optional<schemaregistry::rest::model::RuleSet> &value) {
     overrideRuleSet_ = value;
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

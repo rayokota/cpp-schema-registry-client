@@ -3,14 +3,14 @@
  * Synchronous C++ mock implementation for testing
  */
 
-#include "srclient/rest/MockSchemaRegistryClient.h"
+#include "schemaregistry/rest/MockSchemaRegistryClient.h"
 
 #include <algorithm>
 #include <iomanip>
 #include <random>
 #include <sstream>
 
-namespace srclient::rest {
+namespace schemaregistry::rest {
 
 // MockSchemaStore implementation
 
@@ -36,7 +36,7 @@ std::string MockSchemaStore::generateGuid() const {
 }
 
 void MockSchemaStore::setRegisteredSchema(
-    const srclient::rest::model::RegisteredSchema &schema) {
+    const schemaregistry::rest::model::RegisteredSchema &schema) {
     auto subject = schema.getSubject().value_or("");
 
     // Update indexes
@@ -59,8 +59,8 @@ void MockSchemaStore::setRegisteredSchema(
     }
 }
 
-std::optional<srclient::rest::model::Schema> MockSchemaStore::getSchemaById(
-    int32_t schemaId) const {
+std::optional<schemaregistry::rest::model::Schema>
+MockSchemaStore::getSchemaById(int32_t schemaId) const {
     auto it = schemaIdIndex.find(schemaId);
     if (it != schemaIdIndex.end()) {
         return it->second.toSchema();
@@ -68,8 +68,8 @@ std::optional<srclient::rest::model::Schema> MockSchemaStore::getSchemaById(
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::Schema> MockSchemaStore::getSchemaByGuid(
-    const std::string &guid) const {
+std::optional<schemaregistry::rest::model::Schema>
+MockSchemaStore::getSchemaByGuid(const std::string &guid) const {
     auto it = schemaGuidIndex.find(guid);
     if (it != schemaGuidIndex.end()) {
         return it->second.toSchema();
@@ -77,10 +77,10 @@ std::optional<srclient::rest::model::Schema> MockSchemaStore::getSchemaByGuid(
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisteredSchema>
+std::optional<schemaregistry::rest::model::RegisteredSchema>
 MockSchemaStore::getRegisteredBySchema(
     const std::string &subject,
-    const srclient::rest::model::Schema &schema) const {
+    const schemaregistry::rest::model::Schema &schema) const {
     auto it = schemas.find(subject);
     if (it != schemas.end()) {
         auto schemaStr = schema.getSchema().value_or("");
@@ -93,7 +93,7 @@ MockSchemaStore::getRegisteredBySchema(
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisteredSchema>
+std::optional<schemaregistry::rest::model::RegisteredSchema>
 MockSchemaStore::getRegisteredByVersion(const std::string &subject,
                                         int32_t version) const {
     auto it = schemas.find(subject);
@@ -107,14 +107,14 @@ MockSchemaStore::getRegisteredByVersion(const std::string &subject,
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisteredSchema>
+std::optional<schemaregistry::rest::model::RegisteredSchema>
 MockSchemaStore::getLatestVersion(const std::string &subject) const {
     auto it = schemas.find(subject);
     if (it != schemas.end() && !it->second.empty()) {
         auto maxIt = std::max_element(
             it->second.begin(), it->second.end(),
-            [](const srclient::rest::model::RegisteredSchema &a,
-               const srclient::rest::model::RegisteredSchema &b) {
+            [](const schemaregistry::rest::model::RegisteredSchema &a,
+               const schemaregistry::rest::model::RegisteredSchema &b) {
                 return a.getVersion().value_or(0) < b.getVersion().value_or(0);
             });
         return *maxIt;
@@ -122,7 +122,7 @@ MockSchemaStore::getLatestVersion(const std::string &subject) const {
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisteredSchema>
+std::optional<schemaregistry::rest::model::RegisteredSchema>
 MockSchemaStore::getLatestWithMetadata(
     const std::string &subject,
     const std::unordered_map<std::string, std::string> &metadata) const {
@@ -160,14 +160,14 @@ std::vector<int32_t> MockSchemaStore::getVersions(
 
 void MockSchemaStore::removeBySchema(
     const std::string &subject,
-    const srclient::rest::model::RegisteredSchema &registeredSchema) {
+    const schemaregistry::rest::model::RegisteredSchema &registeredSchema) {
     auto it = schemas.find(subject);
     if (it != schemas.end()) {
         it->second.erase(
             std::remove_if(
                 it->second.begin(), it->second.end(),
                 [&registeredSchema](
-                    const srclient::rest::model::RegisteredSchema &rs) {
+                    const schemaregistry::rest::model::RegisteredSchema &rs) {
                     return rs.getSchema() == registeredSchema.getSchema();
                 }),
             it->second.end());
@@ -202,7 +202,7 @@ void MockSchemaStore::clear() {
 
 bool MockSchemaStore::hasMetadata(
     const std::unordered_map<std::string, std::string> &metadata,
-    const srclient::rest::model::RegisteredSchema &rs) const {
+    const schemaregistry::rest::model::RegisteredSchema &rs) const {
     if (!rs.getMetadata().has_value()) {
         return metadata.empty();
     }
@@ -216,24 +216,24 @@ bool MockSchemaStore::hasMetadata(
 // MockSchemaRegistryClient implementation
 
 MockSchemaRegistryClient::MockSchemaRegistryClient(
-    std::shared_ptr<const srclient::rest::ClientConfiguration> config)
+    std::shared_ptr<const schemaregistry::rest::ClientConfiguration> config)
     : store(std::make_shared<MockSchemaStore>()),
       config(config),
       storeMutex(std::make_shared<std::mutex>()) {
     if (config->getBaseUrls().empty()) {
-        throw srclient::rest::RestException("Base URL is required");
+        throw schemaregistry::rest::RestException("Base URL is required");
     }
 }
 
-std::shared_ptr<const srclient::rest::ClientConfiguration>
+std::shared_ptr<const schemaregistry::rest::ClientConfiguration>
 MockSchemaRegistryClient::getConfiguration() const {
     return config;
 }
 
-srclient::rest::model::RegisteredSchema
+schemaregistry::rest::model::RegisteredSchema
 MockSchemaRegistryClient::registerSchema(
-    const std::string &subject, const srclient::rest::model::Schema &schema,
-    bool normalize) {
+    const std::string &subject,
+    const schemaregistry::rest::model::Schema &schema, bool normalize) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     // Check if schema already exists
@@ -248,7 +248,7 @@ MockSchemaRegistryClient::registerSchema(
         latest.has_value() ? latest.value().getVersion().value_or(0) + 1 : 1;
 
     // Create new registered schema
-    srclient::rest::model::RegisteredSchema registeredSchema(
+    schemaregistry::rest::model::RegisteredSchema registeredSchema(
         std::make_optional(store->nextSchemaId++),
         std::make_optional(store->generateGuid()), std::make_optional(subject),
         std::make_optional(version), schema);
@@ -258,71 +258,74 @@ MockSchemaRegistryClient::registerSchema(
     return registeredSchema;
 }
 
-srclient::rest::model::Schema MockSchemaRegistryClient::getBySubjectAndId(
+schemaregistry::rest::model::Schema MockSchemaRegistryClient::getBySubjectAndId(
     const std::optional<std::string> &subject, int32_t id,
     const std::optional<std::string> &format) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto schema = store->getSchemaById(id);
     if (!schema.has_value()) {
-        throw srclient::rest::RestException("Schema not found");
+        throw schemaregistry::rest::RestException("Schema not found");
     }
 
     return schema.value();
 }
 
-srclient::rest::model::Schema MockSchemaRegistryClient::getByGuid(
+schemaregistry::rest::model::Schema MockSchemaRegistryClient::getByGuid(
     const std::string &guid, const std::optional<std::string> &format) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto schema = store->getSchemaByGuid(guid);
     if (!schema.has_value()) {
-        throw srclient::rest::RestException("Schema not found");
+        throw schemaregistry::rest::RestException("Schema not found");
     }
 
     return schema.value();
 }
 
-srclient::rest::model::RegisteredSchema MockSchemaRegistryClient::getBySchema(
-    const std::string &subject, const srclient::rest::model::Schema &schema,
-    bool normalize, bool deleted) {
+schemaregistry::rest::model::RegisteredSchema
+MockSchemaRegistryClient::getBySchema(
+    const std::string &subject,
+    const schemaregistry::rest::model::Schema &schema, bool normalize,
+    bool deleted) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto rs = store->getRegisteredBySchema(subject, schema);
     if (!rs.has_value()) {
-        throw srclient::rest::RestException("Schema not found");
+        throw schemaregistry::rest::RestException("Schema not found");
     }
 
     return rs.value();
 }
 
-srclient::rest::model::RegisteredSchema MockSchemaRegistryClient::getVersion(
-    const std::string &subject, int32_t version, bool deleted,
-    const std::optional<std::string> &format) {
+schemaregistry::rest::model::RegisteredSchema
+MockSchemaRegistryClient::getVersion(const std::string &subject,
+                                     int32_t version, bool deleted,
+                                     const std::optional<std::string> &format) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto rs = store->getRegisteredByVersion(subject, version);
     if (!rs.has_value()) {
-        throw srclient::rest::RestException("Schema not found");
+        throw schemaregistry::rest::RestException("Schema not found");
     }
 
     return rs.value();
 }
 
-srclient::rest::model::RegisteredSchema
+schemaregistry::rest::model::RegisteredSchema
 MockSchemaRegistryClient::getLatestVersion(
     const std::string &subject, const std::optional<std::string> &format) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     auto rs = store->getLatestVersion(subject);
     if (!rs.has_value()) {
-        throw srclient::rest::RestException("Schema not found");
+        throw schemaregistry::rest::RestException("Schema not found");
     }
 
     return rs.value();
 }
 
-srclient::rest::model::RegisteredSchema
+schemaregistry::rest::model::RegisteredSchema
 MockSchemaRegistryClient::getLatestWithMetadata(
     const std::string &subject,
     const std::unordered_map<std::string, std::string> &metadata, bool deleted,
@@ -331,7 +334,7 @@ MockSchemaRegistryClient::getLatestWithMetadata(
 
     auto rs = store->getLatestWithMetadata(subject, metadata);
     if (!rs.has_value()) {
-        throw srclient::rest::RestException("Schema not found");
+        throw schemaregistry::rest::RestException("Schema not found");
     }
 
     return rs.value();
@@ -361,7 +364,7 @@ int32_t MockSchemaRegistryClient::deleteSubjectVersion(
 
     auto rs = store->getRegisteredByVersion(subject, version);
     if (!rs.has_value()) {
-        throw srclient::rest::RestException("Schema not found");
+        throw schemaregistry::rest::RestException("Schema not found");
     }
 
     store->removeBySchema(subject, rs.value());
@@ -369,38 +372,40 @@ int32_t MockSchemaRegistryClient::deleteSubjectVersion(
 }
 
 bool MockSchemaRegistryClient::testSubjectCompatibility(
-    const std::string &subject, const srclient::rest::model::Schema &schema) {
+    const std::string &subject,
+    const schemaregistry::rest::model::Schema &schema) {
     // For mock implementation, always return true
     return true;
 }
 
 bool MockSchemaRegistryClient::testCompatibility(
     const std::string &subject, int32_t version,
-    const srclient::rest::model::Schema &schema) {
+    const schemaregistry::rest::model::Schema &schema) {
     // For mock implementation, always return true
     return true;
 }
 
-srclient::rest::model::ServerConfig MockSchemaRegistryClient::getConfig(
+schemaregistry::rest::model::ServerConfig MockSchemaRegistryClient::getConfig(
     const std::string &subject) {
-    return srclient::rest::model::ServerConfig();
+    return schemaregistry::rest::model::ServerConfig();
 }
 
-srclient::rest::model::ServerConfig MockSchemaRegistryClient::updateConfig(
+schemaregistry::rest::model::ServerConfig
+MockSchemaRegistryClient::updateConfig(
     const std::string &subject,
-    const srclient::rest::model::ServerConfig &config) {
-    return srclient::rest::model::ServerConfig();
+    const schemaregistry::rest::model::ServerConfig &config) {
+    return schemaregistry::rest::model::ServerConfig();
 }
 
-srclient::rest::model::ServerConfig
+schemaregistry::rest::model::ServerConfig
 MockSchemaRegistryClient::getDefaultConfig() {
-    return srclient::rest::model::ServerConfig();
+    return schemaregistry::rest::model::ServerConfig();
 }
 
-srclient::rest::model::ServerConfig
+schemaregistry::rest::model::ServerConfig
 MockSchemaRegistryClient::updateDefaultConfig(
-    const srclient::rest::model::ServerConfig &config) {
-    return srclient::rest::model::ServerConfig();
+    const schemaregistry::rest::model::ServerConfig &config) {
+    return schemaregistry::rest::model::ServerConfig();
 }
 
 void MockSchemaRegistryClient::clearLatestCaches() {
@@ -414,4 +419,4 @@ void MockSchemaRegistryClient::clearCaches() {
 
 void MockSchemaRegistryClient::close() { clearCaches(); }
 
-}  // namespace srclient::rest
+}  // namespace schemaregistry::rest

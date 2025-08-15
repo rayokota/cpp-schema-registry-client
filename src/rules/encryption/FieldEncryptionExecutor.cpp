@@ -1,10 +1,10 @@
-#include "srclient/rules/encryption/FieldEncryptionExecutor.h"
+#include "schemaregistry/rules/encryption/FieldEncryptionExecutor.h"
 
-#include "srclient/serdes/RuleRegistry.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
 
-namespace srclient::rules::encryption {
+namespace schemaregistry::rules::encryption {
 
-using namespace srclient::serdes;
+using namespace schemaregistry::serdes;
 
 // Field encryption executor implementation
 FieldEncryptionExecutor::FieldEncryptionExecutor(std::shared_ptr<Clock> clock)
@@ -36,4 +36,4 @@ void FieldEncryptionExecutor::registerExecutor() {
         std::make_shared<FieldEncryptionExecutor>(nullptr));
 }
 
-}  // namespace srclient::rules::encryption
+}  // namespace schemaregistry::rules::encryption

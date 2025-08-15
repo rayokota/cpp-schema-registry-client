@@ -11,11 +11,11 @@
  * the class manually.
  */
 
-#include "srclient/rest/model/Rule.h"
+#include "schemaregistry/rest/model/Rule.h"
 
 #include <sstream>
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 NLOHMANN_JSON_SERIALIZE_ENUM(Kind, {{Kind::Transform, "TRANSFORM"},
                                     {Kind::Condition, "CONDITION"}})
@@ -169,4 +169,4 @@ std::optional<bool> Rule::isDisabled() const { return disabled_; }
 
 void Rule::setDisabled(const std::optional<bool> &value) { disabled_ = value; }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

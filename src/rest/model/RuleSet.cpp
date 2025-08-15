@@ -11,11 +11,11 @@
  * the class manually.
  */
 
-#include "srclient/rest/model/RuleSet.h"
+#include "schemaregistry/rest/model/RuleSet.h"
 
 #include <sstream>
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 RuleSet::RuleSet() {
     // Optional members are initialized to std::nullopt by default
@@ -40,50 +40,53 @@ void to_json(nlohmann::json &j, const RuleSet &o) {
 
 void from_json(const nlohmann::json &j, RuleSet &o) {
     if (j.find("migrationRules") != j.end()) {
-        std::vector<srclient::rest::model::Rule> temp;
+        std::vector<schemaregistry::rest::model::Rule> temp;
         j.at("migrationRules").get_to(temp);
         o.migrationRules_ = temp;
     }
     if (j.find("domainRules") != j.end()) {
-        std::vector<srclient::rest::model::Rule> temp;
+        std::vector<schemaregistry::rest::model::Rule> temp;
         j.at("domainRules").get_to(temp);
         o.domainRules_ = temp;
     }
     if (j.find("encodingRules") != j.end()) {
-        std::vector<srclient::rest::model::Rule> temp;
+        std::vector<schemaregistry::rest::model::Rule> temp;
         j.at("encodingRules").get_to(temp);
         o.encodingRules_ = temp;
     }
 }
 
-std::optional<std::vector<srclient::rest::model::Rule>>
+std::optional<std::vector<schemaregistry::rest::model::Rule>>
 RuleSet::getMigrationRules() const {
     return migrationRules_;
 }
 
 void RuleSet::setMigrationRules(
-    const std::optional<std::vector<srclient::rest::model::Rule>> &value) {
+    const std::optional<std::vector<schemaregistry::rest::model::Rule>>
+        &value) {
     migrationRules_ = value;
 }
 
-std::optional<std::vector<srclient::rest::model::Rule>>
+std::optional<std::vector<schemaregistry::rest::model::Rule>>
 RuleSet::getDomainRules() const {
     return domainRules_;
 }
 
 void RuleSet::setDomainRules(
-    const std::optional<std::vector<srclient::rest::model::Rule>> &value) {
+    const std::optional<std::vector<schemaregistry::rest::model::Rule>>
+        &value) {
     domainRules_ = value;
 }
 
-std::optional<std::vector<srclient::rest::model::Rule>>
+std::optional<std::vector<schemaregistry::rest::model::Rule>>
 RuleSet::getEncodingRules() const {
     return encodingRules_;
 }
 
 void RuleSet::setEncodingRules(
-    const std::optional<std::vector<srclient::rest::model::Rule>> &value) {
+    const std::optional<std::vector<schemaregistry::rest::model::Rule>>
+        &value) {
     encodingRules_ = value;
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

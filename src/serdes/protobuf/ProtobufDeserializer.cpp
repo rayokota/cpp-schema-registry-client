@@ -1,5 +1,5 @@
-#define SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL
-#include "srclient/serdes/protobuf/ProtobufDeserializer.h"
+#define schemaregistry_PROTOBUF_SKIP_TEMPLATE_IMPL
+#include "schemaregistry/serdes/protobuf/ProtobufDeserializer.h"
 
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/util/json_util.h>
@@ -8,15 +8,17 @@
 #include <nlohmann/json.hpp>
 #include <optional>
 
-#include "srclient/serdes/json/JsonTypes.h"
-#include "srclient/serdes/protobuf/ProtobufTypes.h"
-#include "srclient/serdes/protobuf/ProtobufUtils.h"
+#include "schemaregistry/serdes/json/JsonTypes.h"
+#include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
+#include "schemaregistry/serdes/protobuf/ProtobufUtils.h"
 
 // Forward declaration for transformFields function from ProtobufUtils.cpp
-namespace srclient::serdes::protobuf::utils {
-std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
-    srclient::serdes::RuleContext &ctx, const std::string &field_executor_type,
-    const srclient::serdes::SerdeValue &value);
+namespace schemaregistry::serdes::protobuf::utils {
+std::unique_ptr<schemaregistry::serdes::SerdeValue> transformFields(
+    schemaregistry::serdes::RuleContext &ctx,
+    const std::string &field_executor_type,
+    const schemaregistry::serdes::SerdeValue &value);
 }
 
-namespace srclient::serdes::protobuf {}  // namespace srclient::serdes::protobuf
+namespace schemaregistry::serdes::protobuf {
+}  // namespace schemaregistry::serdes::protobuf

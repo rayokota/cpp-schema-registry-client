@@ -32,10 +32,10 @@
 #include "google/protobuf/arena.h"
 
 // Include the header file for this module
-#include "srclient/rules/cel/ExtraFunc.h"
+#include "schemaregistry/rules/cel/ExtraFunc.h"
 
 // Implement a stub version of RegisterExtraFuncs
-namespace srclient::rules::cel {
+namespace schemaregistry::rules::cel {
 
 absl::Status RegisterExtraFuncs(
     google::api::expr::runtime::CelFunctionRegistry &registry,
@@ -45,4 +45,4 @@ absl::Status RegisterExtraFuncs(
     return absl::OkStatus();
 }
 
-}  // namespace srclient::rules::cel
+}  // namespace schemaregistry::rules::cel

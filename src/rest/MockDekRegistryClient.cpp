@@ -3,12 +3,12 @@
  * Mock implementation of Data Encryption Key (DEK) Registry Client for testing
  */
 
-#include "srclient/rest/MockDekRegistryClient.h"
+#include "schemaregistry/rest/MockDekRegistryClient.h"
 
 #include <chrono>
 #include <mutex>
 
-using namespace srclient::rest;
+using namespace schemaregistry::rest;
 
 // MockDekStore implementation
 MockDekStore::MockDekStore() {
@@ -16,16 +16,16 @@ MockDekStore::MockDekStore() {
 }
 
 void MockDekStore::setKek(const KekId &kekId,
-                          const srclient::rest::model::Kek &kek) {
+                          const schemaregistry::rest::model::Kek &kek) {
     keks[kekId] = kek;
 }
 
 void MockDekStore::setDek(const DekId &dekId,
-                          const srclient::rest::model::Dek &dek) {
+                          const schemaregistry::rest::model::Dek &dek) {
     deks[dekId] = dek;
 }
 
-std::optional<srclient::rest::model::Kek> MockDekStore::getKek(
+std::optional<schemaregistry::rest::model::Kek> MockDekStore::getKek(
     const KekId &kekId) const {
     auto it = keks.find(kekId);
     if (it != keks.end()) {
@@ -34,7 +34,7 @@ std::optional<srclient::rest::model::Kek> MockDekStore::getKek(
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::Dek> MockDekStore::getDek(
+std::optional<schemaregistry::rest::model::Dek> MockDekStore::getDek(
     const DekId &dekId) const {
     auto it = deks.find(dekId);
     if (it != deks.end()) {
@@ -43,7 +43,7 @@ std::optional<srclient::rest::model::Dek> MockDekStore::getDek(
     return std::nullopt;
 }
 
-srclient::rest::model::Dek *MockDekStore::getMutDek(const DekId &dekId) {
+schemaregistry::rest::model::Dek *MockDekStore::getMutDek(const DekId &dekId) {
     auto it = deks.find(dekId);
     if (it != deks.end()) {
         return &it->second;
@@ -58,12 +58,12 @@ void MockDekStore::clear() {
 
 // MockDekRegistryClient implementation
 MockDekRegistryClient::MockDekRegistryClient(
-    std::shared_ptr<const srclient::rest::ClientConfiguration> config)
+    std::shared_ptr<const schemaregistry::rest::ClientConfiguration> config)
     : config(config),
       store(std::make_shared<MockDekStore>()),
       storeMutex(std::make_shared<std::mutex>()) {}
 
-std::shared_ptr<const srclient::rest::ClientConfiguration>
+std::shared_ptr<const schemaregistry::rest::ClientConfiguration>
 MockDekRegistryClient::getConfiguration() const {
     return config;
 }
@@ -75,8 +75,8 @@ int64_t MockDekRegistryClient::getCurrentTimestamp() const {
         .count();
 }
 
-srclient::rest::model::Kek MockDekRegistryClient::registerKek(
-    const srclient::rest::model::CreateKekRequest &request) {
+schemaregistry::rest::model::Kek MockDekRegistryClient::registerKek(
+    const schemaregistry::rest::model::CreateKekRequest &request) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     KekId cacheKey = {request.getName(), false};
@@ -88,24 +88,24 @@ srclient::rest::model::Kek MockDekRegistryClient::registerKek(
     }
 
     // Create new KEK
-    srclient::rest::model::Kek kek(request.getName(), request.getKmsType(),
-                                   request.getKmsKeyId(), request.getKmsProps(),
-                                   request.getDoc(), request.getShared(),
-                                   getCurrentTimestamp(), false);
+    schemaregistry::rest::model::Kek kek(
+        request.getName(), request.getKmsType(), request.getKmsKeyId(),
+        request.getKmsProps(), request.getDoc(), request.getShared(),
+        getCurrentTimestamp(), false);
 
     store->setKek(cacheKey, kek);
     return kek;
 }
 
-srclient::rest::model::Dek MockDekRegistryClient::registerDek(
+schemaregistry::rest::model::Dek MockDekRegistryClient::registerDek(
     const std::string &kek_name,
-    const srclient::rest::model::CreateDekRequest &request) {
+    const schemaregistry::rest::model::CreateDekRequest &request) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
     DekId cacheKey = {kek_name, request.getSubject(),
                       request.getVersion().value_or(1),
                       request.getAlgorithm().value_or(
-                          srclient::rest::model::Algorithm::Aes256Gcm),
+                          schemaregistry::rest::model::Algorithm::Aes256Gcm),
                       false};
 
     // Check if DEK already exists
@@ -115,10 +115,10 @@ srclient::rest::model::Dek MockDekRegistryClient::registerDek(
     }
 
     // Create new DEK
-    srclient::rest::model::Dek dek(
+    schemaregistry::rest::model::Dek dek(
         kek_name, request.getSubject(), request.getVersion().value_or(1),
         request.getAlgorithm().value_or(
-            srclient::rest::model::Algorithm::Aes256Gcm),
+            schemaregistry::rest::model::Algorithm::Aes256Gcm),
         request.getEncryptedKeyMaterial(),
         std::nullopt,  // keyMaterial
         getCurrentTimestamp(), false);
@@ -127,7 +127,7 @@ srclient::rest::model::Dek MockDekRegistryClient::registerDek(
     return dek;
 }
 
-srclient::rest::model::Kek MockDekRegistryClient::getKek(
+schemaregistry::rest::model::Kek MockDekRegistryClient::getKek(
     const std::string &name, bool deleted) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
@@ -138,16 +138,17 @@ srclient::rest::model::Kek MockDekRegistryClient::getKek(
         return kek.value();
     }
 
-    throw srclient::rest::RestException("KEK not found: " + name);
+    throw schemaregistry::rest::RestException("KEK not found: " + name);
 }
 
-srclient::rest::model::Dek MockDekRegistryClient::getDek(
+schemaregistry::rest::model::Dek MockDekRegistryClient::getDek(
     const std::string &kek_name, const std::string &subject,
-    const std::optional<srclient::rest::model::Algorithm> &algorithm,
+    const std::optional<schemaregistry::rest::model::Algorithm> &algorithm,
     const std::optional<int32_t> &version, bool deleted) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
-    auto alg = algorithm.value_or(srclient::rest::model::Algorithm::Aes256Gcm);
+    auto alg =
+        algorithm.value_or(schemaregistry::rest::model::Algorithm::Aes256Gcm);
     auto ver = version.value_or(1);
 
     DekId dekId = {
@@ -160,18 +161,19 @@ srclient::rest::model::Dek MockDekRegistryClient::getDek(
         return dek.value();
     }
 
-    throw srclient::rest::RestException("DEK not found: " + kek_name + "/" +
-                                        subject);
+    throw schemaregistry::rest::RestException("DEK not found: " + kek_name +
+                                              "/" + subject);
 }
 
-srclient::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
+schemaregistry::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
     const std::string &kek_name, const std::string &subject,
-    const std::optional<srclient::rest::model::Algorithm> &algorithm,
+    const std::optional<schemaregistry::rest::model::Algorithm> &algorithm,
     const std::optional<int32_t> &version, bool deleted,
     const std::vector<uint8_t> &key_material_bytes) {
     std::lock_guard<std::mutex> lock(*storeMutex);
 
-    auto alg = algorithm.value_or(srclient::rest::model::Algorithm::Aes256Gcm);
+    auto alg =
+        algorithm.value_or(schemaregistry::rest::model::Algorithm::Aes256Gcm);
     auto ver = version.value_or(1);
 
     DekId dekId = {kek_name, subject, ver, alg, false};
@@ -182,7 +184,7 @@ srclient::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
         return *dek;
     }
 
-    throw srclient::rest::RestException(
+    throw schemaregistry::rest::RestException(
         "DEK not found for key material update: " + kek_name + "/" + subject);
 }
 

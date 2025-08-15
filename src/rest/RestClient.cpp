@@ -10,7 +10,7 @@
  * Do not edit the class manually.
  */
 
-#include "srclient/rest/RestClient.h"
+#include "schemaregistry/rest/RestClient.h"
 
 #include <httplib.h>
 
@@ -18,7 +18,7 @@
 #include <limits>
 #include <sstream>
 
-namespace srclient::rest {
+namespace schemaregistry::rest {
 
 RestClient::RestClient(std::shared_ptr<const ClientConfiguration> configuration)
     : configuration_(configuration) {
@@ -51,4 +51,4 @@ httplib::Result RestClient::sendRequest(const std::string &path,
     return clients_.front()->send(req);
 }
 
-}  // namespace srclient::rest
+}  // namespace schemaregistry::rest

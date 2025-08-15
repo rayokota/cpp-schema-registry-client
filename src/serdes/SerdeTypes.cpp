@@ -1,4 +1,4 @@
-#include "srclient/serdes/SerdeTypes.h"
+#include "schemaregistry/serdes/SerdeTypes.h"
 
 #include <google/protobuf/message.h>
 
@@ -7,13 +7,13 @@
 #include <sstream>
 
 #include "absl/strings/escaping.h"
-#include "srclient/rest/model/RegisteredSchema.h"
-#include "srclient/rest/model/Schema.h"
-#include "srclient/serdes/avro/AvroTypes.h"
-#include "srclient/serdes/json/JsonTypes.h"
-#include "srclient/serdes/protobuf/ProtobufTypes.h"
+#include "schemaregistry/rest/model/RegisteredSchema.h"
+#include "schemaregistry/rest/model/Schema.h"
+#include "schemaregistry/serdes/avro/AvroTypes.h"
+#include "schemaregistry/serdes/json/JsonTypes.h"
+#include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
 
-namespace srclient::serdes {
+namespace schemaregistry::serdes {
 
 // SchemaSelectorData static factory methods
 SchemaSelectorData SchemaSelectorData::createSchemaId(int32_t id) {
@@ -240,4 +240,4 @@ std::string kindToString(Kind kind) {
 
 }  // namespace type_utils
 
-}  // namespace srclient::serdes
+}  // namespace schemaregistry::serdes

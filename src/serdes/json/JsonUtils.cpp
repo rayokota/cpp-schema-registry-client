@@ -1,18 +1,18 @@
-#include "srclient/serdes/json/JsonUtils.h"
+#include "schemaregistry/serdes/json/JsonUtils.h"
 
 #include <algorithm>
 #include <sstream>
 
-#include "srclient/serdes/RuleRegistry.h"  // For global_registry functions
+#include "schemaregistry/serdes/RuleRegistry.h"  // For global_registry functions
 
-namespace srclient::serdes::json::utils {
+namespace schemaregistry::serdes::json::utils {
 
 // Schema resolution implementations
 namespace schema_resolution {
 
 std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+    const schemaregistry::rest::model::Schema &schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
     std::unordered_set<std::string> &visited) {
     std::unordered_map<std::string, nlohmann::json> resolved_schemas;
 
@@ -62,9 +62,9 @@ std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
     return resolved_schemas;
 }
 
-std::vector<srclient::rest::model::SchemaReference> buildDependencies(
+std::vector<schemaregistry::rest::model::SchemaReference> buildDependencies(
     const nlohmann::json &schema, const std::string &subject_prefix) {
-    std::vector<srclient::rest::model::SchemaReference> dependencies;
+    std::vector<schemaregistry::rest::model::SchemaReference> dependencies;
 
     // TODO: Implement JSON schema analysis to find $ref dependencies
     // This would involve traversing the schema and finding all $ref entries
@@ -421,4 +421,4 @@ nlohmann::json ojsonToJson(const jsoncons::ojson &jsoncons_json) {
     }
 }
 
-}  // namespace srclient::serdes::json::utils
+}  // namespace schemaregistry::serdes::json::utils

@@ -11,11 +11,11 @@
  * the class manually.
  */
 
-#include "srclient/rest/model/SchemaReference.h"
+#include "schemaregistry/rest/model/SchemaReference.h"
 
 #include <sstream>
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 SchemaReference::SchemaReference() {
     // Optional members are initialized to std::nullopt by default
@@ -75,4 +75,4 @@ void SchemaReference::setVersion(const std::optional<int32_t> &value) {
     version_ = value;
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

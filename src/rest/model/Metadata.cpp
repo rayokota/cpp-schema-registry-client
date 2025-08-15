@@ -11,11 +11,11 @@
  * the class manually.
  */
 
-#include "srclient/rest/model/Metadata.h"
+#include "schemaregistry/rest/model/Metadata.h"
 
 #include <sstream>
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 Metadata::Metadata() {
     // Optional members are initialized to std::nullopt by default
@@ -83,4 +83,4 @@ void Metadata::setSensitive(
     sensitive_ = value;
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

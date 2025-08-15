@@ -1,18 +1,18 @@
-#include "srclient/serdes/avro/AvroDeserializer.h"
+#include "schemaregistry/serdes/avro/AvroDeserializer.h"
 
 #include <algorithm>
 #include <sstream>
 
-#include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/avro/AvroUtils.h"
-#include "srclient/serdes/json/JsonTypes.h"
+#include "schemaregistry/serdes/SerdeTypes.h"
+#include "schemaregistry/serdes/avro/AvroUtils.h"
+#include "schemaregistry/serdes/json/JsonTypes.h"
 
-namespace srclient::serdes::avro {
+namespace schemaregistry::serdes::avro {
 
 // AvroDeserializer implementation
 
 AvroDeserializer::AvroDeserializer(
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
     std::shared_ptr<RuleRegistry> rule_registry,
     const DeserializerConfig &config)
     : base_(std::make_shared<BaseDeserializer>(Serde(client, rule_registry),
@@ -38,7 +38,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
     // Get subject using strategy
     auto strategy = base_->getConfig().subject_name_strategy;
     auto subject_opt = strategy(ctx.topic, ctx.serde_type, std::nullopt);
-    std::optional<srclient::rest::model::RegisteredSchema> latest_schema;
+    std::optional<schemaregistry::rest::model::RegisteredSchema> latest_schema;
     bool has_subject = subject_opt.has_value();
 
     if (has_subject) {
@@ -98,7 +98,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
 
     // Migrations processing
     std::vector<Migration> migrations;
-    srclient::rest::model::Schema reader_schema_raw;
+    schemaregistry::rest::model::Schema reader_schema_raw;
     std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
         reader_parsed;
 
@@ -126,7 +126,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
         // 2. Convert to JSON for migration
         auto json_value = utils::avroToJson(intermediate);
         auto json_serde_value =
-            srclient::serdes::json::makeJsonValue(json_value);
+            schemaregistry::serdes::json::makeJsonValue(json_value);
 
         // 3. Apply migrations
         auto migrated = base_->getSerde().executeMigrations(
@@ -135,7 +135,7 @@ NamedValue AvroDeserializer::deserialize(const SerializationContext &ctx,
         if (migrated->getFormat() != SerdeFormat::Json) {
             throw AvroError("Expected JSON value after migrations");
         }
-        auto migrated_json = srclient::serdes::json::asJson(*migrated);
+        auto migrated_json = schemaregistry::serdes::json::asJson(*migrated);
 
         // 4. Convert back to Avro with reader schema
         value = utils::jsonToAvro(migrated_json, reader_parsed.first);
@@ -198,7 +198,8 @@ std::optional<std::string> AvroDeserializer::getName(
 }
 
 std::pair<::avro::ValidSchema, std::vector<::avro::ValidSchema>>
-AvroDeserializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
+AvroDeserializer::getParsedSchema(
+    const schemaregistry::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
@@ -211,4 +212,4 @@ FieldType AvroDeserializer::getFieldType(const ::avro::ValidSchema &schema) {
     return utils::avroSchemaToFieldType(schema);
 }
 
-}  // namespace srclient::serdes::avro
+}  // namespace schemaregistry::serdes::avro

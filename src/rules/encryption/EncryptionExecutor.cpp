@@ -1,4 +1,4 @@
-#include "srclient/rules/encryption/EncryptionExecutor.h"
+#include "schemaregistry/rules/encryption/EncryptionExecutor.h"
 
 #include <algorithm>
 #include <cstring>
@@ -7,11 +7,11 @@
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
-#include "srclient/rules/encryption/EncryptionRegistry.h"
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/avro/AvroTypes.h"
-#include "srclient/serdes/json/JsonTypes.h"
-#include "srclient/serdes/protobuf/ProtobufTypes.h"
+#include "schemaregistry/rules/encryption/EncryptionRegistry.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
+#include "schemaregistry/serdes/avro/AvroTypes.h"
+#include "schemaregistry/serdes/json/JsonTypes.h"
+#include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
 #include "tink/aead.h"
 #include "tink/aead_config.h"
 #include "tink/aead_key_templates.h"
@@ -30,10 +30,10 @@
 #include <endian.h>
 #endif
 
-namespace srclient::rules::encryption {
+namespace schemaregistry::rules::encryption {
 
-using namespace srclient::serdes;
-using namespace srclient::rest;
+using namespace schemaregistry::serdes;
+using namespace schemaregistry::rest;
 
 // SystemClock implementation
 int64_t SystemClock::now() const {
@@ -57,7 +57,7 @@ void FakeClock::setTime(int64_t time) {
 }
 
 // Cryptor implementation
-Cryptor::Cryptor(srclient::rest::model::Algorithm dek_format)
+Cryptor::Cryptor(schemaregistry::rest::model::Algorithm dek_format)
     : dek_format_(dek_format) {
     // Initialize Tink
     auto status = crypto::tink::AeadConfig::Register();
@@ -74,15 +74,15 @@ Cryptor::Cryptor(srclient::rest::model::Algorithm dek_format)
 
     // Create key template based on algorithm
     switch (dek_format) {
-        case srclient::rest::model::Algorithm::Aes128Gcm: {
+        case schemaregistry::rest::model::Algorithm::Aes128Gcm: {
             key_template_ = crypto::tink::AeadKeyTemplates::Aes128Gcm();
             break;
         }
-        case srclient::rest::model::Algorithm::Aes256Gcm: {
+        case schemaregistry::rest::model::Algorithm::Aes256Gcm: {
             key_template_ = crypto::tink::AeadKeyTemplates::Aes256Gcm();
             break;
         }
-        case srclient::rest::model::Algorithm::Aes256Siv: {
+        case schemaregistry::rest::model::Algorithm::Aes256Siv: {
             key_template_ =
                 crypto::tink::DeterministicAeadKeyTemplates::Aes256Siv();
             break;
@@ -93,7 +93,7 @@ Cryptor::Cryptor(srclient::rest::model::Algorithm dek_format)
 }
 
 bool Cryptor::isDeterministic() const {
-    return dek_format_ == srclient::rest::model::Algorithm::Aes256Siv;
+    return dek_format_ == schemaregistry::rest::model::Algorithm::Aes256Siv;
 }
 
 std::vector<uint8_t> Cryptor::generateKey() const {
@@ -274,19 +274,19 @@ void EncryptionExecutor::registerExecutor() {
 }
 
 Cryptor EncryptionExecutor::getCryptor(RuleContext &ctx) const {
-    srclient::rest::model::Algorithm dek_algorithm =
-        srclient::rest::model::Algorithm::Aes256Gcm;
+    schemaregistry::rest::model::Algorithm dek_algorithm =
+        schemaregistry::rest::model::Algorithm::Aes256Gcm;
 
     auto param = ctx.getParameter(ENCRYPT_DEK_ALGORITHM);
     if (param) {
         // Parse algorithm from string
         const std::string &algorithm_str = *param;
         if (algorithm_str == "AES128_GCM") {
-            dek_algorithm = srclient::rest::model::Algorithm::Aes128Gcm;
+            dek_algorithm = schemaregistry::rest::model::Algorithm::Aes128Gcm;
         } else if (algorithm_str == "AES256_GCM") {
-            dek_algorithm = srclient::rest::model::Algorithm::Aes256Gcm;
+            dek_algorithm = schemaregistry::rest::model::Algorithm::Aes256Gcm;
         } else if (algorithm_str == "AES256_SIV") {
-            dek_algorithm = srclient::rest::model::Algorithm::Aes256Siv;
+            dek_algorithm = schemaregistry::rest::model::Algorithm::Aes256Siv;
         } else {
             throw SerdeError("Unsupported DEK algorithm: " + algorithm_str);
         }
@@ -432,7 +432,7 @@ bool EncryptionExecutorTransform::isDekRotated() const {
     return dek_expiry_days_ > 0;
 }
 
-srclient::rest::model::Kek EncryptionExecutorTransform::getKek(
+schemaregistry::rest::model::Kek EncryptionExecutorTransform::getKek(
     RuleContext &ctx) {
     std::lock_guard<std::mutex> lock(kek_mutex_);
 
@@ -445,7 +445,7 @@ srclient::rest::model::Kek EncryptionExecutorTransform::getKek(
     return kek;
 }
 
-srclient::rest::model::Kek EncryptionExecutorTransform::getOrCreateKek(
+schemaregistry::rest::model::Kek EncryptionExecutorTransform::getOrCreateKek(
     RuleContext &ctx) {
     bool is_read = ctx.getRuleMode() == Mode::Read;
     auto kms_type = ctx.getParameter(ENCRYPT_KMS_TYPE);
@@ -498,7 +498,7 @@ srclient::rest::model::Kek EncryptionExecutorTransform::getOrCreateKek(
     }
 }
 
-std::optional<srclient::rest::model::Kek>
+std::optional<schemaregistry::rest::model::Kek>
 EncryptionExecutorTransform::retrieveKekFromRegistry(const KekId &kek_id) {
     try {
         auto client = executor_->getClient();
@@ -515,7 +515,7 @@ EncryptionExecutorTransform::retrieveKekFromRegistry(const KekId &kek_id) {
     }
 }
 
-std::optional<srclient::rest::model::Kek>
+std::optional<schemaregistry::rest::model::Kek>
 EncryptionExecutorTransform::storeKekToRegistry(const KekId &kek_id,
                                                 const std::string &kms_type,
                                                 const std::string &kms_key_id,
@@ -526,7 +526,7 @@ EncryptionExecutorTransform::storeKekToRegistry(const KekId &kek_id,
             throw SerdeError("Client not configured");
         }
 
-        srclient::rest::model::CreateKekRequest request;
+        schemaregistry::rest::model::CreateKekRequest request;
         request.setName(kek_id.name);
         request.setKmsType(kms_type);
         request.setKmsKeyId(kms_key_id);
@@ -540,7 +540,7 @@ EncryptionExecutorTransform::storeKekToRegistry(const KekId &kek_id,
     }
 }
 
-srclient::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(
+schemaregistry::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(
     RuleContext &ctx, std::optional<int32_t> version) {
     auto kek = getKek(ctx);
     bool is_read = ctx.getRuleMode() == Mode::Read;
@@ -555,8 +555,8 @@ srclient::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(
     dek_id.subject = ctx.getSubject();
     dek_id.version = actual_version;
     dek_id.algorithm = cryptor_.isDeterministic()
-                           ? srclient::rest::model::Algorithm::Aes256Siv
-                           : srclient::rest::model::Algorithm::Aes256Gcm;
+                           ? schemaregistry::rest::model::Algorithm::Aes256Siv
+                           : schemaregistry::rest::model::Algorithm::Aes256Gcm;
     dek_id.deleted = is_read;
 
     auto dek = retrieveDekFromRegistry(dek_id);
@@ -604,7 +604,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform::getOrCreateDek(
     return *dek;
 }
 
-srclient::rest::model::Dek EncryptionExecutorTransform::createDek(
+schemaregistry::rest::model::Dek EncryptionExecutorTransform::createDek(
     const DekId &dek_id, int32_t new_version,
     const std::optional<std::vector<uint8_t>> &encrypted_dek) {
     DekId new_dek_id = dek_id;
@@ -625,7 +625,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform::createDek(
 }
 
 std::optional<std::vector<uint8_t>> EncryptionExecutorTransform::encryptDek(
-    const srclient::rest::model::Kek &kek,
+    const schemaregistry::rest::model::Kek &kek,
     const std::vector<uint8_t> &raw_dek) {
     std::shared_lock<std::shared_mutex> config_lock(executor_->config_mutex_);
     auto aead = getAead(executor_->config_, kek);
@@ -647,7 +647,7 @@ std::optional<std::vector<uint8_t>> EncryptionExecutorTransform::encryptDek(
 }
 
 std::vector<uint8_t> EncryptionExecutorTransform::decryptDek(
-    const srclient::rest::model::Kek &kek,
+    const schemaregistry::rest::model::Kek &kek,
     const std::vector<uint8_t> &encrypted_dek) {
     std::shared_lock<std::shared_mutex> config_lock(executor_->config_mutex_);
     auto aead = getAead(executor_->config_, kek);
@@ -668,9 +668,9 @@ std::vector<uint8_t> EncryptionExecutorTransform::decryptDek(
     return std::vector<uint8_t>(result.begin(), result.end());
 }
 
-srclient::rest::model::Dek EncryptionExecutorTransform::updateCachedDek(
+schemaregistry::rest::model::Dek EncryptionExecutorTransform::updateCachedDek(
     const std::string &kek_name, const std::string &subject,
-    std::optional<srclient::rest::model::Algorithm> algorithm,
+    std::optional<schemaregistry::rest::model::Algorithm> algorithm,
     std::optional<int32_t> version, bool deleted,
     const std::vector<uint8_t> &key_material_bytes) {
     auto client = executor_->getClient();
@@ -683,7 +683,7 @@ srclient::rest::model::Dek EncryptionExecutorTransform::updateCachedDek(
     return dek;
 }
 
-std::optional<srclient::rest::model::Dek>
+std::optional<schemaregistry::rest::model::Dek>
 EncryptionExecutorTransform::retrieveDekFromRegistry(const DekId &dek_id) {
     try {
         auto client = executor_->getClient();
@@ -701,7 +701,7 @@ EncryptionExecutorTransform::retrieveDekFromRegistry(const DekId &dek_id) {
     }
 }
 
-std::optional<srclient::rest::model::Dek>
+std::optional<schemaregistry::rest::model::Dek>
 EncryptionExecutorTransform::storeDekToRegistry(
     const DekId &dek_id,
     const std::optional<std::vector<uint8_t>> &encrypted_dek) {
@@ -711,7 +711,7 @@ EncryptionExecutorTransform::storeDekToRegistry(
             throw SerdeError("Client not configured");
         }
 
-        srclient::rest::model::CreateDekRequest request;
+        schemaregistry::rest::model::CreateDekRequest request;
         request.setSubject(dek_id.subject);
         request.setVersion(dek_id.version);
         request.setAlgorithm(dek_id.algorithm);
@@ -734,7 +734,7 @@ EncryptionExecutorTransform::storeDekToRegistry(
 
 bool EncryptionExecutorTransform::isExpired(
     RuleContext &ctx,
-    const std::optional<srclient::rest::model::Dek> &dek) const {
+    const std::optional<schemaregistry::rest::model::Dek> &dek) const {
     int64_t now = executor_->clock_->now();
     return ctx.getRuleMode() != Mode::Read && dek_expiry_days_ > 0 &&
            dek.has_value() &&
@@ -808,7 +808,7 @@ std::unique_ptr<SerdeValue> EncryptionExecutorTransform::toObject(
 
 std::unique_ptr<crypto::tink::Aead> EncryptionExecutorTransform::getAead(
     const std::unordered_map<std::string, std::string> &config,
-    const srclient::rest::model::Kek &kek) {
+    const schemaregistry::rest::model::Kek &kek) {
     std::string kek_url = kek.getKmsType() + "://" + kek.getKmsKeyId();
     auto kms_client = getKmsClient(config, kek_url);
 
@@ -831,10 +831,10 @@ EncryptionExecutorTransform::getKmsClient(
     const std::string &kek_url) {
     try {
         // Try to get an existing KMS client first
-        return srclient::rules::encryption::getKmsClient(kek_url);
+        return schemaregistry::rules::encryption::getKmsClient(kek_url);
     } catch (const std::exception &) {
         // If no existing client, get driver and register a new client
-        auto driver = srclient::rules::encryption::getKmsDriver(kek_url);
+        auto driver = schemaregistry::rules::encryption::getKmsDriver(kek_url);
         return registerKmsClient(driver, config, kek_url);
     }
 }
@@ -848,9 +848,9 @@ EncryptionExecutorTransform::registerKmsClient(
     auto kms_client = kms_driver->newKmsClient(config, kek_url);
 
     // Register the client with the encryption registry
-    srclient::rules::encryption::registerKmsClient(kms_client);
+    schemaregistry::rules::encryption::registerKmsClient(kms_client);
 
     return kms_client;
 }
 
-}  // namespace srclient::rules::encryption
+}  // namespace schemaregistry::rules::encryption

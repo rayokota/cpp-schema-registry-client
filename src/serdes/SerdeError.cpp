@@ -1,12 +1,12 @@
-#include "srclient/serdes/SerdeError.h"
+#include "schemaregistry/serdes/SerdeError.h"
 
-#include "srclient/serdes/SerdeTypes.h"
+#include "schemaregistry/serdes/SerdeTypes.h"
 
-namespace srclient::serdes {
+namespace schemaregistry::serdes {
 
 // RuleConditionError implementation
 RuleConditionError::RuleConditionError(
-    std::shared_ptr<srclient::rest::model::Rule> rule,
+    std::shared_ptr<schemaregistry::rest::model::Rule> rule,
     const std::string &message)
     : SerdeError(message.empty() ? "Rule condition failed" : message),
       rule_(rule) {}
@@ -33,4 +33,4 @@ IoError createIoError(const std::string &operation,
 
 }  // namespace error_utils
 
-}  // namespace srclient::serdes
+}  // namespace schemaregistry::serdes

@@ -4,19 +4,19 @@
  * information
  */
 
-#include "srclient/rest/SchemaStore.h"
+#include "schemaregistry/rest/SchemaStore.h"
 
 #include <functional>
 #include <sstream>
 
-namespace srclient::rest {
+namespace schemaregistry::rest {
 
 SchemaStore::SchemaStore() {}
 
 void SchemaStore::setSchema(const std::optional<std::string> &subject,
                             const std::optional<int32_t> &schemaId,
                             const std::optional<std::string> &schemaGuid,
-                            const srclient::rest::model::Schema &schema) {
+                            const schemaregistry::rest::model::Schema &schema) {
     std::string subjectStr = subject.value_or("");
 
     if (schemaId.has_value()) {
@@ -36,8 +36,8 @@ void SchemaStore::setSchema(const std::optional<std::string> &subject,
 }
 
 void SchemaStore::setRegisteredSchema(
-    const srclient::rest::model::Schema &schema,
-    const srclient::rest::model::RegisteredSchema &rs) {
+    const schemaregistry::rest::model::Schema &schema,
+    const schemaregistry::rest::model::RegisteredSchema &rs) {
     std::string subjectStr = "";
     if (rs.getSubject().has_value()) {
         subjectStr = rs.getSubject().value();
@@ -73,7 +73,7 @@ void SchemaStore::setRegisteredSchema(
 }
 
 std::optional<
-    std::pair<std::optional<std::string>, srclient::rest::model::Schema>>
+    std::pair<std::optional<std::string>, schemaregistry::rest::model::Schema>>
 SchemaStore::getSchemaById(const std::string &subject, int32_t schemaId) const {
     auto subjectIt = schemaIdIndex.find(subject);
     if (subjectIt != schemaIdIndex.end()) {
@@ -85,7 +85,7 @@ SchemaStore::getSchemaById(const std::string &subject, int32_t schemaId) const {
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::Schema> SchemaStore::getSchemaByGuid(
+std::optional<schemaregistry::rest::model::Schema> SchemaStore::getSchemaByGuid(
     const std::string &guid) const {
     auto it = schemaGuidIndex.find(guid);
     if (it != schemaGuidIndex.end()) {
@@ -96,7 +96,7 @@ std::optional<srclient::rest::model::Schema> SchemaStore::getSchemaByGuid(
 
 std::optional<int32_t> SchemaStore::getIdBySchema(
     const std::string &subject,
-    const srclient::rest::model::Schema &schema) const {
+    const schemaregistry::rest::model::Schema &schema) const {
     auto subjectIt = schemaIndex.find(subject);
     if (subjectIt != schemaIndex.end()) {
         std::string schemaHash = createSchemaHash(schema);
@@ -108,10 +108,10 @@ std::optional<int32_t> SchemaStore::getIdBySchema(
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisteredSchema>
+std::optional<schemaregistry::rest::model::RegisteredSchema>
 SchemaStore::getRegisteredBySchema(
     const std::string &subject,
-    const srclient::rest::model::Schema &schema) const {
+    const schemaregistry::rest::model::Schema &schema) const {
     auto subjectIt = rsSchemaIndex.find(subject);
     if (subjectIt != rsSchemaIndex.end()) {
         std::string schemaHash = createSchemaHash(schema);
@@ -123,7 +123,7 @@ SchemaStore::getRegisteredBySchema(
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisteredSchema>
+std::optional<schemaregistry::rest::model::RegisteredSchema>
 SchemaStore::getRegisteredByVersion(const std::string &subject,
                                     int32_t version) const {
     auto subjectIt = rsVersionIndex.find(subject);
@@ -136,7 +136,7 @@ SchemaStore::getRegisteredByVersion(const std::string &subject,
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::RegisteredSchema>
+std::optional<schemaregistry::rest::model::RegisteredSchema>
 SchemaStore::getRegisteredById(const std::string &subject,
                                int32_t schemaId) const {
     auto subjectIt = rsIdIndex.find(subject);
@@ -159,11 +159,11 @@ void SchemaStore::clear() {
 }
 
 std::string SchemaStore::createSchemaHash(
-    const srclient::rest::model::Schema &schema) const {
+    const schemaregistry::rest::model::Schema &schema) const {
     // Us the JSON representation of the schema to create a hash
     nlohmann::json j;
     to_json(j, schema);
     return j.dump();
 }
 
-}  // namespace srclient::rest
+}  // namespace schemaregistry::rest

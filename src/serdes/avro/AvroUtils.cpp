@@ -1,15 +1,15 @@
-#include "srclient/serdes/avro/AvroUtils.h"
+#include "schemaregistry/serdes/avro/AvroUtils.h"
 
 #include <avro/Exception.hh>
 #include <avro/Stream.hh>
 #include <iostream>
 #include <sstream>
 
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/Serde.h"
-#include "srclient/serdes/avro/AvroTypes.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
+#include "schemaregistry/serdes/Serde.h"
+#include "schemaregistry/serdes/avro/AvroTypes.h"
 
-namespace srclient::serdes::avro {
+namespace schemaregistry::serdes::avro {
 
 namespace utils {
 
@@ -701,4 +701,4 @@ void removeConfluentTags(nlohmann::json &schema) {
 
 }  // namespace utils
 
-}  // namespace srclient::serdes::avro
+}  // namespace schemaregistry::serdes::avro

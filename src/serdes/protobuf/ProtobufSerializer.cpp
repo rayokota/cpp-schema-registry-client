@@ -1,5 +1,5 @@
-#define SRCLIENT_PROTOBUF_SKIP_TEMPLATE_IMPL
-#include "srclient/serdes/protobuf/ProtobufSerializer.h"
+#define schemaregistry_PROTOBUF_SKIP_TEMPLATE_IMPL
+#include "schemaregistry/serdes/protobuf/ProtobufSerializer.h"
 
 #include <google/protobuf/any.pb.h>
 #include <google/protobuf/api.pb.h>
@@ -14,16 +14,17 @@
 
 #include "confluent/meta.pb.h"
 #include "confluent/type/decimal.pb.h"
-#include "srclient/serdes/protobuf/ProtobufUtils.h"
+#include "schemaregistry/serdes/protobuf/ProtobufUtils.h"
 
 // Forward declaration for transformFields function from ProtobufUtils.cpp
-namespace srclient::serdes::protobuf::utils {
-std::unique_ptr<srclient::serdes::SerdeValue> transformFields(
-    srclient::serdes::RuleContext &ctx, const std::string &field_executor_type,
-    const srclient::serdes::SerdeValue &value);
+namespace schemaregistry::serdes::protobuf::utils {
+std::unique_ptr<schemaregistry::serdes::SerdeValue> transformFields(
+    schemaregistry::serdes::RuleContext &ctx,
+    const std::string &field_executor_type,
+    const schemaregistry::serdes::SerdeValue &value);
 }
 
-namespace srclient::serdes::protobuf {
+namespace schemaregistry::serdes::protobuf {
 
 using namespace utils;
 
@@ -39,8 +40,8 @@ ProtobufSerde::ProtobufSerde() {}
 std::pair<const google::protobuf::FileDescriptor *,
           const google::protobuf::DescriptorPool *>
 ProtobufSerde::getParsedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
+    const schemaregistry::rest::model::Schema &schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client) {
     std::lock_guard<std::mutex> lock(cache_mutex_);
 
     // Create cache key from schema content
@@ -120,8 +121,8 @@ void ProtobufSerde::clear() {
 }
 
 void ProtobufSerde::resolveNamedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+    const schemaregistry::rest::model::Schema &schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
     google::protobuf::DescriptorPool *pool,
     std::unordered_set<std::string> &visited) {
     // Implement dependency resolution
@@ -153,4 +154,4 @@ void ProtobufSerde::resolveNamedSchema(
     }
 }
 
-}  // namespace srclient::serdes::protobuf
+}  // namespace schemaregistry::serdes::protobuf

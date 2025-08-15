@@ -3,11 +3,11 @@
  * Utility for matching text against wildcard patterns
  */
 
-#include "srclient/serdes/WildcardMatcher.h"
+#include "schemaregistry/serdes/WildcardMatcher.h"
 
 #include <stdexcept>
 
-namespace srclient::serdes {
+namespace schemaregistry::serdes {
 
 namespace {
 
@@ -115,4 +115,4 @@ bool wildcardMatch(const std::string &text, const std::string &matcher) {
     }
 }
 
-}  // namespace srclient::serdes
+}  // namespace schemaregistry::serdes

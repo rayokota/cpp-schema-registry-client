@@ -1,6 +1,6 @@
-#include "srclient/serdes/protobuf/ProtobufTypes.h"
+#include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
 
-namespace srclient::serdes::protobuf {
+namespace schemaregistry::serdes::protobuf {
 
 // Implementation of ProtobufVariant methods
 
@@ -258,4 +258,4 @@ ProtobufVariant &asProtobuf(const SerdeValue &value) {
     return const_cast<ProtobufVariant &>(protobuf_value.getProtobufVariant());
 }
 
-}  // namespace srclient::serdes::protobuf
+}  // namespace schemaregistry::serdes::protobuf

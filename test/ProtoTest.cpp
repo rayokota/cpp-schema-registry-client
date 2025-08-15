@@ -13,38 +13,38 @@
 #include <avro/Generic.hh>
 
 // Project includes
-#include "srclient/rest/MockSchemaRegistryClient.h"
-#include "srclient/rest/ClientConfiguration.h"
-#include "srclient/serdes/SerdeConfig.h"
-#include "srclient/serdes/SerdeTypes.h"
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/protobuf/ProtobufSerializer.h"
-#include "srclient/serdes/protobuf/ProtobufDeserializer.h"
-#include "srclient/serdes/protobuf/ProtobufUtils.h"
-#include "srclient/rest/model/Schema.h"
-#include "srclient/rest/model/Rule.h"
-#include "srclient/rest/model/RuleSet.h"
-#include "srclient/rules/cel/CelFieldExecutor.h"
-#include "srclient/rules/encryption/FieldEncryptionExecutor.h"
-#include "srclient/rules/encryption/EncryptionExecutor.h"
-#include "srclient/rules/encryption/localkms/LocalKmsDriver.h"
-#include "srclient/rest/MockDekRegistryClient.h"
+#include "schemaregistry/rest/MockSchemaRegistryClient.h"
+#include "schemaregistry/rest/ClientConfiguration.h"
+#include "schemaregistry/serdes/SerdeConfig.h"
+#include "schemaregistry/serdes/SerdeTypes.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
+#include "schemaregistry/serdes/protobuf/ProtobufSerializer.h"
+#include "schemaregistry/serdes/protobuf/ProtobufDeserializer.h"
+#include "schemaregistry/serdes/protobuf/ProtobufUtils.h"
+#include "schemaregistry/rest/model/Schema.h"
+#include "schemaregistry/rest/model/Rule.h"
+#include "schemaregistry/rest/model/RuleSet.h"
+#include "schemaregistry/rules/cel/CelFieldExecutor.h"
+#include "schemaregistry/rules/encryption/FieldEncryptionExecutor.h"
+#include "schemaregistry/rules/encryption/EncryptionExecutor.h"
+#include "schemaregistry/rules/encryption/localkms/LocalKmsDriver.h"
+#include "schemaregistry/rest/MockDekRegistryClient.h"
 
 // Additional includes needed for proper compilation
-#include "srclient/serdes/SerdeError.h"
-#include "srclient/serdes/Serde.h"
+#include "schemaregistry/serdes/SerdeError.h"
+#include "schemaregistry/serdes/Serde.h"
 
 #include "test/dep.pb.h"
 #include "test/example.pb.h"
 #include "test/test.pb.h"
 
-using namespace srclient::serdes;
-using namespace srclient::serdes::protobuf;
-using namespace srclient::rest;
-using namespace srclient::rest::model;
-using namespace srclient::rules::cel;
-using namespace srclient::rules::encryption;
-using namespace srclient::rules::encryption::localkms;
+using namespace schemaregistry::serdes;
+using namespace schemaregistry::serdes::protobuf;
+using namespace schemaregistry::rest;
+using namespace schemaregistry::rest::model;
+using namespace schemaregistry::rules::cel;
+using namespace schemaregistry::rules::encryption;
+using namespace schemaregistry::rules::encryption::localkms;
 
 TEST(ProtobufTest, BasicSerialization) {
     // Create client configuration with mock URL

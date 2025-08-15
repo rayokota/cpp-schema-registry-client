@@ -1,4 +1,4 @@
-#include "srclient/serdes/protobuf/ProtobufUtils.h"
+#include "schemaregistry/serdes/protobuf/ProtobufUtils.h"
 
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/io/coded_stream.h>
@@ -9,9 +9,9 @@
 
 #include "absl/strings/escaping.h"
 #include "confluent/meta.pb.h"
-#include "srclient/serdes/RuleRegistry.h"  // For global_registry functions
+#include "schemaregistry/serdes/RuleRegistry.h"  // For global_registry functions
 
-namespace srclient::serdes::protobuf::utils {
+namespace schemaregistry::serdes::protobuf::utils {
 
 // Base64 encoding/decoding utilities using absl
 namespace {
@@ -37,8 +37,8 @@ std::unique_ptr<SerdeValue> transformFields(
     // Check if we have a protobuf schema and value
     if (value.getFormat() == SerdeFormat::Protobuf) {
         auto& proto_variant = asProtobuf(value);
-        if (proto_variant.type !=
-            srclient::serdes::protobuf::ProtobufVariant::ValueType::Message) {
+        if (proto_variant.type != schemaregistry::serdes::protobuf::
+                                      ProtobufVariant::ValueType::Message) {
             throw ProtobufError(
                 "Expected message variant but got different type");
         }
@@ -868,4 +868,4 @@ std::vector<int32_t> createMessageIndexArray(
 
 // extractFieldValue implementation moved to value_transform namespace above
 
-}  // namespace srclient::serdes::protobuf::utils
+}  // namespace schemaregistry::serdes::protobuf::utils

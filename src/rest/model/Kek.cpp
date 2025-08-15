@@ -3,9 +3,9 @@
  * Key encryption key model
  */
 
-#include "srclient/rest/model/Kek.h"
+#include "schemaregistry/rest/model/Kek.h"
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 Kek::Kek() : shared_(false), ts_(0) {}
 
@@ -102,4 +102,4 @@ void from_json(const nlohmann::json &j, Kek &o) {
     }
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

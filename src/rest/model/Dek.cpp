@@ -3,7 +3,7 @@
  * Data encryption key model
  */
 
-#include "srclient/rest/model/Dek.h"
+#include "schemaregistry/rest/model/Dek.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -11,7 +11,7 @@
 
 #include "absl/strings/escaping.h"
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 NLOHMANN_JSON_SERIALIZE_ENUM(Algorithm, {{Algorithm::Aes128Gcm, "AES128_GCM"},
                                          {Algorithm::Aes256Gcm, "AES256_GCM"},
@@ -171,4 +171,4 @@ void from_json(const nlohmann::json &j, Dek &o) {
     }
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

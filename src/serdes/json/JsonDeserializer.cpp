@@ -1,13 +1,13 @@
-#include "srclient/serdes/json/JsonDeserializer.h"
+#include "schemaregistry/serdes/json/JsonDeserializer.h"
 
-#include "srclient/serdes/json/JsonUtils.h"
+#include "schemaregistry/serdes/json/JsonUtils.h"
 
-namespace srclient::serdes::json {
+namespace schemaregistry::serdes::json {
 
 using namespace utils;
 
 JsonDeserializer::JsonDeserializer(
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
     std::shared_ptr<RuleRegistry> rule_registry,
     const DeserializerConfig &config)
     : base_(std::make_shared<BaseDeserializer>(Serde(client, rule_registry),
@@ -37,7 +37,7 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
     // Determine subject
     auto strategy = base_->getConfig().subject_name_strategy;
     auto subject_opt = strategy(ctx.topic, ctx.serde_type, std::nullopt);
-    std::optional<srclient::rest::model::RegisteredSchema> latest_schema;
+    std::optional<schemaregistry::rest::model::RegisteredSchema> latest_schema;
     bool has_subject = subject_opt.has_value();
 
     if (has_subject) {
@@ -86,7 +86,7 @@ nlohmann::json JsonDeserializer::deserialize(const SerializationContext &ctx,
 
     // Schema evolution handling
     std::vector<Migration> migrations;
-    srclient::rest::model::Schema reader_schema_raw;
+    schemaregistry::rest::model::Schema reader_schema_raw;
     std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
         reader_schema;
 
@@ -167,7 +167,8 @@ void JsonDeserializer::close() {
 
 // Helper method implementations
 std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
-JsonDeserializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
+JsonDeserializer::getParsedSchema(
+    const schemaregistry::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
@@ -190,4 +191,4 @@ nlohmann::json JsonDeserializer::executeMigrations(
     return asJson(*migrated_value);
 }
 
-}  // namespace srclient::serdes::json
+}  // namespace schemaregistry::serdes::json

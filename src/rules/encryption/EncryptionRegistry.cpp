@@ -3,14 +3,14 @@
  * Implementation of global registry for KMS drivers and clients
  */
 
-#include "srclient/rules/encryption/EncryptionRegistry.h"
+#include "schemaregistry/rules/encryption/EncryptionRegistry.h"
 
 #include <algorithm>
 #include <stdexcept>
 
 #include "tink/kms_clients.h"
 
-namespace srclient::rules::encryption {
+namespace schemaregistry::rules::encryption {
 
 EncryptionRegistry &EncryptionRegistry::getInstance() {
     // Meyer's singleton - thread-safe in C++11 and later
@@ -128,4 +128,4 @@ std::shared_ptr<crypto::tink::KmsClient> getKmsClient(
     return EncryptionRegistry::getInstance().getKmsClient(keyUri);
 }
 
-}  // namespace srclient::rules::encryption
+}  // namespace schemaregistry::rules::encryption

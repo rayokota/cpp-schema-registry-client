@@ -1,6 +1,6 @@
-#include "srclient/rules/cel/CelRules.h"
+#include "schemaregistry/rules/cel/CelRules.h"
 
-namespace srclient::rules::cel::registration {
+namespace schemaregistry::rules::cel::registration {
 
 void registerAllCelExecutors() {
     registerCelExecutor();
@@ -11,4 +11,4 @@ void registerCelExecutor() { CelExecutor::registerExecutor(); }
 
 void registerCelFieldExecutor() { CelFieldExecutor::registerExecutor(); }
 
-}  // namespace srclient::rules::cel::registration
+}  // namespace schemaregistry::rules::cel::registration

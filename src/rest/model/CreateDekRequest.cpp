@@ -3,9 +3,9 @@
  * Create dek request model
  */
 
-#include "srclient/rest/model/CreateDekRequest.h"
+#include "schemaregistry/rest/model/CreateDekRequest.h"
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 CreateDekRequest::CreateDekRequest() {}
 
@@ -87,4 +87,4 @@ void from_json(const nlohmann::json &j, CreateDekRequest &o) {
     }
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

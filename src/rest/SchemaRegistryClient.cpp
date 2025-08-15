@@ -4,7 +4,7 @@
  * Registry
  */
 
-#include "srclient/rest/SchemaRegistryClient.h"
+#include "schemaregistry/rest/SchemaRegistryClient.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -12,15 +12,15 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 
-#include "srclient/rest/MockSchemaRegistryClient.h"
+#include "schemaregistry/rest/MockSchemaRegistryClient.h"
 
 using json = nlohmann::json;
 
-namespace srclient::rest {
+namespace schemaregistry::rest {
 
 SchemaRegistryClient::SchemaRegistryClient(
-    std::shared_ptr<const srclient::rest::ClientConfiguration> config)
-    : restClient(std::make_shared<srclient::rest::RestClient>(config)),
+    std::shared_ptr<const schemaregistry::rest::ClientConfiguration> config)
+    : restClient(std::make_shared<schemaregistry::rest::RestClient>(config)),
       store(std::make_shared<SchemaStore>()),
       storeMutex(std::make_shared<std::mutex>()),
       latestVersionCacheMutex(std::make_shared<std::mutex>()),
@@ -29,16 +29,16 @@ SchemaRegistryClient::SchemaRegistryClient(
       cacheLatestTtl(std::chrono::seconds(300))  // 5 minutes
 {
     if (config->getBaseUrls().empty()) {
-        throw srclient::rest::RestException("Base URL is required");
+        throw schemaregistry::rest::RestException("Base URL is required");
     }
 }
 
 SchemaRegistryClient::~SchemaRegistryClient() { close(); }
 
 std::shared_ptr<ISchemaRegistryClient> SchemaRegistryClient::newClient(
-    std::shared_ptr<const srclient::rest::ClientConfiguration> config) {
+    std::shared_ptr<const schemaregistry::rest::ClientConfiguration> config) {
     if (config->getBaseUrls().empty()) {
-        throw srclient::rest::RestException("Base URL is required");
+        throw schemaregistry::rest::RestException("Base URL is required");
     }
 
     const std::string url = config->getBaseUrls()[0];
@@ -48,7 +48,7 @@ std::shared_ptr<ISchemaRegistryClient> SchemaRegistryClient::newClient(
     return std::make_shared<SchemaRegistryClient>(config);
 }
 
-std::shared_ptr<const srclient::rest::ClientConfiguration>
+std::shared_ptr<const schemaregistry::rest::ClientConfiguration>
 SchemaRegistryClient::getConfiguration() const {
     return restClient->getConfiguration();
 }
@@ -96,43 +96,43 @@ std::string SchemaRegistryClient::sendHttpRequest(
     auto result = restClient->sendRequest(path, method, query, headers, body);
 
     if (!result) {
-        throw srclient::rest::RestException("Request failed: " +
-                                            to_string(result.error()));
+        throw schemaregistry::rest::RestException("Request failed: " +
+                                                  to_string(result.error()));
     }
 
     if (result->status >= 400) {
         std::string errorMsg = "HTTP Error " + std::to_string(result->status) +
                                ": " + result->body;
-        throw srclient::rest::RestException(errorMsg);
+        throw schemaregistry::rest::RestException(errorMsg);
     }
 
     return result->body;
 }
 
-srclient::rest::model::RegisteredSchema
+schemaregistry::rest::model::RegisteredSchema
 SchemaRegistryClient::parseRegisteredSchemaFromJson(
     const std::string &jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        srclient::rest::model::RegisteredSchema response;
+        schemaregistry::rest::model::RegisteredSchema response;
         from_json(j, response);
         return response;
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException(
+        throw schemaregistry::rest::RestException(
             "Failed to parse registered schema from JSON: " +
             std::string(e.what()));
     }
 }
 
-srclient::rest::model::ServerConfig SchemaRegistryClient::parseConfigFromJson(
-    const std::string &jsonStr) const {
+schemaregistry::rest::model::ServerConfig
+SchemaRegistryClient::parseConfigFromJson(const std::string &jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        srclient::rest::model::ServerConfig config;
+        schemaregistry::rest::model::ServerConfig config;
         from_json(j, config);
         return config;
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException(
+        throw schemaregistry::rest::RestException(
             "Failed to parse config from JSON: " + std::string(e.what()));
     }
 }
@@ -142,7 +142,7 @@ bool SchemaRegistryClient::parseBoolFromJson(const std::string &jsonStr) const {
         json j = json::parse(jsonStr);
         return j.get<bool>();
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException(
+        throw schemaregistry::rest::RestException(
             "Failed to parse boolean from JSON: " + std::string(e.what()));
     }
 }
@@ -153,7 +153,7 @@ std::vector<int32_t> SchemaRegistryClient::parseIntArrayFromJson(
         json j = json::parse(jsonStr);
         return j.get<std::vector<int32_t>>();
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException(
+        throw schemaregistry::rest::RestException(
             "Failed to parse int array from JSON: " + std::string(e.what()));
     }
 }
@@ -164,7 +164,7 @@ std::vector<std::string> SchemaRegistryClient::parseStringArrayFromJson(
         json j = json::parse(jsonStr);
         return j.get<std::vector<std::string>>();
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException(
+        throw schemaregistry::rest::RestException(
             "Failed to parse string array from JSON: " + std::string(e.what()));
     }
 }
@@ -190,9 +190,10 @@ void SchemaRegistryClient::clearCaches() {
 
 void SchemaRegistryClient::close() { clearCaches(); }
 
-srclient::rest::model::RegisteredSchema SchemaRegistryClient::registerSchema(
-    const std::string &subject, const srclient::rest::model::Schema &schema,
-    bool normalize) {
+schemaregistry::rest::model::RegisteredSchema
+SchemaRegistryClient::registerSchema(
+    const std::string &subject,
+    const schemaregistry::rest::model::Schema &schema, bool normalize) {
     // Check cache first
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
@@ -216,13 +217,13 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::registerSchema(
     std::string responseBody = sendHttpRequest(path, "POST", query, body);
 
     // Parse response
-    srclient::rest::model::RegisteredSchema response =
+    schemaregistry::rest::model::RegisteredSchema response =
         parseRegisteredSchemaFromJson(responseBody);
 
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        srclient::rest::model::Schema schemaKey;
+        schemaregistry::rest::model::Schema schemaKey;
         if (response.getSchema().has_value()) {
             schemaKey = response.toSchema();
         } else {
@@ -236,7 +237,7 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::registerSchema(
     return response;
 }
 
-srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
+schemaregistry::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     const std::optional<std::string> &subject, int32_t id,
     const std::optional<std::string> &format) {
     // Check cache first
@@ -262,9 +263,9 @@ srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     std::string responseBody = sendHttpRequest(path, "GET", query);
 
     // Parse response
-    srclient::rest::model::RegisteredSchema response =
+    schemaregistry::rest::model::RegisteredSchema response =
         parseRegisteredSchemaFromJson(responseBody);
-    srclient::rest::model::Schema schema = response.toSchema();
+    schemaregistry::rest::model::Schema schema = response.toSchema();
 
     // Update cache
     {
@@ -276,7 +277,7 @@ srclient::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
     return schema;
 }
 
-srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
+schemaregistry::rest::model::Schema SchemaRegistryClient::getByGuid(
     const std::string &guid, const std::optional<std::string> &format) {
     // Check cache first
     {
@@ -298,9 +299,9 @@ srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
     std::string responseBody = sendHttpRequest(path, "GET", query);
 
     // Parse response
-    srclient::rest::model::RegisteredSchema response =
+    schemaregistry::rest::model::RegisteredSchema response =
         parseRegisteredSchemaFromJson(responseBody);
-    srclient::rest::model::Schema schema = response.toSchema();
+    schemaregistry::rest::model::Schema schema = response.toSchema();
 
     // Update cache
     {
@@ -312,9 +313,10 @@ srclient::rest::model::Schema SchemaRegistryClient::getByGuid(
     return schema;
 }
 
-srclient::rest::model::RegisteredSchema SchemaRegistryClient::getBySchema(
-    const std::string &subject, const srclient::rest::model::Schema &schema,
-    bool normalize, bool deleted) {
+schemaregistry::rest::model::RegisteredSchema SchemaRegistryClient::getBySchema(
+    const std::string &subject,
+    const schemaregistry::rest::model::Schema &schema, bool normalize,
+    bool deleted) {
     // Check cache first
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
@@ -339,14 +341,14 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::getBySchema(
     std::string responseBody = sendHttpRequest(path, "POST", query, body);
 
     // Parse response
-    srclient::rest::model::RegisteredSchema response =
+    schemaregistry::rest::model::RegisteredSchema response =
         parseRegisteredSchemaFromJson(responseBody);
 
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
         // Ensure the schema matches the input
-        srclient::rest::model::RegisteredSchema rs(
+        schemaregistry::rest::model::RegisteredSchema rs(
             response.getId(), response.getGuid(), response.getSubject(),
             response.getVersion(), schema);
         store->setRegisteredSchema(schema, rs);
@@ -355,7 +357,7 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::getBySchema(
     return response;
 }
 
-srclient::rest::model::RegisteredSchema SchemaRegistryClient::getVersion(
+schemaregistry::rest::model::RegisteredSchema SchemaRegistryClient::getVersion(
     const std::string &subject, int32_t version, bool deleted,
     const std::optional<std::string> &format) {
     // Check cache first
@@ -380,20 +382,21 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::getVersion(
     std::string responseBody = sendHttpRequest(path, "GET", query);
 
     // Parse response
-    srclient::rest::model::RegisteredSchema response =
+    schemaregistry::rest::model::RegisteredSchema response =
         parseRegisteredSchemaFromJson(responseBody);
 
     // Update cache
     {
         std::lock_guard<std::mutex> lock(*storeMutex);
-        srclient::rest::model::Schema schema = response.toSchema();
+        schemaregistry::rest::model::Schema schema = response.toSchema();
         store->setRegisteredSchema(schema, response);
     }
 
     return response;
 }
 
-srclient::rest::model::RegisteredSchema SchemaRegistryClient::getLatestVersion(
+schemaregistry::rest::model::RegisteredSchema
+SchemaRegistryClient::getLatestVersion(
     const std::string &subject, const std::optional<std::string> &format) {
     // Check cache first
     {
@@ -415,7 +418,7 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::getLatestVersion(
     std::string responseBody = sendHttpRequest(path, "GET", query);
 
     // Parse response
-    srclient::rest::model::RegisteredSchema response =
+    schemaregistry::rest::model::RegisteredSchema response =
         parseRegisteredSchemaFromJson(responseBody);
 
     // Update cache
@@ -427,7 +430,7 @@ srclient::rest::model::RegisteredSchema SchemaRegistryClient::getLatestVersion(
     return response;
 }
 
-srclient::rest::model::RegisteredSchema
+schemaregistry::rest::model::RegisteredSchema
 SchemaRegistryClient::getLatestWithMetadata(
     const std::string &subject,
     const std::unordered_map<std::string, std::string> &metadata, bool deleted,
@@ -460,7 +463,7 @@ SchemaRegistryClient::getLatestWithMetadata(
     std::string responseBody = sendHttpRequest(path, "GET", query);
 
     // Parse response
-    srclient::rest::model::RegisteredSchema response =
+    schemaregistry::rest::model::RegisteredSchema response =
         parseRegisteredSchemaFromJson(responseBody);
 
     // Update cache
@@ -528,13 +531,14 @@ int32_t SchemaRegistryClient::deleteSubjectVersion(const std::string &subject,
         json j = json::parse(responseBody);
         return j.get<int32_t>();
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException(
+        throw schemaregistry::rest::RestException(
             "Failed to parse version from JSON: " + std::string(e.what()));
     }
 }
 
 bool SchemaRegistryClient::testSubjectCompatibility(
-    const std::string &subject, const srclient::rest::model::Schema &schema) {
+    const std::string &subject,
+    const schemaregistry::rest::model::Schema &schema) {
     // Prepare request
     std::string path =
         "/compatibility/subjects/" + urlEncode(subject) + "/versions/latest";
@@ -552,7 +556,7 @@ bool SchemaRegistryClient::testSubjectCompatibility(
         json response = json::parse(responseBody);
         return response.get<bool>();
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException(
+        throw schemaregistry::rest::RestException(
             "Failed to parse compatibility response from JSON: " +
             std::string(e.what()));
     }
@@ -560,7 +564,7 @@ bool SchemaRegistryClient::testSubjectCompatibility(
 
 bool SchemaRegistryClient::testCompatibility(
     const std::string &subject, int32_t version,
-    const srclient::rest::model::Schema &schema) {
+    const schemaregistry::rest::model::Schema &schema) {
     // Prepare request
     std::string path = "/compatibility/subjects/" + urlEncode(subject) +
                        "/versions/" + std::to_string(version);
@@ -578,13 +582,13 @@ bool SchemaRegistryClient::testCompatibility(
         json response = json::parse(responseBody);
         return response.get<bool>();
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException(
+        throw schemaregistry::rest::RestException(
             "Failed to parse compatibility response from JSON: " +
             std::string(e.what()));
     }
 }
 
-srclient::rest::model::ServerConfig SchemaRegistryClient::getConfig(
+schemaregistry::rest::model::ServerConfig SchemaRegistryClient::getConfig(
     const std::string &subject) {
     // Prepare request
     std::string path = "/config/" + urlEncode(subject);
@@ -596,9 +600,9 @@ srclient::rest::model::ServerConfig SchemaRegistryClient::getConfig(
     return parseConfigFromJson(responseBody);
 }
 
-srclient::rest::model::ServerConfig SchemaRegistryClient::updateConfig(
+schemaregistry::rest::model::ServerConfig SchemaRegistryClient::updateConfig(
     const std::string &subject,
-    const srclient::rest::model::ServerConfig &config) {
+    const schemaregistry::rest::model::ServerConfig &config) {
     // Prepare request
     std::string path = "/config/" + urlEncode(subject);
 
@@ -614,7 +618,8 @@ srclient::rest::model::ServerConfig SchemaRegistryClient::updateConfig(
     return parseConfigFromJson(responseBody);
 }
 
-srclient::rest::model::ServerConfig SchemaRegistryClient::getDefaultConfig() {
+schemaregistry::rest::model::ServerConfig
+SchemaRegistryClient::getDefaultConfig() {
     // Prepare request
     std::string path = "/config";
 
@@ -625,8 +630,9 @@ srclient::rest::model::ServerConfig SchemaRegistryClient::getDefaultConfig() {
     return parseConfigFromJson(responseBody);
 }
 
-srclient::rest::model::ServerConfig SchemaRegistryClient::updateDefaultConfig(
-    const srclient::rest::model::ServerConfig &config) {
+schemaregistry::rest::model::ServerConfig
+SchemaRegistryClient::updateDefaultConfig(
+    const schemaregistry::rest::model::ServerConfig &config) {
     // Prepare request
     std::string path = "/config";
 
@@ -642,4 +648,4 @@ srclient::rest::model::ServerConfig SchemaRegistryClient::updateDefaultConfig(
     return parseConfigFromJson(responseBody);
 }
 
-}  // namespace srclient::rest
+}  // namespace schemaregistry::rest

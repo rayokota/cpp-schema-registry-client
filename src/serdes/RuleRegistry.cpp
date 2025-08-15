@@ -1,12 +1,12 @@
-#include "srclient/serdes/RuleRegistry.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
 
 #include <algorithm>
 #include <stdexcept>
 
-#include "srclient/rest/ClientConfiguration.h"
-#include "srclient/serdes/Serde.h"
+#include "schemaregistry/rest/ClientConfiguration.h"
+#include "schemaregistry/serdes/Serde.h"
 
-namespace srclient::serdes {
+namespace schemaregistry::serdes {
 
 // RuleRegistry implementation
 
@@ -275,4 +275,4 @@ std::optional<std::string> getRuleActionName(
 
 }  // namespace rule_utils
 
-}  // namespace srclient::serdes
+}  // namespace schemaregistry::serdes

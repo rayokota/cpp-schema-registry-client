@@ -4,9 +4,9 @@
  */
 
 #include <gtest/gtest.h>
-#include "srclient/serdes/WildcardMatcher.h"
+#include "schemaregistry/serdes/WildcardMatcher.h"
 
-using namespace srclient::serdes;
+using namespace schemaregistry::serdes;
 
 class WildcardMatcherTest : public ::testing::Test {
 protected:

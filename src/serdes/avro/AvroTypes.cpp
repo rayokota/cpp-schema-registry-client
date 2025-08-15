@@ -1,6 +1,6 @@
-#include "srclient/serdes/avro/AvroTypes.h"
+#include "schemaregistry/serdes/avro/AvroTypes.h"
 
-namespace srclient::serdes::avro {
+namespace schemaregistry::serdes::avro {
 
 // Implementation for AvroValue methods
 bool AvroValue::asBool() const {
@@ -35,4 +35,4 @@ std::vector<uint8_t> AvroValue::asBytes() const {
     return value.getValue<::avro::GenericDatum>();
 }
 
-}  // namespace srclient::serdes::avro
+}  // namespace schemaregistry::serdes::avro

@@ -1,4 +1,4 @@
-#include "srclient/serdes/Serde.h"
+#include "schemaregistry/serdes/Serde.h"
 
 #include <algorithm>
 #include <cstring>
@@ -7,12 +7,12 @@
 #include <stdexcept>
 #include <vector>
 
-#include "srclient/rest/ClientConfiguration.h"
-#include "srclient/serdes/RuleRegistry.h"
-#include "srclient/serdes/SerdeConfig.h"
-#include "srclient/serdes/WildcardMatcher.h"
+#include "schemaregistry/rest/ClientConfiguration.h"
+#include "schemaregistry/serdes/RuleRegistry.h"
+#include "schemaregistry/serdes/SerdeConfig.h"
+#include "schemaregistry/serdes/WildcardMatcher.h"
 
-namespace srclient::serdes {
+namespace schemaregistry::serdes {
 
 // SchemaId implementation
 
@@ -456,8 +456,9 @@ std::unordered_set<std::string> RuleContext::getTags(
 
 // Serde implementation
 
-Serde::Serde(std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
-             std::shared_ptr<RuleRegistry> rule_registry)
+Serde::Serde(
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
+    std::shared_ptr<RuleRegistry> rule_registry)
     : client_(client), rule_registry_(rule_registry) {}
 
 std::optional<RegisteredSchema> Serde::getReaderSchema(
@@ -976,4 +977,4 @@ Schema BaseDeserializer::getWriterSchema(
 
 // Note: ErrorAction and NoneAction implementations are in RuleRegistry.cpp
 
-}  // namespace srclient::serdes
+}  // namespace schemaregistry::serdes

@@ -3,9 +3,9 @@
  * Create kek request model
  */
 
-#include "srclient/rest/model/CreateKekRequest.h"
+#include "schemaregistry/rest/model/CreateKekRequest.h"
 
-namespace srclient::rest::model {
+namespace schemaregistry::rest::model {
 
 CreateKekRequest::CreateKekRequest() : shared_(false) {}
 
@@ -92,4 +92,4 @@ void from_json(const nlohmann::json &j, CreateKekRequest &o) {
     }
 }
 
-}  // namespace srclient::rest::model
+}  // namespace schemaregistry::rest::model

@@ -10,9 +10,9 @@
  * Do not edit the class manually.
  */
 
-#include "srclient/rest/RestException.h"
+#include "schemaregistry/rest/RestException.h"
 
-namespace srclient::rest {
+namespace schemaregistry::rest {
 
 RestException::RestException(
     const std::string_view message, int errorCode,
@@ -30,4 +30,4 @@ std::shared_ptr<std::istream> RestException::getContent() const {
 
 int RestException::getErrorCode() const { return errorCode_; }
 
-}  // namespace srclient::rest
+}  // namespace schemaregistry::rest

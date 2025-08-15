@@ -3,7 +3,7 @@
  * Synchronous C++ implementation of Data Encryption Key (DEK) Registry Client
  */
 
-#include "srclient/rest/DekRegistryClient.h"
+#include "schemaregistry/rest/DekRegistryClient.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -11,26 +11,26 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 
-#include "srclient/rest/MockDekRegistryClient.h"
+#include "schemaregistry/rest/MockDekRegistryClient.h"
 
 using json = nlohmann::json;
 
-namespace srclient::rest {
+namespace schemaregistry::rest {
 
 // DekStore implementation
 DekStore::DekStore() {}
 
 void DekStore::setKek(const KekId &kekId,
-                      const srclient::rest::model::Kek &kek) {
+                      const schemaregistry::rest::model::Kek &kek) {
     keks[kekId] = kek;
 }
 
 void DekStore::setDek(const DekId &dekId,
-                      const srclient::rest::model::Dek &dek) {
+                      const schemaregistry::rest::model::Dek &dek) {
     deks[dekId] = dek;
 }
 
-std::optional<srclient::rest::model::Kek> DekStore::getKek(
+std::optional<schemaregistry::rest::model::Kek> DekStore::getKek(
     const KekId &kekId) const {
     auto it = keks.find(kekId);
     if (it != keks.end()) {
@@ -39,7 +39,7 @@ std::optional<srclient::rest::model::Kek> DekStore::getKek(
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::Dek> DekStore::getDek(
+std::optional<schemaregistry::rest::model::Dek> DekStore::getDek(
     const DekId &dekId) const {
     auto it = deks.find(dekId);
     if (it != deks.end()) {
@@ -48,7 +48,7 @@ std::optional<srclient::rest::model::Dek> DekStore::getDek(
     return std::nullopt;
 }
 
-std::optional<srclient::rest::model::Dek> DekStore::getMutDek(
+std::optional<schemaregistry::rest::model::Dek> DekStore::getMutDek(
     const DekId &dekId) {
     auto it = deks.find(dekId);
     if (it != deks.end()) {
@@ -64,19 +64,19 @@ void DekStore::clear() {
 
 // DekRegistryClient implementation
 DekRegistryClient::DekRegistryClient(
-    std::shared_ptr<const srclient::rest::ClientConfiguration> config)
-    : restClient(std::make_shared<srclient::rest::RestClient>(config)),
+    std::shared_ptr<const schemaregistry::rest::ClientConfiguration> config)
+    : restClient(std::make_shared<schemaregistry::rest::RestClient>(config)),
       store(std::make_shared<DekStore>()),
       storeMutex(std::make_shared<std::mutex>()) {
     if (config->getBaseUrls().empty()) {
-        throw srclient::rest::RestException("Base URL is required");
+        throw schemaregistry::rest::RestException("Base URL is required");
     }
 }
 
 std::shared_ptr<IDekRegistryClient> DekRegistryClient::newClient(
-    std::shared_ptr<const srclient::rest::ClientConfiguration> config) {
+    std::shared_ptr<const schemaregistry::rest::ClientConfiguration> config) {
     if (config->getBaseUrls().empty()) {
-        throw srclient::rest::RestException("Base URL is required");
+        throw schemaregistry::rest::RestException("Base URL is required");
     }
 
     const std::string url = config->getBaseUrls()[0];
@@ -86,7 +86,7 @@ std::shared_ptr<IDekRegistryClient> DekRegistryClient::newClient(
     return std::make_shared<DekRegistryClient>(config);
 }
 
-std::shared_ptr<const srclient::rest::ClientConfiguration>
+std::shared_ptr<const schemaregistry::rest::ClientConfiguration>
 DekRegistryClient::getConfiguration() const {
     return restClient->getConfiguration();
 }
@@ -125,60 +125,60 @@ std::string DekRegistryClient::sendHttpRequest(
     auto result = restClient->sendRequest(path, method, params, headers, body);
 
     if (!result) {
-        throw srclient::rest::RestException("Request failed");
+        throw schemaregistry::rest::RestException("Request failed");
     }
 
     if (result->status >= 400) {
         std::string errorMsg = "HTTP Error " + std::to_string(result->status) +
                                ": " + result->body;
-        throw srclient::rest::RestException(errorMsg);
+        throw schemaregistry::rest::RestException(errorMsg);
     }
 
     return result->body;
 }
 
-srclient::rest::model::Kek DekRegistryClient::parseKekFromJson(
+schemaregistry::rest::model::Kek DekRegistryClient::parseKekFromJson(
     const std::string &jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        srclient::rest::model::Kek kek;
+        schemaregistry::rest::model::Kek kek;
         from_json(j, kek);
         return kek;
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException("Failed to parse KEK from JSON: " +
-                                            std::string(e.what()));
+        throw schemaregistry::rest::RestException(
+            "Failed to parse KEK from JSON: " + std::string(e.what()));
     }
 }
 
-srclient::rest::model::Dek DekRegistryClient::parseDekFromJson(
+schemaregistry::rest::model::Dek DekRegistryClient::parseDekFromJson(
     const std::string &jsonStr) const {
     try {
         json j = json::parse(jsonStr);
-        srclient::rest::model::Dek dek;
+        schemaregistry::rest::model::Dek dek;
         from_json(j, dek);
         return dek;
     } catch (const std::exception &e) {
-        throw srclient::rest::RestException("Failed to parse DEK from JSON: " +
-                                            std::string(e.what()));
+        throw schemaregistry::rest::RestException(
+            "Failed to parse DEK from JSON: " + std::string(e.what()));
     }
 }
 
 std::string DekRegistryClient::algorithmToString(
-    srclient::rest::model::Algorithm algorithm) const {
+    schemaregistry::rest::model::Algorithm algorithm) const {
     switch (algorithm) {
-        case srclient::rest::model::Algorithm::Aes128Gcm:
+        case schemaregistry::rest::model::Algorithm::Aes128Gcm:
             return "AES128_GCM";
-        case srclient::rest::model::Algorithm::Aes256Gcm:
+        case schemaregistry::rest::model::Algorithm::Aes256Gcm:
             return "AES256_GCM";
-        case srclient::rest::model::Algorithm::Aes256Siv:
+        case schemaregistry::rest::model::Algorithm::Aes256Siv:
             return "AES256_SIV";
         default:
             return "AES256_GCM";
     }
 }
 
-srclient::rest::model::Kek DekRegistryClient::registerKek(
-    const srclient::rest::model::CreateKekRequest &request) {
+schemaregistry::rest::model::Kek DekRegistryClient::registerKek(
+    const schemaregistry::rest::model::CreateKekRequest &request) {
     KekId cacheKey{request.getName(), false};
 
     // Check cache first
@@ -200,7 +200,7 @@ srclient::rest::model::Kek DekRegistryClient::registerKek(
     std::string responseBody = sendHttpRequest(path, "POST", {}, body);
 
     // Parse response
-    srclient::rest::model::Kek kek = parseKekFromJson(responseBody);
+    schemaregistry::rest::model::Kek kek = parseKekFromJson(responseBody);
 
     // Update cache
     {
@@ -211,13 +211,13 @@ srclient::rest::model::Kek DekRegistryClient::registerKek(
     return kek;
 }
 
-srclient::rest::model::Dek DekRegistryClient::registerDek(
+schemaregistry::rest::model::Dek DekRegistryClient::registerDek(
     const std::string &kek_name,
-    const srclient::rest::model::CreateDekRequest &request) {
+    const schemaregistry::rest::model::CreateDekRequest &request) {
     DekId cacheKey{kek_name, request.getSubject(),
                    request.getVersion().value_or(1),
                    request.getAlgorithm().value_or(
-                       srclient::rest::model::Algorithm::Aes256Gcm),
+                       schemaregistry::rest::model::Algorithm::Aes256Gcm),
                    false};
 
     // Check cache first
@@ -239,7 +239,7 @@ srclient::rest::model::Dek DekRegistryClient::registerDek(
     std::string responseBody = sendHttpRequest(path, "POST", {}, body);
 
     // Parse response
-    srclient::rest::model::Dek dek = parseDekFromJson(responseBody);
+    schemaregistry::rest::model::Dek dek = parseDekFromJson(responseBody);
 
     // Update cache
     {
@@ -250,8 +250,8 @@ srclient::rest::model::Dek DekRegistryClient::registerDek(
     return dek;
 }
 
-srclient::rest::model::Kek DekRegistryClient::getKek(const std::string &name,
-                                                     bool deleted) {
+schemaregistry::rest::model::Kek DekRegistryClient::getKek(
+    const std::string &name, bool deleted) {
     KekId kekId{name, deleted};
 
     // Check cache first
@@ -272,7 +272,7 @@ srclient::rest::model::Kek DekRegistryClient::getKek(const std::string &name,
     std::string responseBody = sendHttpRequest(path, "GET", query);
 
     // Parse response
-    srclient::rest::model::Kek kek = parseKekFromJson(responseBody);
+    schemaregistry::rest::model::Kek kek = parseKekFromJson(responseBody);
 
     // Update cache
     {
@@ -283,11 +283,12 @@ srclient::rest::model::Kek DekRegistryClient::getKek(const std::string &name,
     return kek;
 }
 
-srclient::rest::model::Dek DekRegistryClient::getDek(
+schemaregistry::rest::model::Dek DekRegistryClient::getDek(
     const std::string &kek_name, const std::string &subject,
-    const std::optional<srclient::rest::model::Algorithm> &algorithm,
+    const std::optional<schemaregistry::rest::model::Algorithm> &algorithm,
     const std::optional<int32_t> &version, bool deleted) {
-    auto alg = algorithm.value_or(srclient::rest::model::Algorithm::Aes256Gcm);
+    auto alg =
+        algorithm.value_or(schemaregistry::rest::model::Algorithm::Aes256Gcm);
     auto ver = version.value_or(1);
 
     DekId dekId{kek_name, subject, ver, alg, deleted};
@@ -314,10 +315,11 @@ srclient::rest::model::Dek DekRegistryClient::getDek(
     std::string responseBody = sendHttpRequest(path, "GET", query);
 
     // Parse response
-    srclient::rest::model::Dek dek = parseDekFromJson(responseBody);
+    schemaregistry::rest::model::Dek dek = parseDekFromJson(responseBody);
 
     // Populate key material bytes
-    const_cast<srclient::rest::model::Dek &>(dek).populateKeyMaterialBytes();
+    const_cast<schemaregistry::rest::model::Dek &>(dek)
+        .populateKeyMaterialBytes();
 
     // Update cache
     {
@@ -328,12 +330,13 @@ srclient::rest::model::Dek DekRegistryClient::getDek(
     return dek;
 }
 
-srclient::rest::model::Dek DekRegistryClient::setDekKeyMaterial(
+schemaregistry::rest::model::Dek DekRegistryClient::setDekKeyMaterial(
     const std::string &kek_name, const std::string &subject,
-    const std::optional<srclient::rest::model::Algorithm> &algorithm,
+    const std::optional<schemaregistry::rest::model::Algorithm> &algorithm,
     const std::optional<int32_t> &version, bool deleted,
     const std::vector<uint8_t> &key_material_bytes) {
-    auto alg = algorithm.value_or(srclient::rest::model::Algorithm::Aes256Gcm);
+    auto alg =
+        algorithm.value_or(schemaregistry::rest::model::Algorithm::Aes256Gcm);
     auto ver = version.value_or(1);
 
     DekId dekId{kek_name, subject, ver, alg, deleted};
@@ -350,7 +353,7 @@ srclient::rest::model::Dek DekRegistryClient::setDekKeyMaterial(
         store->setDek(dekId, mutDek);
         return mutDek;
     } else {
-        throw srclient::rest::RestException("DEK not found");
+        throw schemaregistry::rest::RestException("DEK not found");
     }
 }
 
@@ -361,4 +364,4 @@ void DekRegistryClient::clearCaches() {
 
 void DekRegistryClient::close() { clearCaches(); }
 
-}  // namespace srclient::rest
+}  // namespace schemaregistry::rest

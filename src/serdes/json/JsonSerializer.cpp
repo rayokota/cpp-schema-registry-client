@@ -1,8 +1,8 @@
-#include "srclient/serdes/json/JsonSerializer.h"
+#include "schemaregistry/serdes/json/JsonSerializer.h"
 
-#include "srclient/serdes/json/JsonUtils.h"
+#include "schemaregistry/serdes/json/JsonUtils.h"
 
-namespace srclient::serdes::json {
+namespace schemaregistry::serdes::json {
 
 using namespace utils;
 
@@ -11,8 +11,8 @@ JsonSerde::JsonSerde() {}
 
 std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
 JsonSerde::getParsedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client) {
+    const schemaregistry::rest::model::Schema &schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client) {
     std::lock_guard<std::mutex> lock(cache_mutex_);
 
     // Create cache key from schema content
@@ -54,16 +54,16 @@ void JsonSerde::clear() {
 }
 
 void JsonSerde::resolveNamedSchema(
-    const srclient::rest::model::Schema &schema,
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
+    const schemaregistry::rest::model::Schema &schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
     std::unordered_map<std::string, std::string> references) {
     // Use the schema resolution utilities
     // TODO: Implement reference resolution for JSON schemas
 }
 
 JsonSerializer::JsonSerializer(
-    std::shared_ptr<srclient::rest::ISchemaRegistryClient> client,
-    std::optional<srclient::rest::model::Schema> schema,
+    std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
+    std::optional<schemaregistry::rest::model::Schema> schema,
     std::shared_ptr<RuleRegistry> rule_registry, const SerializerConfig &config)
     : schema_(std::move(schema)),
       base_(std::make_shared<BaseSerializer>(Serde(client, rule_registry),
@@ -102,7 +102,7 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
 
     // Get or register schema
     SchemaId schema_id(SerdeFormat::Json);
-    std::optional<srclient::rest::model::RegisteredSchema> latest_schema;
+    std::optional<schemaregistry::rest::model::RegisteredSchema> latest_schema;
 
     try {
         latest_schema = base_->getSerde().getReaderSchema(
@@ -111,7 +111,7 @@ std::vector<uint8_t> JsonSerializer::serialize(const SerializationContext &ctx,
         // Schema not found - will use provided schema
     }
 
-    srclient::rest::model::Schema target_schema;
+    schemaregistry::rest::model::Schema target_schema;
     std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
         parsed_schema;
 
@@ -227,12 +227,13 @@ void JsonSerializer::close() {
 
 // Helper method implementations
 std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>>
-JsonSerializer::getParsedSchema(const srclient::rest::model::Schema &schema) {
+JsonSerializer::getParsedSchema(
+    const schemaregistry::rest::model::Schema &schema) {
     return serde_->getParsedSchema(schema, base_->getSerde().getClient());
 }
 
 void JsonSerializer::validateSchema(
-    const srclient::rest::model::Schema &schema) {
+    const schemaregistry::rest::model::Schema &schema) {
     auto schema_str = schema.getSchema();
     if (!schema_str.has_value() || schema_str->empty()) {
         throw JsonError("Schema content is empty");
@@ -259,4 +260,4 @@ nlohmann::json JsonSerializer::executeFieldTransformations(
     return value;
 }
 
-}  // namespace srclient::serdes::json
+}  // namespace schemaregistry::serdes::json
