@@ -25,8 +25,33 @@ JsonSerde::getParsedSchema(
     }
 
     // Parse schema with references
-    std::unordered_map<std::string, std::string> references;
-    resolveNamedSchema(schema, client, references);
+    std::unordered_set<std::string> visited;
+    auto resolved_refs =
+        schema_resolution::resolveNamedSchema(schema, client, visited);
+    auto resolver =
+        [resolved_refs](const jsoncons::uri &uri) -> jsoncons::ojson {
+        // Look up the exact URI string in the resolved references
+        auto key = uri.string();
+        auto it = resolved_refs.find(key);
+        if (it != resolved_refs.end()) {
+            return jsonToOJson(it->second);
+        }
+
+        // Fallback: try using only the path component
+        auto path_only = uri.path();
+        if (!path_only.empty() && path_only.front() == '/') {
+            path_only.erase(0, 1);
+        }
+        if (!path_only.empty()) {
+            auto it2 = resolved_refs.find(path_only);
+            if (it2 != resolved_refs.end()) {
+                return jsonToOJson(it2->second);
+            }
+        }
+
+        // If not found, return an empty object
+        return jsoncons::ojson::null();
+    };
 
     // Parse new schema
     nlohmann::json parsed_schema;
@@ -40,7 +65,7 @@ JsonSerde::getParsedSchema(
     auto jsoncons_schema = jsonToOJson(parsed_schema);
     auto compiled_schema =
         std::make_shared<jsoncons::jsonschema::json_schema<jsoncons::ojson>>(
-            jsoncons::jsonschema::make_json_schema(jsoncons_schema));
+            jsoncons::jsonschema::make_json_schema(jsoncons_schema, resolver));
 
     // Store in cache
     parsed_schemas_cache_[cache_key] = compiled_schema;
@@ -57,8 +82,20 @@ void JsonSerde::resolveNamedSchema(
     const schemaregistry::rest::model::Schema &schema,
     std::shared_ptr<schemaregistry::rest::ISchemaRegistryClient> client,
     std::unordered_map<std::string, std::string> references) {
-    // Use the schema resolution utilities
-    // TODO: Implement reference resolution for JSON schemas
+    if (schema.getReferences().has_value()) {
+        for (const auto &ref : schema.getReferences().value()) {
+            if (!ref.getName().has_value() || !ref.getSubject().has_value()) {
+                continue;  // Skip invalid references
+            }
+            if (references.find(ref.getName().value()) == references.end()) {
+                // Resolve reference recursively
+                auto ref_schema =
+                    client->getVersion(ref.getSubject().value(),
+                                       ref.getVersion().value_or(-1), true);
+                resolveNamedSchema(ref_schema.toSchema(), client, references);
+            }
+        }
+    }
 }
 
 JsonSerializer::JsonSerializer(
