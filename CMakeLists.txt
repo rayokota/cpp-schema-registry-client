@@ -144,9 +144,9 @@ target_include_directories(schemaregistry
 # in-tree dependency targets (avoids CMake install errors).
 target_link_libraries(schemaregistry
     PUBLIC
-        $<BUILD_INTERFACE:avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;jsoncons;${Protobuf_LIBRARIES}>
+        $<BUILD_INTERFACE:avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;${Protobuf_LIBRARIES}>
     PRIVATE
-        $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;tink::static>
+        $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsoncons;tink::static>
 )
 
 OPTION(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
