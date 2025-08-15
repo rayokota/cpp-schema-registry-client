@@ -17,12 +17,22 @@
 #include "schemaregistry/serdes/SerdeConfig.h"
 #include "schemaregistry/serdes/SerdeError.h"
 #include "schemaregistry/serdes/SerdeTypes.h"
-#include "schemaregistry/serdes/json/JsonTypes.h"
 #include "schemaregistry/serdes/protobuf/ProtobufSerializer.h"  // For ProtobufSerde
 #include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
 #include "schemaregistry/serdes/protobuf/ProtobufUtils.h"
 
 using SerializationContext = schemaregistry::serdes::SerializationContext;
+
+// Forward declarations for JSON helpers moved to internal headers
+namespace schemaregistry {
+namespace serdes {
+class SerdeValue;
+namespace json {
+std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value);
+nlohmann::json asJson(const SerdeValue &value);
+}  // namespace json
+}  // namespace serdes
+}  // namespace schemaregistry
 
 namespace schemaregistry::serdes::protobuf {
 

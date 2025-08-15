@@ -28,6 +28,7 @@ target_include_directories(schemaregistry-test
         ${Protobuf_INCLUDE_DIRS}
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
         ${CMAKE_BINARY_DIR}/generated_proto  # Include main project's generated protos
+        ${CMAKE_SOURCE_DIR}/src/internal     # Access internal headers used by tests
 )
 
 # Link libraries for the test executable

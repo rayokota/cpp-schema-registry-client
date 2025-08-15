@@ -259,22 +259,6 @@ std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
     }
 }
 
-// moved to CelUtils
-
-// moved to CelUtils
-
-// moved to CelUtils
-
-// moved to CelUtils
-
-// moved to CelUtils
-
-// moved to CelUtils
-
-// moved to CelUtils
-
-// moved to CelUtils
-
 void CelExecutor::registerExecutor() {
     // Register this executor with the global rule registry
     // This matches the Rust version:

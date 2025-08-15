@@ -24,6 +24,9 @@ FetchContent_Declare(
     EXCLUDE_FROM_ALL
     SOURCE_SUBDIR  lang/c++
 )
+# Disable Avro subproject tests to avoid registering them with ctest here
+set(AVROCPP_BUILD_TESTS OFF CACHE BOOL "Build Avro C++ tests" FORCE)
+set(AVRO_BUILD_TESTS OFF CACHE BOOL "Build Avro tests" FORCE)
 FetchContent_MakeAvailable(avrocpp)
 
 # Fetch jsoncons
@@ -133,6 +136,7 @@ target_include_directories(schemaregistry
     PRIVATE
         ${Protobuf_INCLUDE_DIRS}
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/internal>
 )
 
 # Link libraries

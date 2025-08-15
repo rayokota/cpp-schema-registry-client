@@ -12,7 +12,6 @@
 #include "schemaregistry/serdes/SerdeError.h"
 #include "schemaregistry/serdes/SerdeTypes.h"
 #include "schemaregistry/serdes/json/JsonSerializer.h"  // For JsonSerde
-#include "schemaregistry/serdes/json/JsonTypes.h"
 
 namespace schemaregistry::serdes::json {
 
