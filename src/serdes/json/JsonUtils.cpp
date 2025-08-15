@@ -77,15 +77,16 @@ std::vector<srclient::rest::model::SchemaReference> buildDependencies(
 // Value transformation implementations
 namespace value_transform {
 
-nlohmann::json transformFields(RuleContext &ctx,
-                               std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
-                               const nlohmann::json &value) {
+nlohmann::json transformFields(
+    RuleContext &ctx,
+    std::shared_ptr<jsoncons::jsonschema::json_schema<jsoncons::ojson>> schema,
+    const nlohmann::json &value) {
     // Convert nlohmann::json to jsoncons::ojson for processing
     auto jsoncons_value = jsonToOJson(value);
-    
+
     // Create a mutable copy for transformation
     auto mutable_value = jsoncons_value;
-    
+
     // Track visited locations to avoid duplicate transformations
     std::unordered_set<std::string> visited_locations;
 
@@ -164,18 +165,14 @@ nlohmann::json transformFields(RuleContext &ctx,
                     // fails This maintains consistency with the recursive
                     // approach
                 }
-            } catch (const std::exception& e) {
-                // Continue processing even if a single field transformation fails
-                // This maintains consistency with the recursive approach
-            }
-            
-            return jsoncons::jsonschema::walk_result::advance;
-        });
-        
+
+                return jsoncons::jsonschema::walk_result::advance;
+            });
+
         // Convert back to nlohmann::json and return
         return ojsonToJson(mutable_value);
-        
-    } catch (const std::exception& e) {
+
+    } catch (const std::exception &e) {
         // If walk fails, fall back to the original value
         return value;
     }
@@ -226,10 +223,9 @@ jsoncons::ojson transformFieldWithContext(RuleContext &ctx,
     }
 }
 
-jsoncons::ojson transform(RuleContext &ctx,
-                                  const jsoncons::ojson &schema,
-                                  const std::string &path,
-                                  const jsoncons::ojson &value) {
+jsoncons::ojson transform(RuleContext &ctx, const jsoncons::ojson &schema,
+                          const std::string &path,
+                          const jsoncons::ojson &value) {
     // Field-level transformation logic
     auto field_ctx = ctx.currentField();
     if (field_ctx.has_value()) {
