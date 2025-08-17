@@ -110,6 +110,24 @@ target_include_directories(tink_gcpkms INTERFACE
     $<BUILD_INTERFACE:${tink_cc_gcpkms_SOURCE_DIR}>
 )
 
+# Link AWS SDK to AWS KMS extension if enabled
+if(SCHEMAREGISTRY_ENABLE_AWS_KMS AND AWS_SDK_TARGETS)
+    target_link_libraries(tink_awskms INTERFACE ${AWS_SDK_TARGETS})
+    # Also add AWS SDK include directories to tink_awskms
+    if(TARGET aws-cpp-sdk-core)
+        target_include_directories(tink_awskms INTERFACE 
+            $<TARGET_PROPERTY:aws-cpp-sdk-core,INTERFACE_INCLUDE_DIRECTORIES>
+        )
+    endif()
+    if(TARGET aws-cpp-sdk-kms)
+        target_include_directories(tink_awskms INTERFACE 
+            $<TARGET_PROPERTY:aws-cpp-sdk-kms,INTERFACE_INCLUDE_DIRECTORIES>
+        )
+    endif()
+endif()
+
+
+
 # Create namespaced aliases for KMS extensions
 add_library(schemaregistry::tink_awskms ALIAS tink_awskms)
 add_library(schemaregistry::tink_gcpkms ALIAS tink_gcpkms)
@@ -134,6 +152,44 @@ if(NOT nlohmann_json_FOUND)
         GIT_TAG        v3.12.0
     )
     FetchContent_MakeAvailable(nlohmann_json)
+endif()
+
+# AWS SDK C++ modular components: aws-cpp-sdk-core and aws-cpp-sdk-kms
+option(SCHEMAREGISTRY_ENABLE_AWS_KMS "Enable AWS KMS support with modular AWS SDK components" ON)
+if(SCHEMAREGISTRY_ENABLE_AWS_KMS)
+    # Try to find AWS SDK with specific modular components first
+    find_package(AWSSDK QUIET COMPONENTS core kms)
+    
+    if(NOT AWSSDK_FOUND)
+        message(STATUS "AWS SDK not found, fetching modular components (aws-cpp-sdk-core, aws-cpp-sdk-kms) from source...")
+        
+        # Configure AWS SDK build options for modular components only
+        set(BUILD_ONLY "core;kms" CACHE STRING "Build only aws-cpp-sdk-core and aws-cpp-sdk-kms modular components")
+        set(ENABLE_TESTING OFF CACHE BOOL "Disable AWS SDK testing")
+        set(AUTORUN_UNIT_TESTS OFF CACHE BOOL "Disable AWS SDK unit tests")
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build AWS SDK as static libraries")
+        set(ENABLE_UNITY_BUILD ON CACHE BOOL "Enable unity build for faster compilation")
+        set(CPP_STANDARD 17 CACHE STRING "C++ standard for AWS SDK")
+        # Fix CMake compatibility issues with CRT
+        set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "Set minimum CMake policy version for compatibility")
+        set(BUILD_DEPS OFF CACHE BOOL "Disable AWS SDK dependency builds to avoid CRT issues")
+        
+        FetchContent_Declare(
+            aws-sdk-cpp
+            GIT_REPOSITORY https://github.com/aws/aws-sdk-cpp.git
+            GIT_TAG        1.11.400  # Use a newer stable release with better CMake support
+            GIT_SHALLOW    TRUE
+        )
+        
+        FetchContent_MakeAvailable(aws-sdk-cpp)
+        
+        # Set modular AWS SDK component targets for linking
+        set(AWS_SDK_TARGETS aws-cpp-sdk-core aws-cpp-sdk-kms)
+        message(STATUS "Successfully built modular AWS SDK components: aws-cpp-sdk-core, aws-cpp-sdk-kms")
+    else()
+        message(STATUS "Found system AWS SDK with modular components: ${AWSSDK_LINK_LIBRARIES}")
+        set(AWS_SDK_TARGETS ${AWSSDK_LINK_LIBRARIES})
+    endif()
 endif()
 
 # Find Protobuf for protoc executable and libraries
@@ -192,8 +248,10 @@ target_include_directories(schemaregistry
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/internal>
         ${Protobuf_INCLUDE_DIRS}
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${TINK_AWSKMS_SOURCE_DIR}>
-        $<BUILD_INTERFACE:${TINK_GCPKMS_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${tink_cc_awskms_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${tink_cc_gcpkms_SOURCE_DIR}>
+        # Add AWS SDK include directories when enabled
+        $<$<BOOL:${SCHEMAREGISTRY_ENABLE_AWS_KMS}>:$<TARGET_PROPERTY:aws-cpp-sdk-core,INTERFACE_INCLUDE_DIRECTORIES>>
 )
 
 # Link libraries
@@ -204,7 +262,13 @@ target_link_libraries(schemaregistry
         $<BUILD_INTERFACE:avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;${Protobuf_LIBRARIES}>
     PRIVATE
         $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsonata;jsoncons;tink::static>
+        # Link AWS SDK for KMS driver compilation
+        $<$<BOOL:${SCHEMAREGISTRY_ENABLE_AWS_KMS}>:${AWS_SDK_TARGETS}>
 )
+
+# Note: KMS extensions (tink_awskms, tink_gcpkms) are available as optional targets
+# Users can link them separately as needed:
+# target_link_libraries(your_target PRIVATE schemaregistry::tink_awskms schemaregistry::tink_gcpkms)
 
 OPTION(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
 
