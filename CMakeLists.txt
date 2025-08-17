@@ -72,6 +72,48 @@ if(NOT tink_POPULATED)
     add_subdirectory(${tink_SOURCE_DIR} ${tink_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+# Fetch Tink AWS KMS extension
+FetchContent_Declare(
+    tink_cc_awskms
+    GIT_REPOSITORY https://github.com/tink-crypto/tink-cc-awskms.git
+    GIT_TAG main
+)
+
+# Fetch Tink GCP KMS extension
+FetchContent_Declare(
+    tink_cc_gcpkms
+    GIT_REPOSITORY https://github.com/tink-crypto/tink-cc-gcpkms.git
+    GIT_TAG main
+)
+
+# Fetch the KMS extensions
+FetchContent_GetProperties(tink_cc_awskms)
+if(NOT tink_cc_awskms_POPULATED)
+    FetchContent_Populate(tink_cc_awskms)
+endif()
+
+FetchContent_GetProperties(tink_cc_gcpkms)
+if(NOT tink_cc_gcpkms_POPULATED)
+    FetchContent_Populate(tink_cc_gcpkms)
+endif()
+
+# Create interface libraries for the KMS extensions
+add_library(tink_awskms INTERFACE)
+add_library(tink_gcpkms INTERFACE)
+
+# Set include directories for KMS extensions
+target_include_directories(tink_awskms INTERFACE
+    $<BUILD_INTERFACE:${tink_cc_awskms_SOURCE_DIR}>
+)
+
+target_include_directories(tink_gcpkms INTERFACE
+    $<BUILD_INTERFACE:${tink_cc_gcpkms_SOURCE_DIR}>
+)
+
+# Create namespaced aliases for KMS extensions
+add_library(schemaregistry::tink_awskms ALIAS tink_awskms)
+add_library(schemaregistry::tink_gcpkms ALIAS tink_gcpkms)
+
 # Find httplib or fetch if not found
 find_package(httplib QUIET)
 if(NOT httplib_FOUND)
@@ -113,6 +155,9 @@ endif()
 # Create the main library
 add_library(schemaregistry ${HEADERS} ${SOURCES})
 
+# KMS extensions are available as optional targets (users can link these as needed)
+# Example: target_link_libraries(your_target PRIVATE schemaregistry::schemaregistry schemaregistry::tink_awskms schemaregistry::tink_gcpkms)
+
 # Provide a namespaced ALIAS for consumers (and internal consistency)
 # Build-tree alias matching the installed namespace
 add_library(schemaregistry::schemaregistry ALIAS schemaregistry)
@@ -147,6 +192,8 @@ target_include_directories(schemaregistry
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/internal>
         ${Protobuf_INCLUDE_DIRS}
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${TINK_AWSKMS_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${TINK_GCPKMS_SOURCE_DIR}>
 )
 
 # Link libraries
