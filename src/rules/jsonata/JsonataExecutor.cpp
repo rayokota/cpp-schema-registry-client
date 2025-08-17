@@ -2,6 +2,7 @@
 
 #include <regex>
 
+#include "jsonata/Jsonata.h"
 #include "schemaregistry/serdes/RuleRegistry.h"
 #include "schemaregistry/serdes/Serde.h"
 
@@ -16,6 +17,12 @@ std::string JsonataExecutor::getType() const { return "JSONATA"; }
 
 std::unique_ptr<SerdeValue> JsonataExecutor::transform(
     schemaregistry::serdes::RuleContext &ctx, const SerdeValue &msg) {
+    auto expr = ctx.getRule().getExpr();
+    if (!expr) {
+        throw SerdeError("Rule does not contain an expression");
+    }
+    auto jsonata = ::jsonata::Jsonata(expr.value());
+
     return nullptr;
 }
 

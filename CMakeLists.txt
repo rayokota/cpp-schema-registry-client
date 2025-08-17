@@ -29,6 +29,16 @@ set(AVROCPP_BUILD_TESTS OFF CACHE BOOL "Build Avro C++ tests" FORCE)
 set(AVRO_BUILD_TESTS OFF CACHE BOOL "Build Avro tests" FORCE)
 FetchContent_MakeAvailable(avrocpp)
 
+# Fetch jsonata
+FetchContent_Declare(
+    jsonata
+    GIT_REPOSITORY https://github.com/rayokota/jsonata-cpp.git
+    GIT_TAG 9981428df6fe5bb7c1bbda2ee3a532117cb5c951
+)
+# Disable jsonata unit tests
+set(JSONATA_BUILD_TESTS OFF CACHE BOOL "Build jsonata tests" FORCE)
+FetchContent_MakeAvailable(jsonata)
+
 # Fetch jsoncons
 FetchContent_Declare(
     jsoncons
@@ -72,12 +82,6 @@ if(NOT httplib_FOUND)
     )
     FetchContent_MakeAvailable(httplib)
 endif()
-
-FetchContent_Declare(
-  jsonata
-  GIT_REPOSITORY https://github.com/rayokota/jsonata-cpp.git
-  GIT_TAG 5b39c37142246ddc7ee9e7ef7a444f8b2942fbb7
-)
 
 # Find nlohmann_json or fetch if not found
 find_package(nlohmann_json QUIET)
@@ -140,9 +144,9 @@ target_include_directories(schemaregistry
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/internal>
         ${Protobuf_INCLUDE_DIRS}
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/internal>
 )
 
 # Link libraries
@@ -152,7 +156,7 @@ target_link_libraries(schemaregistry
     PUBLIC
         $<BUILD_INTERFACE:avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;${Protobuf_LIBRARIES}>
     PRIVATE
-        $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsoncons;tink::static>
+        $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsonata;jsoncons;tink::static>
 )
 
 OPTION(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
