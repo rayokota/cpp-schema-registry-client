@@ -22,8 +22,9 @@ std::unique_ptr<SerdeValue> JsonataExecutor::transform(
         throw SerdeError("Rule does not contain an expression");
     }
     auto jsonata = ::jsonata::Jsonata(expr.value());
-
-    return nullptr;
+    auto value = msg.asJson();
+    auto result = jsonata.evaluate(value);
+    return SerdeValue::newJson(msg.getFormat(), result);
 }
 
 void JsonataExecutor::registerExecutor() {

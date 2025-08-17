@@ -203,14 +203,22 @@ void MockSchemaStore::clear() {
 bool MockSchemaStore::hasMetadata(
     const std::unordered_map<std::string, std::string> &metadata,
     const schemaregistry::rest::model::RegisteredSchema &rs) const {
-    if (!rs.getMetadata().has_value()) {
-        return metadata.empty();
+    // Get the properties map from the registered schema's metadata
+    std::map<std::string, std::string> props;
+    auto rs_metadata = rs.getMetadata();
+    if (rs_metadata.has_value()) {
+        auto rs_props = rs_metadata.value().getProperties();
+        if (rs_props.has_value()) {
+            props = rs_props.value();
+        }
     }
 
-    // For now, just return true if any metadata is requested
-    // This would need to be enhanced based on actual Metadata model
-    // implementation
-    return true;
+    // Check if all metadata key-value pairs exist and match in props
+    return std::all_of(metadata.begin(), metadata.end(),
+                       [&props](const auto &kv) {
+                           auto it = props.find(kv.first);
+                           return it != props.end() && it->second == kv.second;
+                       });
 }
 
 // MockSchemaRegistryClient implementation

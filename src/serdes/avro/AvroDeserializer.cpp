@@ -138,7 +138,7 @@ class AvroDeserializer::Impl {
             if (migrated->getFormat() != SerdeFormat::Json) {
                 throw AvroError("Expected JSON value after migrations");
             }
-            auto migrated_json = migrated->asJson().dump();
+            auto migrated_json = migrated->asJson();
 
             // 4. Convert back to Avro with reader schema
             value = utils::jsonToAvro(migrated_json, reader_parsed.first);
