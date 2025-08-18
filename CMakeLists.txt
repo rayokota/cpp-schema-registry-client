@@ -92,7 +92,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(protovalidate_cc)
 
 # AWS SDK C++
-find_package(aws-cpp-sdk-core REQUIRED)
 find_package(aws-cpp-sdk-kms REQUIRED)
 
 # Google Cloud C++ SDK
@@ -209,8 +208,6 @@ target_include_directories(schemaregistry
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${tink_cc_awskms_SOURCE_DIR}>
         $<BUILD_INTERFACE:${tink_cc_gcpkms_SOURCE_DIR}>
-        # Add AWS SDK include directories when enabled
-        $<$<BOOL:${SCHEMAREGISTRY_ENABLE_AWS_KMS}>:$<TARGET_PROPERTY:aws-cpp-sdk-core,INTERFACE_INCLUDE_DIRECTORIES>>
 )
 
 # Link libraries
@@ -222,7 +219,6 @@ target_link_libraries(schemaregistry
     PRIVATE
         $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsonata;jsoncons;tink::static>
         # Link AWS SDK for KMS driver compilation
-        aws-cpp-sdk-core
         aws-cpp-sdk-kms
         # Link Google Cloud SDK for GCP KMS driver compilation
         google-cloud-cpp::kms
