@@ -1,7 +1,7 @@
 /**
  * GcpKmsDriver
  * Google Cloud KMS implementation of the KmsDriver interface
- * 
+ *
  * This is the C++ port of the Rust gcp_driver.rs file
  */
 
@@ -19,7 +19,7 @@ namespace schemaregistry::rules::encryption::gcpkms {
 
 /**
  * Google Cloud KMS driver implementation
- * 
+ *
  * Provides GCP KMS functionality by wrapping the Tink GCP KMS client
  * and handling GCP-specific credential configuration.
  */
@@ -75,8 +75,9 @@ class GcpKmsDriver : public KmsDriver {
     /**
      * Build credentials configuration from the provided configuration map
      *
-     * This method processes GCP service account credentials from the configuration.
-     * If specific credentials are not provided, it will use default GCP credentials.
+     * This method processes GCP service account credentials from the
+     * configuration. If specific credentials are not provided, it will use
+     * default GCP credentials.
      *
      * @param conf Configuration parameters
      * @param keyUrl The GCP KMS key URL
@@ -88,7 +89,8 @@ class GcpKmsDriver : public KmsDriver {
         const std::string& keyUrl) const;
 
     /**
-     * Create a temporary credentials file from the provided service account configuration
+     * Create a temporary credentials file from the provided service account
+     * configuration
      *
      * @param conf Configuration parameters containing service account details
      * @return Path to the temporary credentials file
@@ -119,4 +121,4 @@ struct GcpCredentials {
     std::string client_id;
 };
 
-} // namespace schemaregistry::rules::encryption::gcpkms
+}  // namespace schemaregistry::rules::encryption::gcpkms

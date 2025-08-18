@@ -1,0 +1,25 @@
+{
+  "name": "schemaregistry",
+  "version": "0.1.0",
+  "dependencies": [
+    "abseil",
+    "cpp-httplib",
+    "avro-cpp",
+    "nlohmann-json",
+    "jsoncons",
+    "protobuf",
+    {
+      "name": "aws-sdk-cpp",
+      "default-features": false,
+      "features": [
+        "kms"
+      ]
+    },
+    {
+      "name": "google-cloud-cpp",
+      "features": [
+        "kms"
+      ]
+    }
+  ]
+}

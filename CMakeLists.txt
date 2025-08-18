@@ -16,18 +16,45 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
+find_package(absl CONFIG REQUIRED)
+
+# Find httplib or fetch if not found
+find_package(httplib CONFIG QUIET)
+if(NOT httplib_FOUND)
+    FetchContent_Declare(
+        httplib
+        GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
+        GIT_TAG        v0.23.1
+    )
+    FetchContent_MakeAvailable(httplib)
+endif()
+
+# Find nlohmann_json or fetch if not found
+find_package(nlohmann_json CONFIG QUIET)
+if(NOT nlohmann_json_FOUND)
+    FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG        v3.12.0
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
+
 # Fetch Apache Avro C++
-FetchContent_Declare(
-    avrocpp
-    GIT_REPOSITORY https://github.com/apache/avro.git
-    GIT_TAG        release-1.12.0
-    EXCLUDE_FROM_ALL
-    SOURCE_SUBDIR  lang/c++
-)
-# Disable Avro subproject tests to avoid registering them with ctest here
-set(AVROCPP_BUILD_TESTS OFF CACHE BOOL "Build Avro C++ tests" FORCE)
-set(AVRO_BUILD_TESTS OFF CACHE BOOL "Build Avro tests" FORCE)
-FetchContent_MakeAvailable(avrocpp)
+find_package(unofficial-avro-cpp CONFIG QUIET)
+if(NOT unofficial-avro-cpp_FOUND)
+    FetchContent_Declare(
+        unofficial-avro-cpp
+        GIT_REPOSITORY https://github.com/apache/avro.git
+        GIT_TAG        release-1.12.0
+        EXCLUDE_FROM_ALL
+        SOURCE_SUBDIR  lang/c++
+    )
+    # Disable Avro subproject tests to avoid registering them with ctest here
+    set(AVROCPP_BUILD_TESTS OFF CACHE BOOL "Build Avro C++ tests" FORCE)
+    set(AVRO_BUILD_TESTS OFF CACHE BOOL "Build Avro tests" FORCE)
+    FetchContent_MakeAvailable(unofficial-avro-cpp)
+endif()
 
 # Fetch jsonata
 FetchContent_Declare(
@@ -39,15 +66,21 @@ FetchContent_Declare(
 set(JSONATA_BUILD_TESTS OFF CACHE BOOL "Build jsonata tests" FORCE)
 FetchContent_MakeAvailable(jsonata)
 
+# Find Protobuf for protoc executable and libraries
+find_package(protobuf CONFIG REQUIRED)
+
 # Fetch jsoncons
-FetchContent_Declare(
-    jsoncons
-    GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
-    GIT_TAG        v1.3.2
-)
-# Disable jsoncons unit tests
-set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
-FetchContent_MakeAvailable(jsoncons)
+find_package(jsoncons CONFIG QUIET)
+if(NOT jsoncons_FOUND)
+    FetchContent_Declare(
+        jsoncons
+        GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
+        GIT_TAG        v1.3.2
+    )
+    # Disable jsoncons unit tests
+    set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
+    FetchContent_MakeAvailable(jsoncons)
+endif()
 
 # Note that cel-cpp has no CMake build and is not packaged anywhere,
 # so we build protovalidate_cc as an in-tree dependency to get cel-cpp.
@@ -58,9 +91,21 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(protovalidate_cc)
 
+# AWS SDK C++
+find_package(aws-cpp-sdk-core REQUIRED)
+find_package(aws-cpp-sdk-kms REQUIRED)
+
+# Google Cloud C++ SDK
+find_package(google_cloud_cpp_kms REQUIRED)
+
 # Import Tink as an in-tree dependency.
 # See https://developers.google.com/tink/setup/cc
-# Note: absl is provided by Tink, so we don't find_package it separately
+# Configure Tink to use system-provided dependencies instead of building its own
+set(TINK_USE_SYSTEM_ABSEIL ON CACHE BOOL "Use system Abseil" FORCE)
+set(TINK_USE_SYSTEM_PROTOBUF ON CACHE BOOL "Use system Protobuf" FORCE)
+set(TINK_USE_INSTALLED_ABSEIL ON CACHE BOOL "Use installed Abseil" FORCE)
+set(TINK_USE_INSTALLED_PROTOBUF ON CACHE BOOL "Use installed Protobuf" FORCE)
+set(USE_ONLY_FIPS OFF CACHE BOOL "Use only FIPS" FORCE)
 FetchContent_Declare(
     tink
     URL https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.3.0.zip
@@ -106,146 +151,9 @@ target_include_directories(tink_gcpkms INTERFACE
     $<BUILD_INTERFACE:${tink_cc_gcpkms_SOURCE_DIR}>
 )
 
-# Link AWS SDK to AWS KMS extension if enabled
-if(SCHEMAREGISTRY_ENABLE_AWS_KMS AND AWS_SDK_TARGETS)
-    target_link_libraries(tink_awskms INTERFACE ${AWS_SDK_TARGETS})
-    # Also add AWS SDK include directories to tink_awskms
-    if(TARGET aws-cpp-sdk-core)
-        target_include_directories(tink_awskms INTERFACE 
-            $<TARGET_PROPERTY:aws-cpp-sdk-core,INTERFACE_INCLUDE_DIRECTORIES>
-        )
-    endif()
-    if(TARGET aws-cpp-sdk-kms)
-        target_include_directories(tink_awskms INTERFACE 
-            $<TARGET_PROPERTY:aws-cpp-sdk-kms,INTERFACE_INCLUDE_DIRECTORIES>
-        )
-    endif()
-endif()
-
-# Link Google Cloud SDK to GCP KMS extension if enabled
-if(SCHEMAREGISTRY_ENABLE_GCP_KMS AND GOOGLE_CLOUD_TARGETS)
-    target_link_libraries(tink_gcpkms INTERFACE ${GOOGLE_CLOUD_TARGETS})
-    # Add Google Cloud SDK include directories to tink_gcpkms for each component
-    foreach(target IN LISTS GOOGLE_CLOUD_TARGETS)
-        if(TARGET ${target})
-            target_include_directories(tink_gcpkms INTERFACE 
-                $<TARGET_PROPERTY:${target},INTERFACE_INCLUDE_DIRECTORIES>
-            )
-        endif()
-    endforeach()
-endif()
-
-
-
 # Create namespaced aliases for KMS extensions
 add_library(schemaregistry::tink_awskms ALIAS tink_awskms)
 add_library(schemaregistry::tink_gcpkms ALIAS tink_gcpkms)
-
-# Find httplib or fetch if not found
-find_package(httplib QUIET)
-if(NOT httplib_FOUND)
-    FetchContent_Declare(
-        httplib
-        GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-        GIT_TAG        v0.23.1
-    )
-    FetchContent_MakeAvailable(httplib)
-endif()
-
-# Find nlohmann_json or fetch if not found
-find_package(nlohmann_json QUIET)
-if(NOT nlohmann_json_FOUND)
-    FetchContent_Declare(
-        nlohmann_json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG        v3.12.0
-    )
-    FetchContent_MakeAvailable(nlohmann_json)
-endif()
-
-# AWS SDK C++ modular components: aws-cpp-sdk-core and aws-cpp-sdk-kms
-option(SCHEMAREGISTRY_ENABLE_AWS_KMS "Enable AWS KMS support with modular AWS SDK components" ON)
-if(SCHEMAREGISTRY_ENABLE_AWS_KMS)
-    # Try to find AWS SDK with specific modular components first
-    find_package(AWSSDK QUIET COMPONENTS core kms)
-    
-    if(NOT AWSSDK_FOUND)
-        message(STATUS "AWS SDK not found, fetching modular components (aws-cpp-sdk-core, aws-cpp-sdk-kms) from source...")
-        
-        # Configure AWS SDK build options for modular components only
-        set(BUILD_ONLY "core;kms" CACHE STRING "Build only aws-cpp-sdk-core and aws-cpp-sdk-kms modular components")
-        set(ENABLE_TESTING OFF CACHE BOOL "Disable AWS SDK testing")
-        set(AUTORUN_UNIT_TESTS OFF CACHE BOOL "Disable AWS SDK unit tests")
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build AWS SDK as static libraries")
-        set(ENABLE_UNITY_BUILD ON CACHE BOOL "Enable unity build for faster compilation")
-        set(CPP_STANDARD 17 CACHE STRING "C++ standard for AWS SDK")
-        # Fix CMake compatibility issues with CRT
-        set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "Set minimum CMake policy version for compatibility")
-        set(BUILD_DEPS OFF CACHE BOOL "Disable AWS SDK dependency builds to avoid CRT issues")
-        
-        FetchContent_Declare(
-            aws-sdk-cpp
-            GIT_REPOSITORY https://github.com/aws/aws-sdk-cpp.git
-            GIT_TAG        1.11.400  # Use a newer stable release with better CMake support
-            GIT_SHALLOW    TRUE
-        )
-        
-        FetchContent_MakeAvailable(aws-sdk-cpp)
-        
-        # Set modular AWS SDK component targets for linking
-        set(AWS_SDK_TARGETS aws-cpp-sdk-core aws-cpp-sdk-kms)
-        message(STATUS "Successfully built modular AWS SDK components: aws-cpp-sdk-core, aws-cpp-sdk-kms")
-    else()
-        message(STATUS "Found system AWS SDK with modular components: ${AWSSDK_LINK_LIBRARIES}")
-        set(AWS_SDK_TARGETS ${AWSSDK_LINK_LIBRARIES})
-    endif()
-endif()
-
-# Google Cloud C++ SDK modular components: KMS and Auth only
-option(SCHEMAREGISTRY_ENABLE_GCP_KMS "Enable GCP KMS support with modular Google Cloud C++ components" OFF)
-if(SCHEMAREGISTRY_ENABLE_GCP_KMS)
-    # Try to find Google Cloud SDK first
-    find_package(google_cloud_cpp_kms QUIET)
-    
-    if(NOT google_cloud_cpp_kms_FOUND)
-        message(STATUS "Google Cloud C++ SDK not found, fetching modular components (kms, common, grpc_utils) from source...")
-        
-        # Configure Google Cloud C++ SDK build options - build only KMS and auth components
-        set(GOOGLE_CLOUD_CPP_ENABLE_MACOS_OPENSSL_CHECK OFF CACHE BOOL "Disable macOS OpenSSL check")
-        set(GOOGLE_CLOUD_CPP_ENABLE_WERROR OFF CACHE BOOL "Disable warnings as errors")
-        set(BUILD_TESTING OFF CACHE BOOL "Disable Google Cloud SDK testing")
-        set(GOOGLE_CLOUD_CPP_ENABLE_EXAMPLES OFF CACHE BOOL "Disable examples")
-        set(GOOGLE_CLOUD_CPP_ENABLE_CCACHE OFF CACHE BOOL "Disable ccache")
-        
-        # Only build the specific libraries we need
-        set(GOOGLE_CLOUD_CPP_ENABLE "kms;common;grpc_utils" CACHE STRING "Only build KMS, common, and grpc_utils libraries")
-        
-        # Tell Google Cloud C++ SDK to NOT use find_package for dependencies 
-        # since Tink has already provided them via FetchContent
-        set(GOOGLE_CLOUD_CPP_USE_PKG_CONFIG OFF CACHE BOOL "Disable pkg-config usage")
-        set(GOOGLE_CLOUD_CPP_DEPENDENCY_PROVIDER external CACHE STRING "Use external dependencies")
-        
-        FetchContent_Declare(
-            google-cloud-cpp
-            GIT_REPOSITORY https://github.com/googleapis/google-cloud-cpp.git
-            GIT_TAG        v2.28.0  # Use a stable release
-            GIT_SHALLOW    TRUE
-        )
-        
-        FetchContent_MakeAvailable(google-cloud-cpp)
-        
-        # Set the Google Cloud SDK targets for linking (only KMS and dependencies)
-        set(GOOGLE_CLOUD_TARGETS google-cloud-cpp::kms google-cloud-cpp::common google-cloud-cpp::grpc_utils)
-        
-        message(STATUS "Successfully built modular Google Cloud C++ components: kms, common, grpc_utils")
-    else()
-        message(STATUS "Found Google Cloud C++ SDK KMS component: ${google_cloud_cpp_kms_FOUND}")
-        set(GOOGLE_CLOUD_TARGETS google-cloud-cpp::kms)
-    endif()
-endif()
-
-# Find Protobuf for protoc executable and libraries
-find_package(Protobuf REQUIRED)
 
 # Compile project protobuf files
 include(cmake/CompileProtobuf.cmake)
@@ -298,7 +206,6 @@ target_include_directories(schemaregistry
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/internal>
-        ${Protobuf_INCLUDE_DIRS}
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${tink_cc_awskms_SOURCE_DIR}>
         $<BUILD_INTERFACE:${tink_cc_gcpkms_SOURCE_DIR}>
@@ -311,13 +218,14 @@ target_include_directories(schemaregistry
 # in-tree dependency targets (avoids CMake install errors).
 target_link_libraries(schemaregistry
     PUBLIC
-        $<BUILD_INTERFACE:avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;${Protobuf_LIBRARIES}>
+        $<BUILD_INTERFACE:unofficial-avro-cpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;protobuf::libprotobuf>
     PRIVATE
         $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsonata;jsoncons;tink::static>
         # Link AWS SDK for KMS driver compilation
-        $<$<BOOL:${SCHEMAREGISTRY_ENABLE_AWS_KMS}>:${AWS_SDK_TARGETS}>
+        aws-cpp-sdk-core
+        aws-cpp-sdk-kms
         # Link Google Cloud SDK for GCP KMS driver compilation
-        $<$<BOOL:${SCHEMAREGISTRY_ENABLE_GCP_KMS}>:${GOOGLE_CLOUD_TARGETS}>
+        google-cloud-cpp::kms
 )
 
 # Note: KMS extensions (tink_awskms, tink_gcpkms) are available as optional targets
