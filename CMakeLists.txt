@@ -92,15 +92,15 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(protovalidate_cc)
 
 # AWS SDK C++
-find_package(aws-cpp-sdk-core REQUIRED)
-find_package(aws-cpp-sdk-kms REQUIRED)
-
-# Google Cloud C++ SDK
-find_package(google_cloud_cpp_kms REQUIRED)
+find_package(aws-cpp-sdk-core CONFIG REQUIRED)
+find_package(aws-cpp-sdk-kms CONFIG REQUIRED)
 
 # Azure Key Vault C++ SDK
 find_package(azure-security-keyvault-keys-cpp CONFIG REQUIRED)
 find_package(azure-identity-cpp CONFIG REQUIRED)
+
+# Google Cloud C++ SDK
+find_package(google_cloud_cpp_kms CONFIG REQUIRED)
 
 # Import Tink as an in-tree dependency.
 # See https://developers.google.com/tink/setup/cc
@@ -241,12 +241,13 @@ target_link_libraries(schemaregistry
         aws-cpp-sdk-core
         aws-cpp-sdk-kms
         
-        # Google Cloud SDK for GCP KMS driver compilation
-        google-cloud-cpp::kms
-        
         # Azure SDK for Azure KMS driver compilation
         Azure::azure-security-keyvault-keys
         Azure::azure-identity
+
+        # Google Cloud SDK for GCP KMS driver compilation
+        google-cloud-cpp::kms
+        
 )
 
 # Note: KMS extensions (tink_awskms, tink_gcpkms) are available as optional targets
