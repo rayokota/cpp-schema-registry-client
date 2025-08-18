@@ -9,6 +9,7 @@
     "jsoncons",
     "protobuf",
     "azure-security-keyvault-keys-cpp",
+    "azure-identity-cpp",
     {
       "name": "aws-sdk-cpp",
       "default-features": false,

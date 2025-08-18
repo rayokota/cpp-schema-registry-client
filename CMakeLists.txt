@@ -98,6 +98,10 @@ find_package(aws-cpp-sdk-kms REQUIRED)
 # Google Cloud C++ SDK
 find_package(google_cloud_cpp_kms REQUIRED)
 
+# Azure Key Vault C++ SDK
+find_package(azure-security-keyvault-keys-cpp CONFIG REQUIRED)
+find_package(azure-identity-cpp CONFIG REQUIRED)
+
 # Import Tink as an in-tree dependency.
 # See https://developers.google.com/tink/setup/cc
 # Configure Tink to use system-provided dependencies instead of building its own
@@ -239,6 +243,10 @@ target_link_libraries(schemaregistry
         
         # Google Cloud SDK for GCP KMS driver compilation
         google-cloud-cpp::kms
+        
+        # Azure SDK for Azure KMS driver compilation
+        Azure::azure-security-keyvault-keys
+        Azure::azure-identity
 )
 
 # Note: KMS extensions (tink_awskms, tink_gcpkms) are available as optional targets

@@ -16,7 +16,7 @@ using namespace schemaregistry::serdes;
 
 // Internal implementation class for CelExecutor
 class CelExecutor::Impl {
-public:
+  public:
     Impl();
 
     google::protobuf::Arena arena_;
