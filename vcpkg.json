@@ -3,13 +3,7 @@
   "version": "0.1.0",
   "dependencies": [
     "abseil",
-    "cpp-httplib",
     "avro-cpp",
-    "nlohmann-json",
-    "jsoncons",
-    "protobuf",
-    "azure-security-keyvault-keys-cpp",
-    "azure-identity-cpp",
     {
       "name": "aws-sdk-cpp",
       "default-features": false,
@@ -17,11 +11,19 @@
         "kms"
       ]
     },
+    "azure-identity-cpp",
+    "libvault",
+    "azure-security-keyvault-keys-cpp",
+    "cpp-httplib",
     {
       "name": "google-cloud-cpp",
       "features": [
         "kms"
       ]
-    }
+    },
+    "jsoncons",
+    "nlohmann-json",
+    "protobuf",
+    "libvault"
   ]
 }
