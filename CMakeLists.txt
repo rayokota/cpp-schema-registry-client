@@ -218,7 +218,7 @@ target_include_directories(schemaregistry
 # in-tree dependency targets (avoids CMake install errors).
 target_link_libraries(schemaregistry
     PUBLIC
-        $<BUILD_INTERFACE:unofficial-avro-cpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;protobuf::libprotobuf>
+        $<BUILD_INTERFACE:unofficial::avro-cpp::avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;protobuf::libprotobuf>
     PRIVATE
         $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsonata;jsoncons;tink::static>
         # Link AWS SDK for KMS driver compilation
