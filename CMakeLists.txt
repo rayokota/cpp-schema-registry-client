@@ -63,27 +63,23 @@ FetchContent_MakeAvailable(protovalidate_cc)
 # Note: absl is provided by Tink, so we don't find_package it separately
 FetchContent_Declare(
     tink
-    URL      https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.4.0.zip
-    URL_HASH SHA256=06c4d49b0b1357f0b8c3abc77a7d920130dc868e4597d432a9ce1cda4f65e382
+    URL https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.3.0.zip
+    URL_HASH SHA256=363ce671ab5ce0b24f279d3647185597a25f407c3608db007315f79f151f436b
 )
-FetchContent_GetProperties(tink)
-if(NOT tink_POPULATED)
-    FetchContent_Populate(tink)
-    add_subdirectory(${tink_SOURCE_DIR} ${tink_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
+FetchContent_MakeAvailable(tink)
 
 # Fetch Tink AWS KMS extension
 FetchContent_Declare(
     tink_cc_awskms
     GIT_REPOSITORY https://github.com/tink-crypto/tink-cc-awskms.git
-    GIT_TAG main
+    GIT_TAG v2.0.1
 )
 
 # Fetch Tink GCP KMS extension
 FetchContent_Declare(
     tink_cc_gcpkms
     GIT_REPOSITORY https://github.com/tink-crypto/tink-cc-gcpkms.git
-    GIT_TAG main
+    GIT_TAG v2.3.0
 )
 
 # Fetch the KMS extensions
@@ -124,6 +120,19 @@ if(SCHEMAREGISTRY_ENABLE_AWS_KMS AND AWS_SDK_TARGETS)
             $<TARGET_PROPERTY:aws-cpp-sdk-kms,INTERFACE_INCLUDE_DIRECTORIES>
         )
     endif()
+endif()
+
+# Link Google Cloud SDK to GCP KMS extension if enabled
+if(SCHEMAREGISTRY_ENABLE_GCP_KMS AND GOOGLE_CLOUD_TARGETS)
+    target_link_libraries(tink_gcpkms INTERFACE ${GOOGLE_CLOUD_TARGETS})
+    # Add Google Cloud SDK include directories to tink_gcpkms for each component
+    foreach(target IN LISTS GOOGLE_CLOUD_TARGETS)
+        if(TARGET ${target})
+            target_include_directories(tink_gcpkms INTERFACE 
+                $<TARGET_PROPERTY:${target},INTERFACE_INCLUDE_DIRECTORIES>
+            )
+        endif()
+    endforeach()
 endif()
 
 
@@ -189,6 +198,49 @@ if(SCHEMAREGISTRY_ENABLE_AWS_KMS)
     else()
         message(STATUS "Found system AWS SDK with modular components: ${AWSSDK_LINK_LIBRARIES}")
         set(AWS_SDK_TARGETS ${AWSSDK_LINK_LIBRARIES})
+    endif()
+endif()
+
+# Google Cloud C++ SDK modular components: KMS and Auth only
+option(SCHEMAREGISTRY_ENABLE_GCP_KMS "Enable GCP KMS support with modular Google Cloud C++ components" OFF)
+if(SCHEMAREGISTRY_ENABLE_GCP_KMS)
+    # Try to find Google Cloud SDK first
+    find_package(google_cloud_cpp_kms QUIET)
+    
+    if(NOT google_cloud_cpp_kms_FOUND)
+        message(STATUS "Google Cloud C++ SDK not found, fetching modular components (kms, common, grpc_utils) from source...")
+        
+        # Configure Google Cloud C++ SDK build options - build only KMS and auth components
+        set(GOOGLE_CLOUD_CPP_ENABLE_MACOS_OPENSSL_CHECK OFF CACHE BOOL "Disable macOS OpenSSL check")
+        set(GOOGLE_CLOUD_CPP_ENABLE_WERROR OFF CACHE BOOL "Disable warnings as errors")
+        set(BUILD_TESTING OFF CACHE BOOL "Disable Google Cloud SDK testing")
+        set(GOOGLE_CLOUD_CPP_ENABLE_EXAMPLES OFF CACHE BOOL "Disable examples")
+        set(GOOGLE_CLOUD_CPP_ENABLE_CCACHE OFF CACHE BOOL "Disable ccache")
+        
+        # Only build the specific libraries we need
+        set(GOOGLE_CLOUD_CPP_ENABLE "kms;common;grpc_utils" CACHE STRING "Only build KMS, common, and grpc_utils libraries")
+        
+        # Tell Google Cloud C++ SDK to NOT use find_package for dependencies 
+        # since Tink has already provided them via FetchContent
+        set(GOOGLE_CLOUD_CPP_USE_PKG_CONFIG OFF CACHE BOOL "Disable pkg-config usage")
+        set(GOOGLE_CLOUD_CPP_DEPENDENCY_PROVIDER external CACHE STRING "Use external dependencies")
+        
+        FetchContent_Declare(
+            google-cloud-cpp
+            GIT_REPOSITORY https://github.com/googleapis/google-cloud-cpp.git
+            GIT_TAG        v2.28.0  # Use a stable release
+            GIT_SHALLOW    TRUE
+        )
+        
+        FetchContent_MakeAvailable(google-cloud-cpp)
+        
+        # Set the Google Cloud SDK targets for linking (only KMS and dependencies)
+        set(GOOGLE_CLOUD_TARGETS google-cloud-cpp::kms google-cloud-cpp::common google-cloud-cpp::grpc_utils)
+        
+        message(STATUS "Successfully built modular Google Cloud C++ components: kms, common, grpc_utils")
+    else()
+        message(STATUS "Found Google Cloud C++ SDK KMS component: ${google_cloud_cpp_kms_FOUND}")
+        set(GOOGLE_CLOUD_TARGETS google-cloud-cpp::kms)
     endif()
 endif()
 
@@ -264,6 +316,8 @@ target_link_libraries(schemaregistry
         $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsonata;jsoncons;tink::static>
         # Link AWS SDK for KMS driver compilation
         $<$<BOOL:${SCHEMAREGISTRY_ENABLE_AWS_KMS}>:${AWS_SDK_TARGETS}>
+        # Link Google Cloud SDK for GCP KMS driver compilation
+        $<$<BOOL:${SCHEMAREGISTRY_ENABLE_GCP_KMS}>:${GOOGLE_CLOUD_TARGETS}>
 )
 
 # Note: KMS extensions (tink_awskms, tink_gcpkms) are available as optional targets
