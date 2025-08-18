@@ -8,6 +8,7 @@
     "nlohmann-json",
     "jsoncons",
     "protobuf",
+    "azure-security-keyvault-keys-cpp",
     {
       "name": "aws-sdk-cpp",
       "default-features": false,
