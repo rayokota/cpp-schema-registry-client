@@ -14,6 +14,9 @@ Testing
 _deps
 .cmake
 
+# vcpkg build artifacts
+vcpkg_installed
+
 # Executables and libraries
 schemaregistry-test
 
