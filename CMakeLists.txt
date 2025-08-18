@@ -29,17 +29,6 @@ if(NOT httplib_FOUND)
     FetchContent_MakeAvailable(httplib)
 endif()
 
-# Find nlohmann_json or fetch if not found
-find_package(nlohmann_json CONFIG QUIET)
-if(NOT nlohmann_json_FOUND)
-    FetchContent_Declare(
-        nlohmann_json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG        v3.12.0
-    )
-    FetchContent_MakeAvailable(nlohmann_json)
-endif()
-
 # Fetch Apache Avro C++
 find_package(unofficial-avro-cpp CONFIG QUIET)
 if(NOT unofficial-avro-cpp_FOUND)
@@ -56,18 +45,16 @@ if(NOT unofficial-avro-cpp_FOUND)
     FetchContent_MakeAvailable(unofficial-avro-cpp)
 endif()
 
-# Fetch jsonata
-FetchContent_Declare(
-    jsonata
-    GIT_REPOSITORY https://github.com/rayokota/jsonata-cpp.git
-    GIT_TAG 9981428df6fe5bb7c1bbda2ee3a532117cb5c951
-)
-# Disable jsonata unit tests
-set(JSONATA_BUILD_TESTS OFF CACHE BOOL "Build jsonata tests" FORCE)
-FetchContent_MakeAvailable(jsonata)
-
-# Find Protobuf for protoc executable and libraries
-find_package(protobuf CONFIG REQUIRED)
+# Find nlohmann_json or fetch if not found
+find_package(nlohmann_json CONFIG QUIET)
+if(NOT nlohmann_json_FOUND)
+    FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG        v3.12.0
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
 
 # Fetch jsoncons
 find_package(jsoncons CONFIG QUIET)
@@ -81,6 +68,19 @@ if(NOT jsoncons_FOUND)
     set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
     FetchContent_MakeAvailable(jsoncons)
 endif()
+
+# Fetch jsonata
+FetchContent_Declare(
+    jsonata
+    GIT_REPOSITORY https://github.com/rayokota/jsonata-cpp.git
+    GIT_TAG 9981428df6fe5bb7c1bbda2ee3a532117cb5c951
+)
+# Disable jsonata unit tests
+set(JSONATA_BUILD_TESTS OFF CACHE BOOL "Build jsonata tests" FORCE)
+FetchContent_MakeAvailable(jsonata)
+
+# Find Protobuf for protoc executable and libraries
+find_package(protobuf CONFIG REQUIRED)
 
 # Note that cel-cpp has no CMake build and is not packaged anywhere,
 # so we build protovalidate_cc as an in-tree dependency to get cel-cpp.
@@ -124,7 +124,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     tink_cc_gcpkms
     GIT_REPOSITORY https://github.com/tink-crypto/tink-cc-gcpkms.git
-    GIT_TAG v2.3.0
+    GIT_TAG v2.4.0
 )
 
 # Fetch the KMS extensions
