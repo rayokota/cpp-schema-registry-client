@@ -12,11 +12,13 @@
 #include "eval/public/structs/cel_proto_wrapper.h"
 #include "google/protobuf/descriptor.h"
 #include "google/protobuf/message.h"
+#include "nlohmann/json.hpp"
 #include "parser/parser.h"
+#include "schemaregistry/rules/cel/CelExecutorImpl.h"
 #include "schemaregistry/rules/cel/CelUtils.h"
 #include "schemaregistry/rules/cel/ExtraFunc.h"
 #include "schemaregistry/serdes/RuleRegistry.h"
-#include "schemaregistry/serdes/Serde.h"
+#include "schemaregistry/serdes/SerdeError.h"
 #include "schemaregistry/serdes/avro/AvroTypes.h"
 #include "schemaregistry/serdes/json/JsonTypes.h"
 #include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
@@ -25,7 +27,8 @@ namespace schemaregistry::rules::cel {
 
 using namespace schemaregistry::serdes;
 
-CelExecutor::CelExecutor() {
+// Impl constructor implementations
+CelExecutor::Impl::Impl() {
     // Try to initialize the CEL runtime
     auto runtime_result = newRuleBuilder(&arena_);
     if (!runtime_result.ok()) {
@@ -35,21 +38,24 @@ CelExecutor::CelExecutor() {
     runtime_ = std::move(runtime_result.value());
 }
 
-CelExecutor::CelExecutor(
-    std::unique_ptr<const google::api::expr::runtime::CelExpressionBuilder>
-        runtime)
-    : runtime_(std::move(runtime)) {
-    if (!runtime_) {
-        throw SerdeError("CEL runtime cannot be null");
-    }
-}
+// CelExecutor constructor implementations
+CelExecutor::CelExecutor() : impl_(std::make_unique<Impl>()) {}
+
+// Destructor
+CelExecutor::~CelExecutor() = default;
+
+// Move constructor
+CelExecutor::CelExecutor(CelExecutor &&) noexcept = default;
+
+// Move assignment
+CelExecutor &CelExecutor::operator=(CelExecutor &&) noexcept = default;
 
 // Implement the required getType method
 std::string CelExecutor::getType() const { return "CEL"; }
 
 absl::StatusOr<
     std::unique_ptr<google::api::expr::runtime::CelExpressionBuilder>>
-CelExecutor::newRuleBuilder(google::protobuf::Arena *arena) {
+CelExecutor::Impl::newRuleBuilder(google::protobuf::Arena *arena) {
     google::api::expr::runtime::InterpreterOptions options;
     options.enable_qualified_type_identifiers = true;
     options.enable_timestamp_duration_overflow_errors = true;
@@ -84,12 +90,12 @@ std::unique_ptr<SerdeValue> CelExecutor::transform(
     google::protobuf::Arena arena;
 
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
-    args.emplace("msg", fromSerdeValue(msg, &arena));
+    args.emplace("msg", impl_->fromSerdeValue(msg, &arena));
 
-    return execute(ctx, msg, args, &arena);
+    return impl_->execute(ctx, msg, args, &arena);
 }
 
-std::unique_ptr<SerdeValue> CelExecutor::execute(
+std::unique_ptr<SerdeValue> CelExecutor::Impl::execute(
     schemaregistry::serdes::RuleContext &ctx, const SerdeValue &msg,
     const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>
         &args,
@@ -139,7 +145,8 @@ std::unique_ptr<SerdeValue> CelExecutor::execute(
     return nullptr;
 }
 
-std::unique_ptr<google::api::expr::runtime::CelValue> CelExecutor::executeRule(
+std::unique_ptr<google::api::expr::runtime::CelValue>
+CelExecutor::Impl::executeRule(
     RuleContext &ctx, const SerdeValue &msg, const std::string &expr,
     const absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue>
         &args,
@@ -170,7 +177,7 @@ std::unique_ptr<google::api::expr::runtime::CelValue> CelExecutor::executeRule(
 }
 
 absl::StatusOr<std::shared_ptr<google::api::expr::runtime::CelExpression>>
-CelExecutor::getOrCompileExpression(const std::string &expr) {
+CelExecutor::Impl::getOrCompileExpression(const std::string &expr) {
     // Thread-safe cache lookup
     {
         std::lock_guard<std::mutex> lock(cache_mutex_);
@@ -210,7 +217,7 @@ CelExecutor::getOrCompileExpression(const std::string &expr) {
     return shared_expr;
 }
 
-google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(
+google::api::expr::runtime::CelValue CelExecutor::Impl::fromSerdeValue(
     const SerdeValue &value, google::protobuf::Arena *arena) {
     switch (value.getFormat()) {
         case SerdeFormat::Json: {
@@ -231,7 +238,7 @@ google::api::expr::runtime::CelValue CelExecutor::fromSerdeValue(
     }
 }
 
-std::unique_ptr<SerdeValue> CelExecutor::toSerdeValue(
+std::unique_ptr<SerdeValue> CelExecutor::Impl::toSerdeValue(
     const SerdeValue &original,
     const google::api::expr::runtime::CelValue &cel_value) {
     switch (original.getFormat()) {

@@ -92,6 +92,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(protovalidate_cc)
 
 # AWS SDK C++
+find_package(aws-cpp-sdk-core REQUIRED)
 find_package(aws-cpp-sdk-kms REQUIRED)
 
 # Google Cloud C++ SDK
@@ -215,12 +216,28 @@ target_include_directories(schemaregistry
 # in-tree dependency targets (avoids CMake install errors).
 target_link_libraries(schemaregistry
     PUBLIC
-        $<BUILD_INTERFACE:unofficial::avro-cpp::avrocpp;cel_cpp;cel_cpp_parser;cel_cpp_minimal_descriptor_set;protobuf::libprotobuf>
+        # Core serialization and parsing libraries
+        $<BUILD_INTERFACE:unofficial::avro-cpp::avrocpp>
+        $<BUILD_INTERFACE:nlohmann_json::nlohmann_json>
+        $<BUILD_INTERFACE:protobuf::libprotobuf>
     PRIVATE
-        $<BUILD_INTERFACE:absl::log_internal_log_sink_set;absl::log_internal_proto;absl::absl_log;absl::log_internal_message;absl::hash;jsonata;jsoncons;tink::static>
-        # Link AWS SDK for KMS driver compilation
+        # CEL (Common Expression Language) libraries
+        $<BUILD_INTERFACE:cel_cpp>
+        $<BUILD_INTERFACE:cel_cpp_parser>
+        $<BUILD_INTERFACE:cel_cpp_minimal_descriptor_set>
+        
+        # JSON processing libraries
+        $<BUILD_INTERFACE:jsonata>
+        $<BUILD_INTERFACE:jsoncons>
+        
+        # Cryptography library
+        $<BUILD_INTERFACE:tink::static>
+        
+        # AWS SDK for KMS driver compilation
+        aws-cpp-sdk-core
         aws-cpp-sdk-kms
-        # Link Google Cloud SDK for GCP KMS driver compilation
+        
+        # Google Cloud SDK for GCP KMS driver compilation
         google-cloud-cpp::kms
 )
 

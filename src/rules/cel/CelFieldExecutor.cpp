@@ -1,6 +1,7 @@
 #include "schemaregistry/rules/cel/CelFieldExecutor.h"
 
 #include "eval/public/containers/container_backed_list_impl.h"
+#include "schemaregistry/rules/cel/CelExecutorImpl.h"
 #include "schemaregistry/serdes/RuleRegistry.h"
 #include "schemaregistry/serdes/avro/AvroTypes.h"
 #include "schemaregistry/serdes/json/JsonTypes.h"
@@ -35,7 +36,8 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
 
     // Add field value like Rust version
-    args.emplace("value", executor_->fromSerdeValue(field_value, &arena));
+    args.emplace("value",
+                 executor_->impl_->fromSerdeValue(field_value, &arena));
 
     // Add field context information like Rust version
     auto *full_name_str = google::protobuf::Arena::Create<std::string>(
@@ -73,11 +75,11 @@ std::unique_ptr<SerdeValue> CelFieldExecutor::transformField(
                  google::api::expr::runtime::CelValue::CreateList(list_impl));
 
     // Add containing message like Rust version
-    args.emplace("message", executor_->fromSerdeValue(
+    args.emplace("message", executor_->impl_->fromSerdeValue(
                                 field_ctx->getContainingMessage(), &arena));
 
     // Execute the CEL expression using the shared executor
-    auto result = executor_->execute(ctx, field_value, args, &arena);
+    auto result = executor_->impl_->execute(ctx, field_value, args, &arena);
     if (result) {
         return result;
     }
