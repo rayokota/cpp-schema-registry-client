@@ -72,8 +72,8 @@ endif()
 # Fetch jsonata
 FetchContent_Declare(
     jsonata
-    GIT_REPOSITORY https://github.com/rayokota/jsonata-cpp.git
-    GIT_TAG 9981428df6fe5bb7c1bbda2ee3a532117cb5c951
+    URL https://github.com/rayokota/jsonata-cpp/archive/refs/tags/v0.1.0.zip
+    URL_HASH SHA256=3ee1798f28a29d36ebbb273853979926716a384e4d491a6bd408e1f6de51760d
 )
 # Disable jsonata unit tests
 set(JSONATA_BUILD_TESTS OFF CACHE BOOL "Build jsonata tests" FORCE)
