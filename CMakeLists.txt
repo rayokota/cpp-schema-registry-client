@@ -115,52 +115,10 @@ set(TINK_USE_INSTALLED_PROTOBUF ON CACHE BOOL "Use installed Protobuf" FORCE)
 set(USE_ONLY_FIPS OFF CACHE BOOL "Use only FIPS" FORCE)
 FetchContent_Declare(
     tink
-    URL https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.3.0.zip
-    URL_HASH SHA256=363ce671ab5ce0b24f279d3647185597a25f407c3608db007315f79f151f436b
+    URL       https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.4.0.zip
+    URL_HASH  SHA256=06c4d49b0b1357f0b8c3abc77a7d920130dc868e4597d432a9ce1cda4f65e382
 )
 FetchContent_MakeAvailable(tink)
-
-# Fetch Tink AWS KMS extension
-FetchContent_Declare(
-    tink_cc_awskms
-    GIT_REPOSITORY https://github.com/tink-crypto/tink-cc-awskms.git
-    GIT_TAG v2.0.1
-)
-
-# Fetch Tink GCP KMS extension
-FetchContent_Declare(
-    tink_cc_gcpkms
-    GIT_REPOSITORY https://github.com/tink-crypto/tink-cc-gcpkms.git
-    GIT_TAG v2.4.0
-)
-
-# Fetch the KMS extensions
-FetchContent_GetProperties(tink_cc_awskms)
-if(NOT tink_cc_awskms_POPULATED)
-    FetchContent_Populate(tink_cc_awskms)
-endif()
-
-FetchContent_GetProperties(tink_cc_gcpkms)
-if(NOT tink_cc_gcpkms_POPULATED)
-    FetchContent_Populate(tink_cc_gcpkms)
-endif()
-
-# Create interface libraries for the KMS extensions
-add_library(tink_awskms INTERFACE)
-add_library(tink_gcpkms INTERFACE)
-
-# Set include directories for KMS extensions
-target_include_directories(tink_awskms INTERFACE
-    $<BUILD_INTERFACE:${tink_cc_awskms_SOURCE_DIR}>
-)
-
-target_include_directories(tink_gcpkms INTERFACE
-    $<BUILD_INTERFACE:${tink_cc_gcpkms_SOURCE_DIR}>
-)
-
-# Create namespaced aliases for KMS extensions
-add_library(schemaregistry::tink_awskms ALIAS tink_awskms)
-add_library(schemaregistry::tink_gcpkms ALIAS tink_gcpkms)
 
 # Compile project protobuf files
 include(cmake/CompileProtobuf.cmake)
@@ -214,8 +172,6 @@ target_include_directories(schemaregistry
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/internal>
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${tink_cc_awskms_SOURCE_DIR}>
-        $<BUILD_INTERFACE:${tink_cc_gcpkms_SOURCE_DIR}>
 )
 
 # Link libraries
@@ -326,7 +282,7 @@ install(EXPORT schemaregistryTargets
 )
 
 # Add examples subdirectory (optional, can be disabled)
-option(BUILD_EXAMPLES "Build example programs" ON)
+option(BUILD_EXAMPLES "Build example programs" OFF)
 if(BUILD_EXAMPLES)
     add_subdirectory(example)
 endif()

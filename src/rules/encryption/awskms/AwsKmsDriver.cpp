@@ -11,7 +11,7 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "tink/integration/awskms/aws_kms_client.h"
+#include "schemaregistry/rules/encryption/awskms/AwsKmsClient.h"
 
 namespace schemaregistry::rules::encryption::awskms {
 

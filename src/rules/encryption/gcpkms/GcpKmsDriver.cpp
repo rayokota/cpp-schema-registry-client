@@ -11,7 +11,7 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
-#include "tink/integration/gcpkms/gcp_kms_client.h"
+#include "schemaregistry/rules/encryption/gcpkms/GcpKmsClient.h"
 
 namespace schemaregistry::rules::encryption::gcpkms {
 
