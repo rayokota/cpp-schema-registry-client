@@ -152,34 +152,32 @@ class AvroDeserializer::Impl {
         }
 
         // Apply transformation rules
-        if (base_->getSerde().getRuleRegistry()) {
-            auto parsed_schema = writer_parsed;
+        auto parsed_schema = writer_parsed;
 
-            // Create field transformer lambda
-            auto field_transformer =
-                [this, &parsed_schema](
-                    RuleContext &ctx, const std::string &rule_type,
-                    const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
-                if (msg.getFormat() == SerdeFormat::Avro) {
-                    auto avro_datum = asAvro(msg);
-                    auto transformed = utils::transformFields(
-                        ctx, parsed_schema.first, avro_datum);
-                    return makeAvroValue(transformed);
-                }
-                return msg.clone();
-            };
-
-            auto serde_value = makeAvroValue(value);
-
-            auto transformed = base_->getSerde().executeRules(
-                ctx, subject, Mode::Read, std::nullopt,
-                std::make_optional(reader_schema_raw), *serde_value,
-                utils::getInlineTags(nlohmann::json::parse(
-                    reader_schema_raw.getSchema().value())),
-                std::make_shared<FieldTransformer>(field_transformer));
-            if (transformed->getFormat() == SerdeFormat::Avro) {
-                value = asAvro(*transformed);
+        // Create field transformer lambda
+        auto field_transformer =
+            [this, &parsed_schema](
+                RuleContext &ctx, const std::string &rule_type,
+                const SerdeValue &msg) -> std::unique_ptr<SerdeValue> {
+            if (msg.getFormat() == SerdeFormat::Avro) {
+                auto avro_datum = asAvro(msg);
+                auto transformed = utils::transformFields(
+                    ctx, parsed_schema.first, avro_datum);
+                return makeAvroValue(transformed);
             }
+            return msg.clone();
+        };
+
+        auto serde_value = makeAvroValue(value);
+
+        auto transformed = base_->getSerde().executeRules(
+            ctx, subject, Mode::Read, std::nullopt,
+            std::make_optional(reader_schema_raw), *serde_value,
+            utils::getInlineTags(
+                nlohmann::json::parse(reader_schema_raw.getSchema().value())),
+            std::make_shared<FieldTransformer>(field_transformer));
+        if (transformed->getFormat() == SerdeFormat::Avro) {
+            value = asAvro(*transformed);
         }
 
         return NamedValue{getName(reader_parsed.first), std::move(value)};
