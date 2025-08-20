@@ -11,6 +11,7 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "schemaregistry/rules/encryption/EncryptionRegistry.h"
 #include "schemaregistry/rules/encryption/awskms/AwsKmsClient.h"
 
 namespace schemaregistry::rules::encryption::awskms {
@@ -48,13 +49,13 @@ std::shared_ptr<crypto::tink::KmsClient> AwsKmsDriver::newKmsClient(
     }
 }
 
-void AwsKmsDriver::registerDriver() {
-    // Note: This would typically register with a global registry
-    // The exact implementation depends on how the KMS driver registry is
-    // structured For now, this is a placeholder for the registration logic
+std::unique_ptr<AwsKmsDriver> AwsKmsDriver::create() {
+    return std::make_unique<AwsKmsDriver>();
+}
 
-    // Example implementation might look like:
-    // KmsDriverRegistry::getInstance().registerDriver(std::make_unique<AwsKmsDriver>());
+void AwsKmsDriver::registerDriver() {
+    auto driver = create();
+    EncryptionRegistry::getInstance().registerKmsDriver(std::move(driver));
 }
 
 std::string AwsKmsDriver::buildCredentialsPath(

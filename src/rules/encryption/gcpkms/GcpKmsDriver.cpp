@@ -11,6 +11,7 @@
 
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "schemaregistry/rules/encryption/EncryptionRegistry.h"
 #include "schemaregistry/rules/encryption/gcpkms/GcpKmsClient.h"
 
 namespace schemaregistry::rules::encryption::gcpkms {
@@ -48,10 +49,13 @@ std::shared_ptr<crypto::tink::KmsClient> GcpKmsDriver::newKmsClient(
     }
 }
 
+std::unique_ptr<GcpKmsDriver> GcpKmsDriver::create() {
+    return std::make_unique<GcpKmsDriver>();
+}
+
 void GcpKmsDriver::registerDriver() {
-    // TODO: Implement driver registration
-    // This should register the driver with the KMS driver registry
-    // registerKmsDriver(std::make_unique<GcpKmsDriver>());
+    auto driver = create();
+    EncryptionRegistry::getInstance().registerKmsDriver(std::move(driver));
 }
 
 bool GcpKmsDriver::isValidKeyUri(const std::string& keyUri) const {

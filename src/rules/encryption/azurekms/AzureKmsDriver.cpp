@@ -10,6 +10,7 @@
 #include <tuple>
 
 #include "azure/identity.hpp"
+#include "schemaregistry/rules/encryption/EncryptionRegistry.h"
 #include "schemaregistry/rules/encryption/azurekms/AzureKmsClient.h"
 
 namespace schemaregistry::rules::encryption::azurekms {
@@ -57,13 +58,13 @@ std::shared_ptr<crypto::tink::KmsClient> AzureKmsDriver::newKmsClient(
     }
 }
 
-void AzureKmsDriver::registerDriver() {
-    // Note: This would typically register with a global registry
-    // The exact implementation depends on how the KMS driver registry is
-    // structured For now, this is a placeholder for the registration logic
+std::unique_ptr<AzureKmsDriver> AzureKmsDriver::create() {
+    return std::make_unique<AzureKmsDriver>();
+}
 
-    // Example implementation might look like:
-    // KmsDriverRegistry::getInstance().registerDriver(std::make_unique<AzureKmsDriver>());
+void AzureKmsDriver::registerDriver() {
+    auto driver = create();
+    EncryptionRegistry::getInstance().registerKmsDriver(std::move(driver));
 }
 
 std::tuple<std::string, std::string, std::string> AzureKmsDriver::getKeyInfo(

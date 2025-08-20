@@ -238,21 +238,46 @@ std::string typeToString(SerdeType type) {
 }
 
 std::string modeToString(Mode mode) {
-    // This will use the existing mode to string conversion from the model
-    // For now, return a placeholder
-    return "MODE";
+    switch (mode) {
+        case Mode::Read:
+            return "READ";
+        case Mode::Write:
+            return "WRITE";
+        case Mode::WriteRead:
+            return "WRITEREAD";
+        case Mode::Upgrade:
+            return "UPGRADE";
+        case Mode::Downgrade:
+            return "DOWNGRADE";
+        case Mode::UpDown:
+            return "UPDOWN";
+        default:
+            return "UNKNOWN";
+    }
 }
 
 std::string phaseToString(Phase phase) {
-    // This will use the existing phase to string conversion from the model
-    // For now, return a placeholder
-    return "PHASE";
+    switch (phase) {
+        case Phase::Migration:
+            return "MIGRATION";
+        case Phase::Domain:
+            return "DOMAIN";
+        case Phase::Encoding:
+            return "ENCODING";
+        default:
+            return "UNKNOWN";
+    }
 }
 
 std::string kindToString(Kind kind) {
-    // This will use the existing kind to string conversion from the model
-    // For now, return a placeholder
-    return "KIND";
+    switch (kind) {
+        case Kind::Transform:
+            return "TRANSFORM";
+        case Kind::Condition:
+            return "CONDITION";
+        default:
+            return "UNKNOWN";
+    }
 }
 
 }  // namespace type_utils

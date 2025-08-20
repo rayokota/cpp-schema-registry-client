@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "libvault/VaultClient.h"
+#include "schemaregistry/rules/encryption/EncryptionRegistry.h"
 #include "schemaregistry/rules/encryption/hcvault/HcVaultClient.h"
 
 namespace schemaregistry::rules::encryption::hcvault {
@@ -101,13 +102,13 @@ std::shared_ptr<crypto::tink::KmsClient> HcVaultDriver::newKmsClient(
     }
 }
 
-void HcVaultDriver::registerDriver() {
-    // Note: This would typically register with a global registry
-    // The exact implementation depends on how the KMS driver registry is
-    // structured For now, this is a placeholder for the registration logic
+std::unique_ptr<HcVaultDriver> HcVaultDriver::create() {
+    return std::make_unique<HcVaultDriver>();
+}
 
-    // Example implementation might look like:
-    // KmsDriverRegistry::getInstance().registerDriver(std::make_unique<HcVaultDriver>());
+void HcVaultDriver::registerDriver() {
+    auto driver = create();
+    EncryptionRegistry::getInstance().registerKmsDriver(std::move(driver));
 }
 
 std::tuple<std::string, std::string> HcVaultDriver::getEndpointPaths(

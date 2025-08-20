@@ -61,6 +61,13 @@ class HcVaultDriver : public KmsDriver {
         const std::string &keyUrl) override;
 
     /**
+     * Create a new instance of this driver
+     *
+     * @return A new HcVaultDriver instance
+     */
+    static std::unique_ptr<HcVaultDriver> create();
+
+    /**
      * Register this driver with the global KMS driver registry
      */
     static void registerDriver();

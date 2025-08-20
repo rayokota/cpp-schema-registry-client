@@ -168,12 +168,8 @@ namespace utils {
     // Create message value from current field datum
     auto message_value = makeAvroValue(field_datum);
 
-    // Get inline tags for the field (placeholder implementation)
-    std::unordered_set<std::string> inline_tags = {};
-
     // Enter field context
-    ctx.enterField(*message_value, full_name, field_name, field_type,
-                   inline_tags);
+    ctx.enterField(*message_value, full_name, field_name, field_type, {});
 
     try {
         // Transform the field value (synchronous call)

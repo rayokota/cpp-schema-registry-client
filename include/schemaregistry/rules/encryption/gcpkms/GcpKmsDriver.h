@@ -57,6 +57,13 @@ class GcpKmsDriver : public KmsDriver {
         const std::string& keyUrl) override;
 
     /**
+     * Create a new instance of this driver
+     *
+     * @return A new GcpKmsDriver instance
+     */
+    static std::unique_ptr<GcpKmsDriver> create();
+
+    /**
      * Register this driver with the KMS driver registry
      */
     static void registerDriver();

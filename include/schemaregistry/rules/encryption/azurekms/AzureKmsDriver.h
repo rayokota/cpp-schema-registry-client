@@ -62,6 +62,13 @@ class AzureKmsDriver : public KmsDriver {
         const std::string &keyUrl) override;
 
     /**
+     * Create a new instance of this driver
+     *
+     * @return A new AzureKmsDriver instance
+     */
+    static std::unique_ptr<AzureKmsDriver> create();
+
+    /**
      * Register this driver with the global KMS driver registry
      */
     static void registerDriver();
