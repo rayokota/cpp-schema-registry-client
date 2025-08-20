@@ -7,6 +7,7 @@
 
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_format.h"
+#include "schemaregistry/rest/RestException.h"
 #include "schemaregistry/rules/encryption/EncryptionRegistry.h"
 #include "schemaregistry/serdes/RuleRegistry.h"
 #include "schemaregistry/serdes/avro/AvroTypes.h"
@@ -508,10 +509,13 @@ EncryptionExecutorTransform::retrieveKekFromRegistry(const KekId &kek_id) {
 
         auto kek = client->getKek(kek_id.name, kek_id.deleted);
         return kek;
+    } catch (const schemaregistry::rest::RestException &e) {
+        if (e.getStatus() == 404) {
+            return std::nullopt;
+        }
+        throw;
     } catch (const std::exception &e) {
-        // Handle 404 errors by returning nullopt
-        // Other errors should be propagated
-        return std::nullopt;
+        throw;
     }
 }
 
@@ -534,9 +538,13 @@ EncryptionExecutorTransform::storeKekToRegistry(const KekId &kek_id,
 
         auto kek = client->registerKek(request);
         return kek;
+    } catch (const schemaregistry::rest::RestException &e) {
+        if (e.getStatus() == 409) {
+            return std::nullopt;
+        }
+        throw;
     } catch (const std::exception &e) {
-        // Handle 409 conflicts by returning nullopt
-        return std::nullopt;
+        throw;
     }
 }
 
@@ -695,9 +703,13 @@ EncryptionExecutorTransform::retrieveDekFromRegistry(const DekId &dek_id) {
             client->getDek(dek_id.kek_name, dek_id.subject, dek_id.algorithm,
                            dek_id.version, dek_id.deleted);
         return dek;
+    } catch (const schemaregistry::rest::RestException &e) {
+        if (e.getStatus() == 404) {
+            return std::nullopt;
+        }
+        throw;
     } catch (const std::exception &e) {
-        // Handle 404 errors by returning nullopt
-        return std::nullopt;
+        throw;
     }
 }
 
@@ -726,9 +738,13 @@ EncryptionExecutorTransform::storeDekToRegistry(
 
         auto dek = client->registerDek(dek_id.kek_name, request);
         return dek;
+    } catch (const schemaregistry::rest::RestException &e) {
+        if (e.getStatus() == 409) {
+            return std::nullopt;
+        }
+        throw;
     } catch (const std::exception &e) {
-        // Handle 409 conflicts by returning nullopt
-        return std::nullopt;
+        throw;
     }
 }
 

@@ -27,16 +27,19 @@ namespace schemaregistry::rest {
 
 class RestException : public std::runtime_error {
   public:
-    RestException(const std::string_view message, int errorCode = 0,
+    RestException(const std::string_view message, int status = 0,
+                  int errorCode = 0,
                   std::shared_ptr<std::istream> content = nullptr);
     virtual ~RestException();
 
     std::shared_ptr<std::istream> getContent() const;
+    int getStatus() const;
     int getErrorCode() const;
 
   protected:
     std::shared_ptr<std::istream> content_;
     std::string message_;
+    int status_;
     int errorCode_;
 };
 

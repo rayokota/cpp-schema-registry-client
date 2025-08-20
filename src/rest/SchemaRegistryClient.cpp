@@ -103,7 +103,7 @@ std::string SchemaRegistryClient::sendHttpRequest(
     if (result->status >= 400) {
         std::string errorMsg = "HTTP Error " + std::to_string(result->status) +
                                ": " + result->body;
-        throw schemaregistry::rest::RestException(errorMsg);
+        throw schemaregistry::rest::RestException(errorMsg, result->status);
     }
 
     return result->body;

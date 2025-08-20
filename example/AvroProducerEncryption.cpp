@@ -152,6 +152,8 @@ class AvroProducerEncryptionExample {
     if (!producer_) {
       throw std::runtime_error("Failed to create producer: " + std::string(errstr));
     }
+    // librdkafka takes ownership of conf_ on success; avoid double free
+    conf_ = nullptr;
   }
 
   ~AvroProducerEncryptionExample() {
@@ -257,18 +259,6 @@ class AvroProducerEncryptionExample {
   }
 
   void produce_messages(const std::string& topic_name) {
-    // Delivery report callback
-    auto delivery_cb = [](rd_kafka_t* rk, const rd_kafka_message_t* rkmessage, void* opaque) {
-      if (rkmessage->err) {
-        std::cerr << "Message delivery failed: " << rd_kafka_err2str(rkmessage->err) << std::endl;
-      } else {
-        std::cout << "Encrypted message delivered to topic " << rd_kafka_topic_name(rkmessage->rkt)
-                  << " [" << rkmessage->partition << "] at offset " << rkmessage->offset << std::endl;
-      }
-    };
-
-    rd_kafka_conf_set_dr_msg_cb(conf_, delivery_cb);
-
     // Create serialization context
     SerializationContext ser_ctx;
     ser_ctx.topic = topic_name;

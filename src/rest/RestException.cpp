@@ -15,11 +15,12 @@
 namespace schemaregistry::rest {
 
 RestException::RestException(
-    const std::string_view message, int errorCode,
+    const std::string_view message, int status, int errorCode,
     std::shared_ptr<std::istream> content /*= nullptr*/)
     : std::runtime_error(std::string(message)),
       content_(content),
       message_(message),
+      status_(status),
       errorCode_(errorCode) {}
 
 RestException::~RestException() {}
@@ -27,6 +28,8 @@ RestException::~RestException() {}
 std::shared_ptr<std::istream> RestException::getContent() const {
     return content_;
 }
+
+int RestException::getStatus() const { return status_; }
 
 int RestException::getErrorCode() const { return errorCode_; }
 
