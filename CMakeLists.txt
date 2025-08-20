@@ -112,6 +112,7 @@ set(TINK_USE_SYSTEM_ABSEIL ON CACHE BOOL "Use system Abseil" FORCE)
 set(TINK_USE_SYSTEM_PROTOBUF ON CACHE BOOL "Use system Protobuf" FORCE)
 set(TINK_USE_INSTALLED_ABSEIL ON CACHE BOOL "Use installed Abseil" FORCE)
 set(TINK_USE_INSTALLED_PROTOBUF ON CACHE BOOL "Use installed Protobuf" FORCE)
+set(TINK_USE_SYSTEM_OPENSSL ON CACHE BOOL "Use system OpenSSL" FORCE)
 set(USE_ONLY_FIPS OFF CACHE BOOL "Use only FIPS" FORCE)
 FetchContent_Declare(
     tink
@@ -282,7 +283,7 @@ install(EXPORT schemaregistryTargets
 )
 
 # Add examples subdirectory (optional, can be disabled)
-option(BUILD_EXAMPLES "Build example programs" OFF)
+option(BUILD_EXAMPLES "Build example programs" ON)
 if(BUILD_EXAMPLES)
     add_subdirectory(example)
 endif()
