@@ -463,7 +463,7 @@ Serde::Serde(
 
 std::optional<RegisteredSchema> Serde::getReaderSchema(
     const std::string &subject, std::optional<std::string> format,
-    const std::optional<SchemaSelectorData> &use_schema) const {
+    const std::optional<SchemaSelector> &use_schema) const {
     if (!use_schema.has_value()) {
         return std::nullopt;
     }
@@ -471,7 +471,7 @@ std::optional<RegisteredSchema> Serde::getReaderSchema(
     const auto &selector = use_schema.value();
 
     switch (selector.type) {
-        case SchemaSelector::SchemaId: {
+        case SchemaSelectorType::SchemaId: {
             if (!selector.schema_id.has_value()) {
                 throw SerdeError(
                     "Schema ID not provided for SchemaId selector");
@@ -481,11 +481,11 @@ std::optional<RegisteredSchema> Serde::getReaderSchema(
             return client_->getBySchema(subject, schema, false, true);
         }
 
-        case SchemaSelector::LatestVersion: {
+        case SchemaSelectorType::LatestVersion: {
             return client_->getLatestVersion(subject, format);
         }
 
-        case SchemaSelector::LatestWithMetadata: {
+        case SchemaSelectorType::LatestWithMetadata: {
             return client_->getLatestWithMetadata(subject, selector.metadata,
                                                   true, format);
         }

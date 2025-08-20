@@ -183,20 +183,20 @@ using ClientConfiguration = schemaregistry::rest::ClientConfiguration;
 /**
  * Schema selector options for serialization/deserialization (from config.rs)
  */
-enum class SchemaSelector { SchemaId, LatestVersion, LatestWithMetadata };
+enum class SchemaSelectorType { SchemaId, LatestVersion, LatestWithMetadata };
 
 /**
  * Schema selector with associated data (from config.rs)
  */
-struct SchemaSelectorData {
-    SchemaSelector type;
+struct SchemaSelector {
+    SchemaSelectorType type;
     std::optional<int32_t> schema_id;
     std::unordered_map<std::string, std::string> metadata;
 
     // Static factory methods
-    static SchemaSelectorData useSchemaId(int32_t id);
-    static SchemaSelectorData useLatestVersion();
-    static SchemaSelectorData useLatestWithMetadata(
+    static SchemaSelector useSchemaId(int32_t id);
+    static SchemaSelector useLatestVersion();
+    static SchemaSelector useLatestWithMetadata(
         const std::unordered_map<std::string, std::string> &metadata);
 };
 

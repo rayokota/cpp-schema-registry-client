@@ -15,24 +15,24 @@
 
 namespace schemaregistry::serdes {
 
-// SchemaSelectorData static factory methods
-SchemaSelectorData SchemaSelectorData::useSchemaId(int32_t id) {
-    SchemaSelectorData data;
-    data.type = SchemaSelector::SchemaId;
+// SchemaSelector static factory methods
+SchemaSelector SchemaSelector::useSchemaId(int32_t id) {
+    SchemaSelector data;
+    data.type = SchemaSelectorType::SchemaId;
     data.schema_id = id;
     return data;
 }
 
-SchemaSelectorData SchemaSelectorData::useLatestVersion() {
-    SchemaSelectorData data;
-    data.type = SchemaSelector::LatestVersion;
+SchemaSelector SchemaSelector::useLatestVersion() {
+    SchemaSelector data;
+    data.type = SchemaSelectorType::LatestVersion;
     return data;
 }
 
-SchemaSelectorData SchemaSelectorData::useLatestWithMetadata(
+SchemaSelector SchemaSelector::useLatestWithMetadata(
     const std::unordered_map<std::string, std::string> &metadata) {
-    SchemaSelectorData data;
-    data.type = SchemaSelector::LatestWithMetadata;
+    SchemaSelector data;
+    data.type = SchemaSelectorType::LatestWithMetadata;
     data.metadata = metadata;
     return data;
 }

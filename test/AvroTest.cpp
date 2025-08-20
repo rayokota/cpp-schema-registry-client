@@ -135,7 +135,7 @@ TEST(AvroTest, CelFieldTransformation) {
     // Create serializer configuration
     auto ser_config = SerializerConfig(
         false,  // auto_register_schemas
-        std::make_optional(SchemaSelectorData::useLatestVersion()),  // use_schema
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
         true,   // normalize_schemas
         false,  // validate
         std::unordered_map<std::string, std::string>{}  // rule_config
@@ -352,7 +352,7 @@ TEST(AvroTest, JsonataWithCelField) {
     };
     auto ser_config = SerializerConfig(
         false,  // auto_register_schemas
-        std::make_optional(SchemaSelectorData::useLatestWithMetadata(v1_selector_metadata)),
+        std::make_optional(SchemaSelector::useLatestWithMetadata(v1_selector_metadata)),
         false,  // normalize_schemas  
         false,  // validate
         std::unordered_map<std::string, std::string>{}  // rule_config
@@ -363,7 +363,7 @@ TEST(AvroTest, JsonataWithCelField) {
         {"application.version", "v2"}
     };
     auto deser_config = DeserializerConfig(
-        std::make_optional(SchemaSelectorData::useLatestWithMetadata(v2_selector_metadata)),
+        std::make_optional(SchemaSelector::useLatestWithMetadata(v2_selector_metadata)),
         false,  // validate
         std::unordered_map<std::string, std::string>{}  // rule_config
     );
@@ -419,7 +419,7 @@ TEST(AvroTest, FieldEncryption) {
     // Create serializer configuration
     auto ser_config = SerializerConfig(
         false,  // auto_register_schemas
-        std::make_optional(SchemaSelectorData::useLatestVersion()),  // use_schema
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
         false,  // normalize_schemas
         false,  // validate
         rule_config  // rule_config

@@ -276,7 +276,7 @@ class Serde {
     // Schema retrieval (synchronous versions)
     std::optional<RegisteredSchema> getReaderSchema(
         const std::string &subject, std::optional<std::string> format,
-        const std::optional<SchemaSelectorData> &use_schema) const;
+        const std::optional<SchemaSelector> &use_schema) const;
 
     // Rule execution (synchronous versions)
     std::unique_ptr<SerdeValue> executeRules(

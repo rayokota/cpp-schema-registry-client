@@ -123,7 +123,7 @@ TEST(JsonTest, SerializeReferences) {
     // Create serializer configuration
     auto ser_conf = SerializerConfig(
         false,  // auto_register_schemas
-        std::make_optional(SchemaSelectorData::useLatestVersion()),  // use_schema
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
         true,   // normalize_schemas  
         true,  // validate
         {}      // rule_config
@@ -236,7 +236,7 @@ TEST(JsonTest, CelField) {
     // Create serializer configuration to use latest schema from registry
     auto ser_conf = SerializerConfig(
         false,  // auto_register_schemas
-        std::make_optional(SchemaSelectorData::useLatestVersion()),  // use_schema
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
         false,  // normalize_schemas
         true,  // validate
         {}  // rule_config
@@ -356,7 +356,7 @@ TEST(JsonTest, Encryption) {
     // Create serializer configuration to use latest schema from registry with rule config
     auto ser_conf = SerializerConfig(
         false,  // auto_register_schemas
-        std::make_optional(SchemaSelectorData::useLatestVersion()),  // use_schema
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
         false,  // normalize_schemas
         false,  // validate
         rule_config  // rule_config

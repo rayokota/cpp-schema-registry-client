@@ -19,7 +19,7 @@ class SchemaId;
  */
 struct SerializerConfig {
     bool auto_register_schemas;
-    std::optional<SchemaSelectorData> use_schema;
+    std::optional<SchemaSelector> use_schema;
     bool normalize_schemas;
     bool validate;
     std::unordered_map<std::string, std::string> rule_config;
@@ -29,9 +29,8 @@ struct SerializerConfig {
     // Constructors
     SerializerConfig();
     SerializerConfig(
-        bool auto_register_schemas,
-        std::optional<SchemaSelectorData> use_schema, bool normalize_schemas,
-        bool validate,
+        bool auto_register_schemas, std::optional<SchemaSelector> use_schema,
+        bool normalize_schemas, bool validate,
         const std::unordered_map<std::string, std::string> &rule_config);
 
     // Default configuration factory
@@ -49,7 +48,7 @@ struct SerializerConfig {
  * Based on DeserializerConfig from config.rs
  */
 struct DeserializerConfig {
-    std::optional<SchemaSelectorData> use_schema;
+    std::optional<SchemaSelector> use_schema;
     bool validate;
     std::unordered_map<std::string, std::string> rule_config;
     SubjectNameStrategy subject_name_strategy;
@@ -58,7 +57,7 @@ struct DeserializerConfig {
     // Constructors
     DeserializerConfig();
     DeserializerConfig(
-        std::optional<SchemaSelectorData> use_schema, bool validate,
+        std::optional<SchemaSelector> use_schema, bool validate,
         const std::unordered_map<std::string, std::string> &rule_config);
 
     // Default configuration factory

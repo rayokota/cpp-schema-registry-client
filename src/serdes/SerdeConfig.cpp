@@ -18,7 +18,7 @@ SerializerConfig::SerializerConfig()
       schema_id_serializer(prefixSchemaIdSerializer) {}
 
 SerializerConfig::SerializerConfig(
-    bool auto_register_schemas, std::optional<SchemaSelectorData> use_schema,
+    bool auto_register_schemas, std::optional<SchemaSelector> use_schema,
     bool normalize_schemas, bool validate,
     const std::unordered_map<std::string, std::string> &rule_config)
     : auto_register_schemas(auto_register_schemas),
@@ -42,7 +42,7 @@ DeserializerConfig::DeserializerConfig()
       schema_id_deserializer(dualSchemaIdDeserializer) {}
 
 DeserializerConfig::DeserializerConfig(
-    std::optional<SchemaSelectorData> use_schema, bool validate,
+    std::optional<SchemaSelector> use_schema, bool validate,
     const std::unordered_map<std::string, std::string> &rule_config)
     : use_schema(use_schema),
       validate(validate),
