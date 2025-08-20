@@ -108,20 +108,23 @@ class JsonSerializer::Impl {
           base_(std::make_shared<BaseSerializer>(
               Serde(std::move(client), rule_registry), config)),
           serde_(std::make_unique<JsonSerde>()) {
+        std::vector<std::shared_ptr<RuleExecutor>> executors;
         if (rule_registry) {
-            auto executors = rule_registry->getExecutors();
-            for (const auto &executor : executors) {
-                try {
-                    auto rr = base_->getSerde().getRuleRegistry();
-                    if (rr) {
-                        auto client = base_->getSerde().getClient();
-                        executor->configure(client->getConfiguration(),
-                                            config.rule_config);
-                    }
-                } catch (const std::exception &e) {
-                    throw JsonError("Failed to configure rule executor: " +
-                                    std::string(e.what()));
+            executors = rule_registry->getExecutors();
+        } else {
+            executors = global_registry::getRuleExecutors();
+        }
+        for (const auto &executor : executors) {
+            try {
+                auto rr = base_->getSerde().getRuleRegistry();
+                if (rr) {
+                    auto client = base_->getSerde().getClient();
+                    executor->configure(client->getConfiguration(),
+                                        config.rule_config);
                 }
+            } catch (const std::exception &e) {
+                throw JsonError("Failed to configure rule executor: " +
+                                std::string(e.what()));
             }
         }
     }
