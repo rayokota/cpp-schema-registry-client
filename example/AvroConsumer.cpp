@@ -24,16 +24,21 @@ using namespace schemaregistry::serdes::avro;
 
 class ConsumerRebalanceCallback {
  public:
-  static void pre_rebalance_cb(rd_kafka_t* rk, rd_kafka_resp_err_t err,
-                               rd_kafka_topic_partition_list_t* partitions,
-                               void* opaque) {
-    std::cout << "Pre rebalance: " << rd_kafka_err2str(err) << std::endl;
-  }
-
-  static void post_rebalance_cb(rd_kafka_t* rk, rd_kafka_resp_err_t err,
-                                rd_kafka_topic_partition_list_t* partitions,
-                                void* opaque) {
-    std::cout << "Post rebalance: " << rd_kafka_err2str(err) << std::endl;
+  static void rebalance_cb(rd_kafka_t* rk, rd_kafka_resp_err_t err,
+                           rd_kafka_topic_partition_list_t* partitions,
+                           void* opaque) {
+    std::cout << "Rebalance: " << rd_kafka_err2str(err) << std::endl;
+    switch (err) {
+      case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
+        rd_kafka_assign(rk, partitions);
+        break;
+      case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
+        rd_kafka_assign(rk, nullptr);
+        break;
+      default:
+        rd_kafka_assign(rk, nullptr);
+        break;
+    }
   }
 };
 
@@ -95,15 +100,24 @@ class AvroConsumerExample {
                                std::string(errstr));
     }
 
+    // Consume from the start if no committed offsets
+    rd_kafka_conf_set(conf_, "auto.offset.reset", "earliest", nullptr, 0);
+
     // Set rebalance callbacks
     rd_kafka_conf_set_rebalance_cb(conf_, 
-                                   ConsumerRebalanceCallback::pre_rebalance_cb);
+                                   ConsumerRebalanceCallback::rebalance_cb);
 
     // Create consumer
     consumer_ = rd_kafka_new(RD_KAFKA_CONSUMER, conf_, errstr, sizeof(errstr));
     if (!consumer_) {
       throw std::runtime_error("Failed to create consumer: " + std::string(errstr));
     }
+
+    // librdkafka takes ownership of conf_ on success; avoid double free
+    conf_ = nullptr;
+
+    // Route callbacks and events to the consumer poll queue
+    rd_kafka_poll_set_consumer(consumer_);
 
     // Set log level
     rd_kafka_set_log_level(consumer_, LOG_DEBUG);

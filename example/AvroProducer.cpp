@@ -54,7 +54,7 @@ class AvroProducerExample {
   "name": "User",
   "type": "record",
   "fields": [
-    {"name": "name", "type": "string", "confluent:tags": [ "PII" ]},
+    {"name": "name", "type": "string"},
     {"name": "favorite_number", "type": "long"},
     {"name": "favorite_color", "type": "string"}
   ]
