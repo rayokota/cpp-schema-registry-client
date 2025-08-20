@@ -78,11 +78,8 @@ class AvroConsumerEncryptionExample {
     std::unordered_map<std::string, std::string> rule_config;
     DeserializerConfig deser_config(std::nullopt, false, rule_config);
 
-    // Create rule registry for field transformations
-    auto rule_registry = std::make_shared<RuleRegistry>();
-
     // Create Avro deserializer
-    deserializer_ = std::make_unique<AvroDeserializer>(client_, rule_registry, deser_config);
+    deserializer_ = std::make_unique<AvroDeserializer>(client_, nullptr, deser_config);
 
     // Create Kafka consumer configuration
     conf_ = rd_kafka_conf_new();

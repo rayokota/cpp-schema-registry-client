@@ -128,11 +128,8 @@ class AvroProducerEncryptionExample {
     SchemaSelectorData schema_selector = SchemaSelectorData::createLatestVersion();
     SerializerConfig ser_config(false, schema_selector, true, false, rule_config);
 
-    // Create rule registry for field transformations
-    auto rule_registry = std::make_shared<RuleRegistry>();
-
     // Create Avro serializer
-    serializer_ = std::make_unique<AvroSerializer>(client_, std::nullopt, rule_registry, ser_config);
+    serializer_ = std::make_unique<AvroSerializer>(client_, std::nullopt, nullptr, ser_config);
 
     // Create Kafka producer configuration
     conf_ = rd_kafka_conf_new();
