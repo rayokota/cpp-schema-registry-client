@@ -325,3 +325,9 @@ install(EXPORT schemaregistryTargets
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/schemaregistry"
 )
 
+# Add examples subdirectory (optional, can be disabled)
+option(BUILD_EXAMPLES "Build example programs" ON)
+if(BUILD_EXAMPLES)
+    add_subdirectory(example)
+endif()
+
