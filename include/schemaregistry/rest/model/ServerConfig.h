@@ -19,6 +19,16 @@ enum class CompatibilityLevel {
     None,
 };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    CompatibilityLevel,
+    {{CompatibilityLevel::Backward, "BACKWARD"},
+     {CompatibilityLevel::BackwardTransitive, "BACKWARD_TRANSITIVE"},
+     {CompatibilityLevel::Forward, "FORWARD"},
+     {CompatibilityLevel::ForwardTransitive, "FORWARD_TRANSITIVE"},
+     {CompatibilityLevel::Full, "FULL"},
+     {CompatibilityLevel::FullTransitive, "FULL_TRANSITIVE"},
+     {CompatibilityLevel::None, "NONE"}})
+
 /// <summary>
 /// Config
 /// </summary>

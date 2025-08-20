@@ -25,8 +25,7 @@ class AvroDeserializer::Impl {
         }
         for (const auto &executor : executors) {
             try {
-                auto cfg =
-                    base_->getSerde().getClient()->getConfiguration();
+                auto cfg = base_->getSerde().getClient()->getConfiguration();
                 executor->configure(cfg, config.rule_config);
             } catch (const std::exception &e) {
                 throw AvroError("Failed to configure rule executor: " +

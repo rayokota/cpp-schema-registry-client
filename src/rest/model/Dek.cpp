@@ -13,10 +13,6 @@
 
 namespace schemaregistry::rest::model {
 
-NLOHMANN_JSON_SERIALIZE_ENUM(Algorithm, {{Algorithm::Aes128Gcm, "AES128_GCM"},
-                                         {Algorithm::Aes256Gcm, "AES256_GCM"},
-                                         {Algorithm::Aes256Siv, "AES256_SIV"}})
-
 // Base64 encoding/decoding utilities using absl
 namespace {
 std::string base64_encode(const std::vector<uint8_t> &bytes) {

@@ -18,6 +18,10 @@ namespace schemaregistry::rest::model {
  */
 enum class Algorithm { Aes128Gcm, Aes256Gcm, Aes256Siv };
 
+NLOHMANN_JSON_SERIALIZE_ENUM(Algorithm, {{Algorithm::Aes128Gcm, "AES128_GCM"},
+                                         {Algorithm::Aes256Gcm, "AES256_GCM"},
+                                         {Algorithm::Aes256Siv, "AES256_SIV"}})
+
 /**
  * Dek class
  */

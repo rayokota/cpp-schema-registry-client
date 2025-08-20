@@ -17,16 +17,6 @@
 
 namespace schemaregistry::rest::model {
 
-NLOHMANN_JSON_SERIALIZE_ENUM(Kind, {{Kind::Transform, "TRANSFORM"},
-                                    {Kind::Condition, "CONDITION"}})
-
-NLOHMANN_JSON_SERIALIZE_ENUM(Mode, {{Mode::Upgrade, "UPGRADE"},
-                                    {Mode::Downgrade, "DOWNGRADE"},
-                                    {Mode::UpDown, "UPDOWN"},
-                                    {Mode::Write, "WRITE"},
-                                    {Mode::Read, "READ"},
-                                    {Mode::WriteRead, "WRITEREAD"}})
-
 Rule::Rule() {
     // Optional members are initialized to std::nullopt by default
 }
