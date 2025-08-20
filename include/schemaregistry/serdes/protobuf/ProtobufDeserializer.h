@@ -89,19 +89,23 @@ inline ProtobufDeserializer<T>::ProtobufDeserializer(
     : base_(std::make_shared<BaseDeserializer>(
           Serde(std::move(client), rule_registry), config)),
       serde_(std::make_unique<ProtobufSerde>()) {
+    std::vector<std::shared_ptr<RuleExecutor>> executors;
     if (rule_registry) {
-        for (const auto &executor : rule_registry->getExecutors()) {
-            try {
-                auto rr = base_->getSerde().getRuleRegistry();
-                if (rr) {
-                    executor->configure(
-                        base_->getSerde().getClient()->getConfiguration(),
-                        config.rule_config);
-                }
-            } catch (const std::exception &e) {
-                throw ProtobufError("Failed to configure rule executor: " +
-                                    std::string(e.what()));
+        executors = rule_registry->getExecutors();
+    } else {
+        executors = global_registry::getRuleExecutors();
+    }
+    for (const auto &executor : executors) {
+        try {
+            auto rr = base_->getSerde().getRuleRegistry();
+            if (rr) {
+                executor->configure(
+                    base_->getSerde().getClient()->getConfiguration(),
+                    config.rule_config);
             }
+        } catch (const std::exception &e) {
+            throw ProtobufError("Failed to configure rule executor: " +
+                                std::string(e.what()));
         }
     }
 }
