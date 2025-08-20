@@ -620,6 +620,10 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
             runAction(ctx, rule_mode, rule, getOnFailure(rule), *current_msg, e,
                       "ERROR");
             return std::move(current_msg);
+        } catch (const std::exception &e) {
+            runAction(ctx, rule_mode, rule, getOnFailure(rule), *current_msg,
+                      SerdeError(e.what()), "ERROR");
+            return std::move(current_msg);
         }
     }
 
