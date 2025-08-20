@@ -14,6 +14,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <openssl/evp.h>
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -28,8 +30,6 @@
 #include "absl/strings/string_view.h"
 #include "google/cloud/kms/v1/key_management_client.h"
 #include "google/cloud/status_or.h"
-#include "openssl/base.h"
-#include "openssl/digest.h"
 #include "re2/re2.h"
 #include "schemaregistry/rules/encryption/gcpkms/GcpKmsPublicKeyVerify.h"
 #include "tink/public_key_sign.h"

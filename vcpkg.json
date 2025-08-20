@@ -12,7 +12,6 @@
       ]
     },
     "azure-identity-cpp",
-    "libvault",
     "azure-security-keyvault-keys-cpp",
     "cpp-httplib",
     {
@@ -22,7 +21,9 @@
       ]
     },
     "jsoncons",
+    "libvault",
     "nlohmann-json",
-    "protobuf"
+    "protobuf",
+    "openssl"
   ]
 }

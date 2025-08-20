@@ -37,11 +37,6 @@ target_link_libraries(schemaregistry-test
         GTest::gtest_main
         schemaregistry
         ${Protobuf_LIBRARIES}
-        absl::log_internal_log_sink_set
-        absl::log_internal_proto
-        absl::absl_log
-        absl::log_internal_message
-        absl::hash
         tink::static
 )
 

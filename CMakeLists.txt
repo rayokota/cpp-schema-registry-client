@@ -18,6 +18,8 @@ include(FetchContent)
 
 find_package(absl CONFIG REQUIRED)
 
+find_package(OpenSSL REQUIRED)
+
 # Find httplib or fetch if not found
 find_package(httplib CONFIG QUIET)
 if(NOT httplib_FOUND)
@@ -108,11 +110,9 @@ find_package(libvault CONFIG REQUIRED)
 # Import Tink as an in-tree dependency.
 # See https://developers.google.com/tink/setup/cc
 # Configure Tink to use system-provided dependencies instead of building its own
-set(TINK_USE_SYSTEM_ABSEIL ON CACHE BOOL "Use system Abseil" FORCE)
-set(TINK_USE_SYSTEM_PROTOBUF ON CACHE BOOL "Use system Protobuf" FORCE)
+set(TINK_USE_SYSTEM_OPENSSL ON CACHE BOOL "Use system OpenSSL" FORCE)
 set(TINK_USE_INSTALLED_ABSEIL ON CACHE BOOL "Use installed Abseil" FORCE)
 set(TINK_USE_INSTALLED_PROTOBUF ON CACHE BOOL "Use installed Protobuf" FORCE)
-set(TINK_USE_SYSTEM_OPENSSL ON CACHE BOOL "Use system OpenSSL" FORCE)
 set(USE_ONLY_FIPS OFF CACHE BOOL "Use only FIPS" FORCE)
 FetchContent_Declare(
     tink
@@ -196,6 +196,8 @@ target_link_libraries(schemaregistry
         
         # Cryptography library
         $<BUILD_INTERFACE:tink::static>
+
+        OpenSSL::Crypto
         
         # AWS SDK for KMS driver compilation
         aws-cpp-sdk-core
