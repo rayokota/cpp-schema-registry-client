@@ -214,7 +214,7 @@ TEST(ProtobufTest, CelFieldTransformation) {
     std::unordered_map<std::string, std::string> rule_config;
     auto ser_conf = SerializerConfig(
         false,  // auto_register_schemas
-        std::make_optional(SchemaSelectorData::createLatestVersion()),  // use_schema
+        std::make_optional(SchemaSelectorData::useLatestVersion()),  // use_schema
         false,  // normalize_schemas
         false,  // validate
         rule_config  // rule_config

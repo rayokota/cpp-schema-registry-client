@@ -194,9 +194,9 @@ struct SchemaSelectorData {
     std::unordered_map<std::string, std::string> metadata;
 
     // Static factory methods
-    static SchemaSelectorData createSchemaId(int32_t id);
-    static SchemaSelectorData createLatestVersion();
-    static SchemaSelectorData createLatestWithMetadata(
+    static SchemaSelectorData useSchemaId(int32_t id);
+    static SchemaSelectorData useLatestVersion();
+    static SchemaSelectorData useLatestWithMetadata(
         const std::unordered_map<std::string, std::string> &metadata);
 };
 

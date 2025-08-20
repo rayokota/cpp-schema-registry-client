@@ -125,7 +125,7 @@ class AvroProducerEncryptionExample {
     std::unordered_map<std::string, std::string> rule_config;
     
     // Use latest version selector for encryption
-    SchemaSelectorData schema_selector = SchemaSelectorData::createLatestVersion();
+    SchemaSelectorData schema_selector = SchemaSelectorData::useLatestVersion();
     SerializerConfig ser_config(false, schema_selector, true, false, rule_config);
 
     // Create Avro serializer
