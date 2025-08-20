@@ -292,4 +292,12 @@ std::vector<uint8_t> AvroSerializer::serializeJson(
 
 void AvroSerializer::close() { impl_->close(); }
 
+// Static utility methods
+
+::avro::ValidSchema AvroSerializer::compileJsonSchema(
+    const std::string &schema_str) {
+    // Delegate to the existing AvroUtils implementation
+    return utils::compileJsonSchema(schema_str);
+}
+
 }  // namespace schemaregistry::serdes::avro

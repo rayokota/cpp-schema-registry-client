@@ -49,6 +49,9 @@ class AvroProducerEncryptionExample {
   rd_kafka_t* producer_;
   rd_kafka_conf_t* conf_;
   ::avro::ValidSchema valid_schema_;
+  std::string kek_name_;
+  std::string kms_type_;
+  std::string kms_key_id_;
 
  public:
   AvroProducerEncryptionExample(const std::string& brokers,
@@ -56,7 +59,7 @@ class AvroProducerEncryptionExample {
                                const std::string& kek_name,
                                const std::string& kms_type,
                                const std::string& kms_key_id)
-      : producer_(nullptr), conf_(nullptr) {
+      : producer_(nullptr), conf_(nullptr), kek_name_(kek_name), kms_type_(kms_type), kms_key_id_(kms_key_id) {
     // Register KMS drivers and encryption executors
     registerKmsDriversAndExecutors();
 
@@ -110,9 +113,8 @@ class AvroProducerEncryptionExample {
     schema.setSchema(schema_str);
     schema.setRuleSet(rule_set);
 
-    // Parse and validate the schema
-    std::istringstream schema_stream(schema_str);
-    ::avro::compileJsonSchema(schema_stream, valid_schema_);
+    // Parse and validate the schema (using utility function that removes confluent:tags)
+    valid_schema_ = AvroSerializer::compileJsonSchema(schema_str);
 
     // Create serializer configuration with encryption support
     // KMS properties can be passed as follows (example commented out):
@@ -220,11 +222,10 @@ class AvroProducerEncryptionExample {
       encryption_rule.setTags(tags);
       
       std::map<std::string, std::string> params;
-      // Get encryption parameters from environment or configuration
-      // For this example, we'll use placeholder values
-      params["encrypt.kek.name"] = "test-kek";
-      params["encrypt.kms.type"] = "local-kms";
-      params["encrypt.kms.key.id"] = "test-key";
+      // Use encryption parameters from constructor
+      params["encrypt.kek.name"] = kek_name_;
+      params["encrypt.kms.type"] = kms_type_;
+      params["encrypt.kms.key.id"] = kms_key_id_;
       encryption_rule.setParams(params);
       encryption_rule.setOnFailure("ERROR,NONE");
 

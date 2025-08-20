@@ -76,6 +76,15 @@ class AvroSerializer {
      */
     void close();
 
+    /**
+     * Compile a JSON schema string to an Avro ValidSchema, removing
+     * confluent:tags properties This is a utility method that can be used by
+     * applications to compile schemas
+     * @param schema_str JSON schema string to compile
+     * @return Compiled Avro ValidSchema
+     */
+    static ::avro::ValidSchema compileJsonSchema(const std::string &schema_str);
+
   private:
     class Impl;
     std::unique_ptr<Impl> impl_;

@@ -75,7 +75,7 @@ TEST(AvroTest, BasicSerialization) {
     schema.setSchema(std::make_optional<std::string>(schema_str));
     
     // Parse the Avro schema
-    ::avro::ValidSchema avro_schema = schemaregistry::serdes::avro::utils::compileJsonSchema(schema_str);
+    ::avro::ValidSchema avro_schema = AvroSerializer::compileJsonSchema(schema_str);
     
     // Create the Avro record
     ::avro::GenericDatum datum(avro_schema);
@@ -178,7 +178,7 @@ TEST(AvroTest, CelFieldTransformation) {
     auto registered_schema = client->registerSchema("test-value", schema, false);
     
     // Parse the Avro schema
-    ::avro::ValidSchema avro_schema = schemaregistry::serdes::avro::utils::compileJsonSchema(schema_str);
+    ::avro::ValidSchema avro_schema = AvroSerializer::compileJsonSchema(schema_str);
     
     // Create the Avro record with test data
     ::avro::GenericDatum datum(avro_schema);
@@ -325,7 +325,7 @@ TEST(AvroTest, JsonataWithCelField) {
     auto v2_registered = client->registerSchema("test-value", new_schema, false);
     
     // Parse the old schema for creating test data
-    ::avro::ValidSchema avro_schema = schemaregistry::serdes::avro::utils::compileJsonSchema(old_schema_str);
+    ::avro::ValidSchema avro_schema = AvroSerializer::compileJsonSchema(old_schema_str);
     
     // Create the Avro record with test data (using old schema format)
     ::avro::GenericDatum datum(avro_schema);
@@ -474,7 +474,7 @@ TEST(AvroTest, FieldEncryption) {
     auto registered_schema = client->registerSchema("test-value", schema, false);
     
     // Parse the Avro schema
-    ::avro::ValidSchema avro_schema = schemaregistry::serdes::avro::utils::compileJsonSchema(schema_str);
+    ::avro::ValidSchema avro_schema = AvroSerializer::compileJsonSchema(schema_str);
     
     // Create the Avro record with test data
     ::avro::GenericDatum datum(avro_schema);
