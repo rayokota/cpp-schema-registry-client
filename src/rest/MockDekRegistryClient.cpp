@@ -138,7 +138,7 @@ schemaregistry::rest::model::Kek MockDekRegistryClient::getKek(
         return kek.value();
     }
 
-    throw schemaregistry::rest::RestException("KEK not found: " + name);
+    throw schemaregistry::rest::RestException("KEK not found: " + name, 404);
 }
 
 schemaregistry::rest::model::Dek MockDekRegistryClient::getDek(
@@ -161,8 +161,8 @@ schemaregistry::rest::model::Dek MockDekRegistryClient::getDek(
         return dek.value();
     }
 
-    throw schemaregistry::rest::RestException("DEK not found: " + kek_name +
-                                              "/" + subject);
+    throw schemaregistry::rest::RestException(
+        "DEK not found: " + kek_name + "/" + subject, 404);
 }
 
 schemaregistry::rest::model::Dek MockDekRegistryClient::setDekKeyMaterial(
