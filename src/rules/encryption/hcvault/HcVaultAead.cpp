@@ -6,6 +6,7 @@
 #include "schemaregistry/rules/encryption/hcvault/HcVaultAead.h"
 
 #include "absl/status/status.h"
+#include "nlohmann/json.hpp"
 
 namespace schemaregistry::rules::encryption::hcvault {
 
@@ -28,7 +29,7 @@ crypto::tink::util::StatusOr<std::string> HcVaultAead::Encrypt(
         parameters["plaintext"] = plaintextBase64;
 
         // Create path for encryption
-        std::string path = mountPoint_ + "/encrypt/" + keyName_;
+        std::string path = keyName_;
 
         // Perform encryption using Vault transit engine
         Vault::Transit transit(*vaultClient_);
@@ -40,10 +41,15 @@ crypto::tink::util::StatusOr<std::string> HcVaultAead::Encrypt(
                 "HashiCorp Vault encryption failed: No response received");
         }
 
-        // Parse response and extract ciphertext
-        // Note: The actual parsing depends on libvault's JSON response
-        // format
-        return response.value();
+        // Parse response and extract ciphertext per libvault test example
+        auto json = nlohmann::json::parse(response.value());
+        if (!json.contains("data") || !json["data"].contains("ciphertext")) {
+            return crypto::tink::util::Status(
+                absl::StatusCode::kInternal,
+                "HashiCorp Vault encryption failed: Unexpected response "
+                "format");
+        }
+        return json["data"]["ciphertext"].get<std::string>();
 
     } catch (const std::exception &e) {
         return crypto::tink::util::Status(
@@ -60,7 +66,7 @@ crypto::tink::util::StatusOr<std::string> HcVaultAead::Decrypt(
         parameters["ciphertext"] = std::string(ciphertext);
 
         // Create path for decryption
-        std::string path = mountPoint_ + "/decrypt/" + keyName_;
+        std::string path = keyName_;
 
         // Perform decryption using Vault transit engine
         Vault::Transit transit(*vaultClient_);
@@ -72,9 +78,8 @@ crypto::tink::util::StatusOr<std::string> HcVaultAead::Decrypt(
                 "HashiCorp Vault decryption failed: No response received");
         }
 
-        // Decode base64 plaintext
-        std::string plaintext = Vault::Base64::decode(response.value());
-        return plaintext;
+        // libvault transit.decrypt returns plaintext directly
+        return response.value();
 
     } catch (const std::exception &e) {
         return crypto::tink::util::Status(

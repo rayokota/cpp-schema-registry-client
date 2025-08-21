@@ -69,6 +69,11 @@ std::shared_ptr<crypto::tink::KmsClient> HcVaultDriver::newKmsClient(
 
         auto url = parseVaultUrl(uri);
 
+        Vault::HttpErrorCallback httpErrorCallback = [&](std::string err) {
+            std::cout << "Error accessing Hashicorp Vault: " << err
+                      << std::endl;
+        };
+
         // Create Vault client configuration
         auto configBuilder =
             Vault::ConfigBuilder()
@@ -77,6 +82,8 @@ std::shared_ptr<crypto::tink::KmsClient> HcVaultDriver::newKmsClient(
 
         if (url.scheme == "https") {
             configBuilder = configBuilder.withTlsEnabled(true);
+        } else {
+            configBuilder = configBuilder.withTlsEnabled(false);
         }
 
         if (!namespace_.empty()) {
@@ -90,8 +97,8 @@ std::shared_ptr<crypto::tink::KmsClient> HcVaultDriver::newKmsClient(
         auto authStrategy = Vault::TokenStrategy{Vault::Token{token}};
 
         // Create the Vault client
-        auto vaultClient =
-            std::make_shared<Vault::Client>(config, authStrategy);
+        auto vaultClient = std::make_shared<Vault::Client>(config, authStrategy,
+                                                           httpErrorCallback);
 
         // Create and return the HashiCorp Vault KMS client
         return std::make_shared<HcVaultKmsClient>(keyUrl, vaultClient);
