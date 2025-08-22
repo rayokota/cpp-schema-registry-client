@@ -340,6 +340,119 @@ TEST(JsonTest, CelField) {
 }
 
 
+TEST(JsonTest, CelFieldWithNullable) {
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = SchemaRegistryClient::newClient(client_config);
+    
+    // Create serializer configuration to use latest schema from registry
+    auto ser_conf = SerializerConfig(
+        false,  // auto_register_schemas
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
+        false,  // normalize_schemas
+        true,  // validate
+        {}  // rule_config
+    );
+    
+    // Define JSON schema string with PII tags
+    std::string schema_str = R"(
+    {
+        "type": "object",
+        "properties": {
+            "intField": {"type": "integer"},
+            "doubleField": {"type": "number"},
+            "stringField": {
+                "type": ["string", "null"],
+                "confluent:tags": ["PII"]
+            },
+            "booleanField": {"type": "boolean"},
+            "bytesField": {
+                "type": "string",
+                "contentEncoding": "base64",
+                "confluent:tags": ["PII"]
+            }
+        }
+    }
+    )";
+    
+    // Create CEL rule
+    Rule rule;
+    rule.setName(std::make_optional<std::string>("test-cel"));
+    rule.setKind(std::make_optional<Kind>(Kind::Transform));
+    rule.setMode(std::make_optional<Mode>(Mode::Write));
+    rule.setType(std::make_optional<std::string>("CEL_FIELD"));
+    rule.setExpr(std::make_optional<std::string>("name == 'stringField' ; value + '-suffix'"));
+    
+    // Create rule set with domain rules
+    RuleSet rule_set;
+    std::vector<Rule> domain_rules = {rule};
+    rule_set.setDomainRules(std::make_optional<std::vector<Rule>>(domain_rules));
+    
+    // Create schema object with rule set
+    Schema schema;
+    schema.setSchemaType(std::make_optional<std::string>("JSON"));
+    schema.setSchema(std::make_optional<std::string>(schema_str));
+    schema.setRuleSet(std::make_optional<RuleSet>(rule_set));
+    
+    // Register the schema
+    auto registered_schema = client->registerSchema("test-value", schema, false);
+    
+    // Create original test JSON object
+    std::string obj_str = R"(
+    {
+        "intField": 123,
+        "doubleField": 45.67,
+        "stringField": "hi",
+        "booleanField": true,
+        "bytesField": "Zm9vYmFy"
+    }
+    )";
+    
+    nlohmann::json obj = nlohmann::json::parse(obj_str);
+    
+    // Create rule registry and register CEL field executor
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    auto cel_field_executor = std::make_shared<CelFieldExecutor>();
+    rule_registry->registerExecutor(cel_field_executor);
+    
+    // Create JsonSerializer with rule registry - no schema needed since we use latest from registry
+    JsonSerializer serializer(client, std::nullopt, rule_registry, ser_conf);
+    
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Json;
+    
+    // Serialize the JSON object
+    std::vector<uint8_t> bytes = serializer.serialize(ser_ctx, obj);
+    
+    // Create JsonDeserializer with rule registry
+    auto deser_conf = DeserializerConfig::createDefault();
+    JsonDeserializer deserializer(client, rule_registry, deser_conf);
+    
+    // Create expected JSON object (with "-suffix" added to stringField)
+    std::string expected_obj_str = R"(
+    {
+        "intField": 123,
+        "doubleField": 45.67,
+        "stringField": "hi-suffix",
+        "booleanField": true,
+        "bytesField": "Zm9vYmFy"
+    }
+    )";
+    
+    nlohmann::json expected_obj = nlohmann::json::parse(expected_obj_str);
+    
+    // Deserialize back to JSON object
+    nlohmann::json obj2 = deserializer.deserialize(ser_ctx, bytes);
+    
+    // Assert that the deserialized object matches the expected object (with suffix)
+    ASSERT_EQ(obj2, expected_obj);
+}
+
+
 TEST(JsonTest, Encryption) {
     // Register LocalKmsDriver
     LocalKmsDriver::registerDriver();
