@@ -28,6 +28,9 @@ class FieldEncryptionExecutor : public FieldRuleExecutor {
     std::unique_ptr<SerdeValue> transformField(
         RuleContext &ctx, const SerdeValue &field_value) override;
 
+    // Accessor
+    IDekRegistryClient *getClient() const;
+
     // Static registration
     static void registerExecutor();
 };

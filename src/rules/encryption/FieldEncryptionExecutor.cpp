@@ -31,6 +31,10 @@ std::unique_ptr<SerdeValue> FieldEncryptionExecutor::transformField(
     return transform->transform(ctx, field_ctx->getFieldType(), field_value);
 }
 
+IDekRegistryClient *FieldEncryptionExecutor::getClient() const {
+    return executor_.getClient();
+}
+
 void FieldEncryptionExecutor::registerExecutor() {
     global_registry::registerRuleExecutor(
         std::make_shared<FieldEncryptionExecutor>(nullptr));

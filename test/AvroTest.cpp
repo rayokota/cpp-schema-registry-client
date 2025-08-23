@@ -733,3 +733,359 @@ TEST(AvroTest, PayloadEncryption) {
     EXPECT_EQ(bytes_field[1], 2);
     EXPECT_EQ(bytes_field[2], 3);
 }
+
+TEST(AvroTest, EncryptionF1Preserialized) {
+    // Register local KMS driver
+    LocalKmsDriver::registerDriver();
+
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = SchemaRegistryClient::newClient(client_config);
+    
+    // Create rule configuration with secret
+    std::unordered_map<std::string, std::string> rule_config = {
+        {"secret", "mysecret"}
+    };
+    
+    // Create deserializer configuration
+    auto deser_config = DeserializerConfig(
+        std::nullopt,  // use_schema  
+        false,  // validate
+        rule_config  // rule_config
+    );
+    
+    // Define the Avro schema with PII tags for f1 field
+    const std::string schema_str = R"({
+        "type": "record",
+        "name": "f1Schema",
+        "fields": [
+            {"name": "f1", "type": "string", "confluent:tags": ["PII"]}
+        ]
+    })";
+    
+    // Create field encryption rule for PII fields
+    Rule encrypt_rule;
+    encrypt_rule.setName(std::make_optional<std::string>("test-encrypt"));
+    encrypt_rule.setKind(std::make_optional<Kind>(Kind::Transform));
+    encrypt_rule.setMode(std::make_optional<Mode>(Mode::WriteRead));
+    encrypt_rule.setType(std::make_optional<std::string>("ENCRYPT"));
+    
+    // Set rule tags to target PII fields
+    std::vector<std::string> tags = {"PII"};
+    encrypt_rule.setTags(std::make_optional<std::vector<std::string>>(tags));
+    
+    // Set rule parameters for local KMS
+    std::map<std::string, std::string> params = {
+        {"encrypt.kek.name", "kek1-f1"},
+        {"encrypt.kms.type", "local-kms"},
+        {"encrypt.kms.key.id", "mykey"}
+    };
+    encrypt_rule.setParams(std::make_optional<std::map<std::string, std::string>>(params));
+    encrypt_rule.setOnFailure(std::make_optional<std::string>("ERROR,ERROR"));
+    
+    // Create rule set with domain rules
+    RuleSet rule_set;
+    std::vector<Rule> domain_rules = {encrypt_rule};
+    rule_set.setDomainRules(std::make_optional<std::vector<Rule>>(domain_rules));
+    
+    // Create schema object with rule set
+    Schema schema;
+    schema.setSchemaType(std::make_optional<std::string>("AVRO"));
+    schema.setSchema(std::make_optional<std::string>(schema_str));
+    schema.setRuleSet(std::make_optional<RuleSet>(rule_set));
+    
+    // Register the schema
+    auto registered_schema = client->registerSchema("test-value", schema, false);
+    
+    // Create rule registry and register field encryption executor
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    auto fake_clock = std::make_shared<FakeClock>(0);  // Use FakeClock with time 0 for consistent testing
+    auto encryption_executor = std::make_shared<FieldEncryptionExecutor>(fake_clock);
+    rule_registry->registerExecutor(encryption_executor);
+    
+    // Create deserializer
+    AvroDeserializer deserializer(client, rule_registry, deser_config);
+    
+    // Get the DEK client from the encryption executor to pre-register KEK and DEK
+    auto dek_client =
+        dynamic_cast<const FieldEncryptionExecutor*>(
+            rule_registry->getExecutor("ENCRYPT").get()
+        )->getClient();
+    ASSERT_NE(dek_client, nullptr);
+    
+    // Register KEK
+    CreateKekRequest kek_req("kek1-f1", "local-kms", "mykey", std::nullopt, std::nullopt, false);
+    auto registered_kek = dek_client->registerKek(kek_req);
+    
+    // Register DEK with pre-encrypted key material
+    const std::string encrypted_dek = 
+        "07V2ndh02DA73p+dTybwZFm7DKQSZN1tEwQh+FoX1DZLk4Yj2LLu4omYjp/84tAg3BYlkfGSz+zZacJHIE4=";
+    CreateDekRequest dek_req("test-value", std::nullopt, std::nullopt, 
+                            std::make_optional<std::string>(encrypted_dek));
+    auto registered_dek = dek_client->registerDek("kek1-f1", dek_req);
+    
+    // Pre-serialized encrypted bytes from Rust test
+    std::vector<uint8_t> bytes = {
+        0, 0, 0, 0, 1, 104, 122, 103, 121, 47, 106, 70, 78, 77, 86, 47, 101, 70, 105, 108, 97,
+        72, 114, 77, 121, 101, 66, 103, 100, 97, 86, 122, 114, 82, 48, 117, 100, 71, 101, 111,
+        116, 87, 56, 99, 65, 47, 74, 97, 108, 55, 117, 107, 114, 43, 77, 47, 121, 122
+    };
+    
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Avro;
+    
+    // Deserialize the pre-encrypted bytes
+    auto deserialized_value = deserializer.deserialize(ser_ctx, bytes);
+    
+    // Verify the deserialized record
+    ASSERT_TRUE(deserialized_value.value.type() == ::avro::AVRO_RECORD);
+    
+    auto& deserialized_record = deserialized_value.value.value<::avro::GenericRecord>();
+    ASSERT_EQ(deserialized_record.fieldCount(), 1);
+    
+    // Verify field value - should be decrypted to "hello world"
+    EXPECT_EQ(deserialized_record.fieldAt(0).value<std::string>(), "hello world");
+}
+
+TEST(AvroTest, EncryptionDeterministicF1Preserialized) {
+    // Register local KMS driver
+    LocalKmsDriver::registerDriver();
+
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = SchemaRegistryClient::newClient(client_config);
+    
+    // Create rule configuration with secret
+    std::unordered_map<std::string, std::string> rule_config = {
+        {"secret", "mysecret"}
+    };
+    
+    // Create deserializer configuration
+    auto deser_config = DeserializerConfig(
+        std::nullopt,  // use_schema  
+        false,  // validate
+        rule_config  // rule_config
+    );
+    
+    // Define the Avro schema with PII tags for f1 field
+    const std::string schema_str = R"({
+        "type": "record",
+        "name": "f1Schema",
+        "fields": [
+            {"name": "f1", "type": "string", "confluent:tags": ["PII"]}
+        ]
+    })";
+    
+    // Create field encryption rule for PII fields with AES256_SIV algorithm
+    Rule encrypt_rule;
+    encrypt_rule.setName(std::make_optional<std::string>("test-encrypt"));
+    encrypt_rule.setKind(std::make_optional<Kind>(Kind::Transform));
+    encrypt_rule.setMode(std::make_optional<Mode>(Mode::WriteRead));
+    encrypt_rule.setType(std::make_optional<std::string>("ENCRYPT"));
+    
+    // Set rule tags to target PII fields
+    std::vector<std::string> tags = {"PII"};
+    encrypt_rule.setTags(std::make_optional<std::vector<std::string>>(tags));
+    
+    // Set rule parameters for local KMS with deterministic encryption (AES256_SIV)
+    std::map<std::string, std::string> params = {
+        {"encrypt.kek.name", "kek1-det-f1"},
+        {"encrypt.kms.type", "local-kms"},
+        {"encrypt.kms.key.id", "mykey"},
+        {"encrypt.dek.algorithm", "AES256_SIV"}  // Deterministic encryption
+    };
+    encrypt_rule.setParams(std::make_optional<std::map<std::string, std::string>>(params));
+    encrypt_rule.setOnFailure(std::make_optional<std::string>("ERROR,ERROR"));
+    
+    // Create rule set with domain rules
+    RuleSet rule_set;
+    std::vector<Rule> domain_rules = {encrypt_rule};
+    rule_set.setDomainRules(std::make_optional<std::vector<Rule>>(domain_rules));
+    
+    // Create schema object with rule set
+    Schema schema;
+    schema.setSchemaType(std::make_optional<std::string>("AVRO"));
+    schema.setSchema(std::make_optional<std::string>(schema_str));
+    schema.setRuleSet(std::make_optional<RuleSet>(rule_set));
+    
+    // Register the schema
+    auto registered_schema = client->registerSchema("test-value", schema, false);
+    
+    // Create rule registry and register field encryption executor
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    auto fake_clock = std::make_shared<FakeClock>(0);  // Use FakeClock with time 0 for consistent testing
+    auto encryption_executor = std::make_shared<FieldEncryptionExecutor>(fake_clock);
+    rule_registry->registerExecutor(encryption_executor);
+    
+    // Create deserializer
+    AvroDeserializer deserializer(client, rule_registry, deser_config);
+    
+    // Get the DEK client from the encryption executor to pre-register KEK and DEK
+    auto dek_client =
+        dynamic_cast<const FieldEncryptionExecutor*>(
+            rule_registry->getExecutor("ENCRYPT").get()
+        )->getClient();
+    ASSERT_NE(dek_client, nullptr);
+    
+    // Register KEK
+    CreateKekRequest kek_req("kek1-det-f1", "local-kms", "mykey", std::nullopt, std::nullopt, false);
+    auto registered_kek = dek_client->registerKek(kek_req);
+    
+    // Register DEK with pre-encrypted key material for AES256_SIV
+    const std::string encrypted_dek = 
+        "YSx3DTlAHrmpoDChquJMifmPntBzxgRVdMzgYL82rgWBKn7aUSnG+WIu9ozBNS3y2vXd++mBtK07w4/W/G6w0da39X9hfOVZsGnkSvry/QRht84V8yz3dqKxGMOK5A==";
+    CreateDekRequest dek_req("test-value", std::nullopt, 
+                            std::make_optional<Algorithm>(Algorithm::Aes256Siv),
+                            std::make_optional<std::string>(encrypted_dek));
+    auto registered_dek = dek_client->registerDek("kek1-det-f1", dek_req);
+    
+    // Pre-serialized encrypted bytes from Rust test (AES256_SIV produces deterministic output)
+    std::vector<uint8_t> bytes = {
+        0, 0, 0, 0, 1, 72, 68, 54, 89, 116, 120, 114, 108, 66, 110, 107, 84, 87, 87, 57, 78,
+        54, 86, 98, 107, 51, 73, 73, 110, 106, 87, 72, 56, 49, 120, 109, 89, 104, 51, 107, 52,
+        100
+    };
+    
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Avro;
+    
+    // Deserialize the pre-encrypted bytes
+    auto deserialized_value = deserializer.deserialize(ser_ctx, bytes);
+    
+    // Verify the deserialized record
+    ASSERT_TRUE(deserialized_value.value.type() == ::avro::AVRO_RECORD);
+    
+    auto& deserialized_record = deserialized_value.value.value<::avro::GenericRecord>();
+    ASSERT_EQ(deserialized_record.fieldCount(), 1);
+    
+    // Verify field value - should be decrypted to "hello world"
+    EXPECT_EQ(deserialized_record.fieldAt(0).value<std::string>(), "hello world");
+}
+
+TEST(AvroTest, EncryptionDekRotationF1Preserialized) {
+    // Register local KMS driver
+    LocalKmsDriver::registerDriver();
+
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = SchemaRegistryClient::newClient(client_config);
+    
+    // Create rule configuration with secret
+    std::unordered_map<std::string, std::string> rule_config = {
+        {"secret", "mysecret"}
+    };
+    
+    // Create deserializer configuration
+    auto deser_config = DeserializerConfig(
+        std::nullopt,  // use_schema  
+        false,  // validate
+        rule_config  // rule_config
+    );
+    
+    // Define the Avro schema with PII tags for f1 field
+    const std::string schema_str = R"({
+        "type": "record",
+        "name": "f1Schema",
+        "fields": [
+            {"name": "f1", "type": "string", "confluent:tags": ["PII"]}
+        ]
+    })";
+    
+    // Create field encryption rule for PII fields with DEK rotation (1 day expiry)
+    Rule encrypt_rule;
+    encrypt_rule.setName(std::make_optional<std::string>("test-encrypt"));
+    encrypt_rule.setKind(std::make_optional<Kind>(Kind::Transform));
+    encrypt_rule.setMode(std::make_optional<Mode>(Mode::WriteRead));
+    encrypt_rule.setType(std::make_optional<std::string>("ENCRYPT"));
+    
+    // Set rule tags to target PII fields
+    std::vector<std::string> tags = {"PII"};
+    encrypt_rule.setTags(std::make_optional<std::vector<std::string>>(tags));
+    
+    // Set rule parameters for local KMS with DEK rotation (1 day expiry)
+    std::map<std::string, std::string> params = {
+        {"encrypt.kek.name", "kek1-rot-f1"},
+        {"encrypt.kms.type", "local-kms"},
+        {"encrypt.kms.key.id", "mykey"},
+        {"encrypt.dek.expiry.days", "1"}  // DEK expires after 1 day
+    };
+    encrypt_rule.setParams(std::make_optional<std::map<std::string, std::string>>(params));
+    encrypt_rule.setOnFailure(std::make_optional<std::string>("ERROR,ERROR"));
+    
+    // Create rule set with domain rules
+    RuleSet rule_set;
+    std::vector<Rule> domain_rules = {encrypt_rule};
+    rule_set.setDomainRules(std::make_optional<std::vector<Rule>>(domain_rules));
+    
+    // Create schema object with rule set
+    Schema schema;
+    schema.setSchemaType(std::make_optional<std::string>("AVRO"));
+    schema.setSchema(std::make_optional<std::string>(schema_str));
+    schema.setRuleSet(std::make_optional<RuleSet>(rule_set));
+    
+    // Register the schema
+    auto registered_schema = client->registerSchema("test-value", schema, false);
+    
+    // Create rule registry and register field encryption executor
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    auto fake_clock = std::make_shared<FakeClock>(0);  // Use FakeClock with time 0 for consistent testing
+    auto encryption_executor = std::make_shared<FieldEncryptionExecutor>(fake_clock);
+    rule_registry->registerExecutor(encryption_executor);
+    
+    // Create deserializer
+    AvroDeserializer deserializer(client, rule_registry, deser_config);
+    
+    // Get the DEK client from the encryption executor to pre-register KEK and DEK
+    auto dek_client =
+        dynamic_cast<const FieldEncryptionExecutor*>(
+            rule_registry->getExecutor("ENCRYPT").get()
+        )->getClient();
+    ASSERT_NE(dek_client, nullptr);
+    
+    // Register KEK
+    CreateKekRequest kek_req("kek1-rot-f1", "local-kms", "mykey", std::nullopt, std::nullopt, false);
+    auto registered_kek = dek_client->registerKek(kek_req);
+    
+    // Register DEK with pre-encrypted key material for AES256_GCM (default algorithm)
+    const std::string encrypted_dek = 
+        "W/v6hOQYq1idVAcs1pPWz9UUONMVZW4IrglTnG88TsWjeCjxmtRQ4VaNe/I5dCfm2zyY9Cu0nqdvqImtUk4=";
+    CreateDekRequest dek_req("test-value", std::nullopt, 
+                            std::make_optional<Algorithm>(Algorithm::Aes256Gcm),
+                            std::make_optional<std::string>(encrypted_dek));
+    auto registered_dek = dek_client->registerDek("kek1-rot-f1", dek_req);
+    
+    // Pre-serialized encrypted bytes from Rust test (includes version for DEK rotation)
+    std::vector<uint8_t> bytes = {
+        0, 0, 0, 0, 1, 120, 65, 65, 65, 65, 65, 65, 71, 52, 72, 73, 54, 98, 49, 110, 88, 80,
+        88, 113, 76, 121, 71, 56, 99, 73, 73, 51, 53, 78, 72, 81, 115, 101, 113, 113, 85, 67,
+        100, 43, 73, 101, 76, 101, 70, 86, 65, 101, 78, 112, 83, 83, 51, 102, 120, 80, 110, 74,
+        51, 50, 65, 61
+    };
+    
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Avro;
+    
+    // Deserialize the pre-encrypted bytes
+    auto deserialized_value = deserializer.deserialize(ser_ctx, bytes);
+    
+    // Verify the deserialized record
+    ASSERT_TRUE(deserialized_value.value.type() == ::avro::AVRO_RECORD);
+    
+    auto& deserialized_record = deserialized_value.value.value<::avro::GenericRecord>();
+    ASSERT_EQ(deserialized_record.fieldCount(), 1);
+    
+    // Verify field value - should be decrypted to "hello world"
+    EXPECT_EQ(deserialized_record.fieldAt(0).value<std::string>(), "hello world");
+}
