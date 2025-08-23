@@ -308,6 +308,135 @@ TEST(ProtobufTest, CelFieldTransformation) {
     EXPECT_EQ(obj2->oneof_string(), expected_obj.oneof_string());
 }
 
+TEST(ProtobufTest, PayloadEncryption) {
+    // Register LocalKmsDriver
+    LocalKmsDriver::registerDriver();
+
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = std::make_shared<MockSchemaRegistryClient>(client_config);
+    auto dek_client = std::make_shared<MockDekRegistryClient>(client_config);
+
+    // Create rule configuration with secret
+    std::unordered_map<std::string, std::string> rule_config;
+    rule_config["secret"] = "mysecret";
+
+    // Create serializer and deserializer configurations
+    auto ser_conf = SerializerConfig(
+        false,  // auto_register_schemas
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
+        true,   // normalize_schemas
+        false,  // validate
+        rule_config  // rule_config
+    );
+
+    auto deser_conf = DeserializerConfig(
+        std::nullopt,  // use_schema
+        false,  // validate
+        rule_config  // rule_config
+    );
+
+    // Create Author object with test data
+    test::Author obj;
+    obj.set_name("Kafka");
+    obj.set_id(123);
+    obj.set_picture(std::string({1, 2, 3})); // bytes field
+    obj.add_works("Metamorphosis");
+    obj.add_works("The Trial");
+    obj.set_oneof_string("oneof");
+
+    // Create encryption rule
+    Rule rule;
+    rule.setName("test-encrypt");
+    rule.setKind(Kind::Transform);
+    rule.setMode(Mode::WriteRead);
+    rule.setType("ENCRYPT_PAYLOAD");
+
+    // Set rule tags for PII
+    std::vector<std::string> tags = {"PII"};
+    rule.setTags(tags);
+
+    // Set rule parameters
+    std::map<std::string, std::string> params;
+    params["encrypt.kek.name"] = "kek1";
+    params["encrypt.kms.type"] = "local-kms";
+    params["encrypt.kms.key.id"] = "mykey";
+    rule.setParams(params);
+
+    // Set on_failure parameter
+    rule.setOnFailure("ERROR,NONE");
+
+    // Create rule set with the domain rule
+    RuleSet rule_set;
+    std::vector<Rule> encoding_rules = {rule};
+    rule_set.setEncodingRules(encoding_rules);
+
+    // Create schema with rule set
+    Schema schema;
+    schema.setSchemaType("PROTOBUF");
+    schema.setRuleSet(rule_set);
+
+    // Get the protobuf schema string from the test::Author descriptor
+    std::string schema_str = protobuf::utils::schemaToString(obj.GetDescriptor()->file());
+    schema.setSchema(schema_str);
+
+    // Register the schema
+    client->registerSchema("test-value", schema, false);
+
+    // Create rule registry and register field encryption executor
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    rule_registry->registerExecutor(std::make_shared<EncryptionExecutor>());
+
+    // Create protobuf serializer with rule registry
+    ProtobufSerializer<test::Author> ser(
+        client,
+        std::nullopt, // schema
+        rule_registry,
+        ser_conf
+    );
+
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Protobuf;
+    ser_ctx.headers = std::nullopt;
+
+    // Serialize the Author object (encryption will be applied)
+    auto bytes = ser.serialize(ser_ctx, obj);
+
+    // Create protobuf deserializer with rule registry
+    ProtobufDeserializer<test::Author> deser(
+        client,
+        rule_registry,
+        deser_conf
+    );
+
+    // Deserialize the bytes back to Author object
+    auto obj2_ptr = deser.deserialize(ser_ctx, bytes);
+    auto obj2 = dynamic_cast<const test::Author*>(obj2_ptr.get());
+    ASSERT_NE(obj2, nullptr);
+
+    // Create expected object (should be the same as original after decryption)
+    test::Author expected_obj;
+    expected_obj.set_name("Kafka");
+    expected_obj.set_id(123);
+    expected_obj.set_picture(std::string({1, 2, 3}));
+    expected_obj.add_works("Metamorphosis");
+    expected_obj.add_works("The Trial");
+    expected_obj.set_oneof_string("oneof");
+
+    // Assert the decrypted object matches expected values
+    EXPECT_EQ(obj2->name(), expected_obj.name());
+    EXPECT_EQ(obj2->id(), expected_obj.id());
+    EXPECT_EQ(obj2->picture(), expected_obj.picture());
+    EXPECT_EQ(obj2->works_size(), expected_obj.works_size());
+    for (int i = 0; i < expected_obj.works_size(); ++i) {
+        EXPECT_EQ(obj2->works(i), expected_obj.works(i));
+    }
+    EXPECT_EQ(obj2->oneof_string(), expected_obj.oneof_string());
+}
 TEST(ProtobufTest, FieldEncryption) {
     // Register LocalKmsDriver
     LocalKmsDriver::registerDriver();

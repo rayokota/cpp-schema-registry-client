@@ -339,7 +339,6 @@ TEST(JsonTest, CelField) {
     ASSERT_EQ(obj2, expected_obj);
 }
 
-
 TEST(JsonTest, CelFieldWithNullable) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
@@ -451,7 +450,6 @@ TEST(JsonTest, CelFieldWithNullable) {
     // Assert that the deserialized object matches the expected object (with suffix)
     ASSERT_EQ(obj2, expected_obj);
 }
-
 
 TEST(JsonTest, Encryption) {
     // Register LocalKmsDriver
@@ -572,7 +570,6 @@ TEST(JsonTest, Encryption) {
     // Assert that the original and deserialized objects are equal
     ASSERT_EQ(obj2, obj);
 }
-
 
 TEST(JsonTest, PayloadEncryption) {
     // Register LocalKmsDriver
