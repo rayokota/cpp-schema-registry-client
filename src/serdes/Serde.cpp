@@ -55,7 +55,7 @@ size_t SchemaId::readFromBytes(const std::vector<uint8_t> &bytes) {
         // Format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         for (int i = 1; i <= 16; ++i) {
             uuid_stream << std::setw(2) << static_cast<unsigned>(bytes[i]);
-            if (i == 5 || i == 7 || i == 9 || i == 11) {
+            if (i == 4 || i == 6 || i == 8 || i == 10) {
                 uuid_stream << "-";
             }
         }
