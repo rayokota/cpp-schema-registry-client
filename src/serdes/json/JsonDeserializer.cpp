@@ -77,10 +77,17 @@ class JsonDeserializer::Impl {
 
         // Handle encoding rules
         std::vector<uint8_t> decoded_data;
-        auto rule_set = writer_schema_raw.getRuleSet();
-        if (rule_set.has_value()) {
-            // TODO: Implement encoding rule execution
+        if (writer_schema_raw.getRuleSet().has_value()) {
             decoded_data.assign(message_data, message_data + message_size);
+            auto rule_set = writer_schema_raw.getRuleSet().value();
+            if (rule_set.getEncodingRules().has_value()) {
+                auto bytes_value =
+                    SerdeValue::newBytes(SerdeFormat::Json, decoded_data);
+                auto result = base_->getSerde().executeRulesWithPhase(
+                    ctx, subject, Phase::Encoding, Mode::Read, std::nullopt,
+                    std::make_optional(writer_schema_raw), *bytes_value, {});
+                decoded_data = result->asBytes();
+            }
             message_data = decoded_data.data();
             message_size = decoded_data.size();
         }

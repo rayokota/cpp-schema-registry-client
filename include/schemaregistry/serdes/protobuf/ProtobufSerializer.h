@@ -331,7 +331,7 @@ ProtobufSerializer<T>::serializeWithMessageDescriptor(
                 auto result = base_->getSerde().executeRulesWithPhase(
                     ctx, subject, Phase::Encoding, Mode::Write, std::nullopt,
                     std::make_optional(schema), *bytes_value, {});
-                encoded_bytes = result->getValue<std::vector<uint8_t>>();
+                encoded_bytes = result->asBytes();
             }
         }
     }

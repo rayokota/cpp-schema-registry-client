@@ -95,7 +95,7 @@ class AvroDeserializer::Impl {
                 auto result = base_->getSerde().executeRulesWithPhase(
                     ctx, subject, Phase::Encoding, Mode::Read, std::nullopt,
                     std::make_optional(writer_schema_raw), *bytes_value, {});
-                payload_data = result->getValue<std::vector<uint8_t>>();
+                payload_data = result->asBytes();
             }
         }
 

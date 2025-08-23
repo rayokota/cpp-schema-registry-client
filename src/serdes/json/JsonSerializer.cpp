@@ -251,9 +251,16 @@ class JsonSerializer::Impl {
                                            json_string.end());
 
         // Apply encoding rules if present
-        auto rule_set = target_schema.getRuleSet();
-        if (rule_set.has_value()) {
-            // TODO: Implement encoding rule execution
+        if (target_schema.getRuleSet().has_value()) {
+            auto rule_set = target_schema.getRuleSet().value();
+            if (rule_set.getEncodingRules().has_value()) {
+                auto bytes_value =
+                    SerdeValue::newBytes(SerdeFormat::Json, encoded_bytes);
+                auto result = base_->getSerde().executeRulesWithPhase(
+                    ctx, subject, Phase::Encoding, Mode::Write, std::nullopt,
+                    std::make_optional(target_schema), *bytes_value, {});
+                encoded_bytes = result->asBytes();
+            }
         }
 
         // Serialize schema ID with message

@@ -235,7 +235,7 @@ class AvroSerializer::Impl {
                         ctx, subject, Phase::Encoding, Mode::Write,
                         std::nullopt, std::make_optional(schema), *bytes_value,
                         {});
-                    avro_bytes = result->getValue<std::vector<uint8_t>>();
+                    avro_bytes = result->asBytes();
                 }
             }
         }

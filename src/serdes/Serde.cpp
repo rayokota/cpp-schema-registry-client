@@ -601,14 +601,13 @@ std::unique_ptr<SerdeValue> Serde::executeRulesWithPhase(
 
             Kind kind = rule.getKind().value_or(Kind::Transform);
             if (kind == Kind::Condition) {
-                // TODO
                 // For condition rules, check if result is true
-                // Implementation depends on SerdeValue interface
-                // if (!result->asBool()) {
-                //     runAction(ctx, rule_mode, rule, getOnFailure(rule),
-                //              *current_msg, SerdeError("Rule condition
-                //              failed"), "ERROR");
-                // }
+                if (!result->asBool()) {
+                    runAction(ctx, rule_mode, rule, getOnFailure(rule),
+                              *current_msg,
+                              RuleConditionError(std::make_shared<Rule>(rule)),
+                              "ERROR");
+                }
             } else {
                 // replace current_msg with result
                 current_msg = std::move(result);
