@@ -325,7 +325,7 @@ TEST(ProtobufTest, FieldEncryption) {
     // Create serializer and deserializer configurations
     auto ser_conf = SerializerConfig(
         false,  // auto_register_schemas
-        std::nullopt,  // use_schema
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
         true,   // normalize_schemas
         false,  // validate
         rule_config  // rule_config
