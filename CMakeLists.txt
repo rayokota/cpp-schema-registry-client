@@ -18,7 +18,7 @@ include(FetchContent)
 
 find_package(absl CONFIG REQUIRED)
 
-find_package(OpenSSL REQUIRED)
+find_package(OpenSSL CONFIG REQUIRED)
 
 # Find httplib or fetch if not found
 find_package(httplib CONFIG QUIET)
