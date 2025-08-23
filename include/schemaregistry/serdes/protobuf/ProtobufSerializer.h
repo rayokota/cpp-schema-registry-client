@@ -141,12 +141,8 @@ inline ProtobufSerializer<T>::ProtobufSerializer(
     }
     for (const auto &executor : executors) {
         try {
-            auto rr = base_->getSerde().getRuleRegistry();
-            if (rr) {
-                executor->configure(
-                    base_->getSerde().getClient()->getConfiguration(),
-                    config.rule_config);
-            }
+            auto cfg = base_->getSerde().getClient()->getConfiguration();
+            executor->configure(cfg, config.rule_config);
         } catch (const std::exception &e) {
             throw ProtobufError("Failed to configure rule executor: " +
                                 std::string(e.what()));
@@ -165,19 +161,19 @@ inline ProtobufSerializer<T>::ProtobufSerializer(
           Serde(std::move(client), rule_registry), config)),
       serde_(std::make_unique<ProtobufSerde>()),
       reference_subject_name_strategy_(std::move(strategy)) {
+    std::vector<std::shared_ptr<RuleExecutor>> executors;
     if (rule_registry) {
-        for (const auto &executor : rule_registry->getExecutors()) {
-            try {
-                auto rr = base_->getSerde().getRuleRegistry();
-                if (rr) {
-                    executor->configure(
-                        base_->getSerde().getClient()->getConfiguration(),
-                        config.rule_config);
-                }
-            } catch (const std::exception &e) {
-                throw ProtobufError("Failed to configure rule executor: " +
-                                    std::string(e.what()));
-            }
+        executors = rule_registry->getExecutors();
+    } else {
+        executors = global_registry::getRuleExecutors();
+    }
+    for (const auto &executor : executors) {
+        try {
+            auto cfg = base_->getSerde().getClient()->getConfiguration();
+            executor->configure(cfg, config.rule_config);
+        } catch (const std::exception &e) {
+            throw ProtobufError("Failed to configure rule executor: " +
+                                std::string(e.what()));
         }
     }
 }

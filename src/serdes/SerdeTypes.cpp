@@ -146,11 +146,8 @@ std::unique_ptr<SerdeValue> SerdeValue::newString(SerdeFormat format,
             return std::make_unique<json::JsonValue>(json_value);
         }
         case SerdeFormat::Protobuf: {
-            // For protobuf, we cannot create a message from just a string value
-            // This would need a specific message type context
-            throw SerdeError(
-                "Cannot create Protobuf SerdeValue from string "
-                "without message context");
+            protobuf::ProtobufVariant variant(value);
+            return protobuf::makeProtobufValue(std::move(variant));
         }
         default:
             throw SerdeError("Unsupported SerdeFormat");
@@ -171,11 +168,8 @@ std::unique_ptr<SerdeValue> SerdeValue::newBytes(
             return std::make_unique<json::JsonValue>(json_value);
         }
         case SerdeFormat::Protobuf: {
-            // For protobuf, we cannot create a message from just bytes value
-            // This would need a specific message type context
-            throw SerdeError(
-                "Cannot create Protobuf SerdeValue from bytes without "
-                "message context");
+            protobuf::ProtobufVariant variant(value);
+            return protobuf::makeProtobufValue(std::move(variant));
         }
         default:
             throw SerdeError("Unsupported SerdeFormat");
@@ -186,12 +180,14 @@ std::unique_ptr<SerdeValue> SerdeValue::newJson(SerdeFormat format,
                                                 const nlohmann::json &value) {
     switch (format) {
         case SerdeFormat::Avro: {
+            // TODO
             throw SerdeError("TODO");
         }
         case SerdeFormat::Json: {
             return std::make_unique<json::JsonValue>(value);
         }
         case SerdeFormat::Protobuf: {
+            // TODO
             throw SerdeError("TODO");
         }
         default:

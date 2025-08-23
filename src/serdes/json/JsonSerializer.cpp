@@ -116,12 +116,8 @@ class JsonSerializer::Impl {
         }
         for (const auto &executor : executors) {
             try {
-                auto rr = base_->getSerde().getRuleRegistry();
-                if (rr) {
-                    auto client = base_->getSerde().getClient();
-                    executor->configure(client->getConfiguration(),
-                                        config.rule_config);
-                }
+                auto cfg = base_->getSerde().getClient()->getConfiguration();
+                executor->configure(cfg, config.rule_config);
             } catch (const std::exception &e) {
                 throw JsonError("Failed to configure rule executor: " +
                                 std::string(e.what()));

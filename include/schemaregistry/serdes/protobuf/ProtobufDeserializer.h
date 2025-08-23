@@ -97,12 +97,8 @@ inline ProtobufDeserializer<T>::ProtobufDeserializer(
     }
     for (const auto &executor : executors) {
         try {
-            auto rr = base_->getSerde().getRuleRegistry();
-            if (rr) {
-                executor->configure(
-                    base_->getSerde().getClient()->getConfiguration(),
-                    config.rule_config);
-            }
+            auto cfg = base_->getSerde().getClient()->getConfiguration();
+            executor->configure(cfg, config.rule_config);
         } catch (const std::exception &e) {
             throw ProtobufError("Failed to configure rule executor: " +
                                 std::string(e.what()));
