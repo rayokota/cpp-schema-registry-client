@@ -90,7 +90,7 @@ std::unique_ptr<SerdeValue> CelExecutor::transform(
     google::protobuf::Arena arena;
 
     absl::flat_hash_map<std::string, google::api::expr::runtime::CelValue> args;
-    args.emplace("msg", impl_->fromSerdeValue(msg, &arena));
+    args.emplace("message", impl_->fromSerdeValue(msg, &arena));
 
     return impl_->execute(ctx, msg, args, &arena);
 }

@@ -208,6 +208,111 @@ TEST(AvroTest, GuidInHeader) {
     EXPECT_EQ(bytes_field[2], 3);
 }
 
+TEST(AvroTest, CelCondition) {
+    // Create client configuration with mock URL
+    std::vector<std::string> urls = {"mock://"};
+    auto client_config = std::make_shared<const ClientConfiguration>(urls);
+    auto client = SchemaRegistryClient::newClient(client_config);
+    
+    // Create serializer configuration
+    auto ser_config = SerializerConfig(
+        false,  // auto_register_schemas
+        std::make_optional(SchemaSelector::useLatestVersion()),  // use_schema
+        true,   // normalize_schemas
+        false,  // validate
+        std::unordered_map<std::string, std::string>{}  // rule_config
+    );
+    auto deser_config = DeserializerConfig::createDefault();
+    
+    // Define the Avro schema
+    const std::string schema_str = R"({
+        "type": "record",
+        "name": "test",
+        "fields": [
+            {"name": "intField", "type": "int"},
+            {"name": "doubleField", "type": "double"},
+            {"name": "stringField", "type": "string"},
+            {"name": "booleanField", "type": "boolean"},
+            {"name": "bytesField", "type": "bytes"}
+        ]
+    })";
+    
+    // Create CEL rule for condition checking
+    Rule cel_rule;
+    cel_rule.setName(std::make_optional<std::string>("test-cel"));
+    cel_rule.setKind(std::make_optional<Kind>(Kind::Condition));
+    cel_rule.setMode(std::make_optional<Mode>(Mode::Write));
+    cel_rule.setType(std::make_optional<std::string>("CEL"));
+    cel_rule.setExpr(std::make_optional<std::string>("message.stringField == 'hi'"));
+    
+    // Create rule set with domain rules
+    RuleSet rule_set;
+    std::vector<Rule> domain_rules = {cel_rule};
+    rule_set.setDomainRules(std::make_optional<std::vector<Rule>>(domain_rules));
+    
+    // Create schema object with rule set
+    Schema schema;
+    schema.setSchemaType(std::make_optional<std::string>("AVRO"));
+    schema.setSchema(std::make_optional<std::string>(schema_str));
+    schema.setRuleSet(std::make_optional<RuleSet>(rule_set));
+    
+    // Register the schema
+    auto registered_schema = client->registerSchema("test-value", schema, false);
+    
+    // Parse the Avro schema
+    ::avro::ValidSchema avro_schema = AvroSerializer::compileJsonSchema(schema_str);
+    
+    // Create the Avro record with test data
+    ::avro::GenericDatum datum(avro_schema);
+    auto& record = datum.value<::avro::GenericRecord>();
+    
+    // Set field values
+    record.setFieldAt(0, ::avro::GenericDatum(static_cast<int32_t>(123)));           // intField
+    record.setFieldAt(1, ::avro::GenericDatum(45.67));                              // doubleField  
+    record.setFieldAt(2, ::avro::GenericDatum(std::string("hi")));                  // stringField
+    record.setFieldAt(3, ::avro::GenericDatum(true));                               // booleanField
+    record.setFieldAt(4, ::avro::GenericDatum(std::vector<uint8_t>{1, 2, 3}));      // bytesField
+    
+    // Create rule registry and register CEL executor
+    auto rule_registry = std::make_shared<RuleRegistry>();
+    auto cel_executor = std::make_shared<CelExecutor>();
+    rule_registry->registerExecutor(cel_executor);
+    
+    // Create serializer and deserializer
+    AvroSerializer serializer(client, std::nullopt, rule_registry, ser_config);
+    AvroDeserializer deserializer(client, rule_registry, deser_config);
+    
+    // Create serialization context
+    SerializationContext ser_ctx;
+    ser_ctx.topic = "test";
+    ser_ctx.serde_type = SerdeType::Value;
+    ser_ctx.serde_format = SerdeFormat::Avro;
+    
+    // Serialize the record (CEL condition should be evaluated)
+    auto serialized_bytes = serializer.serialize(ser_ctx, datum);
+    
+    // Deserialize the record
+    auto deserialized_value = deserializer.deserialize(ser_ctx, serialized_bytes);
+    
+    // Verify the deserialized record
+    ASSERT_TRUE(deserialized_value.value.type() == ::avro::AVRO_RECORD);
+    
+    auto& deserialized_record = deserialized_value.value.value<::avro::GenericRecord>();
+    ASSERT_EQ(deserialized_record.fieldCount(), 5);
+    
+    // Verify field values - should match original data since CEL condition was satisfied
+    EXPECT_EQ(deserialized_record.fieldAt(0).value<int32_t>(), 123);
+    EXPECT_DOUBLE_EQ(deserialized_record.fieldAt(1).value<double>(), 45.67);
+    EXPECT_EQ(deserialized_record.fieldAt(2).value<std::string>(), "hi");
+    EXPECT_EQ(deserialized_record.fieldAt(3).value<bool>(), true);
+    
+    auto bytes_field = deserialized_record.fieldAt(4).value<std::vector<uint8_t>>();
+    ASSERT_EQ(bytes_field.size(), 3);
+    EXPECT_EQ(bytes_field[0], 1);
+    EXPECT_EQ(bytes_field[1], 2);
+    EXPECT_EQ(bytes_field[2], 3);
+}
+
 TEST(AvroTest, CelFieldTransformation) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
