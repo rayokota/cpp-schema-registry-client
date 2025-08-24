@@ -93,7 +93,8 @@ std::string SchemaRegistryClient::sendHttpRequest(
     httplib::Headers headers;
     headers.insert(std::make_pair("Content-Type", "application/json"));
 
-    auto result = restClient->sendRequest(path, method, query, headers, body);
+    auto result =
+        restClient->sendRequestUrls(path, method, query, headers, body);
 
     if (!result) {
         throw schemaregistry::rest::RestException("Request failed: " +

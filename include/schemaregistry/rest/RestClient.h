@@ -27,6 +27,7 @@
 
 #include <httplib.h>
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -40,6 +41,25 @@ class RestClient {
     virtual ~RestClient();
 
     std::shared_ptr<const ClientConfiguration> getConfiguration() const;
+
+    httplib::Result sendRequestUrls(const std::string &path,
+                                    const std::string &method,
+                                    const httplib::Params &query,
+                                    const httplib::Headers &headers,
+                                    const std::string &body) const;
+
+  private:
+    bool isRetriable(int status_code) const;
+
+    std::chrono::milliseconds calculateExponentialBackoff(
+        std::uint32_t initial_backoff_ms, std::uint32_t retry_attempts,
+        std::chrono::milliseconds max_backoff) const;
+
+    httplib::Result tryRequest(httplib::Client *client, const std::string &path,
+                               const std::string &method,
+                               const httplib::Params &query,
+                               const httplib::Headers &headers,
+                               const std::string &body) const;
 
     httplib::Result sendRequest(const std::string &path,
                                 const std::string &method,

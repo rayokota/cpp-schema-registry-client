@@ -122,7 +122,8 @@ std::string DekRegistryClient::sendHttpRequest(
         params.insert(std::make_pair(pair.first, pair.second));
     }
 
-    auto result = restClient->sendRequest(path, method, params, headers, body);
+    auto result =
+        restClient->sendRequestUrls(path, method, params, headers, body);
 
     if (!result) {
         throw schemaregistry::rest::RestException("Request failed");

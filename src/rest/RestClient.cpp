@@ -14,9 +14,12 @@
 
 #include <httplib.h>
 
+#include <chrono>
 #include <iomanip>
 #include <limits>
+#include <random>
 #include <sstream>
+#include <thread>
 
 namespace schemaregistry::rest {
 
@@ -36,6 +39,88 @@ std::shared_ptr<const ClientConfiguration> RestClient::getConfiguration()
     return configuration_;
 }
 
+httplib::Result RestClient::sendRequestUrls(const std::string &path,
+                                            const std::string &method,
+                                            const httplib::Params &query,
+                                            const httplib::Headers &headers,
+                                            const std::string &body) const {
+    const auto &base_urls = configuration_->getBaseUrls();
+
+    for (size_t i = 0; i < clients_.size() && i < base_urls.size(); ++i) {
+        try {
+            auto result = tryRequest(clients_[i].get(), path, method, query,
+                                     headers, body);
+
+            // If successful response or non-retriable error, return it
+            if (!result || result->status == 0) {
+                // Network error - try next URL if available
+                if (i == clients_.size() - 1) {
+                    return result;  // Last URL, return the error
+                }
+                continue;
+            } else if (result->status < 400 || !isRetriable(result->status)) {
+                return result;
+            } else if (i == clients_.size() - 1) {
+                // Last URL and retriable error, return it
+                return result;
+            }
+            // Try next URL for retriable errors
+        } catch (const std::exception &e) {
+            if (i == clients_.size() - 1) {
+                // Last URL, create an error result
+                return httplib::Result{nullptr, httplib::Error::Unknown};
+            }
+            // Try next URL for exceptions
+        }
+    }
+
+    // This should never be reached, but return error if it does
+    return httplib::Result{nullptr, httplib::Error::Unknown};
+}
+
+httplib::Result RestClient::tryRequest(httplib::Client *client,
+                                       const std::string &path,
+                                       const std::string &method,
+                                       const httplib::Params &query,
+                                       const httplib::Headers &headers,
+                                       const std::string &body) const {
+    std::uint32_t retries = 0;
+    const std::uint32_t max_retries = configuration_->getMaxRetries();
+    const std::uint32_t initial_wait_ms = configuration_->getRetriesWaitMs();
+    const auto max_wait_ms =
+        std::chrono::milliseconds(configuration_->getRetriesMaxWaitMs());
+
+    while (true) {
+        httplib::Request req;
+        req.path = path;
+        req.method = method;
+        req.params = query;
+        req.headers = headers;
+        req.body = body;
+
+        auto result = client->send(req);
+
+        // Check if we should retry
+        bool should_retry = false;
+        if (!result || result->status == 0) {
+            // Network error - always retriable
+            should_retry = true;
+        } else if (result->status >= 400) {
+            should_retry = isRetriable(result->status);
+        }
+
+        if (!should_retry || retries >= max_retries) {
+            return result;
+        }
+
+        // Apply exponential backoff with jitter
+        auto backoff =
+            calculateExponentialBackoff(initial_wait_ms, retries, max_wait_ms);
+        std::this_thread::sleep_for(backoff);
+        retries++;
+    }
+}
+
 httplib::Result RestClient::sendRequest(const std::string &path,
                                         const std::string &method,
                                         const httplib::Params &query,
@@ -49,6 +134,42 @@ httplib::Result RestClient::sendRequest(const std::string &path,
     req.body = body;
 
     return clients_.front()->send(req);
+}
+
+std::chrono::milliseconds RestClient::calculateExponentialBackoff(
+    std::uint32_t initial_backoff_ms, std::uint32_t retry_attempts,
+    std::chrono::milliseconds max_backoff) const {
+    // Calculate 2^retry_attempts * initial_backoff_ms with overflow protection
+    std::uint64_t backoff_ms;
+    if (retry_attempts >= 32 ||
+        (1ULL << retry_attempts) >
+            std::numeric_limits<std::uint32_t>::max() / initial_backoff_ms) {
+        // Overflow would occur, use max_backoff
+        backoff_ms = static_cast<std::uint64_t>(max_backoff.count());
+    } else {
+        backoff_ms = static_cast<std::uint64_t>((1ULL << retry_attempts) *
+                                                initial_backoff_ms);
+        if (backoff_ms > static_cast<std::uint64_t>(max_backoff.count())) {
+            backoff_ms = static_cast<std::uint64_t>(max_backoff.count());
+        }
+    }
+
+    // Apply jitter (random factor between 0.0 and 1.0)
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+    double jitter = dist(gen);
+
+    return std::chrono::milliseconds(static_cast<long>(backoff_ms * jitter));
+}
+
+bool RestClient::isRetriable(int status_code) const {
+    return status_code == 408      // REQUEST_TIMEOUT
+           || status_code == 429   // TOO_MANY_REQUESTS
+           || status_code == 500   // INTERNAL_SERVER_ERROR
+           || status_code == 502   // BAD_GATEWAY
+           || status_code == 503   // SERVICE_UNAVAILABLE
+           || status_code == 504;  // GATEWAY_TIMEOUT
 }
 
 }  // namespace schemaregistry::rest
