@@ -184,6 +184,7 @@ file(GLOB_RECURSE BASE_SOURCES "src/rest/*.cpp")
 target_sources(schemaregistry PRIVATE ${BASE_HEADERS} ${BASE_SOURCES})
 
 # Core serdes sources (always needed - base serialization framework)
+# Also include JsonValue as it is used for schema migration rules
 file(GLOB CORE_SERDES_HEADERS "include/schemaregistry/serdes/Serde.h" 
                               "include/schemaregistry/serdes/SerdeConfig.h"
                               "include/schemaregistry/serdes/SerdeError.h"
