@@ -108,6 +108,57 @@ class SerdeValue {
     virtual nlohmann::json asJson() const = 0;
 };
 
+// Forward declarations for factory functions - declared after SerdeValue
+using SerdeValueStringFactory =
+    std::function<std::unique_ptr<SerdeValue>(const std::string &)>;
+using SerdeValueBytesFactory =
+    std::function<std::unique_ptr<SerdeValue>(const std::vector<uint8_t> &)>;
+using SerdeValueJsonFactory =
+    std::function<std::unique_ptr<SerdeValue>(const nlohmann::json &)>;
+
+/**
+ * Factory registry for creating format-specific SerdeValue instances
+ * This decouples the base SerdeValue class from concrete implementations
+ */
+class SerdeValueFactory {
+  public:
+    /**
+     * Register factory functions for a specific format
+     */
+    static void registerStringFactory(SerdeFormat format,
+                                      SerdeValueStringFactory factory);
+    static void registerBytesFactory(SerdeFormat format,
+                                     SerdeValueBytesFactory factory);
+    static void registerJsonFactory(SerdeFormat format,
+                                    SerdeValueJsonFactory factory);
+
+    /**
+     * Create SerdeValue instances using registered factories
+     */
+    static std::unique_ptr<SerdeValue> createString(SerdeFormat format,
+                                                    const std::string &value);
+    static std::unique_ptr<SerdeValue> createBytes(
+        SerdeFormat format, const std::vector<uint8_t> &value);
+    static std::unique_ptr<SerdeValue> createJson(SerdeFormat format,
+                                                  const nlohmann::json &value);
+
+    /**
+     * Check if factories are registered for a format
+     */
+    static bool hasStringFactory(SerdeFormat format);
+    static bool hasBytesFactory(SerdeFormat format);
+    static bool hasJsonFactory(SerdeFormat format);
+
+  private:
+    static std::unordered_map<SerdeFormat, SerdeValueStringFactory>
+        string_factories_;
+    static std::unordered_map<SerdeFormat, SerdeValueBytesFactory>
+        bytes_factories_;
+    static std::unordered_map<SerdeFormat, SerdeValueJsonFactory>
+        json_factories_;
+    static std::mutex registry_mutex_;
+};
+
 // Magic bytes for schema ID encoding (from serde.rs)
 constexpr uint8_t MAGIC_BYTE_V0 = 0;
 constexpr uint8_t MAGIC_BYTE_V1 = 1;

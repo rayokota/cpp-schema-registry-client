@@ -2,6 +2,30 @@
 
 namespace schemaregistry::serdes::avro {
 
+// Factory registration for Avro format
+namespace {
+// Static initialization to register Avro factories
+bool avro_factories_registered = []() {
+    // Register string factory
+    SerdeValueFactory::registerStringFactory(
+        SerdeFormat::Avro,
+        [](const std::string& value) -> std::unique_ptr<SerdeValue> {
+            ::avro::GenericDatum datum(value);
+            return std::make_unique<AvroValue>(datum);
+        });
+
+    // Register bytes factory
+    SerdeValueFactory::registerBytesFactory(
+        SerdeFormat::Avro,
+        [](const std::vector<uint8_t>& value) -> std::unique_ptr<SerdeValue> {
+            ::avro::GenericDatum datum(value);
+            return std::make_unique<AvroValue>(datum);
+        });
+
+    return true;
+}();
+}  // namespace
+
 // Implementation for AvroValue methods
 bool AvroValue::asBool() const {
     if (value_.type() == ::avro::AVRO_BOOL) {
@@ -32,7 +56,7 @@ nlohmann::json AvroValue::asJson() const {
 }
 
 // Utility function implementation
-::avro::GenericDatum asAvro(const SerdeValue &value) {
+::avro::GenericDatum asAvro(const SerdeValue& value) {
     if (value.getFormat() != SerdeFormat::Avro) {
         throw std::invalid_argument("SerdeValue is not Avro");
     }

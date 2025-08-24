@@ -1,21 +1,132 @@
 #include "schemaregistry/serdes/json/JsonTypes.h"
 
 #include <algorithm>
-
-#include "absl/strings/escaping.h"
+#include <cctype>
 
 namespace schemaregistry::serdes::json {
 
-// Base64 decoding utilities for JSON using absl
+// Factory registration for JSON format
 namespace {
-std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
-    std::string decoded;
-    if (!absl::Base64Unescape(encoded_string, &decoded)) {
-        // Return empty vector on decode failure
-        return std::vector<uint8_t>();
+// Simple base64 implementation - avoiding external dependencies
+std::string base64_encode(const std::vector<uint8_t> &bytes) {
+    const std::string base64_chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    std::string result;
+    size_t i = 0;
+    unsigned char char_array_3[3];
+    unsigned char char_array_4[4];
+
+    for (size_t idx = 0; idx < bytes.size(); idx++) {
+        char_array_3[i++] = bytes[idx];
+        if (i == 3) {
+            char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+            char_array_4[1] = ((char_array_3[0] & 0x03) << 4) +
+                              ((char_array_3[1] & 0xf0) >> 4);
+            char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) +
+                              ((char_array_3[2] & 0xc0) >> 6);
+            char_array_4[3] = char_array_3[2] & 0x3f;
+
+            for (i = 0; i < 4; i++) result += base64_chars[char_array_4[i]];
+            i = 0;
+        }
     }
-    return std::vector<uint8_t>(decoded.begin(), decoded.end());
+
+    if (i) {
+        for (size_t j = 0; j < i; j++) char_array_3[j] = char_array_3[j];
+
+        char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+        char_array_4[1] =
+            ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+        char_array_4[2] =
+            ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+
+        for (size_t j = 0; j < i + 1; j++)
+            result += base64_chars[char_array_4[j]];
+
+        while (i++ < 3) result += '=';
+    }
+
+    return result;
 }
+
+std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
+    const std::string base64_chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    auto is_base64 = [](unsigned char c) {
+        return (isalnum(c) || (c == '+') || (c == '/'));
+    };
+
+    size_t in_len = encoded_string.size();
+    size_t i = 0;
+    size_t in = 0;
+    unsigned char char_array_4[4], char_array_3[3];
+    std::vector<uint8_t> result;
+
+    while (in_len-- && (encoded_string[in] != '=') &&
+           is_base64(encoded_string[in])) {
+        char_array_4[i++] = encoded_string[in];
+        in++;
+        if (i == 4) {
+            for (i = 0; i < 4; i++)
+                char_array_4[i] = base64_chars.find(char_array_4[i]) & 0xff;
+
+            char_array_3[0] =
+                (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+            char_array_3[1] = ((char_array_4[1] & 0xf) << 4) +
+                              ((char_array_4[2] & 0x3c) >> 2);
+            char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+            for (i = 0; (i < 3); i++) result.push_back(char_array_3[i]);
+            i = 0;
+        }
+    }
+
+    if (i) {
+        for (size_t j = 0; j < i; j++)
+            char_array_4[j] = base64_chars.find(char_array_4[j]) & 0xff;
+
+        char_array_3[0] =
+            (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+        char_array_3[1] =
+            ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+
+        for (size_t j = 0; (j < i - 1); j++) result.push_back(char_array_3[j]);
+    }
+
+    return result;
+}
+
+// Static initialization to register JSON factories
+bool json_factories_registered = []() {
+    // Register string factory
+    SerdeValueFactory::registerStringFactory(
+        SerdeFormat::Json,
+        [](const std::string &value) -> std::unique_ptr<SerdeValue> {
+            nlohmann::json json_value = value;
+            return std::make_unique<JsonValue>(json_value);
+        });
+
+    // Register bytes factory
+    SerdeValueFactory::registerBytesFactory(
+        SerdeFormat::Json,
+        [](const std::vector<uint8_t> &value) -> std::unique_ptr<SerdeValue> {
+            // For JSON, encode bytes as base64 string
+            std::string base64_value = base64_encode(value);
+            nlohmann::json json_value = base64_value;
+            return std::make_unique<JsonValue>(json_value);
+        });
+
+    // Register JSON factory
+    SerdeValueFactory::registerJsonFactory(
+        SerdeFormat::Json,
+        [](const nlohmann::json &value) -> std::unique_ptr<SerdeValue> {
+            return std::make_unique<JsonValue>(value);
+        });
+
+    return true;
+}();
 }  // namespace
 
 // Implementation for JsonValue methods
