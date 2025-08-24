@@ -286,6 +286,7 @@ target_link_libraries(schemaregistry
     PRIVATE
         OpenSSL::Crypto
         cpr::cpr
+        absl::strings # for base64_decode in JsonValue
 )
 
 # Conditionally link Avro
