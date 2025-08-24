@@ -17,14 +17,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(SCHEMAREGISTRY_WITH_AVRO "Build with Avro support" ON)
 option(SCHEMAREGISTRY_WITH_JSON "Build with JSON Schema support" ON)
 option(SCHEMAREGISTRY_WITH_PROTOBUF "Build with Protobuf support" ON)
-option(SCHEMAREGISTRY_WITH_CEL "Build with CEL support" ON)
-option(SCHEMAREGISTRY_WITH_JSONATA "Build with JSONata support" ON)
-option(SCHEMAREGISTRY_WITH_AWSKMS "Build with AWS KMS support" ON)
-option(SCHEMAREGISTRY_WITH_AZUREKMS "Build with Azure Vault support" ON)
-option(SCHEMAREGISTRY_WITH_GCPKMS "Build with GCP KMS support" ON)
-option(SCHEMAREGISTRY_WITH_HCVAULT "Build with HashiCorp Vault support" ON)
-option(SCHEMAREGISTRY_WITH_LOCALKMS "Build with local KMS support" ON)
-option(SCHEMAREGISTRY_WITH_TINK "Build with Tink support" ON)
+option(SCHEMAREGISTRY_WITH_RULES "Build with Data Contract rules support" ON)
 
 if(VCPKG_MANIFEST_FEATURES)
     if(NOT DEFINED SCHEMAREGISTRY_WITH_AVRO)
@@ -45,67 +38,16 @@ if(VCPKG_MANIFEST_FEATURES)
         endif()
     endif()
 
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_CEL)
-        if(NOT "cel" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_CEL OFF)
-        endif()
-    endif()
-
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_JSONATA)
-        if(NOT "jsonata" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_JSONATA OFF)
-        endif()
-    endif()
-
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_AWSKMS)
-        if(NOT "awskms" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_AWSKMS OFF)
-        endif()
-    endif()
-    
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_AZUREKMS)
-        if(NOT "azurekms" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_AZUREKMS OFF)
-        endif()
-    endif()
-    
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_GCPKMS)
-        if(NOT "gcpkms" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_GCPKMS OFF)
-        endif()
-    endif()
-    
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_HCVAULT)
-        if(NOT "hcvault" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_HCVAULT OFF)
-        endif()
-    endif()
-    
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_LOCALKMS)
-        if(NOT "localkms" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_LOCALKMS OFF)
-        endif()
-    endif()
-    
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_TINK)
-        if(NOT "tink" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_TINK OFF)
+    if(NOT DEFINED SCHEMAREGISTRY_WITH_RULES)
+        if(NOT "rules" IN_LIST VCPKG_MANIFEST_FEATURES)
+            set(SCHEMAREGISTRY_WITH_RULES OFF)
         endif()
     endif()
 endif()
 
-# If any cloud feature is enabled, ensure tink is also enabled
-if(SCHEMAREGISTRY_WITH_AWSKMS OR SCHEMAREGISTRY_WITH_AZUREKMS OR SCHEMAREGISTRY_WITH_GCPKMS OR 
-   SCHEMAREGISTRY_WITH_HCVAULT OR SCHEMAREGISTRY_WITH_LOCALKMS)
-    if(NOT SCHEMAREGISTRY_WITH_TINK)
-        message(WARNING "Encryption features require Tink support. Auto-enabling Tink.")
-        set(SCHEMAREGISTRY_WITH_TINK ON)
-    endif()
-endif()
-
-if(SCHEMAREGISTRY_WITH_CEL OR SCHEMAREGISTRY_WITH_TINK)
+if(SCHEMAREGISTRY_WITH_RULES)
     if(NOT SCHEMAREGISTRY_WITH_PROTOBUF)
-        message(WARNING "CEL and Tink require Protobuf support. Auto-enabling Protobuf.")
+        message(WARNING "Rules require Protobuf support. Auto-enabling Protobuf.")
         set(SCHEMAREGISTRY_WITH_PROTOBUF ON)
     endif()
 endif()
@@ -163,7 +105,7 @@ if (SCHEMAREGISTRY_WITH_JSON)
     endif()
 endif()
 
-if (SCHEMAREGISTRY_WITH_JSONATA)
+if (SCHEMAREGISTRY_WITH_RULES)
     # Fetch jsonata
     FetchContent_Declare(
         jsonata
@@ -180,7 +122,7 @@ if (SCHEMAREGISTRY_WITH_PROTOBUF)
     find_package(protobuf CONFIG REQUIRED)
 endif()
 
-if (SCHEMAREGISTRY_WITH_CEL)
+if (SCHEMAREGISTRY_WITH_RULES)
     # Note that cel-cpp has no CMake build and is not packaged anywhere,
     # so we build protovalidate_cc as an in-tree dependency to get cel-cpp.
     FetchContent_Declare(
@@ -191,29 +133,29 @@ if (SCHEMAREGISTRY_WITH_CEL)
     FetchContent_MakeAvailable(protovalidate_cc)
 endif()
 
-if (SCHEMAREGISTRY_WITH_AWSKMS)
+if (SCHEMAREGISTRY_WITH_RULES)
     # AWS SDK C++
     find_package(aws-cpp-sdk-core CONFIG REQUIRED)
     find_package(aws-cpp-sdk-kms CONFIG REQUIRED)
 endif()
 
-if (SCHEMAREGISTRY_WITH_AZUREKMS)
+if (SCHEMAREGISTRY_WITH_RULES)
     # Azure Key Vault C++ SDK
     find_package(azure-security-keyvault-keys-cpp CONFIG REQUIRED)
     find_package(azure-identity-cpp CONFIG REQUIRED)
 endif()
 
-if (SCHEMAREGISTRY_WITH_GCPKMS)
+if (SCHEMAREGISTRY_WITH_RULES)
     # Google Cloud C++ SDK
     find_package(google_cloud_cpp_kms CONFIG REQUIRED)
 endif()
 
-if (SCHEMAREGISTRY_WITH_HCVAULT)
+if (SCHEMAREGISTRY_WITH_RULES)
     # HashiCorp Vault C++ client
     find_package(libvault CONFIG REQUIRED)
 endif()
 
-if (SCHEMAREGISTRY_WITH_TINK)
+if (SCHEMAREGISTRY_WITH_RULES)
     # Import Tink as an in-tree dependency.
     # See https://developers.google.com/tink/setup/cc
     # Configure Tink to use system-provided dependencies instead of building its own
