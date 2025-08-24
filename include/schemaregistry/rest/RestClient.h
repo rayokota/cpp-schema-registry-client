@@ -25,11 +25,12 @@
 #undef U
 #endif
 
-#include <httplib.h>
+#include <cpr/cpr.h>
 
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <vector>
 
 namespace schemaregistry::rest {
@@ -42,11 +43,11 @@ class RestClient {
 
     std::shared_ptr<const ClientConfiguration> getConfiguration() const;
 
-    httplib::Result sendRequestUrls(const std::string &path,
-                                    const std::string &method,
-                                    const httplib::Params &query,
-                                    const httplib::Headers &headers,
-                                    const std::string &body) const;
+    cpr::Response sendRequestUrls(
+        const std::string &path, const std::string &method,
+        const std::vector<std::pair<std::string, std::string>> &query,
+        const std::map<std::string, std::string> &headers,
+        const std::string &body) const;
 
   private:
     bool isRetriable(int status_code) const;
@@ -55,21 +56,17 @@ class RestClient {
         std::uint32_t initial_backoff_ms, std::uint32_t retry_attempts,
         std::chrono::milliseconds max_backoff) const;
 
-    httplib::Result tryRequest(httplib::Client *client, const std::string &path,
-                               const std::string &method,
-                               const httplib::Params &query,
-                               const httplib::Headers &headers,
-                               const std::string &body) const;
-
-    httplib::Result sendRequest(const std::string &path,
-                                const std::string &method,
-                                const httplib::Params &query,
-                                const httplib::Headers &headers,
-                                const std::string &body) const;
+    cpr::Response tryRequest(
+        const std::string &base_url, const std::string &path,
+        const std::string &method,
+        const std::vector<std::pair<std::string, std::string>> &query,
+        const std::map<std::string, std::string> &headers,
+        const std::string &body) const;
 
   protected:
     std::shared_ptr<const ClientConfiguration> configuration_;
-    std::vector<std::unique_ptr<httplib::Client>> clients_;
+    std::shared_ptr<cpr::Session> session_;
+    mutable std::mutex session_mutex_;
 };
 
 }  // namespace schemaregistry::rest

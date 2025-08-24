@@ -20,16 +20,8 @@ find_package(absl CONFIG REQUIRED)
 
 find_package(OpenSSL CONFIG REQUIRED)
 
-# Find httplib or fetch if not found
-find_package(httplib CONFIG QUIET)
-if(NOT httplib_FOUND)
-    FetchContent_Declare(
-        httplib
-        GIT_REPOSITORY https://github.com/yhirose/cpp-httplib.git
-        GIT_TAG        v0.23.1
-    )
-    FetchContent_MakeAvailable(httplib)
-endif()
+# Find cpr
+find_package(cpr CONFIG REQUIRED)
 
 # Fetch Apache Avro C++
 find_package(unofficial-avro-cpp CONFIG QUIET)
@@ -198,6 +190,7 @@ target_link_libraries(schemaregistry
         $<BUILD_INTERFACE:tink::static>
 
         OpenSSL::Crypto
+        cpr::cpr
         
         # AWS SDK for KMS driver compilation
         aws-cpp-sdk-core

@@ -89,25 +89,22 @@ std::string SchemaRegistryClient::createMetadataKey(
 
 std::string SchemaRegistryClient::sendHttpRequest(
     const std::string &path, const std::string &method,
-    const httplib::Params &query, const std::string &body) const {
-    httplib::Headers headers;
+    const std::vector<std::pair<std::string, std::string>> &query,
+    const std::string &body) const {
+    std::map<std::string, std::string> headers;
     headers.insert(std::make_pair("Content-Type", "application/json"));
 
     auto result =
         restClient->sendRequestUrls(path, method, query, headers, body);
 
-    if (!result) {
-        throw schemaregistry::rest::RestException("Request failed: " +
-                                                  to_string(result.error()));
+    if (result.status_code >= 400) {
+        std::string errorMsg = "HTTP Error " +
+                               std::to_string(result.status_code) + ": " +
+                               result.text;
+        throw schemaregistry::rest::RestException(errorMsg, result.status_code);
     }
 
-    if (result->status >= 400) {
-        std::string errorMsg = "HTTP Error " + std::to_string(result->status) +
-                               ": " + result->body;
-        throw schemaregistry::rest::RestException(errorMsg, result->status);
-    }
-
-    return result->body;
+    return result.text;
 }
 
 schemaregistry::rest::model::RegisteredSchema
@@ -206,8 +203,8 @@ SchemaRegistryClient::registerSchema(
 
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions";
-    httplib::Params query;
-    query.insert(std::make_pair("normalize", normalize ? "true" : "false"));
+    std::vector<std::pair<std::string, std::string>> query;
+    query.emplace_back("normalize", normalize ? "true" : "false");
 
     // Serialize schema to JSON
     json j;
@@ -252,12 +249,12 @@ schemaregistry::rest::model::Schema SchemaRegistryClient::getBySubjectAndId(
 
     // Prepare request
     std::string path = "/schemas/ids/" + std::to_string(id);
-    httplib::Params query;
+    std::vector<std::pair<std::string, std::string>> query;
     if (subject.has_value()) {
-        query.insert(std::make_pair("subject", subject.value()));
+        query.emplace_back("subject", subject.value());
     }
     if (format.has_value()) {
-        query.insert(std::make_pair("format", format.value()));
+        query.emplace_back("format", format.value());
     }
 
     // Send request
@@ -291,9 +288,9 @@ schemaregistry::rest::model::Schema SchemaRegistryClient::getByGuid(
 
     // Prepare request
     std::string path = "/schemas/guids/" + urlEncode(guid);
-    httplib::Params query;
+    std::vector<std::pair<std::string, std::string>> query;
     if (format.has_value()) {
-        query.insert(std::make_pair("format", format.value()));
+        query.emplace_back("format", format.value());
     }
 
     // Send request
@@ -329,9 +326,9 @@ schemaregistry::rest::model::RegisteredSchema SchemaRegistryClient::getBySchema(
 
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject);
-    httplib::Params query;
-    query.insert(std::make_pair("normalize", normalize ? "true" : "false"));
-    query.insert(std::make_pair("deleted", deleted ? "true" : "false"));
+    std::vector<std::pair<std::string, std::string>> query;
+    query.emplace_back("normalize", normalize ? "true" : "false");
+    query.emplace_back("deleted", deleted ? "true" : "false");
 
     // Serialize schema to JSON
     json j;
@@ -373,10 +370,10 @@ schemaregistry::rest::model::RegisteredSchema SchemaRegistryClient::getVersion(
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions/" +
                        std::to_string(version);
-    httplib::Params query;
-    query.insert(std::make_pair("deleted", deleted ? "true" : "false"));
+    std::vector<std::pair<std::string, std::string>> query;
+    query.emplace_back("deleted", deleted ? "true" : "false");
     if (format.has_value()) {
-        query.insert(std::make_pair("format", format.value()));
+        query.emplace_back("format", format.value());
     }
 
     // Send request
@@ -410,9 +407,9 @@ SchemaRegistryClient::getLatestVersion(
 
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions/latest";
-    httplib::Params query;
+    std::vector<std::pair<std::string, std::string>> query;
     if (format.has_value()) {
-        query.insert(std::make_pair("format", format.value()));
+        query.emplace_back("format", format.value());
     }
 
     // Send request
@@ -448,16 +445,16 @@ SchemaRegistryClient::getLatestWithMetadata(
 
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/metadata";
-    httplib::Params query;
-    query.insert(std::make_pair("deleted", deleted ? "true" : "false"));
+    std::vector<std::pair<std::string, std::string>> query;
+    query.emplace_back("deleted", deleted ? "true" : "false");
     if (format.has_value()) {
-        query.insert(std::make_pair("format", format.value()));
+        query.emplace_back("format", format.value());
     }
 
     // Add metadata to query
     for (const auto &pair : metadata) {
-        query.insert(std::make_pair("key", pair.first));
-        query.insert(std::make_pair("value", pair.second));
+        query.emplace_back("key", pair.first);
+        query.emplace_back("value", pair.second);
     }
 
     // Send request
@@ -491,8 +488,8 @@ std::vector<int32_t> SchemaRegistryClient::getAllVersions(
 std::vector<std::string> SchemaRegistryClient::getAllSubjects(bool deleted) {
     // Prepare request
     std::string path = "/subjects";
-    httplib::Params query;
-    query.insert(std::make_pair("deleted", deleted ? "true" : "false"));
+    std::vector<std::pair<std::string, std::string>> query;
+    query.emplace_back("deleted", deleted ? "true" : "false");
 
     // Send request
     std::string responseBody = sendHttpRequest(path, "GET", query);
@@ -505,8 +502,8 @@ std::vector<int32_t> SchemaRegistryClient::deleteSubject(
     const std::string &subject, bool permanent) {
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject);
-    httplib::Params query;
-    query.insert(std::make_pair("permanent", permanent ? "true" : "false"));
+    std::vector<std::pair<std::string, std::string>> query;
+    query.emplace_back("permanent", permanent ? "true" : "false");
 
     // Send request
     std::string responseBody = sendHttpRequest(path, "DELETE", query);
@@ -521,8 +518,8 @@ int32_t SchemaRegistryClient::deleteSubjectVersion(const std::string &subject,
     // Prepare request
     std::string path = "/subjects/" + urlEncode(subject) + "/versions/" +
                        std::to_string(version);
-    httplib::Params query;
-    query.insert(std::make_pair("permanent", permanent ? "true" : "false"));
+    std::vector<std::pair<std::string, std::string>> query;
+    query.emplace_back("permanent", permanent ? "true" : "false");
 
     // Send request
     std::string responseBody = sendHttpRequest(path, "DELETE", query);

@@ -73,10 +73,10 @@ class SchemaRegistryClient : public ISchemaRegistryClient {
         const std::string &json) const;
 
     // HTTP request helpers
-    std::string sendHttpRequest(const std::string &path,
-                                const std::string &method,
-                                const httplib::Params &query = {},
-                                const std::string &body = "") const;
+    std::string sendHttpRequest(
+        const std::string &path, const std::string &method,
+        const std::vector<std::pair<std::string, std::string>> &query = {},
+        const std::string &body = "") const;
 
   public:
     /**

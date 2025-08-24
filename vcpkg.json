@@ -13,7 +13,6 @@
     },
     "azure-identity-cpp",
     "azure-security-keyvault-keys-cpp",
-    "cpp-httplib",
     {
       "name": "google-cloud-cpp",
       "features": [
@@ -23,7 +22,8 @@
     "jsoncons",
     "libvault",
     "nlohmann-json",
+    "openssl",
     "protobuf",
-    "openssl"
+    "cpr"
   ]
 }

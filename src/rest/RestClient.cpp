@@ -12,7 +12,7 @@
 
 #include "schemaregistry/rest/RestClient.h"
 
-#include <httplib.h>
+#include <cpr/cpr.h>
 
 #include <chrono>
 #include <iomanip>
@@ -24,14 +24,8 @@
 namespace schemaregistry::rest {
 
 RestClient::RestClient(std::shared_ptr<const ClientConfiguration> configuration)
-    : configuration_(configuration) {
-    // Initialize a client for each base URL
-    for (const auto &baseUrl : configuration->getBaseUrls()) {
-        std::unique_ptr<httplib::Client> client =
-            std::make_unique<httplib::Client>(baseUrl);
-        clients_.push_back(std::move(client));
-    }
-}
+    : configuration_(configuration),
+      session_(std::make_shared<cpr::Session>()) {}
 RestClient::~RestClient() {}
 
 std::shared_ptr<const ClientConfiguration> RestClient::getConfiguration()
@@ -39,51 +33,56 @@ std::shared_ptr<const ClientConfiguration> RestClient::getConfiguration()
     return configuration_;
 }
 
-httplib::Result RestClient::sendRequestUrls(const std::string &path,
-                                            const std::string &method,
-                                            const httplib::Params &query,
-                                            const httplib::Headers &headers,
-                                            const std::string &body) const {
+cpr::Response RestClient::sendRequestUrls(
+    const std::string &path, const std::string &method,
+    const std::vector<std::pair<std::string, std::string>> &query,
+    const std::map<std::string, std::string> &headers,
+    const std::string &body) const {
     const auto &base_urls = configuration_->getBaseUrls();
 
-    for (size_t i = 0; i < clients_.size() && i < base_urls.size(); ++i) {
+    std::lock_guard<std::mutex> lock(session_mutex_);
+
+    cpr::Response last_response;  // default constructed (status_code = 0)
+    for (size_t i = 0; i < base_urls.size(); ++i) {
         try {
-            auto result = tryRequest(clients_[i].get(), path, method, query,
-                                     headers, body);
+            auto result =
+                tryRequest(base_urls[i], path, method, query, headers, body);
+
+            last_response = result;
 
             // If successful response or non-retriable error, return it
-            if (!result || result->status == 0) {
+            if (result.status_code == 0) {
                 // Network error - try next URL if available
-                if (i == clients_.size() - 1) {
+                if (i == base_urls.size() - 1) {
                     return result;  // Last URL, return the error
                 }
                 continue;
-            } else if (result->status < 400 || !isRetriable(result->status)) {
+            } else if (result.status_code < 400 ||
+                       !isRetriable(static_cast<int>(result.status_code))) {
                 return result;
-            } else if (i == clients_.size() - 1) {
+            } else if (i == base_urls.size() - 1) {
                 // Last URL and retriable error, return it
                 return result;
             }
             // Try next URL for retriable errors
         } catch (const std::exception &e) {
-            if (i == clients_.size() - 1) {
-                // Last URL, create an error result
-                return httplib::Result{nullptr, httplib::Error::Unknown};
+            if (i == base_urls.size() - 1) {
+                return last_response;
             }
             // Try next URL for exceptions
         }
     }
 
-    // This should never be reached, but return error if it does
-    return httplib::Result{nullptr, httplib::Error::Unknown};
+    // This should never be reached, but return the last response
+    return last_response;
 }
 
-httplib::Result RestClient::tryRequest(httplib::Client *client,
-                                       const std::string &path,
-                                       const std::string &method,
-                                       const httplib::Params &query,
-                                       const httplib::Headers &headers,
-                                       const std::string &body) const {
+cpr::Response RestClient::tryRequest(
+    const std::string &base_url, const std::string &path,
+    const std::string &method,
+    const std::vector<std::pair<std::string, std::string>> &query,
+    const std::map<std::string, std::string> &headers,
+    const std::string &body) const {
     std::uint32_t retries = 0;
     const std::uint32_t max_retries = configuration_->getMaxRetries();
     const std::uint32_t initial_wait_ms = configuration_->getRetriesWaitMs();
@@ -91,22 +90,55 @@ httplib::Result RestClient::tryRequest(httplib::Client *client,
         std::chrono::milliseconds(configuration_->getRetriesMaxWaitMs());
 
     while (true) {
-        httplib::Request req;
-        req.path = path;
-        req.method = method;
-        req.params = query;
-        req.headers = headers;
-        req.body = body;
+        // Configure the shared Session for this request
+        // Ensure no stale body/payload leaks into requests like GET
+        session_->RemoveContent();
+        session_->SetUrl(cpr::Url{base_url + path});
 
-        auto result = client->send(req);
+        // Set headers
+        cpr::Header cpr_headers;
+        for (const auto &kv : headers) {
+            cpr_headers.insert(kv);
+        }
+        session_->SetHeader(cpr_headers);
+
+        // Set query parameters (supporting repeated keys)
+        cpr::Parameters params{};
+        for (const auto &p : query) {
+            params.Add(cpr::Parameter{p.first, p.second});
+        }
+        session_->SetParameters(params);
+
+        // Set body when applicable
+        if (method == "POST" || method == "PUT" || method == "PATCH" ||
+            method == "DELETE") {
+            session_->SetBody(cpr::Body{body});
+        }
+
+        // Dispatch based on method
+        cpr::Response result;
+        if (method == "GET") {
+            result = session_->Get();
+        } else if (method == "POST") {
+            result = session_->Post();
+        } else if (method == "PUT") {
+            result = session_->Put();
+        } else if (method == "PATCH") {
+            result = session_->Patch();
+        } else if (method == "DELETE") {
+            result = session_->Delete();
+        } else {
+            // Unsupported method; set an error-like response
+            return cpr::Response{};
+        }
 
         // Check if we should retry
         bool should_retry = false;
-        if (!result || result->status == 0) {
+        if (result.status_code == 0) {
             // Network error - always retriable
             should_retry = true;
-        } else if (result->status >= 400) {
-            should_retry = isRetriable(result->status);
+        } else if (result.status_code >= 400) {
+            should_retry = isRetriable(static_cast<int>(result.status_code));
         }
 
         if (!should_retry || retries >= max_retries) {
@@ -119,21 +151,6 @@ httplib::Result RestClient::tryRequest(httplib::Client *client,
         std::this_thread::sleep_for(backoff);
         retries++;
     }
-}
-
-httplib::Result RestClient::sendRequest(const std::string &path,
-                                        const std::string &method,
-                                        const httplib::Params &query,
-                                        const httplib::Headers &headers,
-                                        const std::string &body) const {
-    httplib::Request req;
-    req.path = path;
-    req.method = method;
-    req.params = query;
-    req.headers = headers;
-    req.body = body;
-
-    return clients_.front()->send(req);
 }
 
 std::chrono::milliseconds RestClient::calculateExponentialBackoff(

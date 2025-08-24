@@ -113,29 +113,27 @@ std::string DekRegistryClient::sendHttpRequest(
     const std::string &path, const std::string &method,
     const std::map<std::string, std::string> &query,
     const std::string &body) const {
-    httplib::Headers headers;
+    std::map<std::string, std::string> headers;
     headers.insert(std::make_pair("Content-Type", "application/json"));
 
-    // Convert map to httplib::Params
-    httplib::Params params;
+    // Convert map to vector of pairs
+    std::vector<std::pair<std::string, std::string>> params;
+    params.reserve(query.size());
     for (const auto &pair : query) {
-        params.insert(std::make_pair(pair.first, pair.second));
+        params.emplace_back(pair.first, pair.second);
     }
 
     auto result =
         restClient->sendRequestUrls(path, method, params, headers, body);
 
-    if (!result) {
-        throw schemaregistry::rest::RestException("Request failed");
+    if (result.status_code >= 400) {
+        std::string errorMsg = "HTTP Error " +
+                               std::to_string(result.status_code) + ": " +
+                               result.text;
+        throw schemaregistry::rest::RestException(errorMsg, result.status_code);
     }
 
-    if (result->status >= 400) {
-        std::string errorMsg = "HTTP Error " + std::to_string(result->status) +
-                               ": " + result->body;
-        throw schemaregistry::rest::RestException(errorMsg, result->status);
-    }
-
-    return result->body;
+    return result.text;
 }
 
 schemaregistry::rest::model::Kek DekRegistryClient::parseKekFromJson(
