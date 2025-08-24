@@ -2,30 +2,6 @@
 
 namespace schemaregistry::serdes::protobuf {
 
-// Factory registration for Protobuf format
-namespace {
-// Static initialization to register Protobuf factories
-bool protobuf_factories_registered = []() {
-    // Register string factory
-    SerdeValueFactory::registerStringFactory(
-        SerdeFormat::Protobuf,
-        [](const std::string &value) -> std::unique_ptr<SerdeValue> {
-            ProtobufVariant variant(value);
-            return makeProtobufValue(std::move(variant));
-        });
-
-    // Register bytes factory
-    SerdeValueFactory::registerBytesFactory(
-        SerdeFormat::Protobuf,
-        [](const std::vector<uint8_t> &value) -> std::unique_ptr<SerdeValue> {
-            ProtobufVariant variant(value);
-            return makeProtobufValue(std::move(variant));
-        });
-
-    return true;
-}();
-}  // namespace
-
 // Implementation of ProtobufVariant methods
 
 // Copy constructor implementation

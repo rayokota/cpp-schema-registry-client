@@ -1,12 +1,17 @@
 #include "schemaregistry/serdes/SerdeTypes.h"
 
+#include <google/protobuf/message.h>
+
+#include <avro/Compiler.hh>
+#include <avro/ValidSchema.hh>
 #include <sstream>
 
 #include "absl/strings/escaping.h"
 #include "schemaregistry/rest/model/RegisteredSchema.h"
 #include "schemaregistry/rest/model/Schema.h"
-// Note: Format-specific types are no longer directly included here
-// They register themselves through the factory system
+#include "schemaregistry/serdes/avro/AvroTypes.h"
+#include "schemaregistry/serdes/json/JsonTypes.h"
+#include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
 
 namespace schemaregistry::serdes {
 
@@ -110,98 +115,84 @@ std::string ParsedSchemaCache<T>::getSchemaKey(const Schema &schema) const {
 template class ParsedSchemaCache<std::string>;
 template class ParsedSchemaCache<int>;
 
-// Note: Base64 utilities moved to format-specific implementations
-
-// SerdeValueFactory static member definitions
-std::unordered_map<SerdeFormat, SerdeValueStringFactory>
-    SerdeValueFactory::string_factories_;
-std::unordered_map<SerdeFormat, SerdeValueBytesFactory>
-    SerdeValueFactory::bytes_factories_;
-std::unordered_map<SerdeFormat, SerdeValueJsonFactory>
-    SerdeValueFactory::json_factories_;
-std::mutex SerdeValueFactory::registry_mutex_;
-
-// SerdeValueFactory implementation
-void SerdeValueFactory::registerStringFactory(SerdeFormat format,
-                                              SerdeValueStringFactory factory) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    string_factories_[format] = std::move(factory);
+// Base64 encoding/decoding utilities
+namespace {
+std::string base64_encode(const std::vector<uint8_t> &bytes) {
+    std::string input(reinterpret_cast<const char *>(bytes.data()),
+                      bytes.size());
+    return absl::Base64Escape(input);
 }
 
-void SerdeValueFactory::registerBytesFactory(SerdeFormat format,
-                                             SerdeValueBytesFactory factory) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    bytes_factories_[format] = std::move(factory);
-}
-
-void SerdeValueFactory::registerJsonFactory(SerdeFormat format,
-                                            SerdeValueJsonFactory factory) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    json_factories_[format] = std::move(factory);
-}
-
-std::unique_ptr<SerdeValue> SerdeValueFactory::createString(
-    SerdeFormat format, const std::string &value) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    auto it = string_factories_.find(format);
-    if (it != string_factories_.end()) {
-        return it->second(value);
+std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
+    std::string decoded;
+    if (!absl::Base64Unescape(encoded_string, &decoded)) {
+        // Return empty vector on decode failure
+        return std::vector<uint8_t>();
     }
-    throw SerdeError("No string factory registered for format: " +
-                     type_utils::formatToString(format));
+    return std::vector<uint8_t>(decoded.begin(), decoded.end());
 }
-
-std::unique_ptr<SerdeValue> SerdeValueFactory::createBytes(
-    SerdeFormat format, const std::vector<uint8_t> &value) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    auto it = bytes_factories_.find(format);
-    if (it != bytes_factories_.end()) {
-        return it->second(value);
-    }
-    throw SerdeError("No bytes factory registered for format: " +
-                     type_utils::formatToString(format));
-}
-
-std::unique_ptr<SerdeValue> SerdeValueFactory::createJson(
-    SerdeFormat format, const nlohmann::json &value) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    auto it = json_factories_.find(format);
-    if (it != json_factories_.end()) {
-        return it->second(value);
-    }
-    throw SerdeError("No JSON factory registered for format: " +
-                     type_utils::formatToString(format));
-}
-
-bool SerdeValueFactory::hasStringFactory(SerdeFormat format) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    return string_factories_.find(format) != string_factories_.end();
-}
-
-bool SerdeValueFactory::hasBytesFactory(SerdeFormat format) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    return bytes_factories_.find(format) != bytes_factories_.end();
-}
-
-bool SerdeValueFactory::hasJsonFactory(SerdeFormat format) {
-    std::lock_guard<std::mutex> lock(registry_mutex_);
-    return json_factories_.find(format) != json_factories_.end();
-}
+}  // namespace
 
 // SerdeValue static factory method implementations
 std::unique_ptr<SerdeValue> SerdeValue::newString(SerdeFormat format,
                                                   const std::string &value) {
-    return SerdeValueFactory::createString(format, value);
+    switch (format) {
+        case SerdeFormat::Avro: {
+            ::avro::GenericDatum datum(value);
+            return std::make_unique<avro::AvroValue>(datum);
+        }
+        case SerdeFormat::Json: {
+            nlohmann::json json_value = value;
+            return std::make_unique<json::JsonValue>(json_value);
+        }
+        case SerdeFormat::Protobuf: {
+            protobuf::ProtobufVariant variant(value);
+            return protobuf::makeProtobufValue(std::move(variant));
+        }
+        default:
+            throw SerdeError("Unsupported SerdeFormat");
+    }
 }
 
 std::unique_ptr<SerdeValue> SerdeValue::newBytes(
     SerdeFormat format, const std::vector<uint8_t> &value) {
-    return SerdeValueFactory::createBytes(format, value);
+    switch (format) {
+        case SerdeFormat::Avro: {
+            ::avro::GenericDatum datum(value);
+            return std::make_unique<avro::AvroValue>(datum);
+        }
+        case SerdeFormat::Json: {
+            // For JSON, encode bytes as base64 string
+            std::string base64_value = base64_encode(value);
+            nlohmann::json json_value = base64_value;
+            return std::make_unique<json::JsonValue>(json_value);
+        }
+        case SerdeFormat::Protobuf: {
+            protobuf::ProtobufVariant variant(value);
+            return protobuf::makeProtobufValue(std::move(variant));
+        }
+        default:
+            throw SerdeError("Unsupported SerdeFormat");
+    }
 }
 
 std::unique_ptr<SerdeValue> SerdeValue::newJson(SerdeFormat format,
                                                 const nlohmann::json &value) {
-    return SerdeValueFactory::createJson(format, value);
+    switch (format) {
+        case SerdeFormat::Avro: {
+            // TODO
+            throw SerdeError("TODO");
+        }
+        case SerdeFormat::Json: {
+            return std::make_unique<json::JsonValue>(value);
+        }
+        case SerdeFormat::Protobuf: {
+            // TODO
+            throw SerdeError("TODO");
+        }
+        default:
+            throw SerdeError("Unsupported SerdeFormat");
+    }
 }
 
 namespace type_utils {
