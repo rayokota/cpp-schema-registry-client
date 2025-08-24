@@ -9,9 +9,13 @@
 #include "absl/strings/escaping.h"
 #include "schemaregistry/rest/model/RegisteredSchema.h"
 #include "schemaregistry/rest/model/Schema.h"
+#ifdef SCHEMAREGISTRY_USE_AVRO
 #include "schemaregistry/serdes/avro/AvroTypes.h"
+#endif
 #include "schemaregistry/serdes/json/JsonTypes.h"
+#ifdef SCHEMAREGISTRY_USE_PROTOBUF
 #include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
+#endif
 
 namespace schemaregistry::serdes {
 
@@ -137,18 +141,22 @@ std::vector<uint8_t> base64_decode(const std::string &encoded_string) {
 std::unique_ptr<SerdeValue> SerdeValue::newString(SerdeFormat format,
                                                   const std::string &value) {
     switch (format) {
+#ifdef SCHEMAREGISTRY_USE_AVRO
         case SerdeFormat::Avro: {
             ::avro::GenericDatum datum(value);
             return std::make_unique<avro::AvroValue>(datum);
         }
+#endif
         case SerdeFormat::Json: {
             nlohmann::json json_value = value;
             return std::make_unique<json::JsonValue>(json_value);
         }
+#ifdef SCHEMAREGISTRY_USE_PROTOBUF
         case SerdeFormat::Protobuf: {
             protobuf::ProtobufVariant variant(value);
             return protobuf::makeProtobufValue(std::move(variant));
         }
+#endif
         default:
             throw SerdeError("Unsupported SerdeFormat");
     }
@@ -157,20 +165,24 @@ std::unique_ptr<SerdeValue> SerdeValue::newString(SerdeFormat format,
 std::unique_ptr<SerdeValue> SerdeValue::newBytes(
     SerdeFormat format, const std::vector<uint8_t> &value) {
     switch (format) {
+#ifdef SCHEMAREGISTRY_USE_AVRO
         case SerdeFormat::Avro: {
             ::avro::GenericDatum datum(value);
             return std::make_unique<avro::AvroValue>(datum);
         }
+#endif
         case SerdeFormat::Json: {
             // For JSON, encode bytes as base64 string
             std::string base64_value = base64_encode(value);
             nlohmann::json json_value = base64_value;
             return std::make_unique<json::JsonValue>(json_value);
         }
+#ifdef SCHEMAREGISTRY_USE_PROTOBUF
         case SerdeFormat::Protobuf: {
             protobuf::ProtobufVariant variant(value);
             return protobuf::makeProtobufValue(std::move(variant));
         }
+#endif
         default:
             throw SerdeError("Unsupported SerdeFormat");
     }
@@ -179,17 +191,21 @@ std::unique_ptr<SerdeValue> SerdeValue::newBytes(
 std::unique_ptr<SerdeValue> SerdeValue::newJson(SerdeFormat format,
                                                 const nlohmann::json &value) {
     switch (format) {
+#ifdef SCHEMAREGISTRY_USE_AVRO
         case SerdeFormat::Avro: {
             // TODO
             throw SerdeError("TODO");
         }
+#endif
         case SerdeFormat::Json: {
             return std::make_unique<json::JsonValue>(value);
         }
+#ifdef SCHEMAREGISTRY_USE_PROTOBUF
         case SerdeFormat::Protobuf: {
             // TODO
             throw SerdeError("TODO");
         }
+#endif
         default:
             throw SerdeError("Unsupported SerdeFormat");
     }

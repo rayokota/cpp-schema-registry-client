@@ -7,8 +7,6 @@
 
 namespace schemaregistry::rules::cel::utils {
 
-#ifdef SCHEMAREGISTRY_USE_JSON
-
 google::api::expr::runtime::CelValue fromJsonValue(
     const nlohmann::json &json, google::protobuf::Arena *arena) {
     if (json.is_null())
@@ -100,8 +98,6 @@ nlohmann::json toJsonValue(
     }
     return original;
 }
-
-#endif
 
 #ifdef SCHEMAREGISTRY_USE_AVRO
 
@@ -319,8 +315,6 @@ google::api::expr::runtime::CelValue fromAvroValue(
 }
 
 #endif
-
-#ifdef SCHEMAREGISTRY_USE_PROTOBUF
 
 schemaregistry::serdes::protobuf::ProtobufVariant toProtobufValue(
     const schemaregistry::serdes::protobuf::ProtobufVariant &original,
@@ -766,7 +760,5 @@ google::api::expr::runtime::CelValue convertProtobufMapToCel(
 
     return google::api::expr::runtime::CelValue::CreateMap(map_impl);
 }
-
-#endif
 
 }  // namespace schemaregistry::rules::cel::utils
