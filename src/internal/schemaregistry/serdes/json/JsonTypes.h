@@ -81,9 +81,10 @@ class JsonValidationError : public SerdeError {
         : SerdeError("JSON validation error: " + message) {}
 };
 
-// Utility functions for JSON value and schema extraction
-nlohmann::json asJson(const SerdeValue &value);
-
 jsoncons::ojson asOJson(const SerdeValue &value);
+
+std::unique_ptr<SerdeValue> makeJsonValue(const jsoncons::ojson &value);
+
+std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value);
 
 }  // namespace schemaregistry::serdes::json

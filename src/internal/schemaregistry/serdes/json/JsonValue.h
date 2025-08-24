@@ -1,6 +1,5 @@
 #pragma once
 
-#include <jsoncons/json.hpp>
 #include <memory>
 #include <nlohmann/json.hpp>
 
@@ -45,13 +44,10 @@ class JsonValue : public SerdeValue {
     nlohmann::json asJson() const override;
 };
 
-// Helper functions for creating JSON SerdeValue instances
+nlohmann::json asJson(const SerdeValue &value);
+
 std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value);
 
 std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value);
-
-std::unique_ptr<SerdeValue> makeJsonValue(const jsoncons::ojson &value);
-
-std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value);
 
 }  // namespace schemaregistry::serdes::json

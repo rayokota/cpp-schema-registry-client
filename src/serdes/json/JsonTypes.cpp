@@ -10,11 +10,14 @@ jsoncons::ojson asOJson(const SerdeValue &value) {
     return jsoncons::ojson::parse(value.getValue<nlohmann::json>().dump());
 }
 
-nlohmann::json asJson(const SerdeValue &value) {
-    if (value.getFormat() != SerdeFormat::Json) {
-        throw std::invalid_argument("SerdeValue is not JSON");
-    }
-    return value.getValue<nlohmann::json>();
+std::unique_ptr<SerdeValue> makeJsonValue(const jsoncons::ojson &value) {
+    return std::make_unique<JsonValue>(
+        nlohmann::json::parse(value.to_string()));
+}
+
+std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value) {
+    return std::make_unique<JsonValue>(
+        nlohmann::json::parse(value.to_string()));
 }
 
 }  // namespace schemaregistry::serdes::json

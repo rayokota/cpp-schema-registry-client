@@ -52,22 +52,19 @@ std::vector<uint8_t> JsonValue::asBytes() const {
 
 nlohmann::json JsonValue::asJson() const { return value_; }
 
+nlohmann::json asJson(const SerdeValue &value) {
+    if (value.getFormat() != SerdeFormat::Json) {
+        throw std::invalid_argument("SerdeValue is not JSON");
+    }
+    return value.getValue<nlohmann::json>();
+}
+
 std::unique_ptr<SerdeValue> makeJsonValue(const nlohmann::json &value) {
     return std::make_unique<JsonValue>(value);
 }
 
 std::unique_ptr<SerdeValue> makeJsonValue(nlohmann::json &&value) {
     return std::make_unique<JsonValue>(std::move(value));
-}
-
-std::unique_ptr<SerdeValue> makeJsonValue(const jsoncons::ojson &value) {
-    return std::make_unique<JsonValue>(
-        nlohmann::json::parse(value.to_string()));
-}
-
-std::unique_ptr<SerdeValue> makeJsonValue(jsoncons::ojson &&value) {
-    return std::make_unique<JsonValue>(
-        nlohmann::json::parse(value.to_string()));
 }
 
 }  // namespace schemaregistry::serdes::json
