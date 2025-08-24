@@ -19,6 +19,7 @@
 #include "schemaregistry/rest/RestClient.h"
 #include "schemaregistry/rest/RestException.h"
 #include "schemaregistry/rest/SchemaStore.h"
+#include "schemaregistry/rest/TtlLruCache.h"
 #include "schemaregistry/rest/model/RegisteredSchema.h"
 #include "schemaregistry/rest/model/Schema.h"
 #include "schemaregistry/rest/model/ServerConfig.h"
@@ -35,18 +36,10 @@ class SchemaRegistryClient : public ISchemaRegistryClient {
     std::shared_ptr<std::mutex> storeMutex;
 
     // Caches for latest versions
-    std::unordered_map<std::string,
-                       schemaregistry::rest::model::RegisteredSchema>
+    TtlLruCache<std::string, schemaregistry::rest::model::RegisteredSchema>
         latestVersionCache;
-    std::unordered_map<std::string,
-                       schemaregistry::rest::model::RegisteredSchema>
+    TtlLruCache<std::string, schemaregistry::rest::model::RegisteredSchema>
         latestWithMetadataCache;
-    std::shared_ptr<std::mutex> latestVersionCacheMutex;
-    std::shared_ptr<std::mutex> latestWithMetadataCacheMutex;
-
-    // Cache settings
-    size_t cacheCapacity;
-    std::chrono::seconds cacheLatestTtl;
 
     // Helper methods
     std::string urlEncode(const std::string &str) const;

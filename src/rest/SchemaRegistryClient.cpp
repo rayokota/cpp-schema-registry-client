@@ -23,11 +23,11 @@ SchemaRegistryClient::SchemaRegistryClient(
     : restClient(std::make_shared<schemaregistry::rest::RestClient>(config)),
       store(std::make_shared<SchemaStore>()),
       storeMutex(std::make_shared<std::mutex>()),
-      latestVersionCacheMutex(std::make_shared<std::mutex>()),
-      latestWithMetadataCacheMutex(std::make_shared<std::mutex>()),
-      cacheCapacity(1000),
-      cacheLatestTtl(std::chrono::seconds(300))  // 5 minutes
-{
+      latestVersionCache(config->getCacheCapacity(),
+                         std::chrono::seconds(config->getCacheLatestTtlSec())),
+      latestWithMetadataCache(
+          config->getCacheCapacity(),
+          std::chrono::seconds(config->getCacheLatestTtlSec())) {
     if (config->getBaseUrls().empty()) {
         throw schemaregistry::rest::RestException("Base URL is required");
     }
@@ -168,14 +168,8 @@ std::vector<std::string> SchemaRegistryClient::parseStringArrayFromJson(
 }
 
 void SchemaRegistryClient::clearLatestCaches() {
-    {
-        std::lock_guard<std::mutex> lock(*latestVersionCacheMutex);
-        latestVersionCache.clear();
-    }
-    {
-        std::lock_guard<std::mutex> lock(*latestWithMetadataCacheMutex);
-        latestWithMetadataCache.clear();
-    }
+    latestVersionCache.clear();
+    latestWithMetadataCache.clear();
 }
 
 void SchemaRegistryClient::clearCaches() {
@@ -397,12 +391,9 @@ schemaregistry::rest::model::RegisteredSchema
 SchemaRegistryClient::getLatestVersion(
     const std::string &subject, const std::optional<std::string> &format) {
     // Check cache first
-    {
-        std::lock_guard<std::mutex> lock(*latestVersionCacheMutex);
-        auto it = latestVersionCache.find(subject);
-        if (it != latestVersionCache.end()) {
-            return it->second;
-        }
+    auto cached = latestVersionCache.get(subject);
+    if (cached.has_value()) {
+        return cached.value();
     }
 
     // Prepare request
@@ -420,10 +411,7 @@ SchemaRegistryClient::getLatestVersion(
         parseRegisteredSchemaFromJson(responseBody);
 
     // Update cache
-    {
-        std::lock_guard<std::mutex> lock(*latestVersionCacheMutex);
-        latestVersionCache[subject] = response;
-    }
+    latestVersionCache.put(subject, response);
 
     return response;
 }
@@ -435,12 +423,9 @@ SchemaRegistryClient::getLatestWithMetadata(
     const std::optional<std::string> &format) {
     // Check cache first
     std::string cacheKey = createMetadataKey(subject, metadata);
-    {
-        std::lock_guard<std::mutex> lock(*latestWithMetadataCacheMutex);
-        auto it = latestWithMetadataCache.find(cacheKey);
-        if (it != latestWithMetadataCache.end()) {
-            return it->second;
-        }
+    auto cached = latestWithMetadataCache.get(cacheKey);
+    if (cached.has_value()) {
+        return cached.value();
     }
 
     // Prepare request
@@ -465,10 +450,7 @@ SchemaRegistryClient::getLatestWithMetadata(
         parseRegisteredSchemaFromJson(responseBody);
 
     // Update cache
-    {
-        std::lock_guard<std::mutex> lock(*latestWithMetadataCacheMutex);
-        latestWithMetadataCache[cacheKey] = response;
-    }
+    latestWithMetadataCache.put(cacheKey, response);
 
     return response;
 }
