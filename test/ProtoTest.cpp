@@ -24,15 +24,16 @@
 #include "schemaregistry/rest/model/Schema.h"
 #include "schemaregistry/rest/model/Rule.h"
 #include "schemaregistry/rest/model/RuleSet.h"
+#include "schemaregistry/serdes/SerdeError.h"
+#include "schemaregistry/serdes/Serde.h"
+
+#ifdef SCHEMAREGISTRY_USE_RULES
 #include "schemaregistry/rules/cel/CelFieldExecutor.h"
 #include "schemaregistry/rules/encryption/FieldEncryptionExecutor.h"
 #include "schemaregistry/rules/encryption/EncryptionExecutor.h"
 #include "schemaregistry/rules/encryption/localkms/LocalKmsDriver.h"
 #include "schemaregistry/rest/MockDekRegistryClient.h"
-
-// Additional includes needed for proper compilation
-#include "schemaregistry/serdes/SerdeError.h"
-#include "schemaregistry/serdes/Serde.h"
+#endif
 
 #include "test/dep.pb.h"
 #include "test/example.pb.h"
@@ -42,9 +43,12 @@ using namespace schemaregistry::serdes;
 using namespace schemaregistry::serdes::protobuf;
 using namespace schemaregistry::rest;
 using namespace schemaregistry::rest::model;
+
+#ifdef SCHEMAREGISTRY_USE_RULES
 using namespace schemaregistry::rules::cel;
 using namespace schemaregistry::rules::encryption;
 using namespace schemaregistry::rules::encryption::localkms;
+#endif
 
 TEST(ProtobufTest, BasicSerialization) {
     // Create client configuration with mock URL
@@ -270,6 +274,8 @@ TEST(ProtobufTest, SerializeReference) {
     EXPECT_EQ(test_msg2.test_uint32(), test_msg1.test_uint32());
     EXPECT_EQ(test_msg2.test_uint64(), test_msg1.test_uint64());
 }
+
+#ifdef SCHEMAREGISTRY_USE_RULES
 
 TEST(ProtobufTest, CelFieldTransformation) {
     // Create client configuration with mock URL
@@ -633,3 +639,5 @@ TEST(ProtobufTest, FieldEncryption) {
     }
     EXPECT_EQ(obj2->oneof_string(), expected_obj.oneof_string());
 }
+
+#endif

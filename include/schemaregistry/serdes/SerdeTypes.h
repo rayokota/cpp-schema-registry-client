@@ -27,17 +27,6 @@ class ClientConfiguration;
 
 namespace schemaregistry::serdes {
 
-// Forward declarations for specific value classes
-namespace avro {
-class AvroValue;
-}
-namespace json {
-class JsonValue;
-}
-namespace protobuf {
-class ProtobufValue;
-}
-
 /**
  * Serialization format types
  */

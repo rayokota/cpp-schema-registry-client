@@ -175,20 +175,64 @@ endif()
 include(cmake/CompileProtobuf.cmake)
 CompileProtobuf(generated_proto)
 
-# Collect source files
-file(GLOB_RECURSE HEADERS "include/*.h")
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+# Create the main library
+add_library(schemaregistry)
 
-# Add generated protobuf files to the source list
-if(PROTO_SOURCES)
-    list(APPEND SOURCES ${PROTO_SOURCES})
+# Base sources (always included - REST client and core functionality)
+file(GLOB_RECURSE BASE_HEADERS "include/schemaregistry/rest/*.h")
+file(GLOB_RECURSE BASE_SOURCES "src/rest/*.cpp")
+target_sources(schemaregistry PRIVATE ${BASE_HEADERS} ${BASE_SOURCES})
+
+# Core serdes sources (always needed - base serialization framework)
+file(GLOB CORE_SERDES_HEADERS "include/schemaregistry/serdes/Serde.h" 
+                              "include/schemaregistry/serdes/SerdeConfig.h"
+                              "include/schemaregistry/serdes/SerdeError.h"
+                              "include/schemaregistry/serdes/SerdeTypes.h"
+                              "include/schemaregistry/serdes/RuleRegistry.h"
+                              "include/schemaregistry/serdes/WildcardMatcher.h")
+file(GLOB CORE_SERDES_SOURCES "src/serdes/Serde.cpp"
+                              "src/serdes/SerdeConfig.cpp" 
+                              "src/serdes/SerdeError.cpp"
+                              "src/serdes/SerdeTypes.cpp"
+                              "src/serdes/RuleRegistry.cpp"
+                              "src/serdes/WildcardMatcher.cpp")
+target_sources(schemaregistry PRIVATE ${CORE_SERDES_HEADERS} ${CORE_SERDES_SOURCES})
+
+# Conditionally add Avro sources
+if(SCHEMAREGISTRY_WITH_AVRO)
+    file(GLOB AVRO_HEADERS "include/schemaregistry/serdes/avro/*.h")
+    file(GLOB AVRO_SOURCES "src/serdes/avro/*.cpp")
+    file(GLOB AVRO_INTERNAL_HEADERS "src/internal/schemaregistry/serdes/avro/*.h")
+    target_sources(schemaregistry PRIVATE ${AVRO_HEADERS} ${AVRO_SOURCES} ${AVRO_INTERNAL_HEADERS})
 endif()
 
-# Create the main library
-add_library(schemaregistry ${HEADERS} ${SOURCES})
+# Conditionally add JSON sources
+if(SCHEMAREGISTRY_WITH_JSON)
+    file(GLOB JSON_HEADERS "include/schemaregistry/serdes/json/*.h")
+    file(GLOB JSON_SOURCES "src/serdes/json/*.cpp")
+    file(GLOB JSON_INTERNAL_HEADERS "src/internal/schemaregistry/serdes/json/*.h")
+    target_sources(schemaregistry PRIVATE ${JSON_HEADERS} ${JSON_SOURCES} ${JSON_INTERNAL_HEADERS})
+endif()
 
-# KMS extensions are available as optional targets (users can link these as needed)
-# Example: target_link_libraries(your_target PRIVATE schemaregistry::schemaregistry schemaregistry::tink_awskms schemaregistry::tink_gcpkms)
+# Conditionally add Protobuf sources
+if(SCHEMAREGISTRY_WITH_PROTOBUF)
+    file(GLOB PROTOBUF_HEADERS "include/schemaregistry/serdes/protobuf/*.h")
+    file(GLOB PROTOBUF_SOURCES "src/serdes/protobuf/*.cpp")
+    target_sources(schemaregistry PRIVATE ${PROTOBUF_HEADERS} ${PROTOBUF_SOURCES})
+    
+    # Add generated protobuf files
+    if(PROTO_SOURCES)
+        target_sources(schemaregistry PRIVATE ${PROTO_SOURCES})
+    endif()
+endif()
+
+# Conditionally add Rules sources (includes CEL, encryption, jsonata)
+if(SCHEMAREGISTRY_WITH_RULES)
+    file(GLOB_RECURSE RULES_HEADERS "include/schemaregistry/rules/*.h")
+    file(GLOB_RECURSE RULES_SOURCES "src/rules/*.cpp")
+    file(GLOB_RECURSE RULES_INTERNAL_HEADERS "src/internal/schemaregistry/rules/*.h")
+    target_sources(schemaregistry PRIVATE ${RULES_HEADERS} ${RULES_SOURCES} ${RULES_INTERNAL_HEADERS})
+endif()
 
 # Provide a namespaced ALIAS for consumers (and internal consistency)
 # Build-tree alias matching the installed namespace
@@ -225,49 +269,90 @@ target_include_directories(schemaregistry
         $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
 )
 
-# Link libraries
+# Link libraries conditionally based on enabled features
 # Use BUILD_INTERFACE so install(EXPORT ...) does not reference non-exported
 # in-tree dependency targets (avoids CMake install errors).
+
+# Core libraries (always linked)
 target_link_libraries(schemaregistry
     PUBLIC
-        # Core serialization and parsing libraries
-        $<BUILD_INTERFACE:unofficial::avro-cpp::avrocpp>
         $<BUILD_INTERFACE:nlohmann_json::nlohmann_json>
-        $<BUILD_INTERFACE:protobuf::libprotobuf>
     PRIVATE
-        # CEL (Common Expression Language) libraries
-        $<BUILD_INTERFACE:cel_cpp>
-        $<BUILD_INTERFACE:cel_cpp_parser>
-        $<BUILD_INTERFACE:cel_cpp_minimal_descriptor_set>
-        
-        # JSON processing libraries
-        $<BUILD_INTERFACE:jsonata>
-        $<BUILD_INTERFACE:jsoncons>
-        
-        # Cryptography library
-        $<BUILD_INTERFACE:tink::static>
-
         OpenSSL::Crypto
         cpr::cpr
-        
-        # AWS SDK for KMS driver compilation
-        aws-cpp-sdk-core
-        aws-cpp-sdk-kms
-        
-        # Azure SDK for Azure KMS driver compilation
-        Azure::azure-security-keyvault-keys
-        Azure::azure-identity
-        
-        # Google Cloud SDK for GCP KMS driver compilation
-        google-cloud-cpp::kms
-
-        # HashiCorp Vault SDK for Vault KMS driver compilation
-        libvault::vault
 )
 
-# Note: KMS extensions (tink_awskms, tink_gcpkms) are available as optional targets
-# Users can link them separately as needed:
-# target_link_libraries(your_target PRIVATE schemaregistry::tink_awskms schemaregistry::tink_gcpkms)
+# Conditionally link Avro
+if(SCHEMAREGISTRY_WITH_AVRO)
+    target_link_libraries(schemaregistry
+        PUBLIC
+            $<BUILD_INTERFACE:unofficial::avro-cpp::avrocpp>
+    )
+endif()
+
+# Conditionally link JSON libraries  
+if(SCHEMAREGISTRY_WITH_JSON)
+    target_link_libraries(schemaregistry
+        PRIVATE
+            $<BUILD_INTERFACE:jsoncons>
+    )
+endif()
+
+# Conditionally link Protobuf
+if(SCHEMAREGISTRY_WITH_PROTOBUF)
+    target_link_libraries(schemaregistry
+        PUBLIC
+            $<BUILD_INTERFACE:protobuf::libprotobuf>
+    )
+endif()
+
+# Conditionally link Rules dependencies (CEL, encryption, KMS providers)
+if(SCHEMAREGISTRY_WITH_RULES)
+    target_link_libraries(schemaregistry
+        PRIVATE
+            # CEL (Common Expression Language) libraries
+            $<BUILD_INTERFACE:cel_cpp>
+            $<BUILD_INTERFACE:cel_cpp_parser>
+            $<BUILD_INTERFACE:cel_cpp_minimal_descriptor_set>
+            
+            # JSON processing for rules
+            $<BUILD_INTERFACE:jsonata>
+            
+            # Cryptography library
+            $<BUILD_INTERFACE:tink::static>
+            
+            # AWS SDK for KMS driver
+            aws-cpp-sdk-core
+            aws-cpp-sdk-kms
+            
+            # Azure SDK for Azure KMS driver
+            Azure::azure-security-keyvault-keys
+            Azure::azure-identity
+            
+            # Google Cloud SDK for GCP KMS driver
+            google-cloud-cpp::kms
+
+            # HashiCorp Vault SDK for Vault KMS driver
+            libvault::vault
+    )
+endif()
+
+# Add conditional compile definitions for C++ feature detection
+if(SCHEMAREGISTRY_WITH_AVRO)
+    target_compile_definitions(schemaregistry PUBLIC SCHEMAREGISTRY_USE_AVRO)
+endif()
+
+if(SCHEMAREGISTRY_WITH_JSON)
+    target_compile_definitions(schemaregistry PUBLIC SCHEMAREGISTRY_USE_JSON)
+endif()
+
+if(SCHEMAREGISTRY_WITH_PROTOBUF)
+    target_compile_definitions(schemaregistry PUBLIC SCHEMAREGISTRY_USE_PROTOBUF)
+endif()
+
+if(SCHEMAREGISTRY_WITH_RULES)
+    target_compile_definitions(schemaregistry PUBLIC SCHEMAREGISTRY_USE_RULES)
+endif()
 
 option(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
 

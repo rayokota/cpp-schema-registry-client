@@ -22,23 +22,27 @@
 #include "schemaregistry/rest/model/Schema.h"
 #include "schemaregistry/rest/model/Rule.h"
 #include "schemaregistry/rest/model/RuleSet.h"
+#include "schemaregistry/serdes/SerdeError.h"
+#include "schemaregistry/serdes/Serde.h"
+
+#ifdef SCHEMAREGISTRY_USE_RULES
 #include "schemaregistry/rules/cel/CelFieldExecutor.h"
 #include "schemaregistry/rules/encryption/FieldEncryptionExecutor.h"
 #include "schemaregistry/rules/encryption/EncryptionExecutor.h"
 #include "schemaregistry/rules/encryption/localkms/LocalKmsDriver.h"
 #include "schemaregistry/rest/MockDekRegistryClient.h"
-
-// Additional includes needed for proper compilation
-#include "schemaregistry/serdes/SerdeError.h"
-#include "schemaregistry/serdes/Serde.h"
+#endif
 
 using namespace schemaregistry::serdes;
 using namespace schemaregistry::serdes::json;
 using namespace schemaregistry::rest;
 using namespace schemaregistry::rest::model;
+
+#ifdef SCHEMAREGISTRY_USE_RULES
 using namespace schemaregistry::rules::cel;
 using namespace schemaregistry::rules::encryption;
 using namespace schemaregistry::rules::encryption::localkms;
+#endif
 
 TEST(JsonTest, BasicSerialization) {
     // Create client configuration with mock URL
@@ -302,6 +306,8 @@ TEST(JsonTest, SerializeReferences) {
     // Assert that the original and deserialized objects are equal
     ASSERT_EQ(obj2, obj);
 }
+
+#ifdef SCHEMAREGISTRY_USE_RULES
 
 TEST(JsonTest, CelField) {
     // Create client configuration with mock URL
@@ -916,3 +922,5 @@ TEST(JsonTest, EncryptionWithReferences) {
     // Assert that the original and deserialized objects are equal
     ASSERT_EQ(obj2, obj);
 }
+
+#endif   

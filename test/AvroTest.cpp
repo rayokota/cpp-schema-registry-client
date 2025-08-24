@@ -21,30 +21,34 @@
 #include "schemaregistry/serdes/SerdeConfig.h"
 #include "schemaregistry/serdes/SerdeTypes.h"
 #include "schemaregistry/serdes/RuleRegistry.h"
+#include "schemaregistry/rest/model/Metadata.h"
 #include "schemaregistry/rest/model/Schema.h"
+#include "schemaregistry/rest/model/ServerConfig.h"
 #include "schemaregistry/rest/model/Rule.h"
 #include "schemaregistry/rest/model/RuleSet.h"
+#include "schemaregistry/serdes/SerdeError.h"
+#include "schemaregistry/serdks/Serde.h"
+
+#ifdef SCHEMAREGISTRY_USE_RULES
 #include "schemaregistry/rules/cel/CelFieldExecutor.h"
 #include "schemaregistry/rules/encryption/FieldEncryptionExecutor.h"
 #include "schemaregistry/rules/encryption/EncryptionExecutor.h"
 #include "schemaregistry/rules/encryption/localkms/LocalKmsDriver.h"
 #include "schemaregistry/rest/MockDekRegistryClient.h"
 #include "schemaregistry/rules/jsonata/JsonataExecutor.h"
-#include "schemaregistry/rest/model/Metadata.h"
-#include "schemaregistry/rest/model/ServerConfig.h"
-
-// Additional includes needed for proper compilation
-#include "schemaregistry/serdes/SerdeError.h"
-#include "schemaregistry/serdes/Serde.h"
+#endif
 
 using namespace schemaregistry::serdes;
 using namespace schemaregistry::serdes::avro;
 using namespace schemaregistry::rest;
 using namespace schemaregistry::rest::model;
+
+#ifdef SCHEMAREGISTRY_USE_RULES
 using namespace schemaregistry::rules::cel;
 using namespace schemaregistry::rules::encryption;
 using namespace schemaregistry::rules::encryption::localkms;
 using namespace schemaregistry::rules::jsonata;
+#endif
 
 TEST(AvroTest, BasicSerialization) {
     // Create client configuration with mock URL
@@ -313,6 +317,7 @@ TEST(AvroTest, CelCondition) {
     EXPECT_EQ(bytes_field[2], 3);
 }
 
+#ifdef SCHEMAREGISTRY_USE_RULES
 TEST(AvroTest, CelFieldTransformation) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
@@ -1194,3 +1199,5 @@ TEST(AvroTest, EncryptionDekRotationF1Preserialized) {
     // Verify field value - should be decrypted to "hello world"
     EXPECT_EQ(deserialized_record.fieldAt(0).value<std::string>(), "hello world");
 }
+
+#endif

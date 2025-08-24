@@ -56,94 +56,86 @@ endfunction()
 # Create example target
 add_custom_target(example)
 
-# Basic Avro Consumer
-add_example_executable(avro_consumer AvroConsumer.cpp)
+# Build list of example targets dynamically
+set(EXAMPLE_TARGETS)
 
-# Basic Avro Producer  
-add_example_executable(avro_producer AvroProducer.cpp)
+# Only build Avro examples if Avro support is enabled
+if(SCHEMAREGISTRY_WITH_AVRO)
+    add_example_executable(avro_consumer AvroConsumer.cpp)
+    add_example_executable(avro_producer AvroProducer.cpp)
+    list(APPEND EXAMPLE_TARGETS avro_consumer avro_producer)
+    
+    # Only build Avro encryption examples if Rules support is also enabled
+    if(SCHEMAREGISTRY_WITH_RULES)
+        add_example_executable(avro_consumer_encryption AvroConsumerEncryption.cpp
+            tink::static
+        )
+        add_example_executable(avro_producer_encryption AvroProducerEncryption.cpp
+            tink::static
+        )
+        list(APPEND EXAMPLE_TARGETS avro_consumer_encryption avro_producer_encryption)
+    endif()
+endif()
 
-# Avro Consumer with Encryption
-add_example_executable(avro_consumer_encryption AvroConsumerEncryption.cpp
-    tink::static
-)
+# Only build JSON examples if JSON support is enabled
+if(SCHEMAREGISTRY_WITH_JSON)
+    add_example_executable(json_consumer JsonConsumer.cpp)
+    add_example_executable(json_producer JsonProducer.cpp)
+    list(APPEND EXAMPLE_TARGETS json_consumer json_producer)
+    
+    # Only build JSON encryption examples if Rules support is also enabled
+    if(SCHEMAREGISTRY_WITH_RULES)
+        add_example_executable(json_consumer_encryption JsonConsumerEncryption.cpp
+            tink::static
+        )
+        add_example_executable(json_producer_encryption JsonProducerEncryption.cpp
+            tink::static
+        )
+        list(APPEND EXAMPLE_TARGETS json_consumer_encryption json_producer_encryption)
+    endif()
+endif()
 
-# Avro Producer with Encryption
-add_example_executable(avro_producer_encryption AvroProducerEncryption.cpp
-    tink::static
-)
-
-# Basic JSON Consumer
-add_example_executable(json_consumer JsonConsumer.cpp)
-
-# Basic JSON Producer  
-add_example_executable(json_producer JsonProducer.cpp)
-
-# JSON Consumer with Encryption
-add_example_executable(json_consumer_encryption JsonConsumerEncryption.cpp
-    tink::static
-)
-
-# JSON Producer with Encryption
-add_example_executable(json_producer_encryption JsonProducerEncryption.cpp
-    tink::static
-)
-
-# Basic Protobuf Consumer
-add_example_executable(protobuf_consumer ProtobufConsumer.cpp)
-
-# Basic Protobuf Producer  
-add_example_executable(protobuf_producer ProtobufProducer.cpp)
-
-# Protobuf Consumer with Encryption
-add_example_executable(protobuf_consumer_encryption ProtobufConsumerEncryption.cpp
-    tink::static
-)
-
-# Protobuf Producer with Encryption
-add_example_executable(protobuf_producer_encryption ProtobufProducerEncryption.cpp
-    tink::static
-)
+# Only build Protobuf examples if Protobuf support is enabled
+if(SCHEMAREGISTRY_WITH_PROTOBUF)
+    add_example_executable(protobuf_consumer ProtobufConsumer.cpp)
+    add_example_executable(protobuf_producer ProtobufProducer.cpp)
+    list(APPEND EXAMPLE_TARGETS protobuf_consumer protobuf_producer)
+    
+    # Only build Protobuf encryption examples if Rules support is also enabled
+    if(SCHEMAREGISTRY_WITH_RULES)
+        add_example_executable(protobuf_consumer_encryption ProtobufConsumerEncryption.cpp
+            tink::static
+        )
+        add_example_executable(protobuf_producer_encryption ProtobufProducerEncryption.cpp
+            tink::static
+        )
+        list(APPEND EXAMPLE_TARGETS protobuf_consumer_encryption protobuf_producer_encryption)
+    endif()
+endif()
 
 # Protobuf compilation and dependencies are handled in add_example_executable function
 
-# Set output directory for example
-set_target_properties(
-    avro_consumer
-    avro_producer
-    avro_consumer_encryption
-    avro_producer_encryption
-    json_consumer
-    json_producer
-    json_consumer_encryption
-    json_producer_encryption
-    protobuf_consumer
-    protobuf_producer
-    protobuf_consumer_encryption
-    protobuf_producer_encryption
-    PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/example
-)
+# Set output directory for examples (only if examples were built)
+if(EXAMPLE_TARGETS)
+    set_target_properties(${EXAMPLE_TARGETS}
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/example
+    )
 
-# Add install targets for example
-install(TARGETS
-    avro_consumer
-    avro_producer
-    avro_consumer_encryption
-    avro_producer_encryption
-    json_consumer
-    json_producer
-    json_consumer_encryption
-    json_producer_encryption
-    protobuf_consumer
-    protobuf_producer
-    protobuf_consumer_encryption
-    protobuf_producer_encryption
-    DESTINATION bin/example
-)
+    # Add install targets for built examples
+    install(TARGETS ${EXAMPLE_TARGETS}
+        DESTINATION bin/example
+    )
+endif()
 
 # Install README
 install(FILES README.md DESTINATION share/doc/schemaregistry-examples)
 
 # Display information
-message(STATUS "Schema Registry Examples will be built in: ${CMAKE_BINARY_DIR}/example")
-message(STATUS "Run 'make example' to build all examples")
+if(EXAMPLE_TARGETS)
+    message(STATUS "Schema Registry Examples will be built in: ${CMAKE_BINARY_DIR}/example")
+    message(STATUS "Enabled examples: ${EXAMPLE_TARGETS}")
+    message(STATUS "Run 'make example' to build all examples")
+else()
+    message(STATUS "No examples will be built (all serialization formats disabled)")
+endif()
