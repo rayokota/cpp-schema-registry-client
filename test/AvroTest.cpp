@@ -27,7 +27,7 @@
 #include "schemaregistry/rest/model/Rule.h"
 #include "schemaregistry/rest/model/RuleSet.h"
 #include "schemaregistry/serdes/SerdeError.h"
-#include "schemaregistry/serdks/Serde.h"
+#include "schemaregistry/serdes/Serde.h"
 
 #ifdef SCHEMAREGISTRY_USE_RULES
 #include "schemaregistry/rules/cel/CelFieldExecutor.h"
@@ -212,6 +212,8 @@ TEST(AvroTest, GuidInHeader) {
     EXPECT_EQ(bytes_field[2], 3);
 }
 
+#ifdef SCHEMAREGISTRY_USE_RULES
+
 TEST(AvroTest, CelCondition) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
@@ -317,7 +319,6 @@ TEST(AvroTest, CelCondition) {
     EXPECT_EQ(bytes_field[2], 3);
 }
 
-#ifdef SCHEMAREGISTRY_USE_RULES
 TEST(AvroTest, CelFieldTransformation) {
     // Create client configuration with mock URL
     std::vector<std::string> urls = {"mock://"};
