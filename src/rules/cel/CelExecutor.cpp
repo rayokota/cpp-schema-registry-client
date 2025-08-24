@@ -19,9 +19,15 @@
 #include "schemaregistry/rules/cel/ExtraFunc.h"
 #include "schemaregistry/serdes/RuleRegistry.h"
 #include "schemaregistry/serdes/SerdeError.h"
+#ifdef SCHEMAREGISTRY_USE_AVRO
 #include "schemaregistry/serdes/avro/AvroTypes.h"
+#endif
+#ifdef SCHEMAREGISTRY_USE_JSON
 #include "schemaregistry/serdes/json/JsonTypes.h"
+#endif
+#ifdef SCHEMAREGISTRY_USE_PROTOBUF
 #include "schemaregistry/serdes/protobuf/ProtobufTypes.h"
+#endif
 
 namespace schemaregistry::rules::cel {
 
@@ -220,19 +226,25 @@ CelExecutor::Impl::getOrCompileExpression(const std::string &expr) {
 google::api::expr::runtime::CelValue CelExecutor::Impl::fromSerdeValue(
     const SerdeValue &value, google::protobuf::Arena *arena) {
     switch (value.getFormat()) {
+#ifdef SCHEMAREGISTRY_USE_JSON
         case SerdeFormat::Json: {
             auto json_value = schemaregistry::serdes::json::asJson(value);
             return utils::fromJsonValue(json_value, arena);
         }
+#endif
+#ifdef SCHEMAREGISTRY_USE_AVRO
         case SerdeFormat::Avro: {
             auto avro_value = schemaregistry::serdes::avro::asAvro(value);
             return utils::fromAvroValue(avro_value, arena);
         }
+#endif
+#ifdef SCHEMAREGISTRY_USE_PROTOBUF
         case SerdeFormat::Protobuf: {
             auto &proto_variant =
                 schemaregistry::serdes::protobuf::asProtobuf(value);
             return utils::fromProtobufValue(proto_variant, arena);
         }
+#endif
         default:
             return google::api::expr::runtime::CelValue::CreateNull();
     }
@@ -242,16 +254,21 @@ std::unique_ptr<SerdeValue> CelExecutor::Impl::toSerdeValue(
     const SerdeValue &original,
     const google::api::expr::runtime::CelValue &cel_value) {
     switch (original.getFormat()) {
+#ifdef SCHEMAREGISTRY_USE_JSON
         case SerdeFormat::Json: {
             auto original_json = schemaregistry::serdes::json::asJson(original);
             auto converted_json = utils::toJsonValue(original_json, cel_value);
             return schemaregistry::serdes::json::makeJsonValue(converted_json);
         }
+#endif
+#ifdef SCHEMAREGISTRY_USE_AVRO
         case SerdeFormat::Avro: {
             auto original_avro = schemaregistry::serdes::avro::asAvro(original);
             auto converted_avro = utils::toAvroValue(original_avro, cel_value);
             return schemaregistry::serdes::avro::makeAvroValue(converted_avro);
         }
+#endif
+#ifdef SCHEMAREGISTRY_USE_PROTOBUF
         case SerdeFormat::Protobuf: {
             auto &proto_variant =
                 schemaregistry::serdes::protobuf::asProtobuf(original);
@@ -260,6 +277,7 @@ std::unique_ptr<SerdeValue> CelExecutor::Impl::toSerdeValue(
             return schemaregistry::serdes::protobuf::makeProtobufValue(
                 std::move(converted_proto_variant));
         }
+#endif
         default:
             // For unknown formats, return a copy of the original
             return original.clone();

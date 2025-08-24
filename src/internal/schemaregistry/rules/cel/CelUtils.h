@@ -16,6 +16,8 @@
 
 namespace schemaregistry::rules::cel::utils {
 
+#ifdef SCHEMAREGISTRY_USE_JSON
+
 google::api::expr::runtime::CelValue fromJsonValue(
     const nlohmann::json &json, google::protobuf::Arena *arena);
 
@@ -23,12 +25,20 @@ nlohmann::json toJsonValue(
     const nlohmann::json &original,
     const google::api::expr::runtime::CelValue &cel_value);
 
+#endif
+
+#ifdef SCHEMAREGISTRY_USE_AVRO
+
 google::api::expr::runtime::CelValue fromAvroValue(
     const ::avro::GenericDatum &avro, google::protobuf::Arena *arena);
 
 ::avro::GenericDatum toAvroValue(
     const ::avro::GenericDatum &original,
     const google::api::expr::runtime::CelValue &cel_value);
+
+#endif
+
+#ifdef SCHEMAREGISTRY_USE_PROTOBUF
 
 schemaregistry::serdes::protobuf::ProtobufVariant toProtobufValue(
     const schemaregistry::serdes::protobuf::ProtobufVariant &original,
@@ -48,5 +58,7 @@ google::api::expr::runtime::CelValue convertProtobufMapToCel(
     const google::protobuf::Message &map_entry,
     const google::protobuf::FieldDescriptor *map_field,
     google::protobuf::Arena *arena);
+
+#endif
 
 }  // namespace schemaregistry::rules::cel::utils
