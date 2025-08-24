@@ -62,16 +62,6 @@ std::unordered_map<std::string, nlohmann::json> resolveNamedSchema(
     return resolved_schemas;
 }
 
-std::vector<schemaregistry::rest::model::SchemaReference> buildDependencies(
-    const nlohmann::json &schema, const std::string &subject_prefix) {
-    std::vector<schemaregistry::rest::model::SchemaReference> dependencies;
-
-    // TODO: Implement JSON schema analysis to find $ref dependencies
-    // This would involve traversing the schema and finding all $ref entries
-
-    return dependencies;
-}
-
 }  // namespace schema_resolution
 
 // Value transformation implementations
