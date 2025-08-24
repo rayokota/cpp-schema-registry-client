@@ -52,6 +52,12 @@ class RestClient {
         std::uint32_t initial_backoff_ms, std::uint32_t retry_attempts,
         std::chrono::milliseconds max_backoff) const;
 
+    cpr::Response sendRequest(
+        const std::string &url, const std::string &method,
+        const std::vector<std::pair<std::string, std::string>> &query,
+        const std::map<std::string, std::string> &headers,
+        const std::string &body) const;
+
     cpr::Response tryRequest(
         const std::string &base_url, const std::string &path,
         const std::string &method,

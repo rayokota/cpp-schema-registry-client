@@ -90,47 +90,10 @@ cpr::Response RestClient::tryRequest(
         std::chrono::milliseconds(configuration_->getRetriesMaxWaitMs());
 
     while (true) {
-        // Configure the shared Session for this request
-        // Ensure no stale body/payload leaks into requests like GET
-        session_->RemoveContent();
-        session_->SetUrl(cpr::Url{base_url + path});
-
-        // Set headers
-        cpr::Header cpr_headers;
-        for (const auto &kv : headers) {
-            cpr_headers.insert(kv);
-        }
-        session_->SetHeader(cpr_headers);
-
-        // Set query parameters (supporting repeated keys)
-        cpr::Parameters params{};
-        for (const auto &p : query) {
-            params.Add(cpr::Parameter{p.first, p.second});
-        }
-        session_->SetParameters(params);
-
-        // Set body when applicable
-        if (method == "POST" || method == "PUT" || method == "PATCH" ||
-            method == "DELETE") {
-            session_->SetBody(cpr::Body{body});
-        }
-
-        // Dispatch based on method
-        cpr::Response result;
-        if (method == "GET") {
-            result = session_->Get();
-        } else if (method == "POST") {
-            result = session_->Post();
-        } else if (method == "PUT") {
-            result = session_->Put();
-        } else if (method == "PATCH") {
-            result = session_->Patch();
-        } else if (method == "DELETE") {
-            result = session_->Delete();
-        } else {
-            // Unsupported method; set an error-like response
-            return cpr::Response{};
-        }
+        // Use the new sendRequest method that handles authentication and
+        // headers
+        cpr::Response result =
+            sendRequest(base_url + path, method, query, headers, body);
 
         // Check if we should retry
         bool should_retry = false;
@@ -150,6 +113,77 @@ cpr::Response RestClient::tryRequest(
             calculateExponentialBackoff(initial_wait_ms, retries, max_wait_ms);
         std::this_thread::sleep_for(backoff);
         retries++;
+    }
+}
+
+cpr::Response RestClient::sendRequest(
+    const std::string &url, const std::string &method,
+    const std::vector<std::pair<std::string, std::string>> &query,
+    const std::map<std::string, std::string> &headers,
+    const std::string &body) const {
+    // Configure the shared Session for this request
+    // Ensure no stale body/payload leaks into requests like GET
+    session_->RemoveContent();
+    session_->SetUrl(cpr::Url{url});
+
+    // Set default headers including content type
+    cpr::Header cpr_headers;
+    cpr_headers["Content-Type"] = "application/vnd.schemaregistry.v1+json";
+
+    // Handle authentication
+    const auto basic_auth = configuration_->getBasicAuth();
+    const auto bearer_token = configuration_->getBearerAccessToken();
+
+    if (basic_auth.has_value()) {
+        // Parse basic auth string (assume format "username:password")
+        const std::string &auth_str = basic_auth.value();
+        size_t colon_pos = auth_str.find(':');
+        if (colon_pos != std::string::npos) {
+            std::string username = auth_str.substr(0, colon_pos);
+            std::string password = auth_str.substr(colon_pos + 1);
+            session_->SetAuth(
+                cpr::Authentication{username, password, cpr::AuthMode::BASIC});
+        }
+    } else if (bearer_token.has_value()) {
+        cpr_headers["Authorization"] = "Bearer " + bearer_token.value();
+    }
+
+    // Add additional headers (can override defaults)
+    for (const auto &kv : headers) {
+        cpr_headers.insert(kv);
+    }
+
+    session_->SetHeader(cpr_headers);
+
+    // Set query parameters (supporting repeated keys)
+    if (!query.empty()) {
+        cpr::Parameters params{};
+        for (const auto &p : query) {
+            params.Add(cpr::Parameter{p.first, p.second});
+        }
+        session_->SetParameters(params);
+    }
+
+    // Set body when applicable
+    if (!body.empty() && (method == "POST" || method == "PUT" ||
+                          method == "PATCH" || method == "DELETE")) {
+        session_->SetBody(cpr::Body{body});
+    }
+
+    // Dispatch based on method
+    if (method == "GET") {
+        return session_->Get();
+    } else if (method == "POST") {
+        return session_->Post();
+    } else if (method == "PUT") {
+        return session_->Put();
+    } else if (method == "PATCH") {
+        return session_->Patch();
+    } else if (method == "DELETE") {
+        return session_->Delete();
+    } else {
+        // Unsupported method; set an error-like response
+        return cpr::Response{};
     }
 }
 
