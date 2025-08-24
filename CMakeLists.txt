@@ -189,13 +189,15 @@ file(GLOB CORE_SERDES_HEADERS "include/schemaregistry/serdes/Serde.h"
                               "include/schemaregistry/serdes/SerdeError.h"
                               "include/schemaregistry/serdes/SerdeTypes.h"
                               "include/schemaregistry/serdes/RuleRegistry.h"
-                              "include/schemaregistry/serdes/WildcardMatcher.h")
+                              "include/schemaregistry/serdes/WildcardMatcher.h"
+                              "src/internal/schemaregistry/serdes/json/JsonValue.h")
 file(GLOB CORE_SERDES_SOURCES "src/serdes/Serde.cpp"
                               "src/serdes/SerdeConfig.cpp" 
                               "src/serdes/SerdeError.cpp"
                               "src/serdes/SerdeTypes.cpp"
                               "src/serdes/RuleRegistry.cpp"
-                              "src/serdes/WildcardMatcher.cpp")
+                              "src/serdes/WildcardMatcher.cpp"
+                              "src/serdes/json/JsonValue.cpp")
 target_sources(schemaregistry PRIVATE ${CORE_SERDES_HEADERS} ${CORE_SERDES_SOURCES})
 
 # Conditionally add Avro sources
@@ -211,6 +213,9 @@ if(SCHEMAREGISTRY_WITH_JSON)
     file(GLOB JSON_HEADERS "include/schemaregistry/serdes/json/*.h")
     file(GLOB JSON_SOURCES "src/serdes/json/*.cpp")
     file(GLOB JSON_INTERNAL_HEADERS "src/internal/schemaregistry/serdes/json/*.h")
+    # Remove JsonValue files as they are now in CORE_SERDES
+    list(REMOVE_ITEM JSON_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/serdes/json/JsonValue.cpp")
+    list(REMOVE_ITEM JSON_INTERNAL_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/internal/schemaregistry/serdes/json/JsonValue.h")
     target_sources(schemaregistry PRIVATE ${JSON_HEADERS} ${JSON_SOURCES} ${JSON_INTERNAL_HEADERS})
 endif()
 
