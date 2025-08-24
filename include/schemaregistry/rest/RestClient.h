@@ -18,13 +18,6 @@
 
 #pragma once
 
-#include "schemaregistry/rest/ClientConfiguration.h"
-#include "schemaregistry/rest/RestException.h"
-
-#if defined(_WIN32) || defined(_WIN64)
-#undef U
-#endif
-
 #include <cpr/cpr.h>
 
 #include <chrono>
@@ -32,6 +25,9 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+
+#include "schemaregistry/rest/ClientConfiguration.h"
+#include "schemaregistry/rest/RestException.h"
 
 namespace schemaregistry::rest {
 
