@@ -24,8 +24,7 @@
 namespace schemaregistry::rest {
 
 RestClient::RestClient(std::shared_ptr<const ClientConfiguration> configuration)
-    : configuration_(configuration),
-      session_(std::make_shared<cpr::Session>()) {}
+    : configuration_(configuration) {}
 RestClient::~RestClient() {}
 
 std::shared_ptr<const ClientConfiguration> RestClient::getConfiguration()
@@ -39,8 +38,6 @@ cpr::Response RestClient::sendRequestUrls(
     const std::map<std::string, std::string> &headers,
     const std::string &body) const {
     const auto &base_urls = configuration_->getBaseUrls();
-
-    std::lock_guard<std::mutex> lock(session_mutex_);
 
     cpr::Response last_response;  // default constructed (status_code = 0)
     for (size_t i = 0; i < base_urls.size(); ++i) {
@@ -121,12 +118,19 @@ cpr::Response RestClient::sendRequest(
     const std::vector<std::pair<std::string, std::string>> &query,
     const std::map<std::string, std::string> &headers,
     const std::string &body) const {
-    std::lock_guard<std::mutex> lock(session_mutex_);
+    std::unique_lock<std::mutex> lock(session_mutex_, std::defer_lock);
+
+    auto session = configuration_->getSession();
+    if (!session) {
+        session = std::make_shared<cpr::Session>();
+    } else {
+        lock.lock();
+    }
 
     // Configure the shared Session for this request
     // Ensure no stale body/payload leaks into requests like GET
-    session_->RemoveContent();
-    session_->SetUrl(cpr::Url{url});
+    session->RemoveContent();
+    session->SetUrl(cpr::Url{url});
 
     // Set default headers including content type
     cpr::Header cpr_headers;
@@ -137,11 +141,11 @@ cpr::Response RestClient::sendRequest(
     const auto bearer_token = configuration_->getBearerAccessToken();
 
     if (basic_auth.has_value()) {
-        session_->SetAuth(cpr::Authentication{basic_auth.value().first,
-                                              basic_auth.value().second,
-                                              cpr::AuthMode::BASIC});
+        session->SetAuth(cpr::Authentication{basic_auth.value().first,
+                                             basic_auth.value().second,
+                                             cpr::AuthMode::BASIC});
     } else if (bearer_token.has_value()) {
-        session_->SetBearer(cpr::Bearer{bearer_token.value()});
+        session->SetBearer(cpr::Bearer{bearer_token.value()});
     }
 
     // Add additional headers (can override defaults)
@@ -149,7 +153,7 @@ cpr::Response RestClient::sendRequest(
         cpr_headers.insert(kv);
     }
 
-    session_->SetHeader(cpr_headers);
+    session->SetHeader(cpr_headers);
 
     // Set query parameters (supporting repeated keys)
     if (!query.empty()) {
@@ -157,26 +161,26 @@ cpr::Response RestClient::sendRequest(
         for (const auto &p : query) {
             params.Add(cpr::Parameter{p.first, p.second});
         }
-        session_->SetParameters(params);
+        session->SetParameters(params);
     }
 
     // Set body when applicable
     if (!body.empty() && (method == "POST" || method == "PUT" ||
                           method == "PATCH" || method == "DELETE")) {
-        session_->SetBody(cpr::Body{body});
+        session->SetBody(cpr::Body{body});
     }
 
     // Dispatch based on method
     if (method == "GET") {
-        return session_->Get();
+        return session->Get();
     } else if (method == "POST") {
-        return session_->Post();
+        return session->Post();
     } else if (method == "PUT") {
-        return session_->Put();
+        return session->Put();
     } else if (method == "PATCH") {
-        return session_->Patch();
+        return session->Patch();
     } else if (method == "DELETE") {
-        return session_->Delete();
+        return session->Delete();
     } else {
         // Unsupported method; set an error-like response
         return cpr::Response{};

@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <cpr/cpr.h>
-
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -67,7 +65,6 @@ class RestClient {
 
   protected:
     std::shared_ptr<const ClientConfiguration> configuration_;
-    std::shared_ptr<cpr::Session> session_;
     mutable std::mutex session_mutex_;
 };
 

@@ -95,6 +95,14 @@ void ClientConfiguration::setRetriesMaxWaitMs(
     retries_max_wait_ms_ = retries_max_wait_ms;
 }
 
+std::shared_ptr<cpr::Session> ClientConfiguration::getSession() const {
+    return session_;
+}
+
+void ClientConfiguration::setSession(std::shared_ptr<cpr::Session> session) {
+    session_ = session;
+}
+
 bool ClientConfiguration::operator==(const ClientConfiguration &other) const {
     return baseUrls_ == other.baseUrls_ && basic_auth_ == other.basic_auth_ &&
            bearer_access_token_ == other.bearer_access_token_ &&

@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <cpr/cpr.h>
+
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -59,6 +61,9 @@ class ClientConfiguration {
     std::uint32_t getRetriesMaxWaitMs() const;
     void setRetriesMaxWaitMs(std::uint32_t retries_max_wait_ms);
 
+    std::shared_ptr<cpr::Session> getSession() const;
+    void setSession(std::shared_ptr<cpr::Session>);
+
     bool operator==(const ClientConfiguration &other) const;
     bool operator!=(const ClientConfiguration &other) const;
 
@@ -74,6 +79,8 @@ class ClientConfiguration {
     std::uint32_t max_retries_;
     std::uint32_t retries_wait_ms_;
     std::uint32_t retries_max_wait_ms_;
+
+    std::shared_ptr<cpr::Session> session_;
 };
 
 }  // namespace schemaregistry::rest
