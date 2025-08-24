@@ -211,7 +211,7 @@ target_link_libraries(schemaregistry
 # Users can link them separately as needed:
 # target_link_libraries(your_target PRIVATE schemaregistry::tink_awskms schemaregistry::tink_gcpkms)
 
-OPTION(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
+option(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
 
 if(SCHEMAREGISTRY_BUILD_TESTS)
     include(CTest)
@@ -278,8 +278,8 @@ install(EXPORT schemaregistryTargets
 )
 
 # Add examples subdirectory (optional, can be disabled)
-option(BUILD_EXAMPLES "Build example programs" ON)
-if(BUILD_EXAMPLES)
+option(SCHEMAREGISTRY_BUILD_EXAMPLES "Build example programs" ON)
+if(SCHEMAREGISTRY_BUILD_EXAMPLES)
     add_subdirectory(example)
 endif()
 
