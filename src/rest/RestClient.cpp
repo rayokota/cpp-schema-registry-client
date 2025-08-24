@@ -137,17 +137,11 @@ cpr::Response RestClient::sendRequest(
     const auto bearer_token = configuration_->getBearerAccessToken();
 
     if (basic_auth.has_value()) {
-        // Parse basic auth string (assume format "username:password")
-        const std::string &auth_str = basic_auth.value();
-        size_t colon_pos = auth_str.find(':');
-        if (colon_pos != std::string::npos) {
-            std::string username = auth_str.substr(0, colon_pos);
-            std::string password = auth_str.substr(colon_pos + 1);
-            session_->SetAuth(
-                cpr::Authentication{username, password, cpr::AuthMode::BASIC});
-        }
+        session_->SetAuth(cpr::Authentication{basic_auth.value().first,
+                                              basic_auth.value().second,
+                                              cpr::AuthMode::BASIC});
     } else if (bearer_token.has_value()) {
-        cpr_headers["Authorization"] = "Bearer " + bearer_token.value();
+        session_->SetBearer(cpr::Bearer{bearer_token.value()});
     }
 
     // Add additional headers (can override defaults)

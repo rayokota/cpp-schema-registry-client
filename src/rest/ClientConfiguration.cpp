@@ -32,12 +32,13 @@ std::vector<std::string> ClientConfiguration::getBaseUrls() const {
 }
 
 // Authentication getters and setters
-std::optional<std::string> ClientConfiguration::getBasicAuth() const {
+std::optional<std::pair<std::string, std::string>>
+ClientConfiguration::getBasicAuth() const {
     return basic_auth_;
 }
 
 void ClientConfiguration::setBasicAuth(
-    const std::optional<std::string> &basic_auth) {
+    const std::optional<std::pair<std::string, std::string>> &basic_auth) {
     basic_auth_ = basic_auth;
 }
 

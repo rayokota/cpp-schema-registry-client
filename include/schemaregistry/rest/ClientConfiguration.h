@@ -34,8 +34,9 @@ class ClientConfiguration {
     std::vector<std::string> getBaseUrls() const;
 
     // Authentication getters and setters
-    std::optional<std::string> getBasicAuth() const;
-    void setBasicAuth(const std::optional<std::string> &basic_auth);
+    std::optional<std::pair<std::string, std::string>> getBasicAuth() const;
+    void setBasicAuth(
+        const std::optional<std::pair<std::string, std::string>> &basic_auth);
 
     std::optional<std::string> getBearerAccessToken() const;
     void setBearerAccessToken(
@@ -64,7 +65,7 @@ class ClientConfiguration {
   protected:
     std::vector<std::string> baseUrls_;
 
-    std::optional<std::string> basic_auth_;
+    std::optional<std::pair<std::string, std::string>> basic_auth_;
     std::optional<std::string> bearer_access_token_;
 
     std::uint64_t cache_capacity_;
