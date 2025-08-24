@@ -121,6 +121,8 @@ cpr::Response RestClient::sendRequest(
     const std::vector<std::pair<std::string, std::string>> &query,
     const std::map<std::string, std::string> &headers,
     const std::string &body) const {
+    std::lock_guard<std::mutex> lock(session_mutex_);
+    
     // Configure the shared Session for this request
     // Ensure no stale body/payload leaks into requests like GET
     session_->RemoveContent();
