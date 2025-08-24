@@ -17,12 +17,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(SCHEMAREGISTRY_WITH_AVRO "Build with Avro support" ON)
 option(SCHEMAREGISTRY_WITH_JSON "Build with JSON Schema support" ON)
 option(SCHEMAREGISTRY_WITH_PROTOBUF "Build with Protobuf support" ON)
-option(SCHEMAREGISTRY_WITH_CEL "Build with AWS support" ON)
-option(SCHEMAREGISTRY_WITH_JSONATA "Build with AWS support" ON)
-option(SCHEMAREGISTRY_WITH_AWS "Build with AWS support" ON)
-option(SCHEMAREGISTRY_WITH_AZURE "Build with Azure support" ON)
-option(SCHEMAREGISTRY_WITH_GCP "Build with GCP support" ON)
-option(SCHEMAREGISTRY_WITH_HCVAULT "Build with GCP support" ON)
+option(SCHEMAREGISTRY_WITH_CEL "Build with CEL support" ON)
+option(SCHEMAREGISTRY_WITH_JSONATA "Build with JSONata support" ON)
+option(SCHEMAREGISTRY_WITH_AWSKMS "Build with AWS KMS support" ON)
+option(SCHEMAREGISTRY_WITH_AZUREKMS "Build with Azure Vault support" ON)
+option(SCHEMAREGISTRY_WITH_GCPKMS "Build with GCP KMS support" ON)
+option(SCHEMAREGISTRY_WITH_HCVAULT "Build with HashiCorp Vault support" ON)
+option(SCHEMAREGISTRY_WITH_LOCALKMS "Build with local KMS support" ON)
 option(SCHEMAREGISTRY_WITH_TINK "Build with Tink support" ON)
 
 if(VCPKG_MANIFEST_FEATURES)
@@ -56,21 +57,33 @@ if(VCPKG_MANIFEST_FEATURES)
         endif()
     endif()
 
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_AWS)
-        if(NOT "aws" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_AWS OFF)
+    if(NOT DEFINED SCHEMAREGISTRY_WITH_AWSKMS)
+        if(NOT "awskms" IN_LIST VCPKG_MANIFEST_FEATURES)
+            set(SCHEMAREGISTRY_WITH_AWSKMS OFF)
         endif()
     endif()
     
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_AZURE)
-        if(NOT "azure" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_AZURE OFF)
+    if(NOT DEFINED SCHEMAREGISTRY_WITH_AZUREKMS)
+        if(NOT "azurekms" IN_LIST VCPKG_MANIFEST_FEATURES)
+            set(SCHEMAREGISTRY_WITH_AZUREKMS OFF)
         endif()
     endif()
     
-    if(NOT DEFINED SCHEMAREGISTRY_WITH_GCP)
-        if(NOT "gcp" IN_LIST VCPKG_MANIFEST_FEATURES)
-            set(SCHEMAREGISTRY_WITH_GCP OFF)
+    if(NOT DEFINED SCHEMAREGISTRY_WITH_GCPKMS)
+        if(NOT "gcpkms" IN_LIST VCPKG_MANIFEST_FEATURES)
+            set(SCHEMAREGISTRY_WITH_GCPKMS OFF)
+        endif()
+    endif()
+    
+    if(NOT DEFINED SCHEMAREGISTRY_WITH_HCVAULT)
+        if(NOT "hcvault" IN_LIST VCPKG_MANIFEST_FEATURES)
+            set(SCHEMAREGISTRY_WITH_HCVAULT OFF)
+        endif()
+    endif()
+    
+    if(NOT DEFINED SCHEMAREGISTRY_WITH_LOCALKMS)
+        if(NOT "localkms" IN_LIST VCPKG_MANIFEST_FEATURES)
+            set(SCHEMAREGISTRY_WITH_LOCALKMS OFF)
         endif()
     endif()
     
@@ -82,10 +95,18 @@ if(VCPKG_MANIFEST_FEATURES)
 endif()
 
 # If any cloud feature is enabled, ensure tink is also enabled
-if(SCHEMAREGISTRY_WITH_AWS OR SCHEMAREGISTRY_WITH_AZURE OR SCHEMAREGISTRY_WITH_GCP OR SCHEMAREGISTRY_WITH_HCVAULT)
+if(SCHEMAREGISTRY_WITH_AWSKMS OR SCHEMAREGISTRY_WITH_AZUREKMS OR SCHEMAREGISTRY_WITH_GCPKMS OR 
+   SCHEMAREGISTRY_WITH_HCVAULT OR SCHEMAREGISTRY_WITH_LOCALKMS)
     if(NOT SCHEMAREGISTRY_WITH_TINK)
         message(WARNING "Encryption features require Tink support. Auto-enabling Tink.")
         set(SCHEMAREGISTRY_WITH_TINK ON)
+    endif()
+endif()
+
+if(SCHEMAREGISTRY_WITH_CEL OR SCHEMAREGISTRY_WITH_TINK)
+    if(NOT SCHEMAREGISTRY_WITH_PROTOBUF)
+        message(WARNING "CEL and Tink require Protobuf support. Auto-enabling Protobuf.")
+        set(SCHEMAREGISTRY_WITH_PROTOBUF ON)
     endif()
 endif()
 
@@ -98,9 +119,10 @@ find_package(OpenSSL CONFIG REQUIRED)
 # Find cpr
 find_package(cpr CONFIG REQUIRED)
 
-# Fetch Apache Avro C++
-find_package(unofficial-avro-cpp CONFIG QUIET)
-if(NOT unofficial-avro-cpp_FOUND)
+if (SCHEMAREGISTRY_WITH_AVRO)
+    # Fetch Apache Avro C++
+    find_package(unofficial-avro-cpp CONFIG QUIET)
+    if(NOT unofficial-avro-cpp_FOUND)
     FetchContent_Declare(
         unofficial-avro-cpp
         GIT_REPOSITORY https://github.com/apache/avro.git
@@ -112,6 +134,7 @@ if(NOT unofficial-avro-cpp_FOUND)
     set(AVROCPP_BUILD_TESTS OFF CACHE BOOL "Build Avro C++ tests" FORCE)
     set(AVRO_BUILD_TESTS OFF CACHE BOOL "Build Avro tests" FORCE)
     FetchContent_MakeAvailable(unofficial-avro-cpp)
+    endif()
 endif()
 
 # Find nlohmann_json or fetch if not found
@@ -125,68 +148,86 @@ if(NOT nlohmann_json_FOUND)
     FetchContent_MakeAvailable(nlohmann_json)
 endif()
 
-# Fetch jsoncons
-find_package(jsoncons CONFIG QUIET)
-if(NOT jsoncons_FOUND)
-    FetchContent_Declare(
-        jsoncons
-        GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
-        GIT_TAG        v1.3.2
-    )
-    # Disable jsoncons unit tests
-    set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
-    FetchContent_MakeAvailable(jsoncons)
+if (SCHEMAREGISTRY_WITH_JSON)
+    # Fetch jsoncons
+    find_package(jsoncons CONFIG QUIET)
+    if(NOT jsoncons_FOUND)
+        FetchContent_Declare(
+            jsoncons
+            GIT_REPOSITORY https://github.com/danielaparker/jsoncons.git
+            GIT_TAG        v1.3.2
+        )
+        # Disable jsoncons unit tests
+        set(JSONCONS_BUILD_TESTS OFF CACHE BOOL "Build jsoncons tests" FORCE)
+        FetchContent_MakeAvailable(jsoncons)
+    endif()
 endif()
 
-# Fetch jsonata
-FetchContent_Declare(
-    jsonata
-    URL https://github.com/rayokota/jsonata-cpp/archive/refs/tags/v0.1.0.zip
-    URL_HASH SHA256=3ee1798f28a29d36ebbb273853979926716a384e4d491a6bd408e1f6de51760d
-)
-# Disable jsonata unit tests
-set(JSONATA_BUILD_TESTS OFF CACHE BOOL "Build jsonata tests" FORCE)
-FetchContent_MakeAvailable(jsonata)
+if (SCHEMAREGISTRY_WITH_JSONATA)
+    # Fetch jsonata
+    FetchContent_Declare(
+        jsonata
+        URL https://github.com/rayokota/jsonata-cpp/archive/refs/tags/v0.1.0.zip
+        URL_HASH SHA256=3ee1798f28a29d36ebbb273853979926716a384e4d491a6bd408e1f6de51760d
+    )
+    # Disable jsonata unit tests
+    set(JSONATA_BUILD_TESTS OFF CACHE BOOL "Build jsonata tests" FORCE)
+    FetchContent_MakeAvailable(jsonata)
+endif()
 
-# Find Protobuf for protoc executable and libraries
-find_package(protobuf CONFIG REQUIRED)
+if (SCHEMAREGISTRY_WITH_PROTOBUF)
+    # Find Protobuf for protoc executable and libraries
+    find_package(protobuf CONFIG REQUIRED)
+endif()
 
-# Note that cel-cpp has no CMake build and is not packaged anywhere,
-# so we build protovalidate_cc as an in-tree dependency to get cel-cpp.
-FetchContent_Declare(
-    protovalidate_cc
-    GIT_REPOSITORY https://github.com/bufbuild/protovalidate-cc.git
-    GIT_TAG        v0.5.0
-)
-FetchContent_MakeAvailable(protovalidate_cc)
+if (SCHEMAREGISTRY_WITH_CEL)
+    # Note that cel-cpp has no CMake build and is not packaged anywhere,
+    # so we build protovalidate_cc as an in-tree dependency to get cel-cpp.
+    FetchContent_Declare(
+        protovalidate_cc
+        GIT_REPOSITORY https://github.com/bufbuild/protovalidate-cc.git
+        GIT_TAG        v0.5.0
+    )
+    FetchContent_MakeAvailable(protovalidate_cc)
+endif()
 
-# AWS SDK C++
-find_package(aws-cpp-sdk-core CONFIG REQUIRED)
-find_package(aws-cpp-sdk-kms CONFIG REQUIRED)
+if (SCHEMAREGISTRY_WITH_AWSKMS)
+    # AWS SDK C++
+    find_package(aws-cpp-sdk-core CONFIG REQUIRED)
+    find_package(aws-cpp-sdk-kms CONFIG REQUIRED)
+endif()
 
-# Azure Key Vault C++ SDK
-find_package(azure-security-keyvault-keys-cpp CONFIG REQUIRED)
-find_package(azure-identity-cpp CONFIG REQUIRED)
+if (SCHEMAREGISTRY_WITH_AZUREKMS)
+    # Azure Key Vault C++ SDK
+    find_package(azure-security-keyvault-keys-cpp CONFIG REQUIRED)
+    find_package(azure-identity-cpp CONFIG REQUIRED)
+endif()
 
-# Google Cloud C++ SDK
-find_package(google_cloud_cpp_kms CONFIG REQUIRED)
+if (SCHEMAREGISTRY_WITH_GCPKMS)
+    # Google Cloud C++ SDK
+    find_package(google_cloud_cpp_kms CONFIG REQUIRED)
+endif()
 
-# HashiCorp Vault C++ client
-find_package(libvault CONFIG REQUIRED)
+if (SCHEMAREGISTRY_WITH_HCVAULT)
+    # HashiCorp Vault C++ client
+    find_package(libvault CONFIG REQUIRED)
+endif()
 
-# Import Tink as an in-tree dependency.
-# See https://developers.google.com/tink/setup/cc
-# Configure Tink to use system-provided dependencies instead of building its own
-set(TINK_USE_SYSTEM_OPENSSL ON CACHE BOOL "Use system OpenSSL" FORCE)
-set(TINK_USE_INSTALLED_ABSEIL ON CACHE BOOL "Use installed Abseil" FORCE)
-set(TINK_USE_INSTALLED_PROTOBUF ON CACHE BOOL "Use installed Protobuf" FORCE)
-set(USE_ONLY_FIPS OFF CACHE BOOL "Use only FIPS" FORCE)
-FetchContent_Declare(
-    tink
-    URL       https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.4.0.zip
-    URL_HASH  SHA256=06c4d49b0b1357f0b8c3abc77a7d920130dc868e4597d432a9ce1cda4f65e382
-)
-FetchContent_MakeAvailable(tink)
+if (SCHEMAREGISTRY_WITH_TINK)
+    # Import Tink as an in-tree dependency.
+    # See https://developers.google.com/tink/setup/cc
+    # Configure Tink to use system-provided dependencies instead of building its own
+    set(TINK_USE_SYSTEM_OPENSSL ON CACHE BOOL "Use system OpenSSL" FORCE)
+    set(TINK_USE_INSTALLED_ABSEIL ON CACHE BOOL "Use installed Abseil" FORCE)
+    set(TINK_USE_INSTALLED_PROTOBUF ON CACHE BOOL "Use installed Protobuf" FORCE)
+    set(USE_ONLY_FIPS OFF CACHE BOOL "Use only FIPS" FORCE)
+    FetchContent_Declare(
+        tink
+        URL       https://github.com/tink-crypto/tink-cc/archive/refs/tags/v2.4.0.zip
+        URL_HASH  SHA256=06c4d49b0b1357f0b8c3abc77a7d920130dc868e4597d432a9ce1cda4f65e382
+    )
+    FetchContent_MakeAvailable(tink)
+endif()
 
 # Compile project protobuf files
 include(cmake/CompileProtobuf.cmake)
