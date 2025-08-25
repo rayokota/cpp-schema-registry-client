@@ -251,9 +251,12 @@ set_target_properties(schemaregistry PROPERTIES
 )
 
 # Setup formatting
-include(cmake/Format.cmake)
-Format(schemaregistry include)
-Format(schemaregistry src)
+option(SCHEMAREGISTRY_FORMAT_SOURCE "Enable code formatting" OFF)
+if(SCHEMAREGISTRY_FORMAT_SOURCE)
+    include(cmake/Format.cmake)
+    Format(schemaregistry include)
+    Format(schemaregistry src)
+endif()
 
 # Compiler features
 target_compile_features(schemaregistry PUBLIC cxx_std_17)
