@@ -365,7 +365,6 @@ if(SCHEMAREGISTRY_WITH_RULES)
 endif()
 
 option(SCHEMAREGISTRY_BUILD_TESTS "schemaregistry test suite" ON)
-
 if(SCHEMAREGISTRY_BUILD_TESTS)
     include(CTest)
     enable_testing()
@@ -431,7 +430,7 @@ install(EXPORT schemaregistryTargets
 )
 
 # Add examples subdirectory (optional, can be disabled)
-option(SCHEMAREGISTRY_BUILD_EXAMPLES "Build example programs" ON)
+option(SCHEMAREGISTRY_BUILD_EXAMPLES "Build example programs" OFF)
 if(SCHEMAREGISTRY_BUILD_EXAMPLES)
     add_subdirectory(example)
 endif()
