@@ -1,10 +1,113 @@
 #include "schemaregistry/serdes/json/JsonSerializer.h"
 
 #include "schemaregistry/serdes/json/JsonUtils.h"
+#include <cctype>
+#include <cstdio>
 
 namespace schemaregistry::serdes::json {
 
 using namespace utils;
+
+// Schema flattening utilities
+namespace {
+
+std::string uriToDefinitionKey(const std::string& uri) {
+    // Convert URI to safe definition key
+    // "https://jsoncons.com/ref" -> "ref"
+    // "https://example.com/schemas/user" -> "user"
+    
+    // Extract path component
+    auto pos = uri.find_last_of('/');
+    if (pos != std::string::npos && pos < uri.length() - 1) {
+        std::string key = uri.substr(pos + 1);
+        // Remove any non-alphanumeric characters for safety
+        std::string safe_key;
+        for (char c : key) {
+            if (std::isalnum(c) || c == '_') {
+                safe_key += c;
+            }
+        }
+        if (!safe_key.empty()) {
+            return safe_key;
+        }
+    }
+    
+    // Fallback: use hash of full URI
+    return "ref_" + std::to_string(std::hash<std::string>{}(uri));
+}
+
+void rewriteReferences(nlohmann::json& schema, 
+                      const std::unordered_map<std::string, std::string>& uri_map) {
+    if (schema.is_object()) {
+        if (schema.contains("$ref") && schema["$ref"].is_string()) {
+            std::string ref_uri = schema["$ref"];
+            auto it = uri_map.find(ref_uri);
+            if (it != uri_map.end()) {
+                schema["$ref"] = it->second;  // Rewrite to internal reference
+            }
+        }
+        
+        // Recursively process all object properties
+        for (auto& [key, value] : schema.items()) {
+            rewriteReferences(value, uri_map);
+        }
+    } else if (schema.is_array()) {
+        // Recursively process array elements
+        for (auto& element : schema) {
+            rewriteReferences(element, uri_map);
+        }
+    }
+}
+
+nlohmann::json flattenSchemaReferences(
+    const nlohmann::json& main_schema, 
+    const std::unordered_map<std::string, nlohmann::json>& resolved_refs) {
+    
+    auto flattened = main_schema;
+    
+    // 0. Add schema meta-information to make it self-describing
+    flattened["$schema"] = "http://json-schema.org/draft-07/schema#";
+    flattened["$id"] = "internal://flattened-schema";
+    
+    // 1. Create definitions section if it doesn't exist
+    if (!flattened.contains("definitions")) {
+        flattened["definitions"] = nlohmann::json::object();
+    }
+    
+    // 2. Add all resolved references to definitions
+    std::unordered_map<std::string, std::string> uri_to_def_map;
+    for (const auto& [uri, ref_schema] : resolved_refs) {
+        // Create safe definition key from URI
+        std::string def_key = uriToDefinitionKey(uri);
+        
+        // Handle potential key conflicts by adding suffix
+        std::string final_key = def_key;
+        int suffix = 1;
+        while (flattened["definitions"].contains(final_key)) {
+            final_key = def_key + "_" + std::to_string(suffix++);
+        }
+        
+        flattened["definitions"][final_key] = ref_schema;
+        
+        // Map both the original URI and common base URI variations
+        std::string def_ref = "#/definitions/" + final_key;
+        uri_to_def_map[uri] = def_ref;
+        
+        // Also map potential full URI variations that jsoncons might construct
+        std::string full_uri = "https://jsoncons.com/" + uri;
+        uri_to_def_map[full_uri] = def_ref;
+        
+        // Map the base URI itself to avoid meta-schema loading
+        uri_to_def_map["https://jsoncons.com"] = def_ref;
+    }
+    
+    // 3. Recursively rewrite all $ref URIs in the schema
+    rewriteReferences(flattened, uri_to_def_map);
+    
+    return flattened;
+}
+
+}  // anonymous namespace
 
 // JsonSerde implementation
 JsonSerde::JsonSerde() {}
@@ -28,32 +131,8 @@ JsonSerde::getParsedSchema(
     std::unordered_set<std::string> visited;
     auto resolved_refs =
         schema_resolution::resolveNamedSchema(schema, client, visited);
-    auto resolver =
-        [resolved_refs](const jsoncons::uri &uri) -> jsoncons::ojson {
-        // Look up the exact URI string in the resolved references
-        auto key = uri.string();
-        auto it = resolved_refs.find(key);
-        if (it != resolved_refs.end()) {
-            return jsonToOJson(it->second);
-        }
 
-        // Fallback: try using only the path component
-        auto path_only = uri.path();
-        if (!path_only.empty() && path_only.front() == '/') {
-            path_only.erase(0, 1);
-        }
-        if (!path_only.empty()) {
-            auto it2 = resolved_refs.find(path_only);
-            if (it2 != resolved_refs.end()) {
-                return jsonToOJson(it2->second);
-            }
-        }
-
-        // If not found, return an empty object
-        return jsoncons::ojson::null();
-    };
-
-    // Parse new schema
+    // Parse main schema
     nlohmann::json parsed_schema;
     try {
         parsed_schema = nlohmann::json::parse(cache_key);
@@ -62,10 +141,14 @@ JsonSerde::getParsedSchema(
                         std::string(e.what()));
     }
 
-    auto jsoncons_schema = jsonToOJson(parsed_schema);
+    // FLATTEN SCHEMA - NO RESOLVER NEEDED
+    auto flattened_schema = flattenSchemaReferences(parsed_schema, resolved_refs);
+
+    // Compile flattened schema WITHOUT resolver
+    auto jsoncons_schema = jsonToOJson(flattened_schema);
     auto compiled_schema =
         std::make_shared<jsoncons::jsonschema::json_schema<jsoncons::ojson>>(
-            jsoncons::jsonschema::make_json_schema(jsoncons_schema, resolver));
+            jsoncons::jsonschema::make_json_schema(jsoncons_schema));
 
     // Store in cache
     parsed_schemas_cache_[cache_key] = compiled_schema;
