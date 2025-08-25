@@ -69,9 +69,6 @@ jobs:
         # This specifies the location of vcpkg, where it is going to be restored
         # and built as part of the vcpkg action.
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-        # The Git commit id of vcpkg to be checked out. This is only used if
-        # vcpkgDirectory does not contain a valid vcpkg.
-        vcpkgGitCommitId: '2025.07.25'
         # The vcpkg.json file, which will be part of cache key computation.
         vcpkgJsonGlob: '**/vcpkg.json'
 
