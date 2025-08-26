@@ -14,6 +14,6 @@
   "default-triplet": {
     "x64-windows": "x64-windows-release",
     "x64-linux": "x64-linux-release",
-    "x64-osx": "x64-osx-release"
+    "arm64-osx": "arm64-osx-release"
   }
 }

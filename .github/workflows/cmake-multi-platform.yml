@@ -40,7 +40,7 @@ jobs:
             c_compiler: clang
             cpp_compiler: clang++
           - os: macos-latest
-            triplet: x64-osx-release
+            triplet: arm64-osx-release
             c_compiler: clang
             cpp_compiler: clang++
         exclude:
