@@ -2,7 +2,10 @@
   "name": "schemaregistry",
   "version": "0.1.0",
   "dependencies": [
-    "abseil",
+    {
+      "name": "abseil",
+      "version>=": "20240722.0"
+    },
     "avro-cpp",
     {
       "name": "aws-sdk-cpp",
