@@ -75,6 +75,7 @@ jobs:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
         # The vcpkg.json file, which will be part of cache key computation.
         vcpkgJsonGlob: '**/vcpkg.json'
+        vcpkgTriplet: ${{ matrix.triplet }}
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
