@@ -72,7 +72,7 @@ jobs:
       with:
         # This specifies the location of vcpkg, where it is going to be restored
         # and built as part of the vcpkg action.
-        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+        vcpkgDirectory: '${{ github.workspace }}/../vcpkg'
         # The vcpkg.json file, which will be part of cache key computation.
         vcpkgJsonGlob: '**/vcpkg.json'
         vcpkgTriplet: ${{ matrix.triplet }}
@@ -85,7 +85,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+        -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/../vcpkg/scripts/buildsystems/vcpkg.cmake
         -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
         -DVCPKG_BUILD_TYPE=release
         -S ${{ github.workspace }}
