@@ -73,7 +73,7 @@ jobs:
         vcpkgJsonGlob: '**/vcpkg.json'
       env:
         # Force vcpkg to only build release versions of dependencies
-        VCPKG_DEFAULT_TRIPLET: ${{ matrix.os == 'windows-latest' && 'x64-windows-release' || matrix.os == 'macos-latest' && 'x64-osx-release' || 'x64-linux-release' }}
+        VCPKG_DEFAULT_TRIPLET: ${{ matrix.os == 'windows-latest' && 'x64-windows-rel' || matrix.os == 'macos-latest' && 'x64-osx-rel' || 'x64-linux-rel' }}
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -84,7 +84,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
-        -DVCPKG_TARGET_TRIPLET=${{ matrix.os == 'windows-latest' && 'x64-windows-release' || matrix.os == 'macos-latest' && 'x64-osx-release' || 'x64-linux-release' }}
+        -DVCPKG_TARGET_TRIPLET=${{ matrix.os == 'windows-latest' && 'x64-windows-rel' || matrix.os == 'macos-latest' && 'x64-osx-rel' || 'x64-linux-rel' }}
         -S ${{ github.workspace }}
 
     - name: Build
