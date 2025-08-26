@@ -55,6 +55,11 @@ jobs:
           - os: macos-latest
             c_compiler: gcc
 
+    env:
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+      VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
+      VCPKG_HOST_TRIPLET: ${{ matrix.triplet }}
+
     steps:
     - uses: actions/checkout@v4
       with:
@@ -76,6 +81,7 @@ jobs:
         # The vcpkg.json file, which will be part of cache key computation.
         vcpkgJsonGlob: '**/vcpkg.json'
         vcpkgTriplet: ${{ matrix.triplet }}
+        vcpkgArguments: --host-triplet ${{ matrix.triplet }}
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -87,10 +93,13 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/../vcpkg/scripts/buildsystems/vcpkg.cmake
         -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+        -DVCPKG_HOST_TRIPLET=${{ matrix.triplet }}
         -DVCPKG_BUILD_TYPE=release
         -S ${{ github.workspace }}
       env:
         VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+        VCPKG_HOST_TRIPLET: ${{ matrix.triplet }}
+        VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
