@@ -28,15 +28,19 @@ jobs:
         c_compiler: [gcc, clang, cl]
         include:
           - os: windows-latest
+            triplet: x64-windows-release
             c_compiler: cl
             cpp_compiler: cl
           - os: ubuntu-latest
+            triplet: x64-linux-release
             c_compiler: gcc
             cpp_compiler: g++
           - os: ubuntu-latest
+            triplet: x64-linux-release
             c_compiler: clang
             cpp_compiler: clang++
           - os: macos-latest
+            triplet: x64-osx-release
             c_compiler: clang
             cpp_compiler: clang++
         exclude:
@@ -71,9 +75,6 @@ jobs:
         vcpkgDirectory: '${{ github.workspace }}/vcpkg'
         # The vcpkg.json file, which will be part of cache key computation.
         vcpkgJsonGlob: '**/vcpkg.json'
-      env:
-        # Force vcpkg to only build release versions of dependencies
-        VCPKG_DEFAULT_TRIPLET: ${{ matrix.os == 'windows-latest' && 'x64-windows-rel' || matrix.os == 'macos-latest' && 'x64-osx-rel' || 'x64-linux-rel' }}
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -84,7 +85,8 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
-        -DVCPKG_TARGET_TRIPLET=${{ matrix.os == 'windows-latest' && 'x64-windows-rel' || matrix.os == 'macos-latest' && 'x64-osx-rel' || 'x64-linux-rel' }}
+        -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
+        -DVCPKG_BUILD_TYPE=release
         -S ${{ github.workspace }}
 
     - name: Build
