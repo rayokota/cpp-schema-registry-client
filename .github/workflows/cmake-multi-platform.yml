@@ -69,8 +69,8 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: Install Git
-      run: choco install git
+    - name: Install patch
+      run: choco install -y patch
       if: runner.os == 'Windows'
 
     - name: Setup vcpkg
