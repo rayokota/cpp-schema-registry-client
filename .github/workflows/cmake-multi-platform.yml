@@ -81,8 +81,6 @@ jobs:
         vcpkgJsonGlob: '**/vcpkg.json'
         vcpkgTriplet: ${{ matrix.triplet }}
         vcpkgArguments: --host-triplet ${{ matrix.triplet }}
-      env:
-        VCPKG_ROOT: ${{ runner.os == 'Windows' && 'C:\\vcpkg' || '/tmp/vcpkg' }}
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -100,6 +98,7 @@ jobs:
       env:
         VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
         VCPKG_HOST_TRIPLET: ${{ matrix.triplet }}
+        VCPKG_ROOT: ${{ runner.os == 'Windows' && 'C:\\vcpkg' || '/tmp/vcpkg' }}
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
