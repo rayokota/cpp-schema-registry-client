@@ -90,7 +90,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+        -DCMAKE_TOOLCHAIN_FILE=${{ runner.os == 'Windows' && 'C:\\vcpkg' || '/tmp/vcpkg' }}/scripts/buildsystems/vcpkg.cmake
         -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
         -DVCPKG_HOST_TRIPLET=${{ matrix.triplet }}
         -DVCPKG_BUILD_TYPE=release
@@ -98,7 +98,6 @@ jobs:
       env:
         VCPKG_TARGET_TRIPLET: ${{ matrix.triplet }}
         VCPKG_HOST_TRIPLET: ${{ matrix.triplet }}
-        VCPKG_ROOT: ${{ runner.os == 'Windows' && 'C:\\vcpkg' || '/tmp/vcpkg' }}
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
