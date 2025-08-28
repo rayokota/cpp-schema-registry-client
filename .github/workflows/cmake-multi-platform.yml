@@ -58,9 +58,15 @@ jobs:
       VCPKG_HOST_TRIPLET: ${{ matrix.triplet }}
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Cache
+      uses: actions/cache@v4
       with:
-        submodules: true
+        path: build
+        key: ${{ runner.os }}-cmake-build-cache
+
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -69,13 +75,18 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: Install patch
-      run: choco install -y patch
-      if: runner.os == 'Windows'
-
     - name: Install ninja
       run: choco install -y ninja
       if: runner.os == 'Windows'
+
+    - name: Setup MSVC
+      if: runner.os == 'Windows'
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Add JDK 11 to Path (Windows)
+      if: runner.os == 'Windows'
+      run:  |
+        Add-Content "$Env:GITHUB_ENV" "PATH=$Env:JAVA_HOME_11_X64\bin;$Env:PATH"
 
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
@@ -114,3 +125,4 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
+
