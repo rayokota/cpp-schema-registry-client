@@ -52,6 +52,12 @@ if(SCHEMAREGISTRY_WITH_RULES)
     endif()
 endif()
 
+# Bump C++ standard to 20 on Windows when building with Rules
+if(WIN32 AND SCHEMAREGISTRY_WITH_RULES)
+    message(STATUS "Using C++20 on Windows because Rules are enabled")
+    set(CMAKE_CXX_STANDARD 20)
+endif()
+
 include(FetchContent)
 
 find_package(absl CONFIG REQUIRED)
@@ -131,16 +137,6 @@ if (SCHEMAREGISTRY_WITH_RULES)
         GIT_TAG        v0.9.0
     )
     FetchContent_MakeAvailable(protovalidate_cc)
-    
-    # On Windows, ensure CEL/protovalidate_cc targets build with C++20
-    if(WIN32)
-        foreach(cel_tgt IN ITEMS cel_cpp cel_cpp_parser cel_cpp_minimal_descriptor_set)
-            if(TARGET ${cel_tgt})
-                set_property(TARGET ${cel_tgt} PROPERTY CXX_STANDARD 20)
-                set_property(TARGET ${cel_tgt} PROPERTY CXX_STANDARD_REQUIRED YES)
-            endif()
-        endforeach()
-    endif()
 endif()
 
 if (SCHEMAREGISTRY_WITH_RULES)
