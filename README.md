@@ -45,7 +45,7 @@ This project installs a CMake package called `schemaregistry`. The installed tar
 
 ## Examples
 
-You can find examples in the [`examples`] folder.
+You can find examples in the `examples` folder.
 
 To build the examples, run
 
