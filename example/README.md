@@ -72,6 +72,7 @@ A Kafka producer that encrypts and serializes Avro messages using field-level en
 
 **Using CMake:**
 ```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" -DSCHEMAREGISTRY_BUILD_EXAMPLES=ON
 cmake --build build --target example
 ```
 
