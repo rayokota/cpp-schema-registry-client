@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "aws/core/auth/AWSCredentialsProvider.h"
 #include "schemaregistry/rules/encryption/KmsDriver.h"
 #include "tink/kms_client.h"
 #include "tink/util/statusor.h"
@@ -81,14 +82,21 @@ class AwsKmsDriver : public KmsDriver {
     std::string prefix_;
 
     /**
-     * Build credentials configuration from the provided configuration map
+     * Build AWS credentials from the provided configuration map
+     *
+     * This method processes AWS credentials from the configuration and environment.
+     * It supports:
+     * - Explicit access key ID and secret access key
+     * - AWS profile-based credentials
+     * - Default AWS credentials chain
+     * - Role assumption through environment variables
      *
      * @param conf Configuration parameters
      * @param keyUrl The AWS KMS key URL
-     * @return Path to credentials file or empty string for default credentials
-     * @throws TinkError if configuration is invalid
+     * @return Shared pointer to AWS credentials provider
+     * @throws TinkError if configuration is invalid or credentials cannot be loaded
      */
-    std::string buildCredentialsPath(
+    std::shared_ptr<Aws::Auth::AWSCredentialsProvider> buildCredentials(
         const std::unordered_map<std::string, std::string> &conf,
         const std::string &keyUrl) const;
 

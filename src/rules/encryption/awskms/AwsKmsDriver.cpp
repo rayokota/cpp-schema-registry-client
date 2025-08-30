@@ -9,8 +9,16 @@
 #include <sstream>
 #include <vector>
 
+#include "absl/base/call_once.h"
 #include "absl/strings/str_split.h"
 #include "absl/strings/string_view.h"
+#include "aws/core/Aws.h"
+#include "aws/core/auth/AWSCredentialsProvider.h"
+#include "aws/core/auth/AWSCredentialsProviderChain.h"
+#include "aws/core/client/ClientConfiguration.h"
+#include "aws/identity-management/auth/STSAssumeRoleCredentialsProvider.h"
+#include "aws/sts/STSClient.h"
+#include "aws/sts/model/AssumeRoleRequest.h"
 #include "schemaregistry/rules/encryption/EncryptionRegistry.h"
 #include "schemaregistry/rules/encryption/awskms/AwsKmsClient.h"
 
@@ -28,13 +36,13 @@ std::shared_ptr<crypto::tink::KmsClient> AwsKmsDriver::newKmsClient(
     }
 
     try {
-        // Build credentials path based on configuration
-        std::string credentialsPath = buildCredentialsPath(conf, keyUrl);
+        // Build credentials based on configuration
+        auto credentialsProvider = buildCredentials(conf, keyUrl);
 
         // Create the AWS KMS client using Tink's AwsKmsClient
         auto statusOrClient =
             crypto::tink::integration::awskms::AwsKmsClient::New(
-                keyUrl, credentialsPath);
+                keyUrl, credentialsProvider);
 
         if (!statusOrClient.ok()) {
             throw TinkError("Failed to create AWS KMS client: " +
@@ -58,70 +66,110 @@ void AwsKmsDriver::registerDriver() {
     EncryptionRegistry::getInstance().registerKmsDriver(std::move(driver));
 }
 
-std::string AwsKmsDriver::buildCredentialsPath(
+std::shared_ptr<Aws::Auth::AWSCredentialsProvider> AwsKmsDriver::buildCredentials(
     const std::unordered_map<std::string, std::string> &conf,
     const std::string &keyUrl) const {
-    // Check if explicit credentials path is provided
-    auto it = conf.find(CREDENTIALS_PATH);
-    if (it != conf.end() && !it->second.empty()) {
-        return it->second;
-    }
-
-    // For other configuration options, we'll set environment variables
-    // and let the AWS SDK handle credential resolution
-    configureAwsEnvironment(conf, keyUrl);
-
-    // Return empty string to use default credential chain
-    return "";
-}
-
-void AwsKmsDriver::configureAwsEnvironment(
-    const std::unordered_map<std::string, std::string> &conf,
-    const std::string &keyUrl) const {
-    // Set access key and secret key if provided
-    auto accessKeyIt = conf.find(ACCESS_KEY_ID);
-    auto secretKeyIt = conf.find(SECRET_ACCESS_KEY);
-
-    if (accessKeyIt != conf.end() && !accessKeyIt->second.empty() &&
-        secretKeyIt != conf.end() && !secretKeyIt->second.empty()) {
-        setenv("AWS_ACCESS_KEY_ID", accessKeyIt->second.c_str(), 1);
-        setenv("AWS_SECRET_ACCESS_KEY", secretKeyIt->second.c_str(), 1);
-    }
-
-    // Set profile if provided
-    auto profileIt = conf.find(PROFILE);
-    if (profileIt != conf.end() && !profileIt->second.empty()) {
-        setenv("AWS_PROFILE", profileIt->second.c_str(), 1);
-    }
-
-    // Set assume role configuration if provided
+    
+    // Extract configuration values, falling back to environment variables
+    std::string roleArn;
     auto roleArnIt = conf.find(ROLE_ARN);
-    if (roleArnIt != conf.end() && !roleArnIt->second.empty()) {
-        setenv("AWS_ROLE_ARN", roleArnIt->second.c_str(), 1);
-
-        auto roleSessionIt = conf.find(ROLE_SESSION_NAME);
-        if (roleSessionIt != conf.end() && !roleSessionIt->second.empty()) {
-            setenv("AWS_ROLE_SESSION_NAME", roleSessionIt->second.c_str(), 1);
-        }
-
-        auto externalIdIt = conf.find(ROLE_EXTERNAL_ID);
-        if (externalIdIt != conf.end() && !externalIdIt->second.empty()) {
-            setenv("AWS_ROLE_EXTERNAL_ID", externalIdIt->second.c_str(), 1);
+    if (roleArnIt != conf.end()) {
+        roleArn = roleArnIt->second;
+    } else {
+        const char* envRoleArn = std::getenv("AWS_ROLE_ARN");
+        if (envRoleArn) {
+            roleArn = envRoleArn;
         }
     }
-
-    // Extract and set region from key URL if not already set
-    try {
-        std::string keyArn = keyUriToKeyArn(keyUrl);
-        std::string region = getRegionFromKeyArn(keyArn);
-
-        if (getenv("AWS_DEFAULT_REGION") == nullptr) {
-            setenv("AWS_DEFAULT_REGION", region.c_str(), 1);
+    
+    std::string roleSessionName;
+    auto roleSessionNameIt = conf.find(ROLE_SESSION_NAME);
+    if (roleSessionNameIt != conf.end()) {
+        roleSessionName = roleSessionNameIt->second;
+    } else {
+        const char* envRoleSessionName = std::getenv("AWS_ROLE_SESSION_NAME");
+        if (envRoleSessionName) {
+            roleSessionName = envRoleSessionName;
         }
-    } catch (const TinkError &) {
-        // If we can't extract region, let AWS SDK handle it
     }
+    
+    std::string roleExternalId;
+    auto roleExternalIdIt = conf.find(ROLE_EXTERNAL_ID);
+    if (roleExternalIdIt != conf.end()) {
+        roleExternalId = roleExternalIdIt->second;
+    } else {
+        const char* envRoleExternalId = std::getenv("AWS_ROLE_EXTERNAL_ID");
+        if (envRoleExternalId) {
+            roleExternalId = envRoleExternalId;
+        }
+    }
+    
+    std::string accessKeyId;
+    auto accessKeyIt = conf.find(ACCESS_KEY_ID);
+    if (accessKeyIt != conf.end()) {
+        accessKeyId = accessKeyIt->second;
+    }
+    
+    std::string secretAccessKey;
+    auto secretKeyIt = conf.find(SECRET_ACCESS_KEY);
+    if (secretKeyIt != conf.end()) {
+        secretAccessKey = secretKeyIt->second;
+    }
+    
+    std::string profile;
+    auto profileIt = conf.find(PROFILE);
+    if (profileIt != conf.end()) {
+        profile = profileIt->second;
+    }
+    
+    // Get region from key ARN
+    std::string keyArn = keyUriToKeyArn(keyUrl);
+    std::string region = getRegionFromKeyArn(keyArn);
+    
+    // Build base credentials provider
+    std::shared_ptr<Aws::Auth::AWSCredentialsProvider> baseCredentials;
+    
+    if (!accessKeyId.empty() && !secretAccessKey.empty()) {
+        // Use explicit access key and secret
+        baseCredentials = std::make_shared<Aws::Auth::SimpleAWSCredentialsProvider>(
+            accessKeyId, secretAccessKey);
+    } else if (!profile.empty()) {
+        // Use profile-based credentials
+        baseCredentials = std::make_shared<Aws::Auth::ProfileConfigFileAWSCredentialsProvider>(
+            profile.c_str());
+    } else {
+        // Use default credentials chain
+        baseCredentials = std::make_shared<Aws::Auth::DefaultAWSCredentialsProviderChain>();
+    }
+    
+    // If role ARN is specified, wrap with STS assume role provider
+    if (!roleArn.empty()) {
+        Aws::Client::ClientConfiguration stsConfig;
+        stsConfig.region = region.c_str();
+
+        auto stsClient = Aws::MakeShared<Aws::STS::STSClient>(
+            "schemaregistry", baseCredentials, stsConfig);
+
+        Aws::String session = roleSessionName.empty()
+                                   ? Aws::String("schemaregistry-session")
+                                   : Aws::String(roleSessionName.c_str());
+        Aws::String extId = roleExternalId.empty() ? Aws::String("")
+                                                   : Aws::String(roleExternalId.c_str());
+
+        auto assumeProvider = Aws::MakeShared<Aws::Auth::STSAssumeRoleCredentialsProvider>(
+            "schemaregistry",
+            Aws::String(roleArn.c_str()),
+            session,
+            extId,
+            Aws::Auth::DEFAULT_CREDS_LOAD_FREQ_SECONDS,
+            stsClient);
+
+        baseCredentials = assumeProvider;
+    }
+    
+    return baseCredentials;
 }
+
 
 std::string AwsKmsDriver::keyUriToKeyArn(const std::string &keyUri) const {
     if (keyUri.find(PREFIX) != 0) {

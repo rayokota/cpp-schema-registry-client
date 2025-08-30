@@ -144,6 +144,7 @@ if (SCHEMAREGISTRY_WITH_RULES)
     # AWS SDK C++
     find_package(aws-cpp-sdk-core CONFIG REQUIRED)
     find_package(aws-cpp-sdk-kms CONFIG REQUIRED)
+    find_package(aws-cpp-sdk-sts CONFIG REQUIRED)
 endif()
 
 if (SCHEMAREGISTRY_WITH_RULES)
@@ -341,6 +342,7 @@ if(SCHEMAREGISTRY_WITH_RULES)
             # AWS SDK for KMS driver
             aws-cpp-sdk-core
             aws-cpp-sdk-kms
+            aws-cpp-sdk-sts
             
             # Azure SDK for Azure KMS driver
             Azure::azure-security-keyvault-keys

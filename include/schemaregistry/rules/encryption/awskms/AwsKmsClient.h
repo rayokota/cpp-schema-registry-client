@@ -46,13 +46,13 @@ class AwsKmsClient : public crypto::tink::KmsClient {
 
     // Creates a new AwsKmsClient that is bound to the key specified in
     // `key_uri`, if not empty, and that uses the credentials in
-    // `credentials_path`, if not empty, or the default ones to authenticate to
+    // `credentials_provider`, if not empty, or the default ones to authenticate to
     // the KMS.
     //
     // If `key_uri` is empty, then the client is not bound to any particular
     // key.
     static crypto::tink::util::StatusOr<std::unique_ptr<AwsKmsClient>> New(
-        absl::string_view key_uri, absl::string_view credentials_path);
+        absl::string_view key_uri, std::shared_ptr<Aws::Auth::AWSCredentialsProvider> credentials_provider);
 
     // Creates a new client and adds it to the global list of KMSClients.
     //
@@ -63,7 +63,7 @@ class AwsKmsClient : public crypto::tink::KmsClient {
     // AwsKmsAead::New to directly create an Aead object without creating or
     // registering a client.
     static crypto::tink::util::Status RegisterNewClient(
-        absl::string_view key_uri, absl::string_view credentials_path);
+        absl::string_view key_uri, std::shared_ptr<Aws::Auth::AWSCredentialsProvider> credentials_provider);
 
     // Returns true if: (1) `key_uri` is a valid AWS KMS key URI, and (2) the
     // resulting AWS key ARN is equals to key_arn_, in case this client is bound
@@ -75,13 +75,13 @@ class AwsKmsClient : public crypto::tink::KmsClient {
 
   private:
     AwsKmsClient(absl::string_view key_arn,
-                 Aws::Auth::AWSCredentials credentials)
-        : key_arn_(key_arn), credentials_(credentials) {}
-    AwsKmsClient(Aws::Auth::AWSCredentials credentials)
-        : credentials_(credentials) {}
+                 std::shared_ptr<Aws::Auth::AWSCredentialsProvider> credentials_provider)
+        : key_arn_(key_arn), credentials_provider_(credentials_provider) {}
+    AwsKmsClient(std::shared_ptr<Aws::Auth::AWSCredentialsProvider> credentials_provider)
+        : credentials_provider_(credentials_provider) {}
 
     std::string key_arn_;
-    Aws::Auth::AWSCredentials credentials_;
+    std::shared_ptr<Aws::Auth::AWSCredentialsProvider> credentials_provider_;
     std::shared_ptr<Aws::KMS::KMSClient> aws_client_;
 };
 

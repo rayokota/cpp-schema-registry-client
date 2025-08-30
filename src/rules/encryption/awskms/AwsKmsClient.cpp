@@ -105,74 +105,6 @@ util::StatusOr<std::string> GetValue(absl::string_view name,
     return std::string(absl::StripAsciiWhitespace(parts[1]));
 }
 
-// Returns AWS credentials from the given `credential_path`.
-//
-// Credentials are retrieved as follows:
-//
-// If `credentials_path` is not empty the credentials in the given file are
-// returned. The file should have the following format:
-//
-//   [default]
-//   aws_access_key_id = your_access_key_id
-//   aws_secret_access_key = your_secret_access_key
-//
-// If `credentials_path` is empty, the credentials are searched for in the
-// following order:
-//   1. In the file specified via environment variable
-//   AWS_SHARED_CREDENTIALS_FILE
-//   2. In the file specified via environment variable AWS_PROFILE
-//   3. In the file ~/.aws/credentials
-//   4. In the file ~/.aws/config
-//   5. In values specified in environment variables AWS_ACCESS_KEY_ID,
-//      AWS_SECRET_ACCESS_KEY and AWS_SESSION_TOKEN
-//
-// For more info on AWS credentials see:
-// https://docs.aws.amazon.com/sdk-for-cpp/v1/developer-guide/credentials.html
-// and documentation of Aws::Auth::EnvironmentAWSCredentialsProvider and
-// Aws::Auth::ProfileConfigFileAWSCredentialsProvider.
-util::StatusOr<Aws::Auth::AWSCredentials> GetAwsCredentials(
-    absl::string_view credentials_path) {
-    if (credentials_path.empty()) {
-        // Get default credentials.
-        Aws::Auth::DefaultAWSCredentialsProviderChain provider_chain;
-        return provider_chain.GetAWSCredentials();
-    }
-    // Read credentials from the given file.
-    util::StatusOr<std::string> creds_result =
-        ReadFile(std::string(credentials_path));
-    if (!creds_result.ok()) {
-        return creds_result.status();
-    }
-    std::vector<std::string> creds_lines =
-        absl::StrSplit(creds_result.value(), '\n');
-    if (creds_lines.size() < 3) {
-        return util::Status(
-            absl::StatusCode::kInvalidArgument,
-            absl::StrCat("Invalid format of credentials in file ",
-                         credentials_path));
-    }
-    util::StatusOr<std::string> key_id_result =
-        GetValue("aws_access_key_id", creds_lines[1]);
-    if (!key_id_result.ok()) {
-        return util::Status(
-            absl::StatusCode::kInvalidArgument,
-            absl::StrCat("Invalid format of credentials in file ",
-                         credentials_path, " : ",
-                         key_id_result.status().message()));
-    }
-    util::StatusOr<std::string> secret_key_result =
-        GetValue("aws_secret_access_key", creds_lines[2]);
-    if (!secret_key_result.ok()) {
-        return util::Status(
-            absl::StatusCode::kInvalidArgument,
-            absl::StrCat("Invalid format of credentials in file ",
-                         credentials_path, " : ",
-                         secret_key_result.status().message()));
-    }
-    return Aws::Auth::AWSCredentials(key_id_result.value().c_str(),
-                                     secret_key_result.value().c_str());
-}
-
 void InitAwsApi() {
     Aws::SDKOptions options;
     Aws::InitAPI(options);
@@ -183,17 +115,10 @@ void InitAwsApi() {
 static absl::once_flag aws_initialization_once;
 
 util::StatusOr<std::unique_ptr<AwsKmsClient>> AwsKmsClient::New(
-    absl::string_view key_uri, absl::string_view credentials_path) {
+    absl::string_view key_uri, std::shared_ptr<Aws::Auth::AWSCredentialsProvider> credentials_provider) {
     absl::call_once(aws_initialization_once, []() { InitAwsApi(); });
-    // Read credentials.
-    util::StatusOr<Aws::Auth::AWSCredentials> credentials =
-        GetAwsCredentials(credentials_path);
-    if (!credentials.ok()) {
-        return credentials.status();
-    }
-
     if (key_uri.empty()) {
-        return absl::WrapUnique(new AwsKmsClient(*credentials));
+        return absl::WrapUnique(new AwsKmsClient(credentials_provider));
     }
 
     // If a specific key is given, create an AWS KMSClient.
@@ -206,10 +131,10 @@ util::StatusOr<std::unique_ptr<AwsKmsClient>> AwsKmsClient::New(
     if (!client_config.ok()) {
         return client_config.status();
     }
-    auto client = absl::WrapUnique(new AwsKmsClient(*key_arn, *credentials));
+    auto client = absl::WrapUnique(new AwsKmsClient(*key_arn, credentials_provider));
     // Create AWS KMSClient.
     client->aws_client_ = Aws::MakeShared<Aws::KMS::KMSClient>(
-        kTinkAwsKmsAllocationTag, client->credentials_, *client_config);
+        kTinkAwsKmsAllocationTag, client->credentials_provider_, *client_config);
     return std::move(client);
 }
 
@@ -245,19 +170,19 @@ util::StatusOr<std::unique_ptr<Aead>> AwsKmsClient::GetAead(
         return client_config.status();
     }
     auto aws_client = Aws::MakeShared<Aws::KMS::KMSClient>(
-        kTinkAwsKmsAllocationTag, credentials_, *client_config);
+        kTinkAwsKmsAllocationTag, credentials_provider_, *client_config);
     return AwsKmsAead::New(*key_arn, aws_client);
 }
 
 util::Status AwsKmsClient::RegisterNewClient(
-    absl::string_view key_uri, absl::string_view credentials_path) {
+    absl::string_view key_uri, std::shared_ptr<Aws::Auth::AWSCredentialsProvider> credentials_provider) {
     util::StatusOr<std::unique_ptr<AwsKmsClient>> client_result =
-        AwsKmsClient::New(key_uri, credentials_path);
+        AwsKmsClient::New(key_uri, credentials_provider);
     if (!client_result.ok()) {
         return client_result.status();
     }
 
-    return KmsClients::Add(*std::move(client_result));
+    return KmsClients::Add(std::move(*client_result));
 }
 
 }  // namespace awskms
