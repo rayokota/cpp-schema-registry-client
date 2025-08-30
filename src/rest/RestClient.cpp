@@ -192,11 +192,9 @@ std::chrono::milliseconds RestClient::calculateExponentialBackoff(
     std::chrono::milliseconds max_backoff) const {
     // Calculate 2^retry_attempts * initial_backoff_ms with overflow protection
     std::uint64_t backoff_ms;
-    // NOTE: add parentheses around max function below to avoid conflict with
-    // macro max in Windows headers
     if (retry_attempts >= 32 ||
         (1ULL << retry_attempts) >
-            (std::numeric_limits<std::uint32_t>::max)() / initial_backoff_ms) {
+            std::numeric_limits<std::uint32_t>::max() / initial_backoff_ms) {
         // Overflow would occur, use max_backoff
         backoff_ms = static_cast<std::uint64_t>(max_backoff.count());
     } else {
