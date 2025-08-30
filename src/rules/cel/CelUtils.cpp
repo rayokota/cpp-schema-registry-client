@@ -5,6 +5,15 @@
 #include "eval/public/containers/container_backed_list_impl.h"
 #include "eval/public/containers/container_backed_map_impl.h"
 
+// Fix for Windows GetMessage macro conflict
+// On Windows, GetMessage is defined as a macro in winuser.h which conflicts
+// with the GetMessage method in google::protobuf::Reflection
+#ifdef _WIN32
+#ifdef GetMessage
+#undef GetMessage
+#endif
+#endif
+
 namespace schemaregistry::rules::cel::utils {
 
 google::api::expr::runtime::CelValue fromJsonValue(
