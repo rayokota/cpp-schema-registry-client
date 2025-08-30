@@ -7,6 +7,15 @@
 
 #include <memory>  // For std::dynamic_pointer_cast
 
+// Fix for Windows GetMessage macro conflict
+// On Windows, GetMessage is defined as a macro in winuser.h which conflicts
+// with the GetMessage method in google::protobuf::Reflection
+#ifdef _WIN32
+#ifdef GetMessage
+#undef GetMessage
+#endif
+#endif
+
 #include "absl/strings/escaping.h"
 #include "confluent/meta.pb.h"
 #include "schemaregistry/serdes/RuleRegistry.h"  // For global_registry functions
