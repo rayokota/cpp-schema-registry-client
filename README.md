@@ -45,7 +45,7 @@ This project installs a CMake package called `schemaregistry`. The installed tar
 
 ## Examples
 
-You can find examples in the `example` folder.
+You can find examples in the [example](https://github.com/rayokota/cpp-schema-registry-client/blob/master/example/README.md) folder.
 
 To build the examples, run
 
