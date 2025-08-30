@@ -62,7 +62,7 @@ A Kafka producer that encrypts and serializes Avro messages using field-level en
 
 ### Prerequisites
 - C++17 compatible compiler
-- CMake 3.16+
+- CMake 3.22+
 - librdkafka development libraries
 - Avro C++ libraries
 - cpp-schema-registry-client library
@@ -70,32 +70,10 @@ A Kafka producer that encrypts and serializes Avro messages using field-level en
 
 ### Build Instructions
 
-1. **Using CMake:**
-   ```bash
-   mkdir build
-   cd build
-   cmake ..
-   make example
-   ```
-
-2. **Manual compilation:**
-   ```bash
-   # Basic consumer
-   g++ -std=c++17 -o avro_consumer AvroConsumer.cpp \
-     -lrdkafka -lavrocpp -lschemaregistry
-
-   # Basic producer
-   g++ -std=c++17 -o avro_producer AvroProducer.cpp \
-     -lrdkafka -lavrocpp -lschemaregistry
-
-   # Encryption consumer
-   g++ -std=c++17 -o avro_consumer_encryption AvroConsumerEncryption.cpp \
-     -lrdkafka -lavrocpp -lschemaregistry -ltink
-
-   # Encryption producer
-   g++ -std=c++17 -o avro_producer_encryption AvroProducerEncryption.cpp \
-     -lrdkafka -lavrocpp -lschemaregistry -ltink
-   ```
+**Using CMake:**
+```bash
+cmake --build build --target example
+```
 
 ### Dependencies
 
@@ -149,7 +127,6 @@ For AWS KMS, you can set environment variables:
 ```bash
 export AWS_ACCESS_KEY_ID=your_access_key
 export AWS_SECRET_ACCESS_KEY=your_secret_key
-export AWS_DEFAULT_REGION=us-west-2
 ```
 
 Or pass them via the rule configuration in the code.
