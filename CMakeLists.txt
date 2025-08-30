@@ -56,6 +56,7 @@ endif()
 if(WIN32 AND SCHEMAREGISTRY_WITH_RULES)
     message(STATUS "Using C++20 on Windows because Rules are enabled")
     set(CMAKE_CXX_STANDARD 20)
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
 endif()
 
 include(FetchContent)
