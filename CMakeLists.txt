@@ -145,6 +145,8 @@ if (SCHEMAREGISTRY_WITH_RULES)
     find_package(aws-cpp-sdk-core CONFIG REQUIRED)
     find_package(aws-cpp-sdk-kms CONFIG REQUIRED)
     find_package(aws-cpp-sdk-sts CONFIG REQUIRED)
+    find_package(aws-cpp-sdk-cognito-identity CONFIG REQUIRED)
+    find_package(aws-cpp-sdk-identity-management CONFIG REQUIRED)
 endif()
 
 if (SCHEMAREGISTRY_WITH_RULES)
@@ -343,6 +345,8 @@ if(SCHEMAREGISTRY_WITH_RULES)
             aws-cpp-sdk-core
             aws-cpp-sdk-kms
             aws-cpp-sdk-sts
+            aws-cpp-sdk-cognito-identity
+            aws-cpp-sdk-identity-management
             
             # Azure SDK for Azure KMS driver
             Azure::azure-security-keyvault-keys
