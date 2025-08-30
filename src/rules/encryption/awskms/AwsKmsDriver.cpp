@@ -67,60 +67,8 @@ std::string AwsKmsDriver::buildCredentialsPath(
         return it->second;
     }
 
-    // For other configuration options, we'll set environment variables
-    // and let the AWS SDK handle credential resolution
-    configureAwsEnvironment(conf, keyUrl);
-
     // Return empty string to use default credential chain
     return "";
-}
-
-void AwsKmsDriver::configureAwsEnvironment(
-    const std::unordered_map<std::string, std::string> &conf,
-    const std::string &keyUrl) const {
-    // Set access key and secret key if provided
-    auto accessKeyIt = conf.find(ACCESS_KEY_ID);
-    auto secretKeyIt = conf.find(SECRET_ACCESS_KEY);
-
-    if (accessKeyIt != conf.end() && !accessKeyIt->second.empty() &&
-        secretKeyIt != conf.end() && !secretKeyIt->second.empty()) {
-        setenv("AWS_ACCESS_KEY_ID", accessKeyIt->second.c_str(), 1);
-        setenv("AWS_SECRET_ACCESS_KEY", secretKeyIt->second.c_str(), 1);
-    }
-
-    // Set profile if provided
-    auto profileIt = conf.find(PROFILE);
-    if (profileIt != conf.end() && !profileIt->second.empty()) {
-        setenv("AWS_PROFILE", profileIt->second.c_str(), 1);
-    }
-
-    // Set assume role configuration if provided
-    auto roleArnIt = conf.find(ROLE_ARN);
-    if (roleArnIt != conf.end() && !roleArnIt->second.empty()) {
-        setenv("AWS_ROLE_ARN", roleArnIt->second.c_str(), 1);
-
-        auto roleSessionIt = conf.find(ROLE_SESSION_NAME);
-        if (roleSessionIt != conf.end() && !roleSessionIt->second.empty()) {
-            setenv("AWS_ROLE_SESSION_NAME", roleSessionIt->second.c_str(), 1);
-        }
-
-        auto externalIdIt = conf.find(ROLE_EXTERNAL_ID);
-        if (externalIdIt != conf.end() && !externalIdIt->second.empty()) {
-            setenv("AWS_ROLE_EXTERNAL_ID", externalIdIt->second.c_str(), 1);
-        }
-    }
-
-    // Extract and set region from key URL if not already set
-    try {
-        std::string keyArn = keyUriToKeyArn(keyUrl);
-        std::string region = getRegionFromKeyArn(keyArn);
-
-        if (getenv("AWS_DEFAULT_REGION") == nullptr) {
-            setenv("AWS_DEFAULT_REGION", region.c_str(), 1);
-        }
-    } catch (const TinkError &) {
-        // If we can't extract region, let AWS SDK handle it
-    }
 }
 
 std::string AwsKmsDriver::keyUriToKeyArn(const std::string &keyUri) const {
