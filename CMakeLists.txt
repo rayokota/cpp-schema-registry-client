@@ -62,6 +62,10 @@ endif()
 
 include(FetchContent)
 
+if(WIN32)
+    set(FETCHCONTENT_BASE_DIR C:/deps)
+endif()
+
 find_package(absl CONFIG REQUIRED)
 
 find_package(OpenSSL CONFIG REQUIRED)
