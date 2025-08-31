@@ -31,7 +31,7 @@ This library can be used with [librdkafka](https://github.com/confluentinc/librd
 - CMake 3.22+
 - vcpkg
 
-To build, first install [vcpkg](https://github.com/microsoft/vcpkg).  Next, run cmake as follows:
+To build, first install [vcpkg](https://github.com/microsoft/vcpkg).  Next, run CMake as follows:
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
