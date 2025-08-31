@@ -27,7 +27,7 @@ This library can be used with [librdkafka](https://github.com/confluentinc/librd
 ## Build
 
 ### Prerequisites
-- C++17 compatible compiler (C++20 is required for Data Contract rules on Windows)
+- C++17 compatible compiler (C++20 is required for data quality rules on Windows)
 - CMake 3.22+
 - vcpkg
 
