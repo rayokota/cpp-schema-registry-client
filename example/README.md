@@ -61,10 +61,9 @@ A Kafka producer that encrypts and serializes Avro messages using field-level en
 ## Building the Examples
 
 ### Prerequisites
-- C++17 compatible compiler
+- C++17 compatible compiler (C++20 is required for Data Contract rules on Windows)
 - CMake 3.22+
 - librdkafka development libraries
-- Avro C++ libraries
 - cpp-schema-registry-client library
 - Tink crypto library (for encryption examples)
 
@@ -74,23 +73,6 @@ A Kafka producer that encrypts and serializes Avro messages using field-level en
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" -DSCHEMAREGISTRY_BUILD_EXAMPLES=ON
 cmake --build build --target example
-```
-
-### Dependencies
-
-#### Ubuntu/Debian:
-```bash
-sudo apt-get install librdkafka-dev libavro-dev
-```
-
-#### macOS (Homebrew):
-```bash
-brew install librdkafka avro-cpp
-```
-
-#### vcpkg:
-```bash
-vcpkg install librdkafka avro-cpp tink
 ```
 
 ## Schema Definition
