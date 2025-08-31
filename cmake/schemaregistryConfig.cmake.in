@@ -12,8 +12,8 @@ if(NOT TARGET cpr::cpr)
   find_package(cpr QUIET)
 endif()
 
-if(NOT TARGET Protobuf::libprotobuf)
-  find_package(Protobuf QUIET)
+if(NOT TARGET protobuf::libprotobuf)
+  find_package(protobuf QUIET)
 endif()
 
 check_required_components("schemaregistry")

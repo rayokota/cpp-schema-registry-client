@@ -3,7 +3,7 @@
 
 # Find required packages
 find_package(PkgConfig REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(protobuf CONFIG REQUIRED)
 
 # Find librdkafka
 pkg_check_modules(RDKAFKA REQUIRED rdkafka)
@@ -38,7 +38,7 @@ function(add_example_executable target_name source_file)
         target_link_libraries(${target_name}
             schemaregistry
             ${RDKAFKA_LIBRARIES}
-            ${Protobuf_LIBRARIES}
+            protobuf::libprotobuf
             ${ARGN}  # Additional libraries passed as arguments
         )
     else()

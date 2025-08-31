@@ -52,13 +52,12 @@ target_link_libraries(schemaregistry-test
 if(SCHEMAREGISTRY_WITH_PROTOBUF)
     target_include_directories(schemaregistry-test
         PRIVATE
-            ${Protobuf_INCLUDE_DIRS}
             $<$<BOOL:${PROTO_INCLUDE_DIR}>:${PROTO_INCLUDE_DIR}>
             ${CMAKE_BINARY_DIR}/generated_proto  # Include main project's generated protos
     )
     target_link_libraries(schemaregistry-test
         PRIVATE
-            ${Protobuf_LIBRARIES}
+            protobuf::libprotobuf
     )
 endif()
 
