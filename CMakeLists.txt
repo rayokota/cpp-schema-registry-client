@@ -63,7 +63,7 @@ if(WIN32)
     # Use a shorter base directory to avoid path length issues
     set(FETCHCONTENT_BASE_DIR C:/deps)
     # Avoid conflicts with min/max macros in Windows headers
-    add_compile_definitions(NOMINMAX)
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
 endif()
 
 find_package(absl CONFIG REQUIRED)
