@@ -116,7 +116,6 @@ static absl::once_flag aws_initialization_once;
 
 util::StatusOr<std::unique_ptr<AwsKmsClient>> AwsKmsClient::New(
     absl::string_view key_uri, std::shared_ptr<Aws::Auth::AWSCredentialsProvider> credentials_provider) {
-    absl::call_once(aws_initialization_once, []() { InitAwsApi(); });
     if (key_uri.empty()) {
         return absl::WrapUnique(new AwsKmsClient(credentials_provider));
     }

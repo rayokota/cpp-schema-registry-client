@@ -22,7 +22,14 @@
 #include "schemaregistry/rules/encryption/EncryptionRegistry.h"
 #include "schemaregistry/rules/encryption/awskms/AwsKmsClient.h"
 
+static absl::once_flag aws_initialization_once;
+
 namespace schemaregistry::rules::encryption::awskms {
+
+void InitAwsApi() {
+    Aws::SDKOptions options;
+    Aws::InitAPI(options);
+}
 
 AwsKmsDriver::AwsKmsDriver() : prefix_(PREFIX) {}
 
@@ -31,6 +38,7 @@ const std::string &AwsKmsDriver::getKeyUrlPrefix() const { return prefix_; }
 std::shared_ptr<crypto::tink::KmsClient> AwsKmsDriver::newKmsClient(
     const std::unordered_map<std::string, std::string> &conf,
     const std::string &keyUrl) {
+    absl::call_once(aws_initialization_once, []() { InitAwsApi(); });
     if (!isValidKeyUri(keyUrl)) {
         throw TinkError("Invalid AWS KMS key URI: " + keyUrl);
     }
