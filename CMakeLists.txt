@@ -61,6 +61,11 @@ endif()
 
 include(FetchContent)
 
+if(WIN32)
+    # Use a shorter base directory for FetchContent to avoid path length issues
+    set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/deps)
+endif()
+
 find_package(absl CONFIG REQUIRED)
 
 find_package(OpenSSL CONFIG REQUIRED)
