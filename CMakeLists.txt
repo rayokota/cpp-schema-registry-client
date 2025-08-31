@@ -52,18 +52,18 @@ if(SCHEMAREGISTRY_WITH_RULES)
     endif()
 endif()
 
-# Bump C++ standard to 20 on Windows when building with Rules
-if(WIN32 AND SCHEMAREGISTRY_WITH_RULES)
-    message(STATUS "Using C++20 on Windows because Rules are enabled")
-    set(CMAKE_CXX_STANDARD 20)
-    add_compile_definitions(NOMINMAX)
-endif()
-
 include(FetchContent)
 
 if(WIN32)
+    if(SCHEMAREGISTRY_WITH_RULES)
+        # Bump C++ standard to 20 on Windows when building with CEL rules
+        message(STATUS "Using C++20 on Windows because CEL rules are enabled")
+        set(CMAKE_CXX_STANDARD 20)
+    endif()
     # Use a shorter base directory to avoid path length issues
     set(FETCHCONTENT_BASE_DIR C:/deps)
+    # Avoid conflicts with min/max macros in Windows headers
+    add_compile_definitions(NOMINMAX)
 endif()
 
 find_package(absl CONFIG REQUIRED)
