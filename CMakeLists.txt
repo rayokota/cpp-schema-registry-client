@@ -1,9 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
-
-# Set policies for better compatibility
-if(POLICY CMP0135)
-    cmake_policy(SET CMP0135 NEW)  # Set timestamp policy for URL downloads
-endif()
+cmake_minimum_required(VERSION 3.16)
 
 project(schemaregistry VERSION 0.1.0 LANGUAGES CXX)
 
@@ -74,20 +69,36 @@ find_package(OpenSSL CONFIG REQUIRED)
 find_package(cpr CONFIG REQUIRED)
 
 if (SCHEMAREGISTRY_WITH_AVRO)
-    # Fetch Apache Avro C++
     find_package(unofficial-avro-cpp CONFIG QUIET)
     if(NOT unofficial-avro-cpp_FOUND)
-    FetchContent_Declare(
-        unofficial-avro-cpp
-        GIT_REPOSITORY https://github.com/apache/avro.git
-        GIT_TAG        release-1.12.0
-        EXCLUDE_FROM_ALL
-        SOURCE_SUBDIR  lang/c++
-    )
-    # Disable Avro subproject tests to avoid registering them with ctest here
-    set(AVROCPP_BUILD_TESTS OFF CACHE BOOL "Build Avro C++ tests" FORCE)
-    set(AVRO_BUILD_TESTS OFF CACHE BOOL "Build Avro tests" FORCE)
-    FetchContent_MakeAvailable(unofficial-avro-cpp)
+        FetchContent_Declare(
+            unofficial-avro-cpp
+            GIT_REPOSITORY https://github.com/apache/avro.git
+            GIT_TAG        release-1.12.0
+            EXCLUDE_FROM_ALL
+            #SOURCE_SUBDIR  lang/c++
+        )
+        FetchContent_GetProperties(unofficial-avro-cpp)
+        if(NOT unofficial_avro_cpp_POPULATED)
+            # Download the sources
+            FetchContent_Populate(unofficial-avro-cpp)
+
+            # Disable Avro subproject tests before adding the subdir
+            set(AVROCPP_BUILD_TESTS OFF CACHE BOOL "Build Avro C++ tests" FORCE)
+            set(AVRO_BUILD_TESTS OFF CACHE BOOL "Build Avro tests" FORCE)
+
+            # Add only the C++ subdir (what SOURCE_SUBDIR used to do)
+            add_subdirectory(
+                ${unofficial_avro_cpp_SOURCE_DIR}/lang/c++
+                ${unofficial_avro_cpp_BINARY_DIR}/lang/c++
+                EXCLUDE_FROM_ALL
+            )
+
+            # Provide the same imported name your code already links to
+            if(TARGET avrocpp AND NOT TARGET unofficial::avro-cpp::avrocpp)
+                add_library(unofficial::avro-cpp::avrocpp ALIAS avrocpp)
+            endif()
+        endif()
     endif()
 endif()
 
